@@ -1,4 +1,4 @@
-cs444
-=====
+Joosbox
+=======
 
-CS444 Compilers
+Compiler for Joos written in Scala.
