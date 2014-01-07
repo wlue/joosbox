@@ -1,4 +1,26 @@
-Joosbox
-=======
-
-Compiler for Joos written in Scala.
+                              ______
+                             / _____|
+                            / /
+                            | |
+                            | |
+                            | |
+    +-------------------------------+
+    |                               |
+    |      __   __    __   ____     |
+    |    _(  ) /  \  /  \ / ___)    |
+    |   / \) \(  O )(  O )\___ \    |
+    |   \____/ \__/  \__/ (____/    |
+    |                               |
+    |                               |
+    |            JOOSBOX            |
+    |                               |
+    |    Joos-1W to i386 compiler   |
+    |          100% SCALA           |
+    |                               |
+    |                               |
+    |                               |
+    |                               |
+    |     NOT FROM CONCENTRATE      |
+    |    PRODUCT OF WATERLOO, ON    |
+    |                               |
+    +-------------------------------+
