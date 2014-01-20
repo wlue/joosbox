@@ -24,6 +24,4 @@ case class InputSymbol(symbol: String) extends Symbol
 /**
  * Epsilon symbol.
  */
-case object Epsilon extends Symbol {
-  def symbol = throw new NoSuchElementException("Epsilon.symbol")
-}
+case object Epsilon extends Symbol

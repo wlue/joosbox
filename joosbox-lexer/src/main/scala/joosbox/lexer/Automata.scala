@@ -1,6 +1,9 @@
 package joosbox.lexer
 
-class Automata(
+/**
+ * Automata representing NFA/DFA.
+ */
+abstract class Automata(
   // Set of all of the possible states in the automata.
   states:             Set[State],
 
@@ -41,5 +44,57 @@ class Automata(
   val transitionSymbols = relation.values.flatMap(v => v.keys).toSet
   if (transitionSymbols.intersect(symbols).size != transitionSymbols.size) {
     throw new IllegalArgumentException("Transition table contains symbols that are not found within provided symbols.")
+  }
+}
+
+
+/**
+ * DFA
+ */
+object DFA {
+  def apply(
+    states:             Set[State],
+    symbols:            Set[Symbol],
+    relation:           Map[State, Map[Symbol, State]],
+    startState:         State,
+    acceptingStates:    Set[State]
+  ) = new DFA(states, symbols, relation, startState, acceptingStates)
+}
+
+class DFA(
+  states:             Set[State],
+  symbols:            Set[Symbol],
+  relation:           Map[State, Map[Symbol, State]],
+  startState:         State,
+  acceptingStates:    Set[State]
+) extends Automata(states, symbols, relation, startState, acceptingStates) {
+  if (symbols.contains(Symbol(""))) {
+    throw new IllegalArgumentException("")
+  }
+}
+
+
+/**
+ * NFA
+ */
+object NFA {
+  def apply(
+    states:             Set[State],
+    symbols:            Set[Symbol],
+    relation:           Map[State, Map[Symbol, State]],
+    startState:         State,
+    acceptingStates:    Set[State]
+  ) = new NFA(states, symbols, relation, startState, acceptingStates)
+}
+
+class NFA(
+  states:             Set[State],
+  symbols:            Set[Symbol],
+  relation:           Map[State, Map[Symbol, State]],
+  startState:         State,
+  acceptingStates:    Set[State]
+) extends Automata(states, symbols, relation, startState, acceptingStates) {
+  if (symbols.contains(Symbol(""))) {
+    throw new IllegalArgumentException("")
   }
 }
