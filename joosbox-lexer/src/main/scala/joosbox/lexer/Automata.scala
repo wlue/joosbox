@@ -38,6 +38,11 @@ class Automata(
   if (target_states.intersect(states).size != target_states.size) {
     throw new IllegalArgumentException("Transition table contains target states that are not found within provided states.")        
   }
+
+  val transition_symbols = relation.values.flatMap(v => v.keys).toSet
+  if (transition_symbols.intersect(symbols).size != transition_symbols.size) {
+    throw new IllegalArgumentException("Transition table contains symbols that are not found within provided symbols.")        
+  }
 }
 
 class NFA(
@@ -57,5 +62,7 @@ class DFA(
   startState:         State,
   acceptingStates:    scala.collection.Set[State])
 extends Automata(states, symbols, relation, startState, acceptingStates) {
-
+  if (symbols.contains(InputSymbol(""))) {
+    throw new IllegalArgumentException("")        
+  }
 }

@@ -60,6 +60,24 @@ class LexerSpec extends Specification {
       }
     }
 
+    "fail to construct a DFA with missing input symbols in its symbol set" in {
+      try {
+        new joosbox.lexer.DFA(
+            Set(joosbox.lexer.State("p"), joosbox.lexer.State("k"), joosbox.lexer.State("t")),
+            Set(joosbox.lexer.InputSymbol("1")),
+            Map(joosbox.lexer.State("p") -> Map(
+              joosbox.lexer.InputSymbol("1") -> joosbox.lexer.State("k"),
+              joosbox.lexer.InputSymbol("") -> joosbox.lexer.State("t")
+            )),
+            joosbox.lexer.State("p"),
+            Set(joosbox.lexer.State("k"))
+        )
+        false
+      } catch {
+        case e: IllegalArgumentException => true
+      }
+    }
+
     "fail to construct a DFA with epislon transitions" in {
       try {
         new joosbox.lexer.DFA(
