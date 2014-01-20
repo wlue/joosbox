@@ -1,8 +1,8 @@
 package joosbox.lexer
 
-object Lexer {
+object LexerRunner {
   def main(args: Array[String]) {
-    println("Hello, world!")
+    System.exit(0);
   }
 }
 

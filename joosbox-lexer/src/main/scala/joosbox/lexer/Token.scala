@@ -1,7 +1,8 @@
 package joosbox.lexer
+
 import scala.util.matching.Regex
 
-object Tokens {
+object Token {
   val QUESTION      = """[?]""".r
   val LPAREN        = """[(]""".r
   val RPAREN        = """[)]""".r
@@ -61,4 +62,3 @@ object Tokens {
   val CHAR_LITERAL  = new Regex("\'("+ESC_CHAR+"|([^(\\n|\\r|\\\\|\')]))\'")
   val STR_LITERAL   = new Regex("\"("+ESC_CHAR+"|([^(\\n|\\r|\\\\|\")]))*\"")
 }
-

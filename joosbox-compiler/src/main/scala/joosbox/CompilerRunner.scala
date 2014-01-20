@@ -1,8 +1,7 @@
 package joosbox.compiler
 
-object Main {
+object CompilerRunner {
   def main(args: Array[String]) {
-    println("Hello, world!")
     System.exit(0);
   }
 }

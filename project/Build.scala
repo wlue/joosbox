@@ -32,7 +32,7 @@ object JoosboxBuild extends Build {
     id = "joosbox-lexer",
     base = file("joosbox-lexer"),
     settings = sharedSettings ++ Seq(
-      mainClass := Some("joosbox.lexer.Lexer")
+      mainClass := Some("joosbox.lexer.LexerRunner")
     )
   ).settings(
     name := "joosbox-lexer"
@@ -42,7 +42,7 @@ object JoosboxBuild extends Build {
     id = "joosbox-compiler",
     base = file("joosbox-compiler"),
     settings = sharedSettings ++ Seq(
-      mainClass := Some("joosbox.compiler.Main")
+      mainClass := Some("joosbox.compiler.CompilerRunner")
     )
   ).settings(
     name := "joosbox-compiler"

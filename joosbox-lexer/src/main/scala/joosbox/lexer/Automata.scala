@@ -1,23 +1,22 @@
 package joosbox.lexer
 
 class Automata(
-  //  Set of all of the possible states in the automata.
-  states:             scala.collection.Set[State],
+  // Set of all of the possible states in the automata.
+  states:             Set[State],
 
-  //  Set of all possible input symbols accepted by the automata.
-  symbols:            scala.collection.Set[InputSymbol],
+  // Set of all possible input symbols accepted by the automata.
+  symbols:            Set[InputSymbol],
 
-  //  A map of maps, like:
-  //    StartState ->
-  //      InputSymbol -> State
-  relation:           scala.collection.Map[State, scala.collection.Map[InputSymbol, State]],
+  // A map of maps, like:
+  //   StartState ->
+  //     InputSymbol -> State
+  relation:           Map[State, Map[InputSymbol, State]],
 
   startState:         State,
 
-  //  States that result in successful termination of the automata.
-  acceptingStates:    scala.collection.Set[State]
-  ) {
-
+  // States that result in successful termination of the automata.
+  acceptingStates:    Set[State]
+) {
   if (!states.contains(startState)) {
     throw new IllegalArgumentException("Start state is not contained within provided states.")
   }
@@ -31,38 +30,16 @@ class Automata(
   }
 
   if (relation.keys.toSet.intersect(states).size != relation.keys.size) {
-    throw new IllegalArgumentException("Transition table contains source states that are not found within provided states.")    
+    throw new IllegalArgumentException("Transition table contains source states that are not found within provided states.")
   }
 
-  val target_states = relation.mapValues(v => v.values).values.flatten.toSet
-  if (target_states.intersect(states).size != target_states.size) {
-    throw new IllegalArgumentException("Transition table contains target states that are not found within provided states.")        
+  val targetStates = relation.mapValues(v => v.values).values.flatten.toSet
+  if (targetStates.intersect(states).size != targetStates.size) {
+    throw new IllegalArgumentException("Transition table contains target states that are not found within provided states.")
   }
 
-  val transition_symbols = relation.values.flatMap(v => v.keys).toSet
-  if (transition_symbols.intersect(symbols).size != transition_symbols.size) {
+  val transitionSymbols = relation.values.flatMap(v => v.keys).toSet
+  if (transitionSymbols.intersect(symbols).size != transitionSymbols.size) {
     throw new IllegalArgumentException("Transition table contains symbols that are not found within provided symbols.")        
-  }
-}
-
-class NFA(
-  states:             scala.collection.Set[State],
-  symbols:            scala.collection.Set[InputSymbol],
-  relation:           scala.collection.Map[State, scala.collection.Map[InputSymbol, State]],
-  startState:         State,
-  acceptingStates:    scala.collection.Set[State])
-extends Automata(states, symbols, relation, startState, acceptingStates) {
-
-}
-
-class DFA(
-  states:             scala.collection.Set[State],
-  symbols:            scala.collection.Set[InputSymbol],
-  relation:           scala.collection.Map[State, scala.collection.Map[InputSymbol, State]],
-  startState:         State,
-  acceptingStates:    scala.collection.Set[State])
-extends Automata(states, symbols, relation, startState, acceptingStates) {
-  if (symbols.contains(InputSymbol(""))) {
-    throw new IllegalArgumentException("")        
   }
 }
