@@ -5,12 +5,12 @@ class Automata(
   states:             Set[State],
 
   // Set of all possible input symbols accepted by the automata.
-  symbols:            Set[InputSymbol],
+  symbols:            Set[Symbol],
 
   // A map of maps, like:
   //   StartState ->
-  //     InputSymbol -> State
-  relation:           Map[State, Map[InputSymbol, State]],
+  //     Symbol -> State
+  relation:           Map[State, Map[Symbol, State]],
 
   startState:         State,
 
@@ -40,6 +40,6 @@ class Automata(
 
   val transitionSymbols = relation.values.flatMap(v => v.keys).toSet
   if (transitionSymbols.intersect(symbols).size != transitionSymbols.size) {
-    throw new IllegalArgumentException("Transition table contains symbols that are not found within provided symbols.")        
+    throw new IllegalArgumentException("Transition table contains symbols that are not found within provided symbols.")
   }
 }

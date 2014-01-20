@@ -1,23 +1,23 @@
 package joosbox.lexer
 
-object DFA {
+object NFA {
   def apply(
     states:             Set[State],
-    symbols:            Set[InputSymbol],
-    relation:           Map[State, Map[InputSymbol, State]],
+    symbols:            Set[Symbol],
+    relation:           Map[State, Map[Symbol, State]],
     startState:         State,
     acceptingStates:    Set[State]
-  ) = new DFA(states, symbols, relation, startState, acceptingStates)
+  ) = new NFA(states, symbols, relation, startState, acceptingStates)
 }
 
-class DFA(
+class NFA(
   states:             Set[State],
-  symbols:            Set[InputSymbol],
-  relation:           Map[State, Map[InputSymbol, State]],
+  symbols:            Set[Symbol],
+  relation:           Map[State, Map[Symbol, State]],
   startState:         State,
   acceptingStates:    Set[State]
 ) extends Automata(states, symbols, relation, startState, acceptingStates) {
-  if (symbols.contains(InputSymbol(""))) {
+  if (symbols.contains(Symbol(""))) {
     throw new IllegalArgumentException("")
   }
 }
