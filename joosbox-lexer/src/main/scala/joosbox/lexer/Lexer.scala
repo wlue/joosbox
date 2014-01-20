@@ -7,7 +7,7 @@ object Lexer {
     val nfa = new NFA(
         Set(State("p"), State("k")),
         Set(InputSymbol("1")),
-        (state: State, symbol: InputSymbol) => State("p"),
+        Map(State("p") -> Map(InputSymbol("1") -> State("k"))),
         State("p"),
         Set(State("k"))
     )
@@ -17,7 +17,7 @@ object Lexer {
       val failing = new NFA(
           Set(State("p"), State("k")),
           Set(InputSymbol("1")),
-          (state: State, symbol: InputSymbol) => State("p"),
+          Map(State("p") -> Map(InputSymbol("1") -> State("k"))),
           State("h"),
           Set(State("k"))
       )
@@ -29,9 +29,21 @@ object Lexer {
       val failing = new NFA(
           Set(State("p"), State("k")),
           Set(InputSymbol("1")),
-          (state: State, symbol: InputSymbol) => State("p"),
+          Map(State("p") -> Map(InputSymbol("1") -> State("k"))),
           State("p"),
           Set(State("k"), State("h"))
+      )
+    } catch {
+      case e: IllegalArgumentException => println("Failing NFA failed as expected.")
+    }
+
+    try {
+      val failing = new NFA(
+          Set(State("p"), State("k")),
+          Set(InputSymbol("1")),
+          Map(State("p") -> Map(InputSymbol("1") -> State("r"))),
+          State("p"),
+          Set(State("k"))
       )
     } catch {
       case e: IllegalArgumentException => println("Failing NFA failed as expected.")

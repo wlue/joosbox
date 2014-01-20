@@ -1,10 +1,20 @@
 package joosbox.lexer
 
 class NFA(
+  //  Set of all of the possible states in the NFA.
   states:             scala.collection.Set[State],
+
+  //  Set of all possible input symbols accepted by the NFA.
   symbols:            scala.collection.Set[InputSymbol],
-  relation:           (State, InputSymbol) => State,
+
+  //  A map of maps, like:
+  //    StartState ->
+  //      InputSymbol -> State
+  relation:           scala.collection.Map[State, scala.collection.Map[InputSymbol, State]],
+
   startState:         State,
+
+  //  States that result in successful termination of the NFA.
   acceptingStates:    scala.collection.Set[State]
   ) {
 
@@ -14,5 +24,18 @@ class NFA(
 
   if (acceptingStates.intersect(states).size != acceptingStates.size) {
     throw new IllegalArgumentException("Accepting states contain states that are not found within provided states.")
+  }
+
+  if (!relation.contains(startState) && !acceptingStates.contains(startState)) {
+    throw new IllegalArgumentException("Transition table does not contain a transition from the start state and does not accept the start state.")
+  }
+
+  if (relation.keys.toSet.intersect(states).size != relation.keys.size) {
+    throw new IllegalArgumentException("Transition table contains source states that are not found within provided states.")    
+  }
+
+  val target_states = relation.mapValues(v => v.values).values.flatten.toSet
+  if (target_states.intersect(states).size != target_states.size) {
+    throw new IllegalArgumentException("Transition table contains target states that are not found within provided states.")        
   }
 }
