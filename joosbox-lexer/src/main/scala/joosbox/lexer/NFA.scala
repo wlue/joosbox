@@ -1,10 +1,10 @@
 package joosbox.lexer
 
-class NFA(
-  //  Set of all of the possible states in the NFA.
+class Automata(
+  //  Set of all of the possible states in the automata.
   states:             scala.collection.Set[State],
 
-  //  Set of all possible input symbols accepted by the NFA.
+  //  Set of all possible input symbols accepted by the automata.
   symbols:            scala.collection.Set[InputSymbol],
 
   //  A map of maps, like:
@@ -14,7 +14,7 @@ class NFA(
 
   startState:         State,
 
-  //  States that result in successful termination of the NFA.
+  //  States that result in successful termination of the automata.
   acceptingStates:    scala.collection.Set[State]
   ) {
 
@@ -38,4 +38,24 @@ class NFA(
   if (target_states.intersect(states).size != target_states.size) {
     throw new IllegalArgumentException("Transition table contains target states that are not found within provided states.")        
   }
+}
+
+class NFA(
+  states:             scala.collection.Set[State],
+  symbols:            scala.collection.Set[InputSymbol],
+  relation:           scala.collection.Map[State, scala.collection.Map[InputSymbol, State]],
+  startState:         State,
+  acceptingStates:    scala.collection.Set[State])
+extends Automata(states, symbols, relation, startState, acceptingStates) {
+
+}
+
+class DFA(
+  states:             scala.collection.Set[State],
+  symbols:            scala.collection.Set[InputSymbol],
+  relation:           scala.collection.Map[State, scala.collection.Map[InputSymbol, State]],
+  startState:         State,
+  acceptingStates:    scala.collection.Set[State])
+extends Automata(states, symbols, relation, startState, acceptingStates) {
+
 }

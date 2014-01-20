@@ -4,10 +4,6 @@ import joosbox.lexer.Lexer
 
 class LexerSpec extends Specification {
   "Lexer" should {
-    "pass" in {
-      0 must be_==(0)
-    }
-
     "construct a valid NFA" in {
       new joosbox.lexer.NFA(
           Set(joosbox.lexer.State("p"), joosbox.lexer.State("k")),
@@ -55,6 +51,24 @@ class LexerSpec extends Specification {
             Set(joosbox.lexer.State("p"), joosbox.lexer.State("k")),
             Set(joosbox.lexer.InputSymbol("1")),
             Map(joosbox.lexer.State("p") -> Map(joosbox.lexer.InputSymbol("1") -> joosbox.lexer.State("r"))),
+            joosbox.lexer.State("p"),
+            Set(joosbox.lexer.State("k"))
+        )
+        false
+      } catch {
+        case e: IllegalArgumentException => true
+      }
+    }
+
+    "fail to construct a DFA with epislon transitions" in {
+      try {
+        new joosbox.lexer.DFA(
+            Set(joosbox.lexer.State("p"), joosbox.lexer.State("k"), joosbox.lexer.State("t")),
+            Set(joosbox.lexer.InputSymbol("1"), joosbox.lexer.InputSymbol("")),
+            Map(joosbox.lexer.State("p") -> Map(
+              joosbox.lexer.InputSymbol("1") -> joosbox.lexer.State("k"),
+              joosbox.lexer.InputSymbol("") -> joosbox.lexer.State("t")
+            )),
             joosbox.lexer.State("p"),
             Set(joosbox.lexer.State("k"))
         )
