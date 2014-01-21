@@ -55,6 +55,10 @@ abstract class Automata(
      && obj.asInstanceOf[Automata].startState.equals(startState)
      && obj.asInstanceOf[Automata].acceptingStates.equals(acceptingStates))
   }
+
+  override def toString() = {
+    "Automata[States: " + states + ", Symbols: " + symbols + ", Relation: " + relation + ", StartState: " + startState + ", AcceptingStates: " + acceptingStates + "]"
+  }
 }
 
 
@@ -107,11 +111,36 @@ class NFA(
   name:               Option[String] = None
 ) extends Automata(states, symbols, relation, startState, acceptingStates) {
   def toDFA: DFA = {
-    val startClosure : Set[State] = relation.epsilonClosure(startState)
-    val startDFAState = State(startClosure.mkString(","))
 
-    relation.reachableFrom(startClosure)
+    val startSet = relation.epsilonClosure(startState)
+    var NFASourceStateGroups = Set[Set[State]](startSet)
+    var DFAStates = Set[State]()
+    var DFAAcceptors = Set[State]()
+    var DFAStart = State.combine(startSet)
+    var DFARelationTable: Map[State, Map[Symbol, Set[State]]] = Map.empty
 
-    DFA(states, symbols, relation, startState, acceptingStates)
-  }
+    while (NFASourceStateGroups.size > 0) {
+      val originalStates = NFASourceStateGroups.head
+      NFASourceStateGroups = NFASourceStateGroups.drop(1)
+
+      val DFAState = State.combine(originalStates)
+      val reachable = relation.reachableFrom(originalStates)
+
+      if (reachable.size > 0) {
+        DFARelationTable += DFAState -> reachable.mapValues { states => Set(State.combine(states)) }
+      }
+
+      DFAStates = DFAStates + DFAState
+
+      NFASourceStateGroups = NFASourceStateGroups ++ reachable.values.toSet
+      if (originalStates.intersect(acceptingStates).size > 0) {
+        DFAAcceptors = DFAAcceptors + DFAState
+      }
+    }
+
+    println("DFA Relation table = " + DFARelationTable)
+    val DFASymbols = symbols.filter { x => x != Symbol.epsilon }
+
+    DFA(DFAStates, DFASymbols, Relation(DFARelationTable), DFAStart, DFAAcceptors)
+  }  
 }

@@ -102,15 +102,15 @@ class AutomataSpec extends Specification {
         )),
         State("1"),
         Set(State("5"))
-      ).toDFA must be(
+      ).toDFA must beEqualTo(
         DFA(
-          Set(State("1,2"), State("3,4,5"), State("4,5"), State("5")),
+          Set(State("1,2"), State("3,5,4"), State("4,5"), State("5")),
           Set(Symbol("a"), Symbol("b")),
           Relation(Map(
             State("1,2") -> Map(
-              Symbol("a") -> Set(State("3,4,5"))
+              Symbol("a") -> Set(State("3,5,4"))
             ),
-            State("3,4,5") -> Map(
+            State("3,5,4") -> Map(
               Symbol("a") -> Set(State("5")),
               Symbol("b") -> Set(State("4,5"))
             ),
@@ -120,7 +120,7 @@ class AutomataSpec extends Specification {
             )
           )),
           State("1,2"),
-          Set(State("3,4,5"), State("4,5"), State("5"))
+          Set(State("3,5,4"), State("4,5"), State("5"))
         )
       )
     }
