@@ -14,7 +14,7 @@ abstract class Automata(
   //   State ->
   //     Symbol ->
   //       Set[State]
-  relation:           Map[State, Map[Symbol, Set[State]]],
+  relation:           Relation,
 
   startState:         State,
 
@@ -29,20 +29,20 @@ abstract class Automata(
     throw new IllegalArgumentException("Accepting states contain states that are not found within provided states.")
   }
 
-  if (!relation.contains(startState) && !acceptingStates.contains(startState)) {
+  if (!relation.table.contains(startState) && !acceptingStates.contains(startState)) {
     throw new IllegalArgumentException("Transition table does not contain a transition from the start state and does not accept the start state.")
   }
 
-  if (relation.keys.toSet.intersect(states).size != relation.keys.size) {
+  if (relation.table.keys.toSet.intersect(states).size != relation.table.keys.size) {
     throw new IllegalArgumentException("Transition table contains source states that are not found within provided states.")
   }
 
-  val targetStates = relation.mapValues(v => v.values).values.flatten.flatten.toSet
+  val targetStates = relation.table.mapValues(v => v.values).values.flatten.flatten.toSet
   if (targetStates.intersect(states).size != targetStates.size) {
     throw new IllegalArgumentException("Transition table contains target states that are not found within provided states.")
   }
 
-  val transitionSymbols = relation.values.flatMap(v => v.keys).toSet
+  val transitionSymbols = relation.table.values.flatMap(v => v.keys).toSet
   if (transitionSymbols.intersect(symbols).size != transitionSymbols.size) {
     throw new IllegalArgumentException("Transition table contains symbols that are not found within provided symbols.")
   }
@@ -56,7 +56,7 @@ object DFA {
   def apply(
     states:             Set[State],
     symbols:            Set[Symbol],
-    relation:           Map[State, Map[Symbol, Set[State]]],
+    relation:           Relation,
     startState:         State,
     acceptingStates:    Set[State]
   ) = new DFA(states, symbols, relation, startState, acceptingStates)
@@ -65,7 +65,7 @@ object DFA {
 class DFA(
   states:             Set[State],
   symbols:            Set[Symbol],
-  relation:           Map[State, Map[Symbol, Set[State]]],
+  relation:           Relation,
   startState:         State,
   acceptingStates:    Set[State]
 ) extends Automata(states, symbols, relation, startState, acceptingStates) {
@@ -82,7 +82,7 @@ object NFA {
   def apply(
     states:             Set[State],
     symbols:            Set[Symbol],
-    relation:           Map[State, Map[Symbol, Set[State]]],
+    relation:           Relation,
     startState:         State,
     acceptingStates:    Set[State]
   ) = new NFA(states, symbols, relation, startState, acceptingStates)
@@ -91,11 +91,11 @@ object NFA {
 class NFA(
   states:             Set[State],
   symbols:            Set[Symbol],
-  relation:           Map[State, Map[Symbol, Set[State]]],
+  relation:           Relation,
   startState:         State,
   acceptingStates:    Set[State]
 ) extends Automata(states, symbols, relation, startState, acceptingStates) {
-  def toDFA() : DFA = {
+  def toDFA: DFA = {
     states.foreach ( state => {
       println("epsilonClosure of " + state + " == " + epsilonClosure(state))
     })
@@ -103,26 +103,9 @@ class NFA(
     val startClosure : Set[State] = epsilonClosure(startState)
     val startDFAState = State(startClosure.mkString(","))
 
-    val reachableFromStart = startClosure.flatMap(
-      (state) => relation get state
-    ).flatten.foldLeft(Map[Symbol, Set[State]]().withDefaultValue(Set[State]())){
-
-      //  If we have an input symbol that gets us to another state,
-      //  add it to our map.
-      case (b, (x: InputSymbol, y: Set[State])) => b updated (x, b(x) ++ y)
-
-      //  Epsilon transitions are already included in reachableFromStart,
-      //  so just ignore  them here.
-      case (b, _) => b
-    }
-
-    println(reachableFromStart)
-
     //  Every state in the values of reachableFromStart is now a new DFA state.
 
-    DFA(
-      states, symbols, relation, startState, acceptingStates
-    )
+    DFA(states, symbols, relation, startState, acceptingStates)
   }
 
   def epsilonClosure(state: State) : Set[State] = {
@@ -133,7 +116,7 @@ class NFA(
       val q : State = worklist.head
       worklist = worklist drop 1
 
-      relation.get(q).foreach(transitions => {
+      relation.table.get(q).foreach(transitions => {
         transitions.get(Symbol.epsilon).foreach(states => {
           states.foreach(qprime => {
             worklist = worklist + qprime
