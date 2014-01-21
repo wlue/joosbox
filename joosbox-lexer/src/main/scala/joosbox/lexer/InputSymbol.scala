@@ -1,5 +1,10 @@
 package joosbox.lexer
 
+object SymbolImplicits {
+  import scala.language.implicitConversions
+  implicit def stringToSymbol(string: String): Symbol = Symbol(string)
+}
+
 //  Note that an InputSymbol is either a valid Unicode
 //  character or the empty string, to indicate an epsilon-transition.
 

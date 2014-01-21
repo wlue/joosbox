@@ -16,7 +16,9 @@ object JoosboxBuild extends Build {
 
     resolvers := Seq("snapshots", "releases").map(Resolver.sonatypeRepo),
 
-    parallelExecution in Test := false
+    parallelExecution in Test := false,
+
+    scalacOptions := Seq("-feature", "-unchecked")
   )
 
   lazy val joosbox = Project(
@@ -28,6 +30,14 @@ object JoosboxBuild extends Build {
     compiler
   )
 
+  lazy val core = Project(
+    id = "joosbox-core",
+    base = file("joosbox-core"),
+    settings = sharedSettings
+  ).settings(
+    name := "joosbox-core"
+  )
+
   lazy val lexer = Project(
     id = "joosbox-lexer",
     base = file("joosbox-lexer"),
@@ -36,7 +46,7 @@ object JoosboxBuild extends Build {
     )
   ).settings(
     name := "joosbox-lexer"
-  )
+  ).dependsOn(core)
 
   lazy val compiler = Project(
     id = "joosbox-compiler",
@@ -46,6 +56,6 @@ object JoosboxBuild extends Build {
     )
   ).settings(
     name := "joosbox-compiler"
-  )
+  ).dependsOn(core)
 }
 
