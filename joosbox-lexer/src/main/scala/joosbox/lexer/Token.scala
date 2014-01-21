@@ -3,6 +3,131 @@ package joosbox.lexer
 import scala.util.matching.Regex
 
 object Token {
+  val nfas = Seq(
+    NFA(
+      Set(State("i"), State("?")),
+      Set(Symbol.epsilon, Symbol("?")),
+      Relation(Map(State("i") -> Map(Symbol("?") -> Set(State("?"))))),
+      State("i"),
+      Set(State("?")),
+      Some("QUESTION")
+    ),
+
+    NFA(
+      Set(State("i"), State("(")),
+      Set(Symbol.epsilon, Symbol("(")),
+      Relation(Map(State("i") -> Map(Symbol("(") -> Set(State("("))))),
+      State("i"),
+      Set(State("(")),
+      Some("LPAREN")
+    ),
+
+    NFA(
+      Set(State("i"), State(")")),
+      Set(Symbol.epsilon, Symbol(")")),
+      Relation(Map(State("i") -> Map(Symbol(")") -> Set(State(")"))))),
+      State("i"),
+      Set(State(")")),
+      Some("RPAREN")
+    ),
+
+    NFA(
+      Set(State("i"), State("[")),
+      Set(Symbol.epsilon, Symbol("[")),
+      Relation(Map(State("i") -> Map(Symbol("[") -> Set(State("["))))),
+      State("i"),
+      Set(State("[")),
+      Some("LBRACK")
+    ),
+
+    NFA(
+      Set(State("i"), State("]")),
+      Set(Symbol.epsilon, Symbol("]")),
+      Relation(Map(State("i") -> Map(Symbol("]") -> Set(State("]"))))),
+      State("i"),
+      Set(State("]")),
+      Some("RBRACK")
+    ),
+
+    NFA(
+      Set(State("i"), State("{")),
+      Set(Symbol.epsilon, Symbol("{")),
+      Relation(Map(State("i") -> Map(Symbol("{") -> Set(State("{"))))),
+      State("i"),
+      Set(State("{")),
+      Some("LCURLY")
+    ),
+
+    NFA(
+      Set(State("i"), State("}")),
+      Set(Symbol.epsilon, Symbol("}")),
+      Relation(Map(State("i") -> Map(Symbol("}") -> Set(State("}"))))),
+      State("i"),
+      Set(State("}")),
+      Some("RCURLY")
+    ),
+
+    NFA(
+      Set(State("i"), State(":")),
+      Set(Symbol.epsilon, Symbol(":")),
+      Relation(Map(State("i") -> Map(Symbol(":") -> Set(State(":"))))),
+      State("i"),
+      Set(State(":")),
+      Some("COLON")
+    ),
+
+    NFA(
+      Set(State("i"), State(",")),
+      Set(Symbol.epsilon, Symbol(",")),
+      Relation(Map(State("i") -> Map(Symbol(",") -> Set(State(","))))),
+      State("i"),
+      Set(State(",")),
+      Some("COMMA")
+    ),
+
+    NFA(
+      Set(State("i"), State(".")),
+      Set(Symbol.epsilon, Symbol(".")),
+      Relation(Map(State("i") -> Map(Symbol(".") -> Set(State("."))))),
+      State("i"),
+      Set(State(".")),
+      Some("DOT")
+    ),
+
+    NFA(
+      Set(State("i"), State("=")),
+      Set(Symbol.epsilon, Symbol("=")),
+      Relation(Map(State("i") -> Map(Symbol("=") -> Set(State("="))))),
+      State("i"),
+      Set(State("=")),
+      Some("ASSIGN")
+    ),
+
+    NFA(
+      Set(State("i"), State("="), State("==")),
+      Set(Symbol.epsilon, Symbol("=")),
+      Relation(Map(State("i") -> Map(Symbol("=") -> Set(State("="))),
+                   State("=") -> Map(Symbol("=") -> Set(State("==")))
+               )),
+      State("i"),
+      Set(State("==")),
+      Some("EQUAL")
+    ),
+
+    NFA(
+      Set(State("i"), State("!")),
+      Set(Symbol.epsilon, Symbol("!")),
+      Relation(Map(State("i") -> Map(Symbol("!") -> Set(State("!"))))),
+      State("i"),
+      Set(State("!")),
+      Some("LNOT")
+    )
+
+  )
+}
+
+// Only here for hand-conveting to NFAs
+object TokenRegex {
   val QUESTION      = """[?]""".r
   val LPAREN        = """[(]""".r
   val RPAREN        = """[)]""".r

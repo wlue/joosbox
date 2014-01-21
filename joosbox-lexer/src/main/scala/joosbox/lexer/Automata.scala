@@ -93,8 +93,9 @@ object NFA {
     symbols:            Set[Symbol],
     relation:           Relation,
     startState:         State,
-    acceptingStates:    Set[State]
-  ) = new NFA(states, symbols, relation, startState, acceptingStates)
+    acceptingStates:    Set[State],
+    name:               Option[String] = None
+  ) = new NFA(states, symbols, relation, startState, acceptingStates, name)
 }
 
 class NFA(
@@ -102,7 +103,8 @@ class NFA(
   symbols:            Set[Symbol],
   relation:           Relation,
   startState:         State,
-  acceptingStates:    Set[State]
+  acceptingStates:    Set[State],
+  name:               Option[String] = None
 ) extends Automata(states, symbols, relation, startState, acceptingStates) {
   def toDFA: DFA = {
     val startClosure : Set[State] = relation.epsilonClosure(startState)
@@ -111,5 +113,5 @@ class NFA(
     relation.reachableFrom(startClosure)
 
     DFA(states, symbols, relation, startState, acceptingStates)
-  }  
+  }
 }
