@@ -3,8 +3,74 @@ package joosbox.lexer
 import scala.util.matching.Regex
 
 object Token {
-  val nfas = Seq(
-    NFA(
+  sealed trait Token
+  object Question extends Token
+  object LeftParen extends Token
+  object RightParen extends Token
+  object LeftBracket extends Token
+  object RightBracket extends Token
+  object LeftCurly extends Token
+  object RightCurly extends Token
+  object Colon extends Token
+  object Comma extends Token
+  object Dot extends Token
+  object Assign extends Token
+  object Equal extends Token
+  object LogicalNot extends Token
+  object BinaryNot extends Token
+  object NotEqual extends Token
+  object Divide extends Token
+  object DivideAssign extends Token
+  object Plus extends Token
+  object PlusAssign extends Token
+  object Increment extends Token
+  object Minus extends Token
+  object MinusAssign extends Token
+  object Decrement extends Token
+  object Star extends Token
+  object StarAssign extends Token
+  object Modulo extends Token
+  object ModuloAssign extends Token
+  object ShiftRight extends Token
+  object ShiftRightAssign extends Token
+  object BinaryShiftRight extends Token
+  object BinaryShiftRightAssign extends Token
+  object GreaterEqual extends Token
+  object GreaterThan extends Token
+  object ShiftLeft extends Token
+  object ShiftLeftAssign extends Token
+  object LessEqual extends Token
+  object LessThan extends Token
+  object BinaryXor extends Token
+  object BinaryXorAssign extends Token
+  object BinaryOr extends Token
+  object BinaryOrAssign extends Token
+  object LogicalOr extends Token
+  object BinaryAnd extends Token
+  object BinaryAndAssign extends Token
+  object LogicalAnc extends Token
+  object Semicolon extends Token
+
+  object Whitespace extends Token
+  object SingleLineComment extends Token
+  object MultiLineComment extends Token
+  object JavaDocComment extends Token
+
+  object Num extends Token
+  object Identifier extends Token
+
+  object EscapeChar extends Token
+  object CharLiteral extends Token
+  object StringLiteral extends Token
+}
+
+object TokenNFA {
+  lazy val nfa: NFA = {
+    nfas.values.reduce { (first, second) => first.union(second) }
+  }
+
+  val nfas: Map[Token.Token, NFA] = Map(
+    Token.Question -> NFA(
       Set(State("i"), State("?")),
       Set(Symbol.epsilon, Symbol("?")),
       Relation(Map(State("i") -> Map(Symbol("?") -> Set(State("?"))))),
@@ -13,7 +79,7 @@ object Token {
       Some("QUESTION")
     ),
 
-    NFA(
+    Token.LeftParen -> NFA(
       Set(State("i"), State("(")),
       Set(Symbol.epsilon, Symbol("(")),
       Relation(Map(State("i") -> Map(Symbol("(") -> Set(State("("))))),
@@ -22,7 +88,7 @@ object Token {
       Some("LPAREN")
     ),
 
-    NFA(
+    Token.RightParen -> NFA(
       Set(State("i"), State(")")),
       Set(Symbol.epsilon, Symbol(")")),
       Relation(Map(State("i") -> Map(Symbol(")") -> Set(State(")"))))),
@@ -31,7 +97,7 @@ object Token {
       Some("RPAREN")
     ),
 
-    NFA(
+    Token.LeftBracket -> NFA(
       Set(State("i"), State("[")),
       Set(Symbol.epsilon, Symbol("[")),
       Relation(Map(State("i") -> Map(Symbol("[") -> Set(State("["))))),
@@ -40,7 +106,7 @@ object Token {
       Some("LBRACK")
     ),
 
-    NFA(
+    Token.RightBracket -> NFA(
       Set(State("i"), State("]")),
       Set(Symbol.epsilon, Symbol("]")),
       Relation(Map(State("i") -> Map(Symbol("]") -> Set(State("]"))))),
@@ -49,7 +115,7 @@ object Token {
       Some("RBRACK")
     ),
 
-    NFA(
+    Token.LeftCurly -> NFA(
       Set(State("i"), State("{")),
       Set(Symbol.epsilon, Symbol("{")),
       Relation(Map(State("i") -> Map(Symbol("{") -> Set(State("{"))))),
@@ -58,7 +124,7 @@ object Token {
       Some("LCURLY")
     ),
 
-    NFA(
+    Token.RightCurly -> NFA(
       Set(State("i"), State("}")),
       Set(Symbol.epsilon, Symbol("}")),
       Relation(Map(State("i") -> Map(Symbol("}") -> Set(State("}"))))),
@@ -67,7 +133,7 @@ object Token {
       Some("RCURLY")
     ),
 
-    NFA(
+    Token.Colon -> NFA(
       Set(State("i"), State(":")),
       Set(Symbol.epsilon, Symbol(":")),
       Relation(Map(State("i") -> Map(Symbol(":") -> Set(State(":"))))),
@@ -76,7 +142,7 @@ object Token {
       Some("COLON")
     ),
 
-    NFA(
+    Token.Comma -> NFA(
       Set(State("i"), State(",")),
       Set(Symbol.epsilon, Symbol(",")),
       Relation(Map(State("i") -> Map(Symbol(",") -> Set(State(","))))),
@@ -85,7 +151,7 @@ object Token {
       Some("COMMA")
     ),
 
-    NFA(
+    Token.Dot -> NFA(
       Set(State("i"), State(".")),
       Set(Symbol.epsilon, Symbol(".")),
       Relation(Map(State("i") -> Map(Symbol(".") -> Set(State("."))))),
@@ -94,7 +160,7 @@ object Token {
       Some("DOT")
     ),
 
-    NFA(
+    Token.Assign -> NFA(
       Set(State("i"), State("=")),
       Set(Symbol.epsilon, Symbol("=")),
       Relation(Map(State("i") -> Map(Symbol("=") -> Set(State("="))))),
@@ -103,7 +169,7 @@ object Token {
       Some("ASSIGN")
     ),
 
-    NFA(
+    Token.Equal -> NFA(
       Set(State("i"), State("="), State("==")),
       Set(Symbol.epsilon, Symbol("=")),
       Relation(Map(State("i") -> Map(Symbol("=") -> Set(State("="))),
@@ -114,7 +180,7 @@ object Token {
       Some("EQUAL")
     ),
 
-    NFA(
+    Token.LogicalNot -> NFA(
       Set(State("i"), State("!")),
       Set(Symbol.epsilon, Symbol("!")),
       Relation(Map(State("i") -> Map(Symbol("!") -> Set(State("!"))))),
@@ -122,7 +188,6 @@ object Token {
       Set(State("!")),
       Some("LNOT")
     )
-
   )
 }
 

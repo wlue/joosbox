@@ -71,20 +71,24 @@ abstract class Automata(
  */
 object DFA {
   def apply(
-    states:             Set[State],
-    symbols:            Set[Symbol],
-    relation:           Relation,
-    startState:         State,
-    acceptingStates:    Set[State]
+    states: Set[State],
+    symbols: Set[Symbol],
+    relation: Relation,
+    startState: State,
+    acceptingStates: Set[State]
   ) = new DFA(states, symbols, relation, startState, acceptingStates)
+
+  def unapply(dfa: DFA) = Some((
+    dfa.states, dfa.symbols, dfa.relation, dfa.startState, dfa.acceptingStates
+  ))
 }
 
 class DFA(
-  states:             Set[State],
-  symbols:            Set[Symbol],
-  relation:           Relation,
-  startState:         State,
-  acceptingStates:    Set[State]
+  states: Set[State],
+  symbols: Set[Symbol],
+  relation: Relation,
+  startState: State,
+  acceptingStates: Set[State]
 ) extends Automata(states, symbols, relation, startState, acceptingStates) {
   if (symbols.contains(Symbol.epsilon)) {
     throw new IllegalArgumentException("DFA cannot contain epsilon transitions.")
@@ -97,22 +101,26 @@ class DFA(
  */
 object NFA {
   def apply(
-    states:             Set[State],
-    symbols:            Set[Symbol],
-    relation:           Relation,
-    startState:         State,
-    acceptingStates:    Set[State],
-    name:               Option[String] = None
+    states: Set[State],
+    symbols: Set[Symbol],
+    relation: Relation,
+    startState: State,
+    acceptingStates: Set[State],
+    name: Option[String] = None
   ) = new NFA(states, symbols, relation, startState, acceptingStates, name)
+
+  def unapply(nfa: NFA) = Some((
+    nfa.states, nfa.symbols, nfa.relation, nfa.startState, nfa.acceptingStates, nfa.name
+  ))
 }
 
 class NFA(
-  states:             Set[State],
-  symbols:            Set[Symbol],
-  relation:           Relation,
-  startState:         State,
-  acceptingStates:    Set[State],
-  name:               Option[String] = None
+  states: Set[State],
+  symbols: Set[Symbol],
+  relation: Relation,
+  startState: State,
+  acceptingStates: Set[State],
+  val name: Option[String] = None
 ) extends Automata(states, symbols, relation, startState, acceptingStates) {
   def toDFA: DFA = {
 
@@ -146,5 +154,9 @@ class NFA(
     val DFASymbols = symbols.filter { x => x != Symbol.epsilon }
 
     DFA(DFAStates, DFASymbols, Relation(DFARelationTable), DFAStart, DFAAcceptors)
-  }  
+  }
+
+  def union(that: NFA) = {
+    this
+  }
 }
