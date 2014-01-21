@@ -45,6 +45,31 @@ class AutomataSpec extends Specification {
         Set(State("k"))
       ) must throwA[IllegalArgumentException]
     }
+
+    "convert a basic instance of itself into a DFA" in {
+      NFA(
+        Set(State("p"), State("k"), State("t")),
+        Set(Symbol("1")),
+        Map(State("p") -> Map(
+          Symbol("1") -> State("k")
+        )),
+        State("p"),
+        Set(State("k"))
+      ).toDFA must haveClass[DFA]
+    }
+
+    "convert a basic instance of itself with ε-transitions into a DFA" in {
+      NFA(
+        Set(State("p"), State("k"), State("t")),
+        Set(Symbol("1"), Symbol.epsilon),
+        Map(State("p") -> Map(
+          Symbol("1") -> State("k"),
+          Symbol.epsilon -> State("k")
+        )),
+        State("p"),
+        Set(State("k"))
+      ).toDFA must haveClass[DFA]
+    }
   }
 
   "DFA" should {

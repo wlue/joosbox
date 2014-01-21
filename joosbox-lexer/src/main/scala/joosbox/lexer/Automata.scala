@@ -68,8 +68,8 @@ class DFA(
   startState:         State,
   acceptingStates:    Set[State]
 ) extends Automata(states, symbols, relation, startState, acceptingStates) {
-  if (symbols.contains(Symbol(""))) {
-    throw new IllegalArgumentException("")
+  if (symbols.contains(Symbol.epsilon)) {
+    throw new IllegalArgumentException("DFA cannot cntain epsilon transitions.")
   }
 }
 
@@ -94,7 +94,9 @@ class NFA(
   startState:         State,
   acceptingStates:    Set[State]
 ) extends Automata(states, symbols, relation, startState, acceptingStates) {
-  if (symbols.contains(Symbol(""))) {
-    throw new IllegalArgumentException("")
+  def toDFA() : DFA = {
+    DFA(
+      states, symbols, relation, startState, acceptingStates
+    )
   }
 }
