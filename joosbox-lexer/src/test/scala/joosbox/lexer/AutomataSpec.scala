@@ -10,7 +10,7 @@ class AutomataSpec extends Specification {
       NFA(
         Set(State("p"), State("k")),
         Set(Symbol("1")),
-        Map(State("p") -> Map(Symbol("1") -> State("k"))),
+        Map(State("p") -> Map(Symbol("1") -> Set(State("k")))),
         State("p"),
         Set(State("k"))
       ) must not(throwA[Exception])
@@ -20,7 +20,7 @@ class AutomataSpec extends Specification {
       NFA(
         Set(State("p"), State("k")),
         Set(Symbol("1")),
-        Map(State("p") -> Map(Symbol("1") -> State("k"))),
+        Map(State("p") -> Map(Symbol("1") -> Set(State("k")))),
         State("h"),
         Set(State("k"))
       ) must throwA[IllegalArgumentException]
@@ -30,7 +30,7 @@ class AutomataSpec extends Specification {
       NFA(
         Set(State("p"), State("k")),
         Set(Symbol("1")),
-        Map(State("p") -> Map(Symbol("1") -> State("k"))),
+        Map(State("p") -> Map(Symbol("1") -> Set(State("k")))),
         State("p"),
         Set(State("k"), State("h"))
       ) must throwA[IllegalArgumentException]
@@ -40,7 +40,7 @@ class AutomataSpec extends Specification {
       NFA(
         Set(State("p"), State("k")),
         Set(Symbol("1")),
-        Map(State("p") -> Map(Symbol("1") -> State("r"))),
+        Map(State("p") -> Map(Symbol("1") -> Set(State("r")))),
         State("p"),
         Set(State("k"))
       ) must throwA[IllegalArgumentException]
@@ -51,7 +51,7 @@ class AutomataSpec extends Specification {
         Set(State("p"), State("k"), State("t")),
         Set(Symbol("1")),
         Map(State("p") -> Map(
-          Symbol("1") -> State("k")
+          Symbol("1") -> Set(State("k"))
         )),
         State("p"),
         Set(State("k"))
@@ -60,14 +60,26 @@ class AutomataSpec extends Specification {
 
     "convert a basic instance of itself with ε-transitions into a DFA" in {
       NFA(
-        Set(State("p"), State("k"), State("t")),
-        Set(Symbol("1"), Symbol.epsilon),
-        Map(State("p") -> Map(
-          Symbol("1") -> State("k"),
-          Symbol.epsilon -> State("k")
-        )),
-        State("p"),
-        Set(State("k"))
+        Set(State("1"), State("2"), State("3"), State("4"), State("5")),
+        Set(Symbol("a"), Symbol("b"), Symbol.epsilon),
+        Map(
+          State("1") -> Map(
+            Symbol("a") -> Set(State("3")),
+            Symbol.epsilon -> Set(State("2"))
+          ),
+          State("2") -> Map(
+            Symbol("a") -> Set(State("5"), State("4"))
+          ),
+          State("3") -> Map(
+            Symbol("b") -> Set(State("4"))
+          ),
+          State("4") -> Map(
+            Symbol("a") -> Set(State("5")),
+            Symbol("b") -> Set(State("5"))
+          )
+        ),
+        State("1"),
+        Set(State("5"))
       ).toDFA must haveClass[DFA]
     }
   }
@@ -77,7 +89,7 @@ class AutomataSpec extends Specification {
       DFA(
         Set(State("p"), State("k")),
         Set(Symbol("1")),
-        Map(State("p") -> Map(Symbol("1") -> State("k"))),
+        Map(State("p") -> Map(Symbol("1") -> Set(State("k")))),
         State("p"),
         Set(State("k"))
       ) must not(throwA[Exception])
@@ -88,8 +100,8 @@ class AutomataSpec extends Specification {
         Set(State("p"), State("k"), State("t")),
         Set(Symbol("1")),
         Map(State("p") -> Map(
-          Symbol("1") -> State("k"),
-          Symbol("") -> State("t")
+          Symbol("1") -> Set(State("k")),
+          Symbol("") -> Set(State("t"))
         )),
         State("p"),
         Set(State("k"))
@@ -101,8 +113,8 @@ class AutomataSpec extends Specification {
         Set(State("p"), State("k"), State("t")),
         Set(Symbol("1"), Symbol.epsilon),
         Map(State("p") -> Map(
-          Symbol("1") -> State("k"),
-          Symbol("") -> State("t")
+          Symbol("1") -> Set(State("k")),
+          Symbol("") -> Set(State("t"))
         )),
         State("p"),
         Set(State("k"))
