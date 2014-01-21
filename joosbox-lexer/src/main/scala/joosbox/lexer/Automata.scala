@@ -47,18 +47,22 @@ abstract class Automata(
     throw new IllegalArgumentException("Transition table contains symbols that are not found within provided symbols.")
   }
 
-  override def equals(obj:Any) = {
-    (obj.isInstanceOf[Automata]
-     && obj.asInstanceOf[Automata].states.equals(states)
-     && obj.asInstanceOf[Automata].symbols.equals(symbols)
-     && obj.asInstanceOf[Automata].relation.equals(relation)
-     && obj.asInstanceOf[Automata].startState.equals(startState)
-     && obj.asInstanceOf[Automata].acceptingStates.equals(acceptingStates))
+  override def equals(obj: Any) = obj match {
+    case automata: Automata =>
+      automata.states.equals(states) &&
+      automata.symbols.equals(symbols) &&
+      automata.relation.equals(relation) &&
+      automata.startState.equals(startState) &&
+      automata.acceptingStates.equals(acceptingStates)
+    case _ => false
   }
 
-  override def toString() = {
-    "Automata[States: " + states + ", Symbols: " + symbols + ", Relation: " + relation + ", StartState: " + startState + ", AcceptingStates: " + acceptingStates + "]"
-  }
+  override def toString = this.getClass.getName + "(" +
+    states + ", " +
+    symbols + ", " +
+    relation + ", " +
+    startState + ", " +
+    acceptingStates + ")"
 }
 
 
