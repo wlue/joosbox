@@ -6,7 +6,7 @@ import joosbox.lexer._
 
 class SymbolSpec extends Specification {
   "Symbol" should {
-    "Create an epsilon" in {
+    "create an epsilon" in {
       Symbol.epsilon must not(throwA[Exception])
       Epsilon must not(throwA[Exception])
     }

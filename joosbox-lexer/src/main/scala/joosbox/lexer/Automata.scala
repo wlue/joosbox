@@ -94,9 +94,5 @@ class NFA(
   startState:         State,
   acceptingStates:    Set[State]
 ) extends Automata(states, symbols, relation, startState, acceptingStates) {
-  def toDFA() : DFA = {
-    DFA(
-      states, symbols, relation, startState, acceptingStates
-    )
-  }
+  def toDFA(): DFA = DFA(states, symbols, relation, startState, acceptingStates)
 }
