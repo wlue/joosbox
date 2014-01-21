@@ -58,7 +58,29 @@ class AutomataSpec extends Specification {
       ).toDFA must haveClass[DFA]
     }
 
-    "convert a basic instance of itself with ε-transitions into a DFA" in {
+    "be equal to an identical instance of itself" in {
+      NFA(
+        Set(State("p"), State("k"), State("t")),
+        Set(Symbol("1")),
+        Relation(Map(State("p") -> Map(
+          Symbol("1") -> Set(State("k"))
+        ))),
+        State("p"),
+        Set(State("k"))
+      ) must beEqualTo(
+        NFA(
+          Set(State("p"), State("k"), State("t")),
+          Set(Symbol("1")),
+          Relation(Map(State("p") -> Map(
+            Symbol("1") -> Set(State("k"))
+          ))),
+          State("p"),
+          Set(State("k"))
+        )
+      )
+    }
+
+    "convert a basic instance of itself with epsilon-transitions into a DFA" in {
       NFA(
         Set(State("1"), State("2"), State("3"), State("4"), State("5")),
         Set(Symbol("a"), Symbol("b"), Symbol.epsilon),
@@ -80,7 +102,27 @@ class AutomataSpec extends Specification {
         )),
         State("1"),
         Set(State("5"))
-      ).toDFA must haveClass[DFA]
+      ).toDFA must be(
+        DFA(
+          Set(State("1,2"), State("3,4,5"), State("4,5"), State("5")),
+          Set(Symbol("a"), Symbol("b")),
+          Relation(Map(
+            State("1,2") -> Map(
+              Symbol("a") -> Set(State("3,4,5"))
+            ),
+            State("3,4,5") -> Map(
+              Symbol("a") -> Set(State("5")),
+              Symbol("b") -> Set(State("4,5"))
+            ),
+            State("4,5") -> Map(
+              Symbol("a") -> Set(State("5")),
+              Symbol("b") -> Set(State("5"))
+            )
+          )),
+          State("1,2"),
+          Set(State("3,4,5"), State("4,5"), State("5"))
+        )
+      )
     }
   }
 

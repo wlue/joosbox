@@ -5,21 +5,21 @@ package joosbox.lexer
  */
 abstract class Automata(
   // Set of all of the possible states in the automata.
-  states:             Set[State],
+  val states:             Set[State],
 
   // Set of all possible input symbols accepted by the automata.
-  symbols:            Set[Symbol],
+  val symbols:            Set[Symbol],
 
   // A map of maps of symbols to sets of states, like:
   //   State ->
   //     Symbol ->
   //       Set[State]
-  relation:           Relation,
+  val relation:           Relation,
 
-  startState:         State,
+  val startState:         State,
 
   // States that result in successful termination of the automata.
-  acceptingStates:    Set[State]
+  val acceptingStates:    Set[State]
 ) {
   if (!states.contains(startState)) {
     throw new IllegalArgumentException("Start state is not contained within provided states.")
@@ -46,6 +46,15 @@ abstract class Automata(
   if (transitionSymbols.intersect(symbols).size != transitionSymbols.size) {
     throw new IllegalArgumentException("Transition table contains symbols that are not found within provided symbols.")
   }
+
+  override def equals(obj:Any) = {
+    (obj.isInstanceOf[Automata]
+     && obj.asInstanceOf[Automata].states.equals(states)
+     && obj.asInstanceOf[Automata].symbols.equals(symbols)
+     && obj.asInstanceOf[Automata].relation.equals(relation)
+     && obj.asInstanceOf[Automata].startState.equals(startState)
+     && obj.asInstanceOf[Automata].acceptingStates.equals(acceptingStates))
+  }
 }
 
 
@@ -70,7 +79,7 @@ class DFA(
   acceptingStates:    Set[State]
 ) extends Automata(states, symbols, relation, startState, acceptingStates) {
   if (symbols.contains(Symbol.epsilon)) {
-    throw new IllegalArgumentException("DFA cannot cntain epsilon transitions.")
+    throw new IllegalArgumentException("DFA cannot contain epsilon transitions.")
   }
 }
 
@@ -96,36 +105,11 @@ class NFA(
   acceptingStates:    Set[State]
 ) extends Automata(states, symbols, relation, startState, acceptingStates) {
   def toDFA: DFA = {
-    states.foreach ( state => {
-      println("epsilonClosure of " + state + " == " + epsilonClosure(state))
-    })
-
-    val startClosure : Set[State] = epsilonClosure(startState)
+    val startClosure : Set[State] = relation.epsilonClosure(startState)
     val startDFAState = State(startClosure.mkString(","))
 
-    //  Every state in the values of reachableFromStart is now a new DFA state.
+    relation.reachableFrom(startClosure)
 
     DFA(states, symbols, relation, startState, acceptingStates)
-  }
-
-  def epsilonClosure(state: State) : Set[State] = {
-    var worklist : Set[State] = Set(state)
-    var ret : Set[State] = Set(state)
-
-    while (worklist.size != 0) {
-      val q : State = worklist.head
-      worklist = worklist drop 1
-
-      relation.table.get(q).foreach(transitions => {
-        transitions.get(Symbol.epsilon).foreach(states => {
-          states.foreach(qprime => {
-            worklist = worklist + qprime
-            ret = ret + qprime
-          })
-        })
-      })
-    }
-
-    ret
-  }
+  }  
 }
