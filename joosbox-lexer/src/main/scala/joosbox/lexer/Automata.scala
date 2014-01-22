@@ -125,28 +125,32 @@ class NFA(
   def toDFA: DFA = {
 
     def process(
-      originalStates:   Set[State],
-      allStates:        Set[State],
-      acceptingStates:  Set[State],
-      relationTable:    Map[State, Map[Symbol, Set[State]]]
+      originalStates:           Set[State],
+      originalAllStates:        Set[State],
+      originalAcceptingStates:  Set[State],
+      originalRelationTable:    Map[State, Map[Symbol, Set[State]]]
       
       // returns the set of states, set of accepting states, and relation table.
     ): (Set[State], Set[State], Map[State, Map[Symbol, Set[State]]]) = {
       val newState = State.combine(originalStates)
       val reachableStates = relation.reachableFrom(originalStates)
 
+      val acceptingStates = if (originalStates.intersect(originalAcceptingStates).size > 0) {
+        originalAcceptingStates + newState
+      } else originalAcceptingStates
+
+      val relationTable = if (reachableStates.size > 0) {
+        originalRelationTable + (newState -> reachableStates.flatMap { transition =>
+          Some(transition._1 -> Set(State.combine(transition._2))) 
+        })
+      } else originalRelationTable
+
       reachableStates.values.foldLeft((
-        allStates + State.combine(originalStates),
-        if (originalStates.intersect(acceptingStates).size > 0) {
-          acceptingStates + newState 
-        } else acceptingStates,
-        if (reachableStates.size > 0) {
-          relationTable + (newState -> reachableStates.flatMap { e =>
-            Some(e._1 -> Set(State.combine(e._2))) 
-          })
-        } else relationTable
+        originalAllStates + State.combine(originalStates),
+        acceptingStates,
+        relationTable
       )) {
-        (b, v) => process(v, b._1, b._2, b._3)
+        (accumulator, states) => process(states, accumulator._1, accumulator._2, accumulator._3)
       }
     }
 
