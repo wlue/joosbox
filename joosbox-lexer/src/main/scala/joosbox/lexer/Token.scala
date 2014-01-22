@@ -31,16 +31,16 @@ object Token {
   object StarAssign extends Token
   object Modulo extends Token
   object ModuloAssign extends Token
+  object GreaterThan extends Token
+  object GreaterEqual extends Token
   object ShiftRight extends Token
   object ShiftRightAssign extends Token
   object BinaryShiftRight extends Token
   object BinaryShiftRightAssign extends Token
-  object GreaterEqual extends Token
-  object GreaterThan extends Token
+  object LessThan extends Token
+  object LessEqual extends Token
   object ShiftLeft extends Token
   object ShiftLeftAssign extends Token
-  object LessEqual extends Token
-  object LessThan extends Token
   object BinaryXor extends Token
   object BinaryXorAssign extends Token
   object BinaryOr extends Token
@@ -48,7 +48,7 @@ object Token {
   object LogicalOr extends Token
   object BinaryAnd extends Token
   object BinaryAndAssign extends Token
-  object LogicalAnc extends Token
+  object LogicalAnd extends Token
   object Semicolon extends Token
 
   object Whitespace extends Token
@@ -187,7 +187,352 @@ object TokenNFA {
       State("i"),
       Set(State("!")),
       Some("LNOT")
+    ),
+
+    Token.BinaryNot -> NFA(
+      Set(State("i"), State("~")),
+      Set(Symbol.epsilon, Symbol("~")),
+      Relation(Map(State("i") -> Map(Symbol("~") -> Set(State("~"))))),
+      State("i"),
+      Set(State("~")),
+      Some("BNOT")
+    ),
+
+    Token.NotEqual -> NFA(
+      Set(State("i"), State("!"), State("!=")),
+      Set(Symbol.epsilon, Symbol("!"), Symbol("=")),
+      Relation(Map(State("i") -> Map(Symbol("!") -> Set(State("!"))),
+                   State("!") -> Map(Symbol("=") -> Set(State("!=")))
+               )),
+      State("i"),
+      Set(State("!=")),
+      Some("NOT_EQUAL")
+    ),
+
+    Token.Divide -> NFA(
+      Set(State("i"), State("/")),
+      Set(Symbol.epsilon, Symbol("/")),
+      Relation(Map(State("i") -> Map(Symbol("/") -> Set(State("/"))))),
+      State("i"),
+      Set(State("/")),
+      Some("DIV")
+    ),
+
+    Token.DivideAssign -> NFA(
+      Set(State("i"), State("/"), State("/=")),
+      Set(Symbol.epsilon, Symbol("/"), Symbol("=")),
+      Relation(Map(State("i") -> Map(Symbol("/") -> Set(State("/"))),
+                   State("/") -> Map(Symbol("=") -> Set(State("/=")))
+               )),
+      State("i"),
+      Set(State("/=")),
+      Some("DIV_ASSIGN")
+    ),
+
+    Token.Plus -> NFA(
+      Set(State("i"), State("+")),
+      Set(Symbol.epsilon, Symbol("+")),
+      Relation(Map(State("i") -> Map(Symbol("+") -> Set(State("+"))))),
+      State("i"),
+      Set(State("+")),
+      Some("PLUS")
+    ),
+
+    Token.PlusAssign -> NFA(
+      Set(State("i"), State("+"), State("+=")),
+      Set(Symbol.epsilon, Symbol("+"), Symbol("=")),
+      Relation(Map(State("i") -> Map(Symbol("+") -> Set(State("+"))),
+                   State("+") -> Map(Symbol("=") -> Set(State("+=")))
+               )),
+      State("i"),
+      Set(State("+=")),
+      Some("PLUS_ASSIGN")
+    ),
+
+    Token.Increment -> NFA(
+      Set(State("i"), State("+"), State("++")),
+      Set(Symbol.epsilon, Symbol("+")),
+      Relation(Map(State("i") -> Map(Symbol("+") -> Set(State("+"))),
+                   State("+") -> Map(Symbol("+") -> Set(State("++")))
+               )),
+      State("i"),
+      Set(State("++")),
+      Some("INC")
+    ),
+
+    Token.Minus -> NFA(
+      Set(State("i"), State("-")),
+      Set(Symbol.epsilon, Symbol("-")),
+      Relation(Map(State("i") -> Map(Symbol("-") -> Set(State("-"))))),
+      State("i"),
+      Set(State("-")),
+      Some("MINUS")
+    ),
+
+    Token.MinusAssign -> NFA(
+      Set(State("i"), State("-"), State("-=")),
+      Set(Symbol.epsilon, Symbol("-"), Symbol("=")),
+      Relation(Map(State("i") -> Map(Symbol("-") -> Set(State("-"))),
+                   State("-") -> Map(Symbol("=") -> Set(State("-=")))
+               )),
+      State("i"),
+      Set(State("-=")),
+      Some("MINUS_ASSIGN")
+    ),
+
+    Token.Decrement -> NFA(
+      Set(State("i"), State("-"), State("--")),
+      Set(Symbol.epsilon, Symbol("-")),
+      Relation(Map(State("i") -> Map(Symbol("-") -> Set(State("-"))),
+                   State("-") -> Map(Symbol("-") -> Set(State("--")))
+               )),
+      State("i"),
+      Set(State("--")),
+      Some("DEC")
+    ),
+
+    Token.Star -> NFA(
+      Set(State("i"), State("*")),
+      Set(Symbol.epsilon, Symbol("*")),
+      Relation(Map(State("i") -> Map(Symbol("*") -> Set(State("*"))))),
+      State("i"),
+      Set(State("*")),
+      Some("STAR")
+    ),
+
+    Token.StarAssign -> NFA(
+      Set(State("i"), State("*"), State("*=")),
+      Set(Symbol.epsilon, Symbol("*"), Symbol("=")),
+      Relation(Map(State("i") -> Map(Symbol("*") -> Set(State("*"))),
+                   State("*") -> Map(Symbol("=") -> Set(State("*=")))
+               )),
+      State("i"),
+      Set(State("*=")),
+      Some("STAR_ASSIGN")
+    ),
+
+    Token.Modulo -> NFA(
+      Set(State("i"), State("%")),
+      Set(Symbol.epsilon, Symbol("%")),
+      Relation(Map(State("i") -> Map(Symbol("%") -> Set(State("%"))))),
+      State("i"),
+      Set(State("%")),
+      Some("MOD")
+    ),
+
+    Token.ModuloAssign -> NFA(
+      Set(State("i"), State("%"), State("%=")),
+      Set(Symbol.epsilon, Symbol("*"), Symbol("=")),
+      Relation(Map(State("i") -> Map(Symbol("%") -> Set(State("%"))),
+                   State("%") -> Map(Symbol("=") -> Set(State("%=")))
+               )),
+      State("i"),
+      Set(State("%=")),
+      Some("MOD_ASSIGN")
+    ),
+
+    Token.GreaterThan -> NFA(
+      Set(State("i"), State(">")),
+      Set(Symbol.epsilon, Symbol(">")),
+      Relation(Map(State("i") -> Map(Symbol(">") -> Set(State(">"))))),
+      State("i"),
+      Set(State(">")),
+      Some("GT")
+    ),
+
+    Token.GreaterEqual -> NFA(
+      Set(State("i"), State(">"), State(">=")),
+      Set(Symbol.epsilon, Symbol(">"), Symbol("=")),
+      Relation(Map(State("i") -> Map(Symbol(">") -> Set(State(">"))),
+                   State(">") -> Map(Symbol("=") -> Set(State(">=")))
+               )),
+      State("i"),
+      Set(State(">=")),
+      Some("GTE")
+    ),
+
+    Token.ShiftRight -> NFA(
+      Set(State("i"), State(">"), State(">>")),
+      Set(Symbol.epsilon, Symbol(">")),
+      Relation(Map(State("i") -> Map(Symbol(">") -> Set(State(">"))),
+                   State(">") -> Map(Symbol(">") -> Set(State(">>")))
+               )),
+      State("i"),
+      Set(State(">>")),
+      Some("SR")
+    ),
+
+    Token.ShiftRightAssign -> NFA(
+      Set(State("i"), State(">"), State(">>"), State(">>=")),
+      Set(Symbol.epsilon, Symbol(">"), Symbol("=")),
+      Relation(Map(State("i") -> Map(Symbol(">") -> Set(State(">"))),
+                   State(">") -> Map(Symbol(">") -> Set(State(">>"))),
+                   State(">>") -> Map(Symbol("=") -> Set(State(">>=")))
+               )),
+      State("i"),
+      Set(State(">>=")),
+      Some("SR_ASSIGN")
+    ),
+
+    Token.BinaryShiftRight -> NFA(
+      Set(State("i"), State(">"), State(">>"), State(">>>")),
+      Set(Symbol.epsilon, Symbol(">")),
+      Relation(Map(State("i") -> Map(Symbol(">") -> Set(State(">"))),
+                   State(">") -> Map(Symbol(">") -> Set(State(">>"))),
+                   State(">>") -> Map(Symbol(">") -> Set(State(">>>")))
+               )),
+      State("i"),
+      Set(State(">>>")),
+      Some("BSR")
+    ),
+
+    Token.BinaryShiftRightAssign -> NFA(
+      Set(State("i"), State(">"), State(">>"), State(">>>"), State(">>>=")),
+      Set(Symbol.epsilon, Symbol(">"), Symbol("=")),
+      Relation(Map(State("i") -> Map(Symbol(">") -> Set(State(">"))),
+                   State(">") -> Map(Symbol(">") -> Set(State(">>"))),
+                   State(">>") -> Map(Symbol(">") -> Set(State(">>>"))),
+                   State(">>>") -> Map(Symbol("=") -> Set(State(">>>=")))
+               )),
+      State("i"),
+      Set(State(">>>=")),
+      Some("BSR_ASSIGN")
+    ),
+
+    Token.LessThan -> NFA(
+      Set(State("i"), State("<")),
+      Set(Symbol.epsilon, Symbol("<")),
+      Relation(Map(State("i") -> Map(Symbol("<") -> Set(State("<"))))),
+      State("i"),
+      Set(State("<")),
+      Some("LT")
+    ),
+
+    Token.LessEqual -> NFA(
+      Set(State("i"), State("<"), State("<=")),
+      Set(Symbol.epsilon, Symbol("<"), Symbol("=")),
+      Relation(Map(State("i") -> Map(Symbol("<") -> Set(State("<"))),
+                   State("<") -> Map(Symbol("=") -> Set(State("<=")))
+               )),
+      State("i"),
+      Set(State("<=")),
+      Some("LE")
+    ),
+
+    Token.ShiftLeft -> NFA(
+      Set(State("i"), State("<"), State("<<")),
+      Set(Symbol.epsilon, Symbol("<")),
+      Relation(Map(State("i") -> Map(Symbol("<") -> Set(State("<"))),
+                   State("<") -> Map(Symbol("<") -> Set(State("<<")))
+               )),
+      State("i"),
+      Set(State("<<")),
+      Some("SL")
+    ),
+
+    Token.ShiftLeftAssign -> NFA(
+      Set(State("i"), State("<"), State("<<"), State("<<=")),
+      Set(Symbol.epsilon, Symbol("<"), Symbol("=")),
+      Relation(Map(State("i") -> Map(Symbol("<") -> Set(State("<"))),
+                   State("<") -> Map(Symbol("<") -> Set(State("<<"))),
+                   State("<<") -> Map(Symbol("=") -> Set(State("<<=")))
+               )),
+      State("i"),
+      Set(State("<<=")),
+      Some("SL_ASSIGN")
+    ),
+
+    Token.BinaryXor -> NFA(
+      Set(State("i"), State("^")),
+      Set(Symbol.epsilon, Symbol("^")),
+      Relation(Map(State("i") -> Map(Symbol("^") -> Set(State("^"))))),
+      State("i"),
+      Set(State("^")),
+      Some("BXOR")
+    ),
+
+    Token.BinaryXorAssign -> NFA(
+      Set(State("i"), State("^"), State("^=")),
+      Set(Symbol.epsilon, Symbol("^"), Symbol("=")),
+      Relation(Map(State("i") -> Map(Symbol("^") -> Set(State("^"))),
+                   State("^") -> Map(Symbol("=") -> Set(State("^=")))
+               )),
+      State("i"),
+      Set(State("^=")),
+      Some("BXOR_ASSIGN")
+    ),
+
+  Token.BinaryOr -> NFA(
+      Set(State("i"), State("|")),
+      Set(Symbol.epsilon, Symbol("|")),
+      Relation(Map(State("i") -> Map(Symbol("|") -> Set(State("|"))))),
+      State("i"),
+      Set(State("|")),
+      Some("BOR")
+    ),
+
+    Token.BinaryOrAssign -> NFA(
+      Set(State("i"), State("|"), State("|=")),
+      Set(Symbol.epsilon, Symbol("|"), Symbol("=")),
+      Relation(Map(State("i") -> Map(Symbol("|") -> Set(State("|"))),
+                   State("|") -> Map(Symbol("=") -> Set(State("|=")))
+               )),
+      State("i"),
+      Set(State("|=")),
+      Some("BOR_ASSIGN")
+    ),
+
+    Token.LogicalOr -> NFA(
+      Set(State("i"), State("|"), State("||")),
+      Set(Symbol.epsilon, Symbol("|")),
+      Relation(Map(State("i") -> Map(Symbol("|") -> Set(State("|"))),
+                   State("|") -> Map(Symbol("|") -> Set(State("||")))
+               )),
+      State("i"),
+      Set(State("||")),
+      Some("LOR")
+    ),
+
+    Token.BinaryAnd -> NFA(
+      Set(State("i"), State("&")),
+      Set(Symbol.epsilon, Symbol("&")),
+      Relation(Map(State("i") -> Map(Symbol("&") -> Set(State("&"))))),
+      State("i"),
+      Set(State("&")),
+      Some("BAND")
+    ),
+
+    Token.BinaryAndAssign -> NFA(
+      Set(State("i"), State("&"), State("&=")),
+      Set(Symbol.epsilon, Symbol("&"), Symbol("=")),
+      Relation(Map(State("i") -> Map(Symbol("&") -> Set(State("&"))),
+                   State("&") -> Map(Symbol("=") -> Set(State("&=")))
+               )),
+      State("i"),
+      Set(State("&=")),
+      Some("BAND_ASSIGN")
+    ),
+
+    Token.LogicalAnd -> NFA(
+      Set(State("i"), State("&"), State("&&")),
+      Set(Symbol.epsilon, Symbol("&")),
+      Relation(Map(State("i") -> Map(Symbol("&") -> Set(State("&"))),
+                   State("&") -> Map(Symbol("&") -> Set(State("&&")))
+               )),
+      State("i"),
+      Set(State("&&")),
+      Some("LAND")
+    ),
+
+    Token.Semicolon -> NFA(
+      Set(State("i"), State(";")),
+      Set(Symbol.epsilon, Symbol(";")),
+      Relation(Map(State("i") -> Map(Symbol(";") -> Set(State(";"))))),
+      State("i"),
+      Set(State(";")),
+      Some("SEMI")
     )
+
   )
 }
 
@@ -220,16 +565,16 @@ object TokenRegex {
   val STAR_ASSIGN   = """[*][=]""".r
   val MOD           = """[%]""".r
   val MOD_ASSIGN    = """[%][=]""".r
+  val GT            = """[>]""".r
+  val GE            = """[>][=]""".r
   val SR            = """[>][>]""".r
   val SR_ASSIGN     = """[>][>][=]""".r
   val BSR           = """[>][>][>]""".r
   val BSR_ASSIGN    = """[>][>][>][=]""".r
-  val GE            = """[>][=]""".r
-  val GT            = """[>]""".r
+  val LT            = """[<]""".r
+  val LE            = """[<][=]""".r
   val SL            = """[<][<]""".r
   val SL_ASSIGN     = """[<][<][=]""".r
-  val LE            = """[<][=]""".r
-  val LT            = """[<]""".r
   val BXOR          = """[\^]""".r
   val BXOR_ASSIGN   = """[\^][=]""".r
   val BOR           = """[|]""".r
