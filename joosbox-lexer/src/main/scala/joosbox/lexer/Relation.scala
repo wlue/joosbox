@@ -3,17 +3,18 @@ package joosbox.lexer
 case class Relation(table: Map[State, Map[Symbol, Set[State]]]) {
   def reachableFrom(startClosure: Set[State]) = {
     startClosure
-      .flatMap { (state: State) => table.get(state) }
-      .flatten
-      .foldLeft(Map.empty[Symbol, Set[State]].withDefaultValue(Set.empty[State])) {
-
-        // If we have an input symbol that gets us to another state,
-        // add it to our map.
-        case (b, (x: InputSymbol, y: Set[State])) => b updated (x, b(x) ++ y)
-
-        // Epsilon transitions are already included in reachableFromStart,
-        // so just ignore  them here.
-        case (b, _) => b
+      .flatMap { (state: State) => {
+        table.get(state).flatMap { map =>
+            val out = map.flatMap { e => if (e._1.isInstanceOf[InputSymbol]) Some(e) else None }
+            if (out.size > 0) Some(out) else None
+          }
+        }
+      }
+      .foldLeft(Map.empty[Symbol, Set[State]]) {
+        case (b, m: Map[Symbol, Set[State]]) => m.flatMap { e =>
+          b updated (e._1, b.getOrElse(e._1, Set.empty[State]) ++ e._2)
+        }
+        case (b, x) => b
       }
   }
 

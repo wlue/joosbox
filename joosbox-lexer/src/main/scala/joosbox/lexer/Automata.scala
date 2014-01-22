@@ -124,38 +124,46 @@ class NFA(
 ) extends Automata(states, symbols, relation, startState, acceptingStates) {
   def toDFA: DFA = {
 
-    val startSet = relation.epsilonClosure(startState)
-    var NFASourceStateGroups = Set[Set[State]](startSet)
-    var DFAStates = Set[State]()
-    var DFAAcceptors = Set[State]()
-    var DFAStart = State.combine(startSet)
-    var DFARelationTable: Map[State, Map[Symbol, Set[State]]] = Map.empty
+    def process(
+      originalStates:   Set[State],
+      allStates:        Set[State],
+      acceptingStates:  Set[State],
+      relationTable:    Map[State, Map[Symbol, Set[State]]]
+      
+      // returns the set of states, set of accepting states, and relation table.
+    ): (Set[State], Set[State], Map[State, Map[Symbol, Set[State]]]) = {
+      val newState = State.combine(originalStates)
+      val reachableStates = relation.reachableFrom(originalStates)
 
-    while (NFASourceStateGroups.size > 0) {
-      val originalStates = NFASourceStateGroups.head
-      NFASourceStateGroups = NFASourceStateGroups.drop(1)
-
-      val DFAState = State.combine(originalStates)
-      val reachable = relation.reachableFrom(originalStates)
-
-      if (reachable.size > 0) {
-        DFARelationTable += DFAState -> reachable.mapValues { states => Set(State.combine(states)) }
-      }
-
-      DFAStates = DFAStates + DFAState
-
-      NFASourceStateGroups = NFASourceStateGroups ++ reachable.values.toSet
-      if (originalStates.intersect(acceptingStates).size > 0) {
-        DFAAcceptors = DFAAcceptors + DFAState
+      reachableStates.values.foldLeft((
+        allStates + State.combine(originalStates),
+        if (originalStates.intersect(acceptingStates).size > 0) {
+          acceptingStates + newState 
+        } else acceptingStates,
+        if (reachableStates.size > 0) {
+          relationTable + (newState -> reachableStates.flatMap { e =>
+            Some(e._1 -> Set(State.combine(e._2))) 
+          })
+        } else relationTable
+      )) {
+        (b, v) => process(v, b._1, b._2, b._3)
       }
     }
 
-    println("DFA Relation table = " + DFARelationTable)
-    val DFASymbols = symbols.filter { x => x != Symbol.epsilon }
+    val startSet = relation.epsilonClosure(startState)
+    val (newStates, newAcceptingStates, newRelationTable) = process(
+      startSet, Set.empty[State], acceptingStates, Map.empty[State, Map[Symbol, Set[State]]]
+    )
 
-    DFA(DFAStates, DFASymbols, Relation(DFARelationTable), DFAStart, DFAAcceptors)
-  }
-
+    DFA(
+      newStates,
+      symbols.filter { x => x != Symbol.epsilon },
+      Relation(newRelationTable),
+      State.combine(startSet),
+      newAcceptingStates
+    )
+  }  
+  
   def union(that: NFA) = {
     this
   }
