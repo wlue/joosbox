@@ -179,7 +179,35 @@ class NFASpec extends Specification {
           )),
           State("1"),
           Set(State("8"))
-        ).toDFA must not(throwA[Exception])
+        ).toDFA must beEqualTo(
+          DFA(
+            Set(State("1"), State("2,3"), State("4"),
+                State("3,5,6,7"), State("6,7"), State("8")),
+            Set(Symbol("a"), Symbol("b"), Symbol("c")),
+            Relation(Map(
+              State("1") -> Map(
+                Symbol("a") -> Set(State("2,3"))
+              ),
+              State("2,3") -> Map(
+                Symbol("a") -> Set(State("4"))
+              ),
+              State("4") -> Map(
+                Symbol("a") -> Set(State("3,5,6,7"))
+              ),
+              State("3,5,6,7") -> Map(
+                Symbol("a") -> Set(State("4")),
+                Symbol("b") -> Set(State("6,7")),
+                Symbol("c") -> Set(State("8"))
+              ),
+              State("6,7") -> Map(
+                Symbol("b") -> Set(State("6,7")),
+                Symbol("c") -> Set(State("8"))
+              )
+            )),
+            State("1"),
+            Set(State("8"))
+          )
+        )
       }
     }
 
