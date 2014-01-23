@@ -604,6 +604,34 @@ object TokenNFA {
       State("i"),
       Set(State("/***/")),
       Some("JD_COMMENT")
+    ),
+
+    Token.Num -> NFA(
+      Set(State("i"), State("digit")),
+      Set(Symbol.epsilon, DigitSymbol),
+      Relation(Map(State("i") -> Map(DigitSymbol -> Set(State("digit"))),
+                   State("digit") -> Map(DigitSymbol -> Set(State("digit")))
+               )),
+      State("i"),
+      Set(State("digit")),
+      Some("NUM")
+    ),
+
+    Token.Identifier -> NFA(
+      Set(State("i"), State("id")),
+      Set(Symbol.epsilon, LetterSymbol, DigitSymbol, Symbol("_"), Symbol("$")),
+      Relation(Map(State("i") -> Map(LetterSymbol -> Set(State("id"))),
+                   State("i") -> Map(DigitSymbol -> Set(State("id"))),
+                   State("i") -> Map(Symbol("_") -> Set(State("id"))),
+                   State("i") -> Map(Symbol("$") -> Set(State("id"))),
+                   State("id") -> Map(LetterSymbol -> Set(State("id"))),
+                   State("id") -> Map(DigitSymbol -> Set(State("id"))),
+                   State("id") -> Map(Symbol("_") -> Set(State("id"))),
+                   State("id") -> Map(Symbol("$") -> Set(State("id")))
+               )),
+      State("i"),
+      Set(State("id")),
+      Some("IDENTIFIER")
     )
 
   )

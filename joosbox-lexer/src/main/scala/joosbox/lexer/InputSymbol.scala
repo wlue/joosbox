@@ -40,3 +40,54 @@ case class NegatedSymbol(symbol: Set[Symbol]) extends Symbol{
   }
 }
 
+/**
+ * Digit symbol
+ */
+case object DigitSymbol extends Symbol {
+    Set(Symbol("0"),
+        Symbol("1"),
+        Symbol("2"),
+        Symbol("3"),
+        Symbol("4"),
+        Symbol("5"),
+        Symbol("6"),
+        Symbol("7"),
+        Symbol("8"),
+        Symbol("9"))
+}
+
+/**
+ * Letter symbol
+ */
+case object LetterSymbol extends Symbol {
+    Set(Symbol("a"),
+        Symbol("b"),
+        Symbol("c"),
+        Symbol("d"),
+        Symbol("e"),
+        Symbol("f"),
+        Symbol("g"),
+        Symbol("h"),
+        Symbol("i"),
+        Symbol("j"),
+        Symbol("k"),
+        Symbol("l"),
+        Symbol("m"),
+        Symbol("n"),
+        Symbol("o"),
+        Symbol("p"),
+        Symbol("q"),
+        Symbol("r"),
+        Symbol("s"),
+        Symbol("t"),
+        Symbol("u"),
+        Symbol("v"),
+        Symbol("w"),
+        Symbol("x"),
+        Symbol("y"),
+        Symbol("z"))
+}
+
+
+
+
