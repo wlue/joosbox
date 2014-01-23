@@ -553,6 +553,57 @@ object TokenNFA {
       State("i"),
       Set(State("ws")),
       Some("WHITESPACE")
+    ),
+
+    Token.SingleLineComment -> NFA(
+      Set(State("i"), State("/"), State("//"), State("eol"), State("eol2")),
+      Set(Symbol.epsilon, Symbol("/"), Symbol("\n"), Symbol("\r"),
+        NegatedSymbol(Set(Symbol("\n"), Symbol("\r")))),
+      Relation(Map(State("i") -> Map(Symbol("/") -> Set(State("/"))),
+                  State("/") -> Map(Symbol("/") -> Set(State("//"))),
+                  State("//") -> Map(NegatedSymbol(Set(Symbol("\n"), Symbol("\r"))) -> Set(State("//"))),
+                  State("//") -> Map(Symbol("\n") -> Set(State("eol"))),
+                  State("//") -> Map(Symbol("\r") -> Set(State("eol2"))),
+                  State("eol2") -> Map(Symbol("\n") -> Set(State("eol")))
+              )),
+      State("i"),
+      Set(State("eol"), State("eol2")),
+      Some("SL_COMMENT")
+    ),
+
+    Token.MultiLineComment -> NFA(
+      Set(State("i"), State("/"), State("/*"), State("/**"), State("/**/")),
+      Set(Symbol.epsilon, Symbol("/"), Symbol("*"), NegatedSymbol(Set(Symbol("*"))),
+        NegatedSymbol(Set(Symbol("*"), Symbol("/")))),
+      Relation(Map(State("i") -> Map(Symbol("/") -> Set(State("/"))),
+                  State("/") -> Map(Symbol("*") -> Set(State("/*"))),
+                  State("/*") -> Map(Symbol("*") -> Set(State("/**"))),
+                  State("/*") -> Map(NegatedSymbol(Set(Symbol("*"))) -> Set(State("/*"))),
+                  State("/**") -> Map(Symbol("/") -> Set(State("/**/"))),
+                  State("/**") -> Map(Symbol("*") -> Set(State("/**"))),
+                  State("/**") -> Map(NegatedSymbol(Set(Symbol("*"), Symbol("/"))) -> Set(State("/*")))
+              )),
+      State("i"),
+      Set(State("/**/")),
+      Some("ML_COMMENT")
+    ),
+
+    Token.JavaDocComment -> NFA(
+      Set(State("i"), State("/"), State("/*"), State("/**"), State("/***"), State("/***/")),
+      Set(Symbol.epsilon, Symbol("/"), Symbol("*"), NegatedSymbol(Set(Symbol("*"))),
+        NegatedSymbol(Set(Symbol("*"), Symbol("/")))),
+      Relation(Map(State("i") -> Map(Symbol("/") -> Set(State("/"))),
+                  State("/") -> Map(Symbol("*") -> Set(State("/*"))),
+                  State("/*") -> Map(Symbol("*") -> Set(State("/**"))),
+                  State("/**") -> Map(Symbol("*") -> Set(State("/***"))),
+                  State("/**") -> Map(NegatedSymbol(Set(Symbol("*"))) -> Set(State("/**"))),
+                  State("/***") -> Map(Symbol("/") -> Set(State("/***/"))),
+                  State("/***") -> Map(Symbol("*") -> Set(State("/***"))),
+                  State("/***") -> Map(NegatedSymbol(Set(Symbol("*"), Symbol("/"))) -> Set(State("/**")))
+              )),
+      State("i"),
+      Set(State("/***/")),
+      Some("JD_COMMENT")
     )
 
   )
@@ -610,7 +661,7 @@ object TokenRegex {
   val WHITESPACE    = """\s\s*""".r
   val SL_COMMENT    = """//[^(\n|\r)]*[(\n|\r(\n)?]""".r
   val ML_COMMENT    = """/\*([^(\n|\r)]*(\r\n|\r|\n))*\*/""".r
-  val JD_COMMENT    = """/\*\*(\*[^(\n|\r)]*(\r\n|\r|\n))*\*/""".r
+  val JD_COMMENT    = """/\*\*([^(\n|\r)]*(\r\n|\r|\n))*\*/""".r
 
   val NUM           = """\d\d*""".r
   val IDENTIFIER    = """[a-zA-Z_\$][a-zA-Z_0-9\$]*""".r

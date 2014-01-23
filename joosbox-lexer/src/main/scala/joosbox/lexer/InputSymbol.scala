@@ -34,4 +34,9 @@ case object Epsilon extends Symbol
 /**
  * Negated symbol
  */
-case class NegatedInputSymbol(symbol: String) extends Symbol
+case class NegatedSymbol(symbol: Set[Symbol]) extends Symbol{
+  def apply(symbol: Set[Symbol]): NegatedSymbol = symbol match {
+      case _ => NegatedSymbol(symbol)
+  }
+}
+
