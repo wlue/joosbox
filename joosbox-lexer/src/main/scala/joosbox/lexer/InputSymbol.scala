@@ -30,3 +30,8 @@ case class InputSymbol(symbol: String) extends Symbol
  * Epsilon symbol.
  */
 case object Epsilon extends Symbol
+
+/**
+ * Negated symbol
+ */
+case class NegatedInputSymbol(symbol: String) extends Symbol
