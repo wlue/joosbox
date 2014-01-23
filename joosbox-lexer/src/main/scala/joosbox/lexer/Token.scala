@@ -531,6 +531,28 @@ object TokenNFA {
       State("i"),
       Set(State(";")),
       Some("SEMI")
+    ),
+
+    Token.Whitespace -> NFA(
+      Set(State("i"), State("ws")),
+      Set(Symbol.epsilon, Symbol(" "), Symbol("\\n"), Symbol("\\r"),
+          Symbol("\\t"), Symbol("\\f"), Symbol("\\x0B")),
+      Relation(Map(State("i") -> Map(Symbol(" ") -> Set(State("ws"))),
+                   State("i") -> Map(Symbol("\\n") -> Set(State("ws"))),
+                   State("i") -> Map(Symbol("\\r") -> Set(State("ws"))),
+                   State("i") -> Map(Symbol("\\t") -> Set(State("ws"))),
+                   State("i") -> Map(Symbol("\\f") -> Set(State("ws"))),
+                   State("i") -> Map(Symbol("\\x0B") -> Set(State("ws"))),
+                   State("ws") -> Map(Symbol(" ") -> Set(State("ws"))),
+                   State("ws") -> Map(Symbol("\\n") -> Set(State("ws"))),
+                   State("ws") -> Map(Symbol("\\r") -> Set(State("ws"))),
+                   State("ws") -> Map(Symbol("\\t") -> Set(State("ws"))),
+                   State("ws") -> Map(Symbol("\\f") -> Set(State("ws"))),
+                   State("ws") -> Map(Symbol("\\x0B") -> Set(State("ws")))
+              )),
+      State("i"),
+      Set(State("ws")),
+      Some("WHITESPACE")
     )
 
   )
