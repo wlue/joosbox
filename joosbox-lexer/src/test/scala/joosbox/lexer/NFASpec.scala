@@ -6,6 +6,7 @@ import joosbox.lexer._
 
 class NFASpec extends Specification {
   "NFA" should {
+
     "create" in {
       NFA(
         Set(State("p"), State("k")),
@@ -89,6 +90,7 @@ class NFASpec extends Specification {
     }
 
     "toDFA" in {
+
       "basic instance" in {
         NFA(
           Set(State("p"), State("k"), State("t")),
@@ -144,6 +146,40 @@ class NFASpec extends Specification {
             Set(State("3,4,5"), State("4,5"), State("5"))
           )
         )
+      }
+
+      "ming-ho's test case" in {
+        NFA(
+          Set(State("1"), State("2"), State("3"), State("4"),
+              State("5"), State("6"), State("7"), State("8")),
+          Set(Symbol("a"), Symbol("b"), Symbol("c"), Symbol.epsilon),
+          Relation(Map(
+            State("1") -> Map(
+              Symbol("a") -> Set(State("2"))
+            ),
+            State("2") -> Map(
+              Symbol.epsilon -> Set(State("3"))
+            ),
+            State("3") -> Map(
+              Symbol("a") -> Set(State("4"))
+            ),
+            State("4") -> Map(
+              Symbol("a") -> Set(State("5"))
+            ),
+            State("5") -> Map(
+              Symbol.epsilon -> Set(State("3"), State("6"))
+            ),
+            State("6") -> Map(
+              Symbol("b") -> Set(State("6")),
+              Symbol.epsilon -> Set(State("7"))
+            ),
+            State("7") -> Map(
+              Symbol("c") -> Set(State("8"))
+            )
+          )),
+          State("1"),
+          Set(State("8"))
+        ).toDFA must not(throwA[Exception])
       }
     }
 
