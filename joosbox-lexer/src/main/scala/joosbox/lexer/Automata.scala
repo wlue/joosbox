@@ -128,13 +128,16 @@ class NFA(
    */
   def withName(newName: String) = NFA(states, symbols, relation, startState, acceptingStates, Some(newName))
 
+  /**
+   * Convert the NFA to a DFA.
+   */
   def toDFA: DFA = {
     // returns the set of states, set of accepting states, and relation table.
     def process(
-      originalStates:           Set[State],
-      originalAllStates:        Set[State],
-      originalAcceptingStates:  Set[State],
-      originalRelationTable:    Map[State, Map[Symbol, Set[State]]]
+      originalStates: Set[State],
+      originalAllStates: Set[State],
+      originalAcceptingStates: Set[State],
+      originalRelationTable: Map[State, Map[Symbol, Set[State]]]
     ): (Set[State], Set[State], Map[State, Map[Symbol, Set[State]]]) = {
       val originalEpsilonClosure = originalStates.flatMap { s => relation.epsilonClosure(s) }
       val newState = State.combine(originalEpsilonClosure)
@@ -142,13 +145,17 @@ class NFA(
 
       val acceptingStates = if (originalEpsilonClosure.intersect(originalAcceptingStates).size > 0) {
         originalAcceptingStates + newState
-      } else originalAcceptingStates
+      } else {
+        originalAcceptingStates
+      }
 
       val relationTable = if (reachableStates.size > 0) {
         originalRelationTable + (newState -> reachableStates.flatMap { transition =>
-          Some(transition._1 -> Set(State.combine(transition._2.flatMap { s => relation.epsilonClosure(s) }))) 
+          Some(transition._1 -> Set(State.combine(transition._2.flatMap { s => relation.epsilonClosure(s) })))
         })
-      } else originalRelationTable
+      } else {
+        originalRelationTable
+      }
 
       if (originalRelationTable.contains(newState)) {
         (originalAllStates + newState, acceptingStates, relationTable)
@@ -157,8 +164,8 @@ class NFA(
           originalAllStates + newState,
           acceptingStates,
           relationTable
-        )) {
-          (accumulator, states) => process(states, accumulator._1, accumulator._2, accumulator._3)
+        )) { (accumulator, states) =>
+          process(states, accumulator._1, accumulator._2, accumulator._3)
         }
       }
     }

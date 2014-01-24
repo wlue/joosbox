@@ -537,19 +537,26 @@ object TokenNFA {
       Set(State("i"), State("ws")),
       Set(Symbol.epsilon, Symbol(" "), Symbol("\\n"), Symbol("\\r"),
           Symbol("\\t"), Symbol("\\f"), Symbol("\\x0B")),
-      Relation(Map(State("i")   -> Map( Symbol(" ") -> Set(State("ws")),
-                                        Symbol("\\n") -> Set(State("ws")),
-                                        Symbol("\\r") -> Set(State("ws")),
-                                        Symbol("\\t") -> Set(State("ws")),
-                                        Symbol("\\f") -> Set(State("ws")),
-                                        Symbol("\\x0B") -> Set(State("ws"))),
-                   State("ws")  -> Map( Symbol(" ") -> Set(State("ws"))),
-                                        Symbol("\\n") -> Set(State("ws"))),
-                                        Symbol("\\r") -> Set(State("ws"))),
-                                        Symbol("\\t") -> Set(State("ws"))),
-                                        Symbol("\\f") -> Set(State("ws"))),
-                                        Symbol("\\x0B") -> Set(State("ws")))
-              )),
+      Relation(
+        Map(
+          State("i") -> Map(
+            Symbol(" ") -> Set(State("ws")),
+            Symbol("\\n") -> Set(State("ws")),
+            Symbol("\\r") -> Set(State("ws")),
+            Symbol("\\t") -> Set(State("ws")),
+            Symbol("\\f") -> Set(State("ws")),
+            Symbol("\\x0B") -> Set(State("ws"))
+          ),
+          State("ws") -> Map(
+            Symbol(" ") -> Set(State("ws")),
+            Symbol("\\n") -> Set(State("ws")),
+            Symbol("\\r") -> Set(State("ws")),
+            Symbol("\\t") -> Set(State("ws")),
+            Symbol("\\f") -> Set(State("ws")),
+            Symbol("\\x0B") -> Set(State("ws"))
+          )
+        )
+      ),
       State("i"),
       Set(State("ws")),
       Some("WHITESPACE")
@@ -557,13 +564,12 @@ object TokenNFA {
 
     Token.SingleLineComment -> NFA(
       Set(State("i"), State("/"), State("//"), State("eol"), State("eol2")),
-      Set(Symbol.epsilon, Symbol("/"), Symbol("\n"), Symbol("\r"),
-        NegatedSymbol(Set(Symbol("\n"), Symbol("\r")))),
+      Set(Symbol.epsilon, Symbol("/"), Symbol("\n"), Symbol("\r"), NegatedSymbols("\n", "\r")),
       Relation(Map(State("i")     -> Map( Symbol("/") -> Set(State("/"))),
                    State("/")     -> Map( Symbol("/") -> Set(State("//"))),
                    State("//")    -> Map( Symbol("\n") -> Set(State("eol")),
                                           Symbol("\r") -> Set(State("eol2")),
-                                          NegatedSymbol(Set(Symbol("\n"), Symbol("\r"))) -> Set(State("//"))),
+                                          NegatedSymbols("\n", "\r") -> Set(State("//"))),
                    State("eol2")  -> Map( Symbol("\n") -> Set(State("eol")))
               )),
       State("i"),
@@ -573,15 +579,14 @@ object TokenNFA {
 
     Token.MultiLineComment -> NFA(
       Set(State("i"), State("/"), State("/*"), State("/**"), State("/**/")),
-      Set(Symbol.epsilon, Symbol("/"), Symbol("*"), NegatedSymbol(Set(Symbol("*"))),
-        NegatedSymbol(Set(Symbol("*"), Symbol("/")))),
+      Set(Symbol.epsilon, Symbol("/"), Symbol("*"), NegatedSymbols("*"), NegatedSymbols("*", "/")),
       Relation(Map(State("i")   -> Map( Symbol("/") -> Set(State("/"))),
                    State("/")   -> Map( Symbol("*") -> Set(State("/*"))),
                    State("/*")  -> Map( Symbol("*") -> Set(State("/**")),
-                                        NegatedSymbol(Set(Symbol("*"))) -> Set(State("/*"))),
+                                        NegatedSymbols("*") -> Set(State("/*"))),
                    State("/**") -> Map( Symbol("/") -> Set(State("/**/")),
                                         Symbol("*") -> Set(State("/**")),
-                                        NegatedSymbol(Set(Symbol("*"), Symbol("/"))) -> Set(State("/*")))
+                                        NegatedSymbols("*", "/") -> Set(State("/*")))
               )),
       State("i"),
       Set(State("/**/")),
@@ -590,16 +595,15 @@ object TokenNFA {
 
     Token.JavaDocComment -> NFA(
       Set(State("i"), State("/"), State("/*"), State("/**"), State("/***"), State("/***/")),
-      Set(Symbol.epsilon, Symbol("/"), Symbol("*"), NegatedSymbol(Set(Symbol("*"))),
-        NegatedSymbol(Set(Symbol("*"), Symbol("/")))),
+      Set(Symbol.epsilon, Symbol("/"), Symbol("*"), NegatedSymbols("*"), NegatedSymbols("*", "/")),
       Relation(Map(State("i")     -> Map( Symbol("/") -> Set(State("/"))),
                    State("/")     -> Map( Symbol("*") -> Set(State("/*"))),
                    State("/*")    -> Map( Symbol("*") -> Set(State("/**"))),
                    State("/**")   -> Map( Symbol("*") -> Set(State("/***")),
-                                          NegatedSymbol(Set(Symbol("*"))) -> Set(State("/**"))),
+                                          NegatedSymbols("*") -> Set(State("/**"))),
                    State("/***")  -> Map( Symbol("/") -> Set(State("/***/")),
                                           Symbol("*") -> Set(State("/***")),
-                                          NegatedSymbol(Set(Symbol("*"), Symbol("/"))) -> Set(State("/**")))
+                                          NegatedSymbols("*", "/") -> Set(State("/**")))
               )),
       State("i"),
       Set(State("/***/")),
@@ -608,9 +612,9 @@ object TokenNFA {
 
     Token.Num -> NFA(
       Set(State("i"), State("digit")),
-      Set(Symbol.epsilon, DigitSymbol),
-      Relation(Map(State("i") -> Map(DigitSymbol -> Set(State("digit"))),
-                   State("digit") -> Map(DigitSymbol -> Set(State("digit")))
+      Set(Symbol.epsilon) ++ Symbol.digits,
+      Relation(Map(State("i") -> Map(Symbol.digitsGroup -> Set(State("digit"))),
+                   State("digit") -> Map(Symbol.digitsGroup -> Set(State("digit")))
                )),
       State("i"),
       Set(State("digit")),
@@ -619,13 +623,13 @@ object TokenNFA {
 
     Token.Identifier -> NFA(
       Set(State("i"), State("id")),
-      Set(Symbol.epsilon, LetterSymbol, DigitSymbol, Symbol("_"), Symbol("$")),
-      Relation(Map(State("i")   -> Map( LetterSymbol -> Set(State("id")),
-                                        DigitSymbol -> Set(State("id")),
+      Set(Symbol.epsilon, Symbol("_"), Symbol("$")) ++ Symbol.letters ++ Symbol.digits,
+      Relation(Map(State("i")   -> Map( Symbol.lettersGroup -> Set(State("id")),
+                                        Symbol.digitsGroup -> Set(State("id")),
                                         Symbol("_") -> Set(State("id")),
                                         Symbol("$") -> Set(State("id"))),
-                   State("id")  -> Map( LetterSymbol -> Set(State("id")),
-                                        DigitSymbol -> Set(State("id")),
+                   State("id")  -> Map( Symbol.lettersGroup -> Set(State("id")),
+                                        Symbol.digitsGroup -> Set(State("id")),
                                         Symbol("_") -> Set(State("id")),
                                         Symbol("$") -> Set(State("id")))
                )),
