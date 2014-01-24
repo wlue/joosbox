@@ -63,6 +63,20 @@ abstract class Automata(
     relation + ", " +
     startState + ", " +
     acceptingStates + ")"
+
+  def toGraphViz: String = {
+    """digraph FiniteAutomaton {
+  rankdir=LR;
+  node [shape = doublecircle]; """ + acceptingStates.map{ s => "\"" + s + "\"" }.mkString(" ") + """;
+  node [shape = circle];
+  """ + relation.table.flatMap {
+    case (start, transitions) => transitions.flatMap {
+      case (symbol, states) => states.flatMap ( (state) => {
+        Some("\"" + start + "\" -> \"" + state + "\" [ label = \"" + symbol + "\" ];")
+      })
+    }
+  }.mkString("\n") + "\n}"
+  }
 }
 
 
