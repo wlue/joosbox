@@ -57,7 +57,7 @@ abstract class Automata(
     case _ => false
   }
 
-  override def toString = this.getClass.getName + "(" +
+  override def toString = this.getClass.getSimpleName + "(" +
     states + ", " +
     symbols + ", " +
     relation + ", " +
@@ -122,15 +122,19 @@ class NFA(
   acceptingStates: Set[State],
   val name: Option[String] = None
 ) extends Automata(states, symbols, relation, startState, acceptingStates) {
-  def toDFA: DFA = {
 
+  /**
+   * Return an identical NFA with a different name.
+   */
+  def withName(newName: String) = NFA(states, symbols, relation, startState, acceptingStates, Some(newName))
+
+  def toDFA: DFA = {
+    // returns the set of states, set of accepting states, and relation table.
     def process(
       originalStates:           Set[State],
       originalAllStates:        Set[State],
       originalAcceptingStates:  Set[State],
       originalRelationTable:    Map[State, Map[Symbol, Set[State]]]
-      
-      // returns the set of states, set of accepting states, and relation table.
     ): (Set[State], Set[State], Map[State, Map[Symbol, Set[State]]]) = {
       val originalEpsilonClosure = originalStates.flatMap { s => relation.epsilonClosure(s) }
       val newState = State.combine(originalEpsilonClosure)
@@ -171,9 +175,10 @@ class NFA(
       State.combine(startSet),
       newAcceptingStates
     )
-  }  
-
-  def union(that: NFA) = {
-    this
   }
+
+  /**
+   * TODO: Unimplemented
+   */
+  def union(that: NFA) = this
 }

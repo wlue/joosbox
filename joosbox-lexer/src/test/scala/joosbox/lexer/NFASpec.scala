@@ -212,7 +212,31 @@ class NFASpec extends Specification {
     }
 
     "union" in {
-      true
+      "simple case" in {
+        val first = NFA(
+          Set(State("1")),
+          Set.empty,
+          Relation.empty,
+          State("1"),
+          Set(State("1")),
+          Some("A")
+        )
+        val second = first.withName("B")
+        val combined = NFA(
+          Set(State("AB"), State("A-1"), State("B-1")),
+          Set.empty,
+          Relation(Map(
+            State("AB") -> Map(
+              Symbol.epsilon -> Set(State("A-1"), State("B-1"))
+            )
+          )),
+          State("AB"),
+          Set(State("A1"), State("B1")),
+          Some("AB")
+        )
+
+        first.union(second) must beEqualTo(combined)
+      }
     }
   }
 }

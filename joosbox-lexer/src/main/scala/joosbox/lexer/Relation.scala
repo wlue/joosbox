@@ -1,5 +1,9 @@
 package joosbox.lexer
 
+object Relation {
+  def empty: Relation = Relation(Map.empty)
+}
+
 case class Relation(table: Map[State, Map[Symbol, Set[State]]]) {
   def reachableFrom(startClosure: Set[State]) = {
     startClosure
