@@ -24,12 +24,13 @@ class DFASpec extends Specification {
       val acceptingStates = Set(State("k"))
 
       val dfa = DFA(states, symbols, relation, startState, acceptingStates)
-      val DFA(states2, symbols2, relation2, startState2, acceptingStates2) = dfa
+      val DFA(states2, symbols2, relation2, startState2, acceptingStates2, name2) = dfa
       states2 must beEqualTo(states)
       symbols2 must beEqualTo(symbols)
       relation2 must beEqualTo(relation)
       startState2 must beEqualTo(startState)
       acceptingStates2 must beEqualTo(acceptingStates)
+      name2 must beNone
     }
 
     "fail to create with" in {

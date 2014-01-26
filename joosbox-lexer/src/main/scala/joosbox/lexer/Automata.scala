@@ -19,7 +19,10 @@ abstract class Automata(
   val startState:         State,
 
   // States that result in successful termination of the automata.
-  val acceptingStates:    Set[State]
+  val acceptingStates:    Set[State],
+
+  //  Optional name.
+  val name: Option[String] = None
 ) {
   if (!states.contains(startState)) {
     throw new IllegalArgumentException("Start state is not contained within provided states.")
@@ -89,11 +92,12 @@ object DFA {
     symbols: Set[Symbol],
     relation: Relation,
     startState: State,
-    acceptingStates: Set[State]
-  ) = new DFA(states, symbols, relation, startState, acceptingStates)
+    acceptingStates: Set[State],
+    name: Option[String] = None
+  ) = new DFA(states, symbols, relation, startState, acceptingStates, name)
 
   def unapply(dfa: DFA) = Some((
-    dfa.states, dfa.symbols, dfa.relation, dfa.startState, dfa.acceptingStates
+    dfa.states, dfa.symbols, dfa.relation, dfa.startState, dfa.acceptingStates, dfa.name
   ))
 }
 
@@ -102,8 +106,9 @@ class DFA(
   symbols: Set[Symbol],
   relation: Relation,
   startState: State,
-  acceptingStates: Set[State]
-) extends Automata(states, symbols, relation, startState, acceptingStates) {
+  acceptingStates: Set[State],
+  name: Option[String] = None
+) extends Automata(states, symbols, relation, startState, acceptingStates, name) {
   if (symbols.contains(Symbol.epsilon)) {
     throw new IllegalArgumentException("DFA cannot contain epsilon transitions.")
   }
@@ -168,8 +173,8 @@ class NFA(
   relation: Relation,
   startState: State,
   acceptingStates: Set[State],
-  val name: Option[String] = None
-) extends Automata(states, symbols, relation, startState, acceptingStates) {
+  name: Option[String] = None
+) extends Automata(states, symbols, relation, startState, acceptingStates, name) {
 
   /**
    * Return an identical NFA with a different name.
@@ -228,12 +233,19 @@ class NFA(
       symbols.filter { x => x != Symbol.epsilon },
       Relation(newRelationTable),
       State.combine(startSet),
-      newAcceptingStates
+      newAcceptingStates,
+      name
     )
   }
 
   /**
    * TODO: Unimplemented
    */
+
+  //  NOTE: When this does get implemented, it might be a good idea to set
+  //  the matchData on each State with the name of the NFA/DFA from which
+  //  that state came. That way, once a match is made on this new NFA,
+  //  we can just check the matchData on the resulting accepting State
+  //  and figure out the type of the token we just parsed.
   def union(that: NFA) = this
 }
