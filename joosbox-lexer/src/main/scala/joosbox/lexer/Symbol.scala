@@ -24,6 +24,7 @@ object Symbol {
 
 sealed trait Symbol {
   def matchSymbol(symbol: String): Boolean
+  def priority: Int
 }
 
 
@@ -32,6 +33,7 @@ sealed trait Symbol {
  */
 case object Epsilon extends Symbol {
   def matchSymbol(symbol: String): Boolean = true
+  def priority: Int = 0
 }
 
 
@@ -40,6 +42,7 @@ case object Epsilon extends Symbol {
  */
 case class InputSymbol(symbol: String) extends Symbol {
   def matchSymbol(symbol: String): Boolean = (this.symbol == symbol)
+  def priority: Int = 2
 }
 
 /**
@@ -47,6 +50,7 @@ case class InputSymbol(symbol: String) extends Symbol {
  */
 case class SymbolGroup(symbols: Set[Symbol]) extends Symbol {
   def matchSymbol(symbol: String): Boolean = symbols.exists { sym => sym.matchSymbol(symbol) }
+  def priority: Int = 2
 }
 
 
@@ -60,4 +64,5 @@ case class NegatedSymbols(symbols: String*) extends Symbol {
   def matchSymbol(symbol: String): Boolean = symbols.forall { sym =>
     (symbol != sym)
   }
+  def priority: Int = 1
 }

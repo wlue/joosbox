@@ -107,6 +107,40 @@ class DFA(
   if (symbols.contains(Symbol.epsilon)) {
     throw new IllegalArgumentException("DFA cannot contain epsilon transitions.")
   }
+
+
+  def consume(inputString: String, state: State = startState): Option[State] = {
+    if (inputString.length == 0) {
+      if (acceptingStates.contains(state)) {
+        Some(state)
+      } else {
+        None
+      }
+    } else {
+      relation.table.get(state).flatMap { (rules) =>
+        //  For each relation in the relation table, we...
+        rules.keys.toList.sortWith(_.priority > _.priority).toStream.flatMap { (symbol) =>
+
+          //  ...check if the symbol matches our input
+          if (symbol.matchSymbol(inputString.head.toString)) {
+            rules.get(symbol).flatMap { (targetStates) =>
+              targetStates.flatMap { (targetState) =>
+
+                //  If it does, we move to that state and consume the rest of the input.
+                consume(inputString.drop(1), targetState)
+              }.headOption
+            }
+          } else {
+            None
+          }
+
+        //  Because we're using headOption here, and we could have a bunch of relations,
+        //  we convert the above sorted list to a Stream - meaning that when the first
+        //  non-None Option comes through to headOption, we stop iteration, saving time.
+        }.headOption
+      }
+    }
+  }
 }
 
 

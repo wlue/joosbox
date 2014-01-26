@@ -59,5 +59,37 @@ class DFASpec extends Specification {
         ) must throwA[IllegalArgumentException]
       }
     }
+
+    "consume strings" in {
+      "passing simple string" in {
+        DFA(
+          Set(State("start"), State("gotA"), State("gotB"), State("gotC"), State("gotD")),
+          Set(Symbol("a"), Symbol("b"), Symbol("c"), Symbol("d")),
+          Relation(Map(
+            State("start") -> Map(Symbol("a") -> Set(State("gotA"))),
+            State("gotA") -> Map(Symbol("b") -> Set(State("gotB"))),
+            State("gotB") -> Map(Symbol("c") -> Set(State("gotC"))),
+            State("gotC") -> Map(Symbol("d") -> Set(State("gotD")))
+          )),
+          State("start"),
+          Set(State("gotD"))
+        ).consume("abcd") must beEqualTo(Some(State("gotD")))
+      }
+
+      "failing simple string" in {
+        DFA(
+          Set(State("start"), State("gotA"), State("gotB"), State("gotC"), State("gotD")),
+          Set(Symbol("a"), Symbol("b"), Symbol("c"), Symbol("d")),
+          Relation(Map(
+            State("start") -> Map(Symbol("a") -> Set(State("gotA"))),
+            State("gotA") -> Map(Symbol("b") -> Set(State("gotB"))),
+            State("gotB") -> Map(Symbol("c") -> Set(State("gotC"))),
+            State("gotC") -> Map(Symbol("d") -> Set(State("gotD")))
+          )),
+          State("start"),
+          Set(State("gotD"))
+        ).consume("dcba") must beEqualTo(None)
+      }
+    }
   }
 }
