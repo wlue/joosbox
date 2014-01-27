@@ -535,25 +535,25 @@ object TokenNFA {
 
     Token.Whitespace -> NFA(
       Set(State("i"), State("ws")),
-      Set(Symbol.epsilon, Symbol(" "), Symbol("\\n"), Symbol("\\r"),
-          Symbol("\\t"), Symbol("\\f"), Symbol("\\x0B")),
+      Set(Symbol.epsilon, Symbol(" "), Symbol("\n"), Symbol("\r"),
+          Symbol("\t"), Symbol("\f"), Symbol("\13")),
       Relation(
         Map(
           State("i") -> Map(
             Symbol(" ") -> Set(State("ws")),
-            Symbol("\\n") -> Set(State("ws")),
-            Symbol("\\r") -> Set(State("ws")),
-            Symbol("\\t") -> Set(State("ws")),
-            Symbol("\\f") -> Set(State("ws")),
-            Symbol("\\x0B") -> Set(State("ws"))
+            Symbol("\n") -> Set(State("ws")),
+            Symbol("\r") -> Set(State("ws")),
+            Symbol("\t") -> Set(State("ws")),
+            Symbol("\f") -> Set(State("ws")),
+            Symbol("\13") -> Set(State("ws"))
           ),
           State("ws") -> Map(
             Symbol(" ") -> Set(State("ws")),
-            Symbol("\\n") -> Set(State("ws")),
-            Symbol("\\r") -> Set(State("ws")),
-            Symbol("\\t") -> Set(State("ws")),
-            Symbol("\\f") -> Set(State("ws")),
-            Symbol("\\x0B") -> Set(State("ws"))
+            Symbol("\n") -> Set(State("ws")),
+            Symbol("\r") -> Set(State("ws")),
+            Symbol("\t") -> Set(State("ws")),
+            Symbol("\f") -> Set(State("ws")),
+            Symbol("\13") -> Set(State("ws"))
           )
         )
       ),
