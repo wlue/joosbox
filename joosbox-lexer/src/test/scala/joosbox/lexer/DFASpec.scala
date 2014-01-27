@@ -74,7 +74,7 @@ class DFASpec extends Specification {
           )),
           State("start"),
           Set(State("gotD"))
-        ).consume("abcd") must beEqualTo(Some(State("gotD")))
+        ).consume("abcd") must beEqualTo(Some(State("gotD"), ""))
       }
 
       "failing simple string" in {
@@ -90,6 +90,51 @@ class DFASpec extends Specification {
           State("start"),
           Set(State("gotD"))
         ).consume("dcba") must beEqualTo(None)
+      }
+
+      "maximal munch" in {
+        DFA(
+          Set(State("start"), State("gotA"), State("gotB"), State("gotC"), State("gotD")),
+          Set(Symbol("a"), Symbol("b"), Symbol("c"), Symbol("d")),
+          Relation(Map(
+            State("start") -> Map(Symbol("a") -> Set(State("gotA"))),
+            State("gotA") -> Map(Symbol("b") -> Set(State("gotB"))),
+            State("gotB") -> Map(Symbol("c") -> Set(State("gotC"))),
+            State("gotC") -> Map(Symbol("d") -> Set(State("gotD"))),
+            State("gotD") -> Map(Symbol("a") -> Set(State("gotA")))
+          )),
+          State("start"),
+          Set(State("gotB"), State("gotD"))
+        ).consume("abcdabcd") must beEqualTo(Some(State("gotD"), ""))
+      }
+
+      "maximal munch if all states accept" in {
+        DFA(
+          Set(State("start"), State("gotA"), State("gotB"), State("gotC"), State("gotD")),
+          Set(Symbol("a"), Symbol("b"), Symbol("c"), Symbol("d")),
+          Relation(Map(
+            State("start") -> Map(Symbol("a") -> Set(State("gotA"))),
+            State("gotA") -> Map(Symbol("b") -> Set(State("gotB"))),
+            State("gotB") -> Map(Symbol("c") -> Set(State("gotC"))),
+            State("gotC") -> Map(Symbol("d") -> Set(State("gotD"))),
+            State("gotD") -> Map(Symbol("a") -> Set(State("gotA")))
+          )),
+          State("start"),
+          Set(State("start"), State("gotA"), State("gotB"), State("gotC"), State("gotD"))
+        ).consume("abcdabcd") must beEqualTo(Some(State("gotD"), ""))
+      }
+
+      "maximal munch if extra input exists" in {
+        DFA(
+          Set(State("start"), State("a"), State("aa")),
+          Set(Symbol("a")),
+          Relation(Map(
+            State("start") -> Map(Symbol("a") -> Set(State("a"))),
+            State("a") -> Map(Symbol("a") -> Set(State("aa")))
+          )),
+          State("start"),
+          Set(State("aa"), State("a"))
+        ).consume("aaa") must beEqualTo(Some(State("aa"), "a"))
       }
     }
   }

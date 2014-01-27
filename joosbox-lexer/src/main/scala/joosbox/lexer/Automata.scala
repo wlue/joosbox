@@ -114,15 +114,15 @@ class DFA(
   }
 
 
-  def consume(inputString: String, state: State = startState): Option[State] = {
+  def consume(inputString: String, state: State = startState): Option[(State, String)] = {
     if (inputString.length == 0) {
       if (acceptingStates.contains(state)) {
-        Some(state)
+        Some(state, inputString)
       } else {
         None
       }
     } else {
-      relation.table.get(state).flatMap { (rules) =>
+      val result = relation.table.get(state).flatMap { (rules) =>
         //  For each relation in the relation table, we...
         rules.keys.toList.sortWith(_.priority > _.priority).toStream.flatMap { (symbol) =>
 
@@ -143,6 +143,12 @@ class DFA(
         //  we convert the above sorted list to a Stream - meaning that when the first
         //  non-None Option comes through to headOption, we stop iteration, saving time.
         }.headOption
+      }
+
+      if (result == None && acceptingStates.contains(state)) {
+        Some(state, inputString)
+      } else {
+        result
       }
     }
   }
