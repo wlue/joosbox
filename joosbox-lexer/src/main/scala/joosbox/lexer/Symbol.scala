@@ -16,9 +16,9 @@ object Symbol {
   def set(symbols: Iterable[String]): Set[Symbol] = symbols.map { sym => Symbol(sym) }.toSet
 
   lazy val epsilon = Epsilon
-  lazy val digits: Set[Symbol] = (1 to 10).map { num => InputSymbol(num.toString) }.toSet
+  lazy val digits: Set[Symbol] = (0 to 9).map { num => InputSymbol(num.toString) }.toSet
   lazy val digitsGroup = SymbolGroup(digits)
-  lazy val letters: Set[Symbol] = ('a' to 'z').map { letter => InputSymbol(letter.toString) }.toSet
+  lazy val letters: Set[Symbol] = (('a' to 'z') ++ ('A' to 'Z')).map { letter => InputSymbol(letter.toString) }.toSet
   lazy val lettersGroup = SymbolGroup(letters)
 }
 

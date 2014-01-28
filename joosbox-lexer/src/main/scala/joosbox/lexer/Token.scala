@@ -625,7 +625,6 @@ object TokenNFA {
       Set(State("i"), State("id")),
       Set(Symbol.epsilon, Symbol("_"), Symbol("$"), Symbol.lettersGroup, Symbol.digitsGroup),
       Relation(Map(State("i")   -> Map( Symbol.lettersGroup -> Set(State("id")),
-                                        Symbol.digitsGroup -> Set(State("id")),
                                         Symbol("_") -> Set(State("id")),
                                         Symbol("$") -> Set(State("id"))),
                    State("id")  -> Map( Symbol.lettersGroup -> Set(State("id")),

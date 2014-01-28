@@ -636,18 +636,73 @@ class TokenSpec extends Specification {
       "success" in {
         TokenNFA.nfas(Token.JavaDocComment).toDFA.consume("/**\n*/") must beEqualTo(Some(State("/***/"), ""))
       }
-      "success" in {
+      "failure" in {
         TokenNFA.nfas(Token.JavaDocComment).toDFA.consume("/*\n**/") must beEqualTo(None)
       }
       "failure" in {
         TokenNFA.nfas(Token.JavaDocComment).toDFA.consume("//") must beEqualTo(None)
       }
       "failure" in {
-        TokenNFA.nfas(Token.MultiLineComment).toDFA.consume("Hello /** World */") must beEqualTo(None)
+        TokenNFA.nfas(Token.JavaDocComment).toDFA.consume("Hello /** World */") must beEqualTo(None)
       }
     }
 
+    "match number" in {
+      "success" in {
+        TokenNFA.nfas(Token.Num).toDFA.consume("0") must beEqualTo(Some(State("digit"), ""))
+      }
+      "success" in {
+        TokenNFA.nfas(Token.Num).toDFA.consume("1") must beEqualTo(Some(State("digit"), ""))
+      }
+      "success" in {
+        TokenNFA.nfas(Token.Num).toDFA.consume("10") must beEqualTo(Some(State("digit"), ""))
+      }
+      "success" in {
+        TokenNFA.nfas(Token.Num).toDFA.consume("1234567890") must beEqualTo(Some(State("digit"), ""))
+      }
+      "failure" in {
+        TokenNFA.nfas(Token.Num).toDFA.consume("") must beEqualTo(None)
+      }
+      "failure" in {
+        TokenNFA.nfas(Token.Num).toDFA.consume("-1") must beEqualTo(None)
+      }
+      "failure" in {
+        TokenNFA.nfas(Token.Num).toDFA.consume("one") must beEqualTo(None)
+      }
+    }
 
+    "match identifier" in {
+      "success" in {
+        TokenNFA.nfas(Token.Identifier).toDFA.consume("a") must beEqualTo(Some(State("id"), ""))
+      }
+      "success" in {
+        TokenNFA.nfas(Token.Identifier).toDFA.consume("abc") must beEqualTo(Some(State("id"), ""))
+      }
+      "success" in {
+        TokenNFA.nfas(Token.Identifier).toDFA.consume("AbCdEf") must beEqualTo(Some(State("id"), ""))
+      }
+      "success" in {
+        TokenNFA.nfas(Token.Identifier).toDFA.consume("abc_def$") must beEqualTo(Some(State("id"), ""))
+      }
+      "success" in {
+        TokenNFA.nfas(Token.Identifier).toDFA.consume("$hello") must beEqualTo(Some(State("id"), ""))
+      }
+      "success" in {
+        TokenNFA.nfas(Token.Identifier).toDFA.consume("_hello") must beEqualTo(Some(State("id"), ""))
+      }
+      "success" in {
+        TokenNFA.nfas(Token.Identifier).toDFA.consume("world1") must beEqualTo(Some(State("id"), ""))
+      }
+      "failure" in {
+        TokenNFA.nfas(Token.Identifier).toDFA.consume("") must beEqualTo(None)
+      }
+      "failure" in {
+        TokenNFA.nfas(Token.Identifier).toDFA.consume("-world") must beEqualTo(None)
+      }
+      "failure" in {
+        TokenNFA.nfas(Token.Identifier).toDFA.consume("1world") must beEqualTo(None)
+      }
+    }
 
   }
 }
