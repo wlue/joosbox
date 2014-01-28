@@ -136,6 +136,21 @@ class DFASpec extends Specification {
           Set(State("aa"), State("a"))
         ).consume("aaa") must beEqualTo(Some(State("aa"), "a"))
       }
+
+      "maximal munch with rewinding" in {
+        DFA(
+          Set(State("start"), State("a"), State("ab"), State("abc"), State("b")),
+          Set(Symbol("a"), Symbol("b"), Symbol("c")),
+          Relation(Map(
+            State("start") -> Map(Symbol("a") -> Set(State("a"))),
+            State("a") -> Map(Symbol("b") -> Set(State("ab"))),
+            State("ab") -> Map(Symbol("c") -> Set(State("abc")))
+          )),
+          State("start"),
+          Set(State("a"), State("b"), State("abc"))
+        ).consume("ababc") must beEqualTo(Some(State("a"), "babc"))
+      }
+
     }
   }
 }
