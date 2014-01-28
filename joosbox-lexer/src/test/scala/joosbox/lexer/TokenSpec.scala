@@ -500,5 +500,49 @@ class TokenSpec extends Specification {
       }
     }
 
+  "match whitespace" in {
+      "success" in {
+        TokenNFA.nfas(Token.Whitespace).toDFA.consume(" ") must beEqualTo(Some(State("ws"), ""))
+      }
+      "success" in {
+        TokenNFA.nfas(Token.Whitespace).toDFA.consume("\n") must beEqualTo(Some(State("ws"), ""))
+      }
+      "success" in {
+        TokenNFA.nfas(Token.Whitespace).toDFA.consume("\r") must beEqualTo(Some(State("ws"), ""))
+      }
+      "success" in {
+        TokenNFA.nfas(Token.Whitespace).toDFA.consume("\t") must beEqualTo(Some(State("ws"), ""))
+      }
+      "success" in {
+        TokenNFA.nfas(Token.Whitespace).toDFA.consume("\f") must beEqualTo(Some(State("ws"), ""))
+      }
+      "success" in {
+        TokenNFA.nfas(Token.Whitespace).toDFA.consume("\13") must beEqualTo(Some(State("ws"), ""))
+      }
+      "success" in {
+        TokenNFA.nfas(Token.Whitespace).toDFA.consume("\r\n") must beEqualTo(Some(State("ws"), ""))
+      }
+      "success" in {
+        TokenNFA.nfas(Token.Whitespace).toDFA.consume("\n\n") must beEqualTo(Some(State("ws"), ""))
+      }
+      "success" in {
+        TokenNFA.nfas(Token.Whitespace).toDFA.consume("\r\r") must beEqualTo(Some(State("ws"), ""))
+      }
+      "success" in {
+        TokenNFA.nfas(Token.Whitespace).toDFA.consume("\r\r\n") must beEqualTo(Some(State("ws"), ""))
+      }
+      "success" in {
+        TokenNFA.nfas(Token.Whitespace).toDFA.consume("      ") must beEqualTo(Some(State("ws"), ""))
+      }
+      "failure" in {
+        TokenNFA.nfas(Token.Whitespace).toDFA.consume("\b") must beEqualTo(None)
+      }
+      "failure" in {
+        TokenNFA.nfas(Token.Whitespace).toDFA.consume("") must beEqualTo(None)
+      }
+      "failure" in {
+        TokenNFA.nfas(Token.Whitespace).toDFA.consume("a  ") must beEqualTo(None)
+      }
+    }
   }
 }
