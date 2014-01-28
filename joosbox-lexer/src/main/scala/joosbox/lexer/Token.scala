@@ -322,7 +322,7 @@ object TokenNFA {
 
     Token.ModuloAssign -> NFA(
       Set(State("i"), State("%"), State("%=")),
-      Set(Symbol.epsilon, Symbol("*"), Symbol("=")),
+      Set(Symbol.epsilon, Symbol("%"), Symbol("=")),
       Relation(Map(State("i") -> Map(Symbol("%") -> Set(State("%"))),
                    State("%") -> Map(Symbol("=") -> Set(State("%=")))
                )),
@@ -612,7 +612,7 @@ object TokenNFA {
 
     Token.Num -> NFA(
       Set(State("i"), State("digit")),
-      Set(Symbol.epsilon) ++ Symbol.digits,
+      Set(Symbol.epsilon, Symbol.digitsGroup),
       Relation(Map(State("i") -> Map(Symbol.digitsGroup -> Set(State("digit"))),
                    State("digit") -> Map(Symbol.digitsGroup -> Set(State("digit")))
                )),
@@ -623,7 +623,7 @@ object TokenNFA {
 
     Token.Identifier -> NFA(
       Set(State("i"), State("id")),
-      Set(Symbol.epsilon, Symbol("_"), Symbol("$")) ++ Symbol.letters ++ Symbol.digits,
+      Set(Symbol.epsilon, Symbol("_"), Symbol("$"), Symbol.lettersGroup, Symbol.digitsGroup),
       Relation(Map(State("i")   -> Map( Symbol.lettersGroup -> Set(State("id")),
                                         Symbol.digitsGroup -> Set(State("id")),
                                         Symbol("_") -> Set(State("id")),
