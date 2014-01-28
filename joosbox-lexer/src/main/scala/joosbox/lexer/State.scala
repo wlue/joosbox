@@ -14,7 +14,7 @@ case class State(name: String, matchData: Option[MatchData] = None) {
   //  matchData should only be queried once some Automaton
   //  has returned a State as a match.
   override def equals(obj: Any) = obj match {
-    case State(name) => this.name == name
+    case State(name, _) => this.name == name
     case _ => false
   }
 
