@@ -582,7 +582,72 @@ class TokenSpec extends Specification {
       "failure" in {
         TokenNFA.nfas(Token.SingleLineComment).toDFA.consume("Hello // World\n") must beEqualTo(None)
       }
-
     }
+
+    "match multiline comment" in {
+      "success" in {
+        TokenNFA.nfas(Token.MultiLineComment).toDFA.consume("/* Hello World */") must beEqualTo(Some(State("/**/"), ""))
+      }
+      "success" in {
+        TokenNFA.nfas(Token.MultiLineComment).toDFA.consume("/* Hello World\n*/") must beEqualTo(Some(State("/**/"), ""))
+      }
+      "success" in {
+        TokenNFA.nfas(Token.MultiLineComment).toDFA.consume("/* Hello\n World*/") must beEqualTo(Some(State("/**/"), ""))
+      }
+      "success" in {
+        TokenNFA.nfas(Token.MultiLineComment).toDFA.consume("/* Hello // World*/") must beEqualTo(Some(State("/**/"), ""))
+      }
+      "success" in {
+        TokenNFA.nfas(Token.MultiLineComment).toDFA.consume("/**\n* Hello\n*  World\n */") must beEqualTo(Some(State("/**/"), ""))
+      }
+      "success" in {
+        TokenNFA.nfas(Token.MultiLineComment).toDFA.consume("/**/") must beEqualTo(Some(State("/**/"), ""))
+      }
+      "success" in {
+        TokenNFA.nfas(Token.MultiLineComment).toDFA.consume("/*\n*/") must beEqualTo(Some(State("/**/"), ""))
+      }
+      "failure" in {
+        TokenNFA.nfas(Token.MultiLineComment).toDFA.consume("//") must beEqualTo(None)
+      }
+      "failure" in {
+        TokenNFA.nfas(Token.MultiLineComment).toDFA.consume("Hello /* World */") must beEqualTo(None)
+      }
+    }
+
+    "match javadoc comment" in {
+      "success" in {
+        TokenNFA.nfas(Token.JavaDocComment).toDFA.consume("/** Hello World */") must beEqualTo(Some(State("/***/"), ""))
+      }
+      "success" in {
+        TokenNFA.nfas(Token.JavaDocComment).toDFA.consume("/** Hello World\n*/") must beEqualTo(Some(State("/***/"), ""))
+      }
+      "success" in {
+        TokenNFA.nfas(Token.JavaDocComment).toDFA.consume("/** Hello\n World*/") must beEqualTo(Some(State("/***/"), ""))
+      }
+      "success" in {
+        TokenNFA.nfas(Token.JavaDocComment).toDFA.consume("/** Hello // World*/") must beEqualTo(Some(State("/***/"), ""))
+      }
+      "success" in {
+        TokenNFA.nfas(Token.JavaDocComment).toDFA.consume("/**\n* Hello\n*  World\n */") must beEqualTo(Some(State("/***/"), ""))
+      }
+      "success" in {
+        TokenNFA.nfas(Token.JavaDocComment).toDFA.consume("/***/") must beEqualTo(Some(State("/***/"), ""))
+      }
+      "success" in {
+        TokenNFA.nfas(Token.JavaDocComment).toDFA.consume("/**\n*/") must beEqualTo(Some(State("/***/"), ""))
+      }
+      "success" in {
+        TokenNFA.nfas(Token.JavaDocComment).toDFA.consume("/*\n**/") must beEqualTo(None)
+      }
+      "failure" in {
+        TokenNFA.nfas(Token.JavaDocComment).toDFA.consume("//") must beEqualTo(None)
+      }
+      "failure" in {
+        TokenNFA.nfas(Token.MultiLineComment).toDFA.consume("Hello /** World */") must beEqualTo(None)
+      }
+    }
+
+
+
   }
 }
