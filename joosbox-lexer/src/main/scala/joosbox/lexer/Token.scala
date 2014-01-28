@@ -636,6 +636,43 @@ object TokenNFA {
       State("i"),
       Set(State("id")),
       Some("IDENTIFIER")
+    ),
+
+    Token.CharLiteral -> NFA(
+      Set(State("i"), State("\'"), State("\'\\"), State("char-part"), State("char")),
+      Set(Symbol("\\"), Symbol("n"), Symbol("r"), Symbol("t"), Symbol("b"),
+          Symbol("f"), Symbol("\""), Symbol("\'"), NegatedSymbols("\\, \n, \r")),
+      Relation(Map(State("i")     -> Map( Symbol("\'") -> Set(State("\'"))),
+                   State("\'")    -> Map( Symbol("\\") -> Set(State("\'\\")),
+                                          Symbol("\'") -> Set(State("char")),
+                                          NegatedSymbols("\\, \n, \r") -> Set(State("char-part"))),
+                   State("\'\\")  -> Map( Symbol("n") -> Set(State("char-part")),
+                                          Symbol("r") -> Set(State("char-part")),
+                                          Symbol("t") -> Set(State("char-part")),
+                                          Symbol("b") -> Set(State("char-part")),
+                                          Symbol("f") -> Set(State("char-part")),
+                                          Symbol("\"") -> Set(State("char-part")),
+                                          Symbol("\'") -> Set(State("char-part"))),
+                   State("char-part") -> Map( Symbol("\'") -> Set(State("char")))
+               )),
+      State("i"),
+      Set(State("char")),
+      Some("CHAR_LITERAL")
+    ),
+
+    Token.StringLiteral -> NFA(
+      Set(State("i"), State("\""), State("\"\\"), State("string")),
+      Set(Symbol("\""), Symbol("\\"), NegatedSymbols("\", \\, \n, \r"),
+        NegatedSymbols("\n, \r")),
+      Relation(Map(State("i")     -> Map( Symbol("\"") -> Set(State("\""))),
+                   State("\"")    -> Map( Symbol("\"") -> Set(State("string")),
+                                          Symbol("\\") -> Set(State("\"\\")),
+                                          NegatedSymbols("\", \\, \n, \r") -> Set(State("\""))),
+                   State("\"\\")  -> Map( NegatedSymbols("\n, \r") -> Set(State("\"")))
+               )),
+      State("i"),
+      Set(State("string")),
+      Some("STR_LITERAL")
     )
 
   )
