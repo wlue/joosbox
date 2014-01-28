@@ -8,25 +8,40 @@ class TokenSpec extends Specification {
   "Token" should {
     "match question" in {
       "success" in {
-        TokenNFA.nfas.get(Token.Question).get.toDFA.consume("?") must beEqualTo(Some(State("?"), ""))
+        TokenNFA.nfas(Token.Question).toDFA.consume("?") must beEqualTo(Some(State("?"), ""))
       }
       "failure" in {
-        TokenNFA.nfas.get(Token.Question).get.toDFA.consume("!") must beEqualTo(None)
+        TokenNFA.nfas(Token.Question).toDFA.consume("!") must beEqualTo(None)
       }
     }
 
     "match parens" in {
       "leftparen success" in {
-        TokenNFA.nfas.get(Token.LeftParen).get.toDFA.consume("(") must beEqualTo(Some(State("("), ""))
+        TokenNFA.nfas(Token.LeftParen).toDFA.consume("(") must beEqualTo(Some(State("("), ""))
       }
       "leftparen failure" in {
-        TokenNFA.nfas.get(Token.LeftParen).get.toDFA.consume(")") must beEqualTo(None)
+        TokenNFA.nfas(Token.LeftParen).toDFA.consume(")") must beEqualTo(None)
       }
       "rightparen success" in {
-        TokenNFA.nfas.get(Token.RightParen).get.toDFA.consume(")") must beEqualTo(Some(State(")"), ""))
+        TokenNFA.nfas(Token.RightParen).toDFA.consume(")") must beEqualTo(Some(State(")"), ""))
       }
       "rightparen failure" in {
-        TokenNFA.nfas.get(Token.RightParen).get.toDFA.consume("(") must beEqualTo(None)
+        TokenNFA.nfas(Token.RightParen).toDFA.consume("(") must beEqualTo(None)
+      }
+    }
+
+    "match brackets" in {
+      "leftbracket success" in {
+        TokenNFA.nfas(Token.LeftBracket).toDFA.consume("[") must beEqualTo(Some(State("["), ""))
+      }
+      "leftbracket failure" in {
+        TokenNFA.nfas(Token.LeftBracket).toDFA.consume("]") must beEqualTo(None)
+      }
+      "rightbracket success" in {
+        TokenNFA.nfas(Token.RightBracket).toDFA.consume("]") must beEqualTo(Some(State("]"), ""))
+      }
+      "rightbracket failure" in {
+        TokenNFA.nfas(Token.RightBracket).toDFA.consume("[") must beEqualTo(None)
       }
     }
   }
