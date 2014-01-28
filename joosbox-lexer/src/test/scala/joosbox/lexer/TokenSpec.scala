@@ -341,5 +341,51 @@ class TokenSpec extends Specification {
         TokenNFA.nfas(Token.BinaryShiftRightAssign).toDFA.consume(">>") must beEqualTo(None)
       }
     }
+
+    "match less than" in {
+      "success" in {
+        TokenNFA.nfas(Token.LessThan).toDFA.consume("<") must beEqualTo(Some(State("<"), ""))
+      }
+      "failure" in {
+        TokenNFA.nfas(Token.LessThan).toDFA.consume(">") must beEqualTo(None)
+      }
+    }
+
+    "match less than equal" in {
+      "success" in {
+        TokenNFA.nfas(Token.LessEqual).toDFA.consume("<=") must beEqualTo(Some(State("<="), ""))
+      }
+      "failure" in {
+        TokenNFA.nfas(Token.LessEqual).toDFA.consume("<") must beEqualTo(None)
+      }
+      "failure" in {
+        TokenNFA.nfas(Token.LessEqual).toDFA.consume("=") must beEqualTo(None)
+      }
+    }
+
+    "match shift left" in {
+      "success" in {
+        TokenNFA.nfas(Token.ShiftLeft).toDFA.consume("<<") must beEqualTo(Some(State("<<"), ""))
+      }
+      "failure" in {
+        TokenNFA.nfas(Token.ShiftLeft).toDFA.consume("<=") must beEqualTo(None)
+      }
+      "failure" in {
+        TokenNFA.nfas(Token.ShiftLeft).toDFA.consume("<") must beEqualTo(None)
+      }
+    }
+
+    "match shift left assign" in {
+      "success" in {
+        TokenNFA.nfas(Token.ShiftLeftAssign).toDFA.consume("<<=") must beEqualTo(Some(State("<<="), ""))
+      }
+      "failure" in {
+        TokenNFA.nfas(Token.ShiftLeftAssign).toDFA.consume("<<") must beEqualTo(None)
+      }
+      "failure" in {
+        TokenNFA.nfas(Token.ShiftLeftAssign).toDFA.consume("<=") must beEqualTo(None)
+      }
+    }
+
   }
 }
