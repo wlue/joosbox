@@ -500,7 +500,7 @@ class TokenSpec extends Specification {
       }
     }
 
-  "match whitespace" in {
+    "match whitespace" in {
       "success" in {
         TokenNFA.nfas(Token.Whitespace).toDFA.consume(" ") must beEqualTo(Some(State("ws"), ""))
       }
@@ -543,6 +543,46 @@ class TokenSpec extends Specification {
       "failure" in {
         TokenNFA.nfas(Token.Whitespace).toDFA.consume("a  ") must beEqualTo(None)
       }
+    }
+
+    "match single line comment" in {
+      "success" in {
+        TokenNFA.nfas(Token.SingleLineComment).toDFA.consume("//\n") must beEqualTo(Some(State("eol"), ""))
+      }
+      "success" in {
+        TokenNFA.nfas(Token.SingleLineComment).toDFA.consume("// Hello World\n") must beEqualTo(Some(State("eol"), ""))
+      }
+      "success" in {
+        TokenNFA.nfas(Token.SingleLineComment).toDFA.consume("// Hello // World\n") must beEqualTo(Some(State("eol"), ""))
+      }
+      "success" in {
+        TokenNFA.nfas(Token.SingleLineComment).toDFA.consume("//\r") must beEqualTo(Some(State("eol2"), ""))
+      }
+      "success" in {
+        TokenNFA.nfas(Token.SingleLineComment).toDFA.consume("// Hello World\r") must beEqualTo(Some(State("eol2"), ""))
+      }
+      "success" in {
+        TokenNFA.nfas(Token.SingleLineComment).toDFA.consume("// Hello // World\r") must beEqualTo(Some(State("eol2"), ""))
+      }
+      "success" in {
+        TokenNFA.nfas(Token.SingleLineComment).toDFA.consume("//\r\n") must beEqualTo(Some(State("eol"), ""))
+      }
+      "success" in {
+        TokenNFA.nfas(Token.SingleLineComment).toDFA.consume("// Hello World\r\n") must beEqualTo(Some(State("eol"), ""))
+      }
+      "success" in {
+        TokenNFA.nfas(Token.SingleLineComment).toDFA.consume("// Hello // World\r\n") must beEqualTo(Some(State("eol"), ""))
+      }
+      "failure" in {
+        TokenNFA.nfas(Token.SingleLineComment).toDFA.consume("/**\n* Hello\n* World\n */") must beEqualTo(None)
+      }
+      "failure" in {
+        TokenNFA.nfas(Token.SingleLineComment).toDFA.consume("/* Hello World */") must beEqualTo(None)
+      }
+      "failure" in {
+        TokenNFA.nfas(Token.SingleLineComment).toDFA.consume("Hello // World\n") must beEqualTo(None)
+      }
+
     }
   }
 }

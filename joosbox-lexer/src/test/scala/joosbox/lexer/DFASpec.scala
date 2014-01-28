@@ -151,6 +151,78 @@ class DFASpec extends Specification {
         ).consume("ababc") must beEqualTo(Some(State("a"), "babc"))
       }
 
+      "passing simple string using negated symbols" in {
+        DFA(
+          Set(State("start"), State("gotA"), State("notB"), State("notC"), State("gotD")),
+          Set(Symbol("a"), NegatedSymbols("b"), NegatedSymbols("c"), Symbol("d")),
+          Relation(Map(
+            State("start") -> Map(Symbol("a") -> Set(State("gotA"))),
+            State("gotA") -> Map(NegatedSymbols("b") -> Set(State("notB"))),
+            State("notB") -> Map(NegatedSymbols("c") -> Set(State("notC"))),
+            State("notC") -> Map(Symbol("d") -> Set(State("gotD")))
+          )),
+          State("start"),
+          Set(State("gotD"))
+        ).consume("acbd") must beEqualTo(Some(State("gotD"), ""))
+      }
+
+      "failing simple string using negated symbols" in {
+        DFA(
+          Set(State("start"), State("gotA"), State("notB"), State("notC"), State("gotD")),
+          Set(Symbol("a"), NegatedSymbols("b"), NegatedSymbols("c"), Symbol("d")),
+          Relation(Map(
+            State("start") -> Map(Symbol("a") -> Set(State("gotA"))),
+            State("gotA") -> Map(NegatedSymbols("b") -> Set(State("notB"))),
+            State("notB") -> Map(NegatedSymbols("c") -> Set(State("notC"))),
+            State("notC") -> Map(Symbol("d") -> Set(State("gotD")))
+          )),
+          State("start"),
+          Set(State("gotD"))
+        ).consume("abcd") must beEqualTo(None)
+      }
+
+      "passing simple string using more negated symbols" in {
+        DFA(
+          Set(State("start"), State("gotA"), State("notBorC"), State("gotD")),
+          Set(Symbol("a"), NegatedSymbols("b", "c"), Symbol("d")),
+          Relation(Map(
+            State("start") -> Map(Symbol("a") -> Set(State("gotA"))),
+            State("gotA") -> Map(NegatedSymbols("b", "c") -> Set(State("notBorC"))),
+            State("notBorC") -> Map(Symbol("d") -> Set(State("gotD")))
+          )),
+          State("start"),
+          Set(State("gotD"))
+        ).consume("add") must beEqualTo(Some(State("gotD"), ""))
+      }
+
+      "failing simple string using more negated symbols" in {
+        DFA(
+          Set(State("start"), State("gotA"), State("notBorC"), State("gotD")),
+          Set(Symbol("a"), NegatedSymbols("b", "c"), Symbol("d")),
+          Relation(Map(
+            State("start") -> Map(Symbol("a") -> Set(State("gotA"))),
+            State("gotA") -> Map(NegatedSymbols("b", "c") -> Set(State("notBorC"))),
+            State("notBorC") -> Map(Symbol("d") -> Set(State("gotD")))
+          )),
+          State("start"),
+          Set(State("gotD"))
+        ).consume("abd") must beEqualTo(None)
+      }
+
+      "failing simple string using more negated symbols" in {
+        DFA(
+          Set(State("start"), State("gotA"), State("notBorC"), State("gotD")),
+          Set(Symbol("a"), NegatedSymbols("b", "c"), Symbol("d")),
+          Relation(Map(
+            State("start") -> Map(Symbol("a") -> Set(State("gotA"))),
+            State("gotA") -> Map(NegatedSymbols("b", "c") -> Set(State("notBorC"))),
+            State("notBorC") -> Map(Symbol("d") -> Set(State("gotD")))
+          )),
+          State("start"),
+          Set(State("gotD"))
+        ).consume("acd") must beEqualTo(None)
+      }
+
     }
   }
 }

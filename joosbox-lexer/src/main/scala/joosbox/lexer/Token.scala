@@ -641,11 +641,11 @@ object TokenNFA {
     Token.CharLiteral -> NFA(
       Set(State("i"), State("\'"), State("\'\\"), State("char-part"), State("char")),
       Set(Symbol("\\"), Symbol("n"), Symbol("r"), Symbol("t"), Symbol("b"),
-          Symbol("f"), Symbol("\""), Symbol("\'"), NegatedSymbols("\\, \n, \r")),
+          Symbol("f"), Symbol("\""), Symbol("\'"), NegatedSymbols("\\", "\n", "\r")),
       Relation(Map(State("i")     -> Map( Symbol("\'") -> Set(State("\'"))),
                    State("\'")    -> Map( Symbol("\\") -> Set(State("\'\\")),
                                           Symbol("\'") -> Set(State("char")),
-                                          NegatedSymbols("\\, \n, \r") -> Set(State("char-part"))),
+                                          NegatedSymbols("\\", "\n", "\r") -> Set(State("char-part"))),
                    State("\'\\")  -> Map( Symbol("n") -> Set(State("char-part")),
                                           Symbol("r") -> Set(State("char-part")),
                                           Symbol("t") -> Set(State("char-part")),
@@ -662,13 +662,13 @@ object TokenNFA {
 
     Token.StringLiteral -> NFA(
       Set(State("i"), State("\""), State("\"\\"), State("string")),
-      Set(Symbol("\""), Symbol("\\"), NegatedSymbols("\", \\, \n, \r"),
-        NegatedSymbols("\n, \r")),
+      Set(Symbol("\""), Symbol("\\"), NegatedSymbols("\"", "\\", "\n", "\r"),
+        NegatedSymbols("\n", "\r")),
       Relation(Map(State("i")     -> Map( Symbol("\"") -> Set(State("\""))),
                    State("\"")    -> Map( Symbol("\"") -> Set(State("string")),
                                           Symbol("\\") -> Set(State("\"\\")),
-                                          NegatedSymbols("\", \\, \n, \r") -> Set(State("\""))),
-                   State("\"\\")  -> Map( NegatedSymbols("\n, \r") -> Set(State("\"")))
+                                          NegatedSymbols("\"", "\\", "\n", "\r") -> Set(State("\""))),
+                   State("\"\\")  -> Map( NegatedSymbols("\n", "\r") -> Set(State("\"")))
                )),
       State("i"),
       Set(State("string")),
