@@ -5,19 +5,22 @@ object Relation {
 }
 
 case class Relation(table: Map[State, Map[Symbol, Set[State]]]) {
-  def reachableFrom(startClosure: Set[State]) = {
+  def reachableFrom(startClosure: Set[State]): Map[Symbol, Set[State]] = {
     startClosure
-      .flatMap { (state: State) => {
-        table.get(state).flatMap { map =>
-            val out = map.flatMap { e => if (e._1 == Epsilon) None else Some(e) }
-            if (out.size > 0) Some(out) else None
-          }
+      .flatMap { (state: State) =>
+        table.get(state).flatMap { map: Map[Symbol, Set[State]] =>
+          val out = map.flatMap { kv => kv match {
+            case (Epsilon, _) => None
+            case _ => Some(kv)
+          }}
+          if (out.size > 0) Some(out) else None
         }
       }
       .foldLeft(Map.empty[Symbol, Set[State]]) {
-        case (b, m: Map[Symbol, Set[State]]) => m.flatMap { e =>
-          b updated (e._1, b.getOrElse(e._1, Set.empty[State]) ++ e._2)
-        }
+        case (b, m: Map[Symbol, Set[State]]) =>
+          m.flatMap { case (symbol: Symbol, states: Set[State]) =>
+            b updated (symbol, b.getOrElse(symbol, Set.empty[State]) ++ states)
+          }
         case (b, x) => b
       }
   }

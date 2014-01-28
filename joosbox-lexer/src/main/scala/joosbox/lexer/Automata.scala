@@ -209,32 +209,38 @@ class NFA(
       originalAcceptingStates: Set[State],
       originalRelationTable: Map[State, Map[Symbol, Set[State]]]
     ): (Set[State], Set[State], Map[State, Map[Symbol, Set[State]]]) = {
-      val originalEpsilonClosure = originalStates.flatMap { s => relation.epsilonClosure(s) }
-      val newState = State.combine(originalEpsilonClosure)
-      val reachableStates = relation.reachableFrom(originalEpsilonClosure)
-
-      val acceptingStates = if (originalEpsilonClosure.intersect(originalAcceptingStates).size > 0) {
-        originalAcceptingStates + newState
-      } else {
-        originalAcceptingStates
+      val originalEpsilonClosure: Set[State] = originalStates.flatMap { state: State =>
+        relation.epsilonClosure(state)
       }
 
-      val relationTable = if (reachableStates.size > 0) {
-        originalRelationTable + (newState -> reachableStates.flatMap { transition =>
-          Some(transition._1 -> Set(State.combine(transition._2.flatMap { s => relation.epsilonClosure(s) })))
-        })
-      } else {
-        originalRelationTable
-      }
+      val newState: State = State.combine(originalEpsilonClosure)
+      val reachableStates: Map[Symbol, Set[State]] = relation.reachableFrom(originalEpsilonClosure)
+
+      val acceptingStates: Set[State] =
+        if (originalEpsilonClosure.intersect(originalAcceptingStates).size > 0) {
+          originalAcceptingStates + newState
+        } else {
+          originalAcceptingStates
+        }
+
+      val relationTable: Map[State, Map[Symbol, Set[State]]] =
+        if (reachableStates.size > 0) {
+          val value: Map[Symbol, Set[State]] =
+            reachableStates.map { case (symbol: Symbol, states: Set[State]) =>
+              val combinedStates: Set[State] = states.flatMap { state: State => relation.epsilonClosure(state) }
+              symbol -> Set(State.combine(combinedStates))
+            }
+
+          originalRelationTable + (newState -> value)
+        } else {
+          originalRelationTable
+        }
 
       if (originalRelationTable.contains(newState)) {
         (originalAllStates + newState, acceptingStates, relationTable)
       } else {
-        reachableStates.values.foldLeft((
-          originalAllStates + newState,
-          acceptingStates,
-          relationTable
-        )) { (accumulator, states) =>
+        val initial = (originalAllStates + newState, acceptingStates, relationTable)
+        reachableStates.values.foldLeft(initial) { case (accumulator, states) =>
           process(states, accumulator._1, accumulator._2, accumulator._3)
         }
       }
@@ -258,11 +264,10 @@ class NFA(
   /**
    * TODO: Unimplemented
    */
-
-  //  NOTE: When this does get implemented, it might be a good idea to set
-  //  the matchData on each State with the name of the NFA/DFA from which
-  //  that state came. That way, once a match is made on this new NFA,
-  //  we can just check the matchData on the resulting accepting State
-  //  and figure out the type of the token we just parsed.
+  // NOTE: When this does get implemented, it might be a good idea to set
+  // the matchData on each State with the name of the NFA/DFA from which
+  // that state came. That way, once a match is made on this new NFA,
+  // we can just check the matchData on the resulting accepting State
+  // and figure out the type of the token we just parsed.
   def union(that: NFA) = this
 }

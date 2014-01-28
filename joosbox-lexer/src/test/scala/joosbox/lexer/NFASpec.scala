@@ -213,7 +213,6 @@ class NFASpec extends Specification {
 
     "union" in {
       "simple case" in {
-        /*
         val first = NFA(
           Set(State("1")),
           Set.empty,
@@ -224,21 +223,20 @@ class NFASpec extends Specification {
         )
         val second = first.withName("B")
         val combined = NFA(
-          Set(State("AB"), State("A-1"), State("B-1")),
-          Set.empty,
+          Set(State("A-B"), State("A-1"), State("B-1")),
+          Set(Symbol.epsilon),
           Relation(Map(
-            State("AB") -> Map(
+            State("A-B") -> Map(
               Symbol.epsilon -> Set(State("A-1"), State("B-1"))
             )
           )),
-          State("AB"),
-          Set(State("A1"), State("B1")),
+          State("A-B"),
+          Set(State("A-1"), State("B-1")),
           Some("AB")
         )
 
-        first.union(second) must beEqualTo(combined)
-        */
-       true
+        // first.union(second) must beEqualTo(combined)
+        true
       }
     }
   }
