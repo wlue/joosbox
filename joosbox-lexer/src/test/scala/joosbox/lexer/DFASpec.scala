@@ -258,10 +258,10 @@ class DFASpec extends Specification {
           )
         ).toDFA
 
-        dfa.matchString("abc") must beEqualTo(Set(MatchData("c")))
-        dfa.matchString("abcdef") must beEqualTo(Set(MatchData("c")))
-        dfa.matchString("abcdefghi") must beEqualTo(Set(MatchData("c")))
-        dfa.matchString("abcxyz") must beEqualTo(Set(MatchData("c"), MatchData("z")))
+        dfa.matchString("abc") must beEqualTo(List(MatchData("c")))
+        dfa.matchString("abcdef") must beEqualTo(List(MatchData("c")))
+        dfa.matchString("abcdefghi") must beEqualTo(List(MatchData("c")))
+        dfa.matchString("abcxyz") must beEqualTo(List(MatchData("c"), MatchData("z")))
 
         dfa.consume("abc") must beEqualTo(Some(State("c"), ""))
         dfa.consume("abcdef") must beEqualTo(Some(State("c"), "def"))

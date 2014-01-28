@@ -153,15 +153,15 @@ class DFA(
     }
   }
 
-  def matchString(inputString: String): Set[MatchData] = {
-    consume(inputString, startState).map[Set[MatchData]] {
+  def matchString(inputString: String): List[MatchData] = {
+    consume(inputString, startState).map[List[MatchData]] {
       case (state: State, remaining: String) => {
         state.matchData match {
-          case Some(matchData) => Set(matchData) ++ matchString(remaining)
-          case None => Set.empty[MatchData]
+          case Some(matchData) => List(matchData) ++ matchString(remaining)
+          case None => List.empty[MatchData]
         }
       }
-    }.getOrElse(Set.empty[MatchData])
+    }.getOrElse(List.empty[MatchData])
   }
 }
 
