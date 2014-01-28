@@ -9,7 +9,7 @@ case class Relation(table: Map[State, Map[Symbol, Set[State]]]) {
     startClosure
       .flatMap { (state: State) => {
         table.get(state).flatMap { map =>
-            val out = map.flatMap { e => if (e._1.isInstanceOf[InputSymbol]) Some(e) else None }
+            val out = map.flatMap { e => if (e._1 == Epsilon) None else Some(e) }
             if (out.size > 0) Some(out) else None
           }
         }
