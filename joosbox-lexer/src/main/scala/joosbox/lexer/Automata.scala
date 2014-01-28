@@ -128,8 +128,8 @@ class DFA(
 
           //  ...check if the symbol matches our input
           if (symbol.matchSymbol(inputString.head.toString)) {
-            rules.get(symbol).flatMap { (targetStates) =>
-              targetStates.flatMap { (targetState) =>
+            rules.get(symbol).flatMap { targetStates =>
+              targetStates.flatMap { targetState =>
 
                 //  If it does, we move to that state and consume the rest of the input.
                 consume(inputString.drop(1), targetState)
