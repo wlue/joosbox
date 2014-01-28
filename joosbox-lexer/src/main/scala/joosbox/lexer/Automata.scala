@@ -152,6 +152,17 @@ class DFA(
       }
     }
   }
+
+  def matchString(inputString: String): Set[MatchData] = {
+    consume(inputString, startState).map[Set[MatchData]] {
+      case (state: State, remaining: String) => {
+        state.matchData match {
+          case Some(matchData) => Set(matchData) ++ matchString(remaining)
+          case None => Set.empty[MatchData]
+        }
+      }
+    }.getOrElse(Set.empty[MatchData])
+  }
 }
 
 

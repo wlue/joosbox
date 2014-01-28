@@ -222,7 +222,52 @@ class DFASpec extends Specification {
           Set(State("gotD"))
         ).consume("acd") must beEqualTo(None)
       }
+    }
 
+    "match" in {
+      "test basic NFA" in {
+        val dfa = NFA(
+          Set(State("a"), State("b"), State("c", Some(MatchData("c"))), State("x"),
+              State("y"), State("z", Some(MatchData("z"))), State("start")),
+          Set(Symbol("a"), Symbol("b"), Symbol("c"),
+              Symbol("x"), Symbol("y"), Symbol("z")),
+          Relation(Map(
+            State("start") -> Map(
+              Symbol("a") -> Set(State("a")),
+              Symbol("x") -> Set(State("x"))
+            ),
+            State("a") -> Map(
+              Symbol("b") -> Set(State("b"))
+            ),
+            State("b") -> Map(
+              //  Note - this MatchData is what is currently returned.
+              //  This should be refactored to store matchData outside the state itself.
+              Symbol("c") -> Set(State("c", Some(MatchData("c"))))
+            ),
+            State("x") -> Map(
+              Symbol("y") -> Set(State("y"))
+            ),
+            State("y") -> Map(
+              Symbol("z") -> Set(State("z", Some(MatchData("z"))))
+            )
+          )),
+          State("start"),
+          Set(
+            State("c", Some(MatchData("c"))),
+            State("z", Some(MatchData("z")))
+          )
+        ).toDFA
+
+        dfa.matchString("abc") must beEqualTo(Set(MatchData("c")))
+        dfa.matchString("abcdef") must beEqualTo(Set(MatchData("c")))
+        dfa.matchString("abcdefghi") must beEqualTo(Set(MatchData("c")))
+        dfa.matchString("abcxyz") must beEqualTo(Set(MatchData("c"), MatchData("z")))
+
+        dfa.consume("abc") must beEqualTo(Some(State("c"), ""))
+        dfa.consume("abcdef") must beEqualTo(Some(State("c"), "def"))
+        dfa.consume("xyz") must beEqualTo(Some(State("z"), ""))
+        dfa.consume("xyz123") must beEqualTo(Some(State("z"), "123"))
+      }
     }
   }
 }

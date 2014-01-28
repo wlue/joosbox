@@ -6,7 +6,10 @@ object StateImplicits {
 }
 
 object State {
-  def combine(states: Iterable[State]) = State(states.map(_.name).toList.sorted.mkString(","))
+  def combine(states: Iterable[State]) = State(
+    states.map(_.name).toList.sorted.mkString(","),
+    states.flatMap(_.matchData).headOption
+  )
 }
 
 case class State(name: String, matchData: Option[MatchData] = None) {
