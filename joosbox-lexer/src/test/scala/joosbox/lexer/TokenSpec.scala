@@ -387,5 +387,118 @@ class TokenSpec extends Specification {
       }
     }
 
+    "match binary xor" in {
+      "success" in {
+        TokenNFA.nfas(Token.BinaryXor).toDFA.consume("^") must beEqualTo(Some(State("^"), ""))
+      }
+      "failure" in {
+        TokenNFA.nfas(Token.BinaryXor).toDFA.consume(">") must beEqualTo(None)
+      }
+    }
+
+    "match binary xor assign" in {
+      "success" in {
+        TokenNFA.nfas(Token.BinaryXorAssign).toDFA.consume("^=") must beEqualTo(Some(State("^="), ""))
+      }
+      "failure" in {
+        TokenNFA.nfas(Token.BinaryXorAssign).toDFA.consume("^") must beEqualTo(None)
+      }
+      "failure" in {
+        TokenNFA.nfas(Token.BinaryXorAssign).toDFA.consume("=") must beEqualTo(None)
+      }
+      "failure" in {
+        TokenNFA.nfas(Token.BinaryXorAssign).toDFA.consume("^ ") must beEqualTo(None)
+      }
+    }
+
+
+    "match binary or" in {
+      "success" in {
+        TokenNFA.nfas(Token.BinaryOr).toDFA.consume("|") must beEqualTo(Some(State("|"), ""))
+      }
+      "failure" in {
+        TokenNFA.nfas(Token.BinaryOr).toDFA.consume("^") must beEqualTo(None)
+      }
+    }
+
+    "match binary or assign" in {
+      "success" in {
+        TokenNFA.nfas(Token.BinaryOrAssign).toDFA.consume("|=") must beEqualTo(Some(State("|="), ""))
+      }
+      "failure" in {
+        TokenNFA.nfas(Token.BinaryOrAssign).toDFA.consume("|") must beEqualTo(None)
+      }
+      "failure" in {
+        TokenNFA.nfas(Token.BinaryOrAssign).toDFA.consume("=") must beEqualTo(None)
+      }
+      "failure" in {
+        TokenNFA.nfas(Token.BinaryOrAssign).toDFA.consume("| ") must beEqualTo(None)
+      }
+    }
+
+    "match binary and" in {
+      "success" in {
+        TokenNFA.nfas(Token.BinaryAnd).toDFA.consume("&") must beEqualTo(Some(State("&"), ""))
+      }
+      "failure" in {
+        TokenNFA.nfas(Token.BinaryAnd).toDFA.consume("|") must beEqualTo(None)
+      }
+    }
+
+    "match binary and assign" in {
+      "success" in {
+        TokenNFA.nfas(Token.BinaryAndAssign).toDFA.consume("&=") must beEqualTo(Some(State("&="), ""))
+      }
+      "failure" in {
+        TokenNFA.nfas(Token.BinaryAndAssign).toDFA.consume("&") must beEqualTo(None)
+      }
+      "failure" in {
+        TokenNFA.nfas(Token.BinaryAndAssign).toDFA.consume("=") must beEqualTo(None)
+      }
+      "failure" in {
+        TokenNFA.nfas(Token.BinaryAndAssign).toDFA.consume("& ") must beEqualTo(None)
+      }
+    }
+
+
+    "match logical or" in {
+      "success" in {
+        TokenNFA.nfas(Token.LogicalOr).toDFA.consume("||") must beEqualTo(Some(State("||"), ""))
+      }
+      "failure" in {
+        TokenNFA.nfas(Token.LogicalOr).toDFA.consume("|") must beEqualTo(None)
+      }
+      "failure" in {
+        TokenNFA.nfas(Token.LogicalOr).toDFA.consume("| ") must beEqualTo(None)
+      }
+      "failure" in {
+        TokenNFA.nfas(Token.LogicalOr).toDFA.consume("&&") must beEqualTo(None)
+      }
+    }
+
+    "match logical and" in {
+      "success" in {
+        TokenNFA.nfas(Token.LogicalAnd).toDFA.consume("&&") must beEqualTo(Some(State("&&"), ""))
+      }
+      "failure" in {
+        TokenNFA.nfas(Token.LogicalAnd).toDFA.consume("&") must beEqualTo(None)
+      }
+      "failure" in {
+        TokenNFA.nfas(Token.LogicalAnd).toDFA.consume("& ") must beEqualTo(None)
+      }
+      "failure" in {
+        TokenNFA.nfas(Token.LogicalAnd).toDFA.consume("||") must beEqualTo(None)
+      }
+    }
+
+    "match semicolon" in {
+      "success" in {
+        TokenNFA.nfas(Token.Semicolon).toDFA.consume(";") must beEqualTo(Some(State(";"), ""))
+      }
+      "failure" in {
+        TokenNFA.nfas(Token.Semicolon).toDFA.consume("|") must beEqualTo(None)
+      }
+    }
+
   }
 }
