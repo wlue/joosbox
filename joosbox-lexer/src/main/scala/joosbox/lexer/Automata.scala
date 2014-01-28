@@ -122,14 +122,14 @@ class DFA(
         None
       }
     } else {
-      val result = relation.table.get(state).flatMap { (rules) =>
+      val result:Option[(State, String)] = relation.table.get(state).flatMap { (rules:Map[Symbol, Set[State]]) =>
         //  For each relation in the relation table, we...
-        rules.keys.toList.sortWith(_.priority > _.priority).toStream.flatMap { (symbol) =>
+        rules.keys.toList.sortWith(_.priority > _.priority).toStream.flatMap { (symbol:Symbol) =>
 
           //  ...check if the symbol matches our input
           if (symbol.matchSymbol(inputString.head.toString)) {
-            rules.get(symbol).flatMap { targetStates =>
-              targetStates.flatMap { targetState =>
+            rules.get(symbol).flatMap { (targetStates:Set[State]) =>
+              targetStates.flatMap { (targetState:State) =>
 
                 //  If it does, we move to that state and consume the rest of the input.
                 consume(inputString.drop(1), targetState)
