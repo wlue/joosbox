@@ -26,13 +26,14 @@ class NFASpec extends Specification {
       val name = Some("TestName")
 
       val nfa = NFA(states, symbols, relation, startState, acceptingStates, name)
-      val NFA(states2, symbols2, relation2, startState2, acceptingStates2, name2) = nfa
+      val NFA(states2, symbols2, relation2, startState2, acceptingStates2, name2, stateSourceMap2) = nfa
       states2 must beEqualTo(states)
       symbols2 must beEqualTo(symbols)
       relation2 must beEqualTo(relation)
       startState2 must beEqualTo(startState)
       acceptingStates2 must beEqualTo(acceptingStates)
       name2 must beEqualTo(name)
+      stateSourceMap2 must beEqualTo(nfa.stateSourceMap)
     }
 
     "fail to create with" in {

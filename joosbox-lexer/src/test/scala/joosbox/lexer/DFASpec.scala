@@ -24,13 +24,14 @@ class DFASpec extends Specification {
       val acceptingStates = Set(State("k"))
 
       val dfa = DFA(states, symbols, relation, startState, acceptingStates)
-      val DFA(states2, symbols2, relation2, startState2, acceptingStates2, name2) = dfa
+      val DFA(states2, symbols2, relation2, startState2, acceptingStates2, name2, stateSourceMap2) = dfa
       states2 must beEqualTo(states)
       symbols2 must beEqualTo(symbols)
       relation2 must beEqualTo(relation)
       startState2 must beEqualTo(startState)
       acceptingStates2 must beEqualTo(acceptingStates)
       name2 must beNone
+      stateSourceMap2 must beEqualTo(dfa.stateSourceMap)
     }
 
     "fail to create with" in {
@@ -227,8 +228,8 @@ class DFASpec extends Specification {
     "match" in {
       "test basic NFA" in {
         val dfa = NFA(
-          Set(State("a"), State("b"), State("c", Some(MatchData("c"))), State("x"),
-              State("y"), State("z", Some(MatchData("z"))), State("start")),
+          Set(State("a"), State("b"), State("c"), State("x"),
+              State("y"), State("z"), State("start")),
           Set(Symbol("a"), Symbol("b"), Symbol("c"),
               Symbol("x"), Symbol("y"), Symbol("z")),
           Relation(Map(
@@ -240,33 +241,74 @@ class DFASpec extends Specification {
               Symbol("b") -> Set(State("b"))
             ),
             State("b") -> Map(
-              //  Note - this MatchData is what is currently returned.
-              //  This should be refactored to store matchData outside the state itself.
-              Symbol("c") -> Set(State("c", Some(MatchData("c"))))
+              Symbol("c") -> Set(State("c"))
             ),
             State("x") -> Map(
               Symbol("y") -> Set(State("y"))
             ),
             State("y") -> Map(
-              Symbol("z") -> Set(State("z", Some(MatchData("z"))))
+              Symbol("z") -> Set(State("z"))
             )
           )),
           State("start"),
-          Set(
-            State("c", Some(MatchData("c"))),
-            State("z", Some(MatchData("z")))
+          Set(State("c"), State("z")),
+          Some("BASIC"),
+          Map[State, MatchData](
+            State("c") -> MatchData("C_MATCH"),
+            State("z") -> MatchData("Z_MATCH")
           )
         ).toDFA
 
-        dfa.matchString("abc") must beEqualTo(List(MatchData("c")))
+        dfa.matchString("abc") must beEqualTo(Some(List(MatchData("C_MATCH"))))
         dfa.matchString("abcdef") must beEqualTo(None)
         dfa.matchString("abcdefghi") must beEqualTo(None)
-        dfa.matchString("abcxyz") must beEqualTo(List(MatchData("c"), MatchData("z")))
+        dfa.matchString("abcxyz") must beEqualTo(Some(List(MatchData("C_MATCH"), MatchData("Z_MATCH"))))
 
         dfa.consume("abc") must beEqualTo(Some(State("c"), ""))
         dfa.consume("abcdef") must beEqualTo(Some(State("c"), "def"))
         dfa.consume("xyz") must beEqualTo(Some(State("z"), ""))
         dfa.consume("xyz123") must beEqualTo(Some(State("z"), "123"))
+      }
+
+      "merged basic DFA from NFA with epsilon transitions" in {
+        val dfa = NFA(
+          Set(State("a"), State("b"), State("c"), State("x"),
+              State("y"), State("z"), State("start")),
+          Set(Symbol("a"), Symbol("b"), Symbol("c"),
+              Symbol("x"), Symbol("y"), Symbol("z"), Symbol.epsilon),
+          Relation(Map(
+            State("start") -> Map(
+              Symbol("a") -> Set(State("a")),
+              Symbol("x") -> Set(State("x"))
+            ),
+            State("a") -> Map(
+              Symbol("b") -> Set(State("b")),
+              Symbol.epsilon -> Set(State("x"))
+            ),
+            State("b") -> Map(
+              Symbol("c") -> Set(State("c"))
+            ),
+            State("x") -> Map(
+              Symbol("y") -> Set(State("y"))
+            ),
+            State("y") -> Map(
+              Symbol("z") -> Set(State("z")),
+              Symbol.epsilon -> Set(State("c"))
+            )
+          )),
+          State("start"),
+          Set(State("c"), State("z")),
+          Some("BASIC"),
+          Map[State, MatchData](
+            State("c") -> MatchData("C_MATCH"),
+            State("z") -> MatchData("Z_MATCH")
+          )
+        ).toDFA
+
+        dfa.matchString("abc") must beEqualTo(Some(List(MatchData("C_MATCH"))))
+        dfa.matchString("ayz") must beEqualTo(Some(List(MatchData("Z_MATCH"))))
+        dfa.matchString("ay") must beEqualTo(Some(List(MatchData("C_MATCH"))))
+        dfa.matchString("abcxyz") must beEqualTo(Some(List(MatchData("C_MATCH"), MatchData("Z_MATCH"))))
       }
     }
   }

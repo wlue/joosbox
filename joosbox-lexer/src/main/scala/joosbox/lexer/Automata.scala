@@ -22,7 +22,10 @@ abstract class Automata(
   val acceptingStates:    Set[State],
 
   //  Optional name.
-  val name: Option[String] = None
+  val name: Option[String] = None,
+
+  //  Map from states to match data.
+  var _stateSourceMap: Map[State, MatchData] = Map.empty[State, MatchData]
 ) {
   if (!states.contains(startState)) {
     throw new IllegalArgumentException("Start state is not contained within provided states.")
@@ -50,13 +53,24 @@ abstract class Automata(
     throw new IllegalArgumentException("Transition table contains symbols that are not found within provided symbols.")
   }
 
+  if (_stateSourceMap.size == 0 && name != None) {
+    _stateSourceMap = states.map{ case (state: State) => (state, MatchData(name.get)) }.toMap
+  }
+
+  val stateSourceMap = _stateSourceMap
+
+  if (stateSourceMap.keys.toSet.intersect(states).size != stateSourceMap.keys.size) {
+    throw new IllegalArgumentException("State source map contains states not found within provided states.")
+  }
+
   override def equals(obj: Any) = obj match {
     case automata: Automata =>
       automata.states.equals(states) &&
       automata.symbols.equals(symbols) &&
       automata.relation.equals(relation) &&
       automata.startState.equals(startState) &&
-      automata.acceptingStates.equals(acceptingStates)
+      automata.acceptingStates.equals(acceptingStates) &&
+      automata.stateSourceMap.equals(stateSourceMap)
     case _ => false
   }
 
@@ -65,7 +79,8 @@ abstract class Automata(
     symbols + ", " +
     relation + ", " +
     startState + ", " +
-    acceptingStates + ")"
+    acceptingStates + "," + 
+    stateSourceMap + ")"
 
   def toGraphViz: String = {
     """digraph FiniteAutomaton {
@@ -93,11 +108,12 @@ object DFA {
     relation: Relation,
     startState: State,
     acceptingStates: Set[State],
-    name: Option[String] = None
-  ) = new DFA(states, symbols, relation, startState, acceptingStates, name)
+    name: Option[String] = None,
+    _stateSourceMap: Map[State, MatchData] = Map.empty[State, MatchData]
+  ) = new DFA(states, symbols, relation, startState, acceptingStates, name, _stateSourceMap)
 
   def unapply(dfa: DFA) = Some((
-    dfa.states, dfa.symbols, dfa.relation, dfa.startState, dfa.acceptingStates, dfa.name
+    dfa.states, dfa.symbols, dfa.relation, dfa.startState, dfa.acceptingStates, dfa.name, dfa.stateSourceMap
   ))
 }
 
@@ -153,15 +169,21 @@ class DFA(
     }
   }
 
-  def matchString(inputString: String): List[MatchData] = {
-    consume(inputString, startState).map[List[MatchData]] {
+  def matchString(inputString: String): Option[List[MatchData]] = {
+    consume(inputString, startState).flatMap[List[MatchData]] {
       case (state: State, remaining: String) => {
-        state.matchData match {
-          case Some(matchData) => List(matchData) ++ matchString(remaining)
-          case None => List.empty[MatchData]
+        if (remaining.length == 0) {
+          Some(List[MatchData](stateSourceMap(state)))
+        } else {
+          matchString(remaining) match {
+            case Some(remainingMatchData) => {
+              Some(List[MatchData](stateSourceMap(state)) ++ remainingMatchData)
+            }
+            case None => None
+          }
         }
       }
-    }.getOrElse(List.empty[MatchData])
+    }
   }
 }
 
@@ -176,11 +198,12 @@ object NFA {
     relation: Relation,
     startState: State,
     acceptingStates: Set[State],
-    name: Option[String] = None
-  ) = new NFA(states, symbols, relation, startState, acceptingStates, name)
+    name: Option[String] = None,
+    _stateSourceMap: Map[State, MatchData] = Map.empty[State, MatchData]
+  ) = new NFA(states, symbols, relation, startState, acceptingStates, name, _stateSourceMap)
 
   def unapply(nfa: NFA) = Some((
-    nfa.states, nfa.symbols, nfa.relation, nfa.startState, nfa.acceptingStates, nfa.name
+    nfa.states, nfa.symbols, nfa.relation, nfa.startState, nfa.acceptingStates, nfa.name, nfa.stateSourceMap
   ))
 }
 
@@ -190,13 +213,14 @@ class NFA(
   relation: Relation,
   startState: State,
   acceptingStates: Set[State],
-  name: Option[String] = None
-) extends Automata(states, symbols, relation, startState, acceptingStates, name) {
+  name: Option[String] = None,
+  _stateSourceMap: Map[State, MatchData] = Map.empty[State, MatchData]
+) extends Automata(states, symbols, relation, startState, acceptingStates, name, _stateSourceMap) {
 
   /**
    * Return an identical NFA with a different name.
    */
-  def withName(newName: String) = NFA(states, symbols, relation, startState, acceptingStates, Some(newName))
+  def withName(newName: String) = NFA(states, symbols, relation, startState, acceptingStates, Some(newName), stateSourceMap)
 
   /**
    * Convert the NFA to a DFA.
@@ -251,13 +275,26 @@ class NFA(
       startSet, Set.empty[State], acceptingStates, Map.empty[State, Map[Symbol, Set[State]]]
     )
 
+    val newStateSourceMap = states.flatMap {
+      case (state: State) => {
+        val states = relation.epsilonClosure(state)
+        val combinedMatchData: Set[MatchData] = states.flatMap(stateSourceMap.get(_))
+
+        combinedMatchData.headOption match {
+          case None => None
+          case Some(data) => Some(State.combine(states) -> data)
+        }
+      }
+    }.toMap
+
     DFA(
       newStates,
       symbols.filter { x => x != Symbol.epsilon },
       Relation(newRelationTable),
       State.combine(startSet),
-      newAcceptingStates,
-      name
+      newAcceptingStates.intersect(newStates),
+      name,
+      newStateSourceMap
     )
   }
 
