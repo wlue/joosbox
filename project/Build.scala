@@ -11,7 +11,8 @@ object JoosboxBuild extends Build {
 
     libraryDependencies := Seq(
       "org.scala-lang" % "scala-library" % "2.10.3",
-      "org.specs2" %% "specs2" % "2.3.7" % "test"
+      "org.specs2" %% "specs2" % "2.3.7" % "test",
+      "commons-lang" % "commons-lang" % "2.6"
     ),
 
     resolvers := Seq("snapshots", "releases").map(Resolver.sonatypeRepo),

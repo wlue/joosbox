@@ -703,6 +703,68 @@ class TokenSpec extends Specification {
         TokenNFA.nfas(Token.Identifier).toDFA.consume("1world") must beEqualTo(None)
       }
     }
+  }
 
+  "matchString" in {
+    "simple assign/equals matching" in {
+      val testNFAs = List[NFA](TokenNFA.nfas(Token.Assign), TokenNFA.nfas(Token.Equal))
+      val mergedTestNFAs = testNFAs.reduce { (first, second) => first.union(second) }
+      val mergedTestDFA = mergedTestNFAs.toDFA
+
+      mergedTestDFA.matchString("=") must beEqualTo(Some(List(MatchData("ASSIGN"))))
+      mergedTestDFA.matchString("==") must beEqualTo(Some(List(MatchData("EQUAL"))))
+      mergedTestDFA.matchString("===") must beEqualTo(Some(List(MatchData("EQUAL"), MatchData("ASSIGN"))))
+      mergedTestDFA.matchString("+") must beEqualTo(None)
+    }
+
+    "simple assign/equal/not matching" in {
+      val testNFAs = List[NFA](
+        TokenNFA.nfas(Token.Assign),
+        TokenNFA.nfas(Token.Equal),
+        TokenNFA.nfas(Token.LogicalNot)
+      )
+      val mergedTestNFAs = testNFAs.reduce { (first, second) => first.union(second) }
+      val mergedTestDFA = mergedTestNFAs.toDFA
+
+      println("Merged 3x test DFA: " + mergedTestDFA.toGraphViz)
+
+      mergedTestDFA.matchString("=") must beEqualTo(Some(List(MatchData("ASSIGN"))))
+      mergedTestDFA.matchString("==") must beEqualTo(Some(List(MatchData("EQUAL"))))
+      mergedTestDFA.matchString("!") must beEqualTo(Some(List(MatchData("LNOT"))))
+    }
+
+    "simple assign/equal/not/notequal matching" in {
+      val testNFAs = List[NFA](
+        TokenNFA.nfas(Token.Assign),
+        TokenNFA.nfas(Token.Equal),
+        TokenNFA.nfas(Token.LogicalNot),
+        TokenNFA.nfas(Token.NotEqual)        
+      )
+      val mergedTestNFAs = testNFAs.reduce { (first, second) => first.union(second) }
+      val mergedTestDFA = mergedTestNFAs.toDFA
+
+      println("Merged 4x test DFA: " + mergedTestDFA.toGraphViz)
+
+      mergedTestDFA.matchString("=") must beEqualTo(Some(List(MatchData("ASSIGN"))))
+      mergedTestDFA.matchString("==") must beEqualTo(Some(List(MatchData("EQUAL"))))
+      mergedTestDFA.matchString("!") must beEqualTo(Some(List(MatchData("LNOT"))))
+      mergedTestDFA.matchString("!=") must beEqualTo(Some(List(MatchData("NOT_EQUAL"))))
+    }
+
+    "EVERYTHING matching" in {
+      val theDFA = TokenNFA.nfa.toDFA
+
+      theDFA.matchString("=") must beEqualTo(Some(List(MatchData("ASSIGN"))))
+      theDFA.matchString("==") must beEqualTo(Some(List(MatchData("EQUAL"))))
+      theDFA.matchString("!") must beEqualTo(Some(List(MatchData("LNOT"))))
+      theDFA.matchString("!=") must beEqualTo(Some(List(MatchData("NOT_EQUAL"))))
+      theDFA.matchString("a != b") must beEqualTo(Some(List(
+        MatchData("IDENTIFIER"),
+        MatchData("WHITESPACE"),
+        MatchData("NOT_EQUAL"),
+        MatchData("WHITESPACE"),
+        MatchData("IDENTIFIER")
+      )))
+    }
   }
 }

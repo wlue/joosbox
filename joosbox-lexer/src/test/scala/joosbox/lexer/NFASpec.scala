@@ -233,11 +233,14 @@ class NFASpec extends Specification {
           )),
           State("A-B"),
           Set(State("A-1"), State("B-1")),
-          Some("AB")
+          Some("AB"),
+          Map(
+            State("A-1") -> MatchData("A"),
+            State("B-1") -> MatchData("B")
+          )
         )
 
-        // first.union(second) must beEqualTo(combined)
-        true
+        first.union(second) must beEqualTo(combined)
       }
     }
   }

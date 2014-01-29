@@ -1,5 +1,7 @@
 package joosbox.lexer
 
+import org.apache.commons.lang.StringEscapeUtils.escapeJava
+
 /**
  * Automata representing NFA/DFA.
  */
@@ -60,7 +62,10 @@ abstract class Automata(
   val stateSourceMap = _stateSourceMap
 
   if (stateSourceMap.keys.toSet.intersect(states).size != stateSourceMap.keys.size) {
-    throw new IllegalArgumentException("State source map contains states not found within provided states.")
+    throw new IllegalArgumentException(
+      "State source map contains states not found within provided states. Source map:\n" +
+      stateSourceMap + "\nProvided states:\n" + states + "\n"
+    )
   }
 
   override def equals(obj: Any) = obj match {
@@ -85,12 +90,12 @@ abstract class Automata(
   def toGraphViz: String = {
     """digraph FiniteAutomaton {
   rankdir=LR;
-  node [shape = doublecircle]; """ + acceptingStates.map{ s => "\"" + s + "\"" }.mkString(" ") + """;
+  node [shape = doublecircle]; """ + acceptingStates.map{ s => "\"" + s.name + "\"" }.mkString(" ") + """;
   node [shape = circle];
   """ + relation.table.flatMap {
     case (start, transitions) => transitions.flatMap {
       case (symbol, states) => states.flatMap ( (state) => {
-        Some("\"" + start + "\" -> \"" + state + "\" [ label = \"" + symbol + "\" ];")
+        Some("\"" + escapeJava(start.name) + "\" -> \"" + escapeJava(state.name) + "\" [ label = \"" + escapeJava(symbol.toString) + "\" ];")
       })
     }
   }.mkString("\n") + "\n}"
@@ -123,12 +128,12 @@ class DFA(
   relation: Relation,
   startState: State,
   acceptingStates: Set[State],
-  name: Option[String] = None
-) extends Automata(states, symbols, relation, startState, acceptingStates, name) {
+  name: Option[String] = None,
+  _stateSourceMap: Map[State, MatchData] = Map.empty[State, MatchData]
+) extends Automata(states, symbols, relation, startState, acceptingStates, name, _stateSourceMap) {
   if (symbols.contains(Symbol.epsilon)) {
     throw new IllegalArgumentException("DFA cannot contain epsilon transitions.")
   }
-
 
   def consume(inputString: String, state: State = startState): Option[(State, String)] = {
     if (inputString.length == 0) {
@@ -220,7 +225,17 @@ class NFA(
   /**
    * Return an identical NFA with a different name.
    */
-  def withName(newName: String) = NFA(states, symbols, relation, startState, acceptingStates, Some(newName), stateSourceMap)
+  def withName(newName: String) = {
+    val renamedStateSourceMap = stateSourceMap.map {
+      case (state: State, data: MatchData) => {
+        data match {
+          case MatchData(name) => state -> MatchData(newName)
+          case _ => state -> data
+        }
+      }
+    }
+    NFA(states, symbols, relation, startState, acceptingStates, Some(newName), renamedStateSourceMap)
+  }
 
   /**
    * Convert the NFA to a DFA.
@@ -231,8 +246,9 @@ class NFA(
       originalStates: Set[State],
       originalAllStates: Set[State],
       originalAcceptingStates: Set[State],
-      originalRelationTable: Map[State, Map[Symbol, Set[State]]]
-    ): (Set[State], Set[State], Map[State, Map[Symbol, Set[State]]]) = {
+      originalRelationTable: Map[State, Map[Symbol, Set[State]]],
+      originalStateSourceMap: Map[State, MatchData]
+    ): (Set[State], Set[State], Map[State, Map[Symbol, Set[State]]], Map[State, MatchData]) = {
       val originalEpsilonClosure: Set[State] = originalStates.flatMap { state: State =>
         relation.epsilonClosure(state)
       }
@@ -246,6 +262,15 @@ class NFA(
         } else {
           originalAcceptingStates
         }
+
+      val stateSourceMap: Map[State, MatchData] = {
+        val sourceMatchData: Set[State] = originalEpsilonClosure.intersect(originalStateSourceMap.keys.toSet).intersect(acceptingStates)
+        if (sourceMatchData.size > 0) {
+          originalStateSourceMap + (newState -> originalStateSourceMap(sourceMatchData.head))
+        } else {
+          originalStateSourceMap
+        }
+      }
 
       val relationTable: Map[State, Map[Symbol, Set[State]]] =
         if (reachableStates.size > 0) {
@@ -261,50 +286,103 @@ class NFA(
         }
 
       if (originalRelationTable.contains(newState)) {
-        (originalAllStates + newState, acceptingStates, relationTable)
+        (originalAllStates + newState, acceptingStates, relationTable, stateSourceMap)
       } else {
-        val initial = (originalAllStates + newState, acceptingStates, relationTable)
+        val initial = (originalAllStates + newState, acceptingStates, relationTable, stateSourceMap)
         reachableStates.values.foldLeft(initial) { case (accumulator, states) =>
-          process(states, accumulator._1, accumulator._2, accumulator._3)
+          process(states, accumulator._1, accumulator._2, accumulator._3, accumulator._4)
         }
       }
     }
 
     val startSet = relation.epsilonClosure(startState)
-    val (newStates, newAcceptingStates, newRelationTable) = process(
-      startSet, Set.empty[State], acceptingStates, Map.empty[State, Map[Symbol, Set[State]]]
+    val (newStates, newAcceptingStates, newRelationTable, newStateSourceMap) = process(
+      startSet, Set.empty[State], acceptingStates, Map.empty[State, Map[Symbol, Set[State]]], stateSourceMap
     )
 
-    val newStateSourceMap = states.flatMap {
-      case (state: State) => {
-        val states = relation.epsilonClosure(state)
-        val combinedMatchData: Set[MatchData] = states.flatMap(stateSourceMap.get(_))
-
-        combinedMatchData.headOption match {
-          case None => None
-          case Some(data) => Some(State.combine(states) -> data)
-        }
-      }
+    val prunedStateSourceMap = newStateSourceMap.flatMap {
+      case (state: State, data: MatchData) => if (newStates.contains(state)) Some(state -> data) else None
     }.toMap
+    val pnac = newAcceptingStates.intersect(newStates)
 
     DFA(
       newStates,
       symbols.filter { x => x != Symbol.epsilon },
       Relation(newRelationTable),
       State.combine(startSet),
-      newAcceptingStates.intersect(newStates),
+      pnac,
       name,
-      newStateSourceMap
+      prunedStateSourceMap
     )
   }
 
-  /**
-   * TODO: Unimplemented
-   */
-  // NOTE: When this does get implemented, it might be a good idea to set
-  // the matchData on each State with the name of the NFA/DFA from which
-  // that state came. That way, once a match is made on this new NFA,
-  // we can just check the matchData on the resulting accepting State
-  // and figure out the type of the token we just parsed.
-  def union(that: NFA) = this
+  def union(that: NFA): NFA = {
+    val newStates: Set[State] = {
+      states.map{ s:State => State(name.get + "-" + s.name) } ++
+      that.states.map{ s:State => State(that.name.get + "-" + s.name) }
+    }
+
+    //  TODO: If there is no name here, generate one.
+    val newName: String = name.get + "-" + that.name.get
+    val newStartState: State = State(name.get + "-" + that.name.get)
+
+    val newAcceptingStates: Set[State] = {
+      acceptingStates.map{ s:State => State(name.get + "-" + s.name) } ++
+      that.acceptingStates.map{ s:State => State(that.name.get + "-" + s.name) }
+    }
+
+    val newRelationTable: Map[State, Map[Symbol, Set[State]]] = {
+      relation.table.map{
+        case(state: State, transitions: Map[Symbol, Set[State]]) => {
+          State(name.get + "-" + state.name) -> transitions.map {
+            case(symbol: Symbol, states: Set[State]) => {
+              symbol -> states.map { (destState: State) => 
+                State(name.get + "-" + destState.name)
+              }
+            }
+          }
+        }
+      } ++ 
+      that.relation.table.map{
+        case(state: State, transitions: Map[Symbol, Set[State]]) => {
+          State(that.name.get + "-" + state.name) -> transitions.map {
+            case(symbol: Symbol, states: Set[State]) => {
+              symbol -> states.map { (destState: State) => 
+                State(that.name.get + "-" + destState.name)
+              }
+            }
+          }
+        }
+      } ++ 
+      Map[State, Map[Symbol, Set[State]]](
+        newStartState -> Map(Symbol.epsilon -> Set(
+          State(name.get + "-" + startState.name),
+          State(that.name.get + "-" + that.startState.name)
+        ))
+      )
+    }
+
+    val newStateSourceMap: Map[State, MatchData] = {
+      stateSourceMap.map{
+        case(state: State, data: MatchData) => {
+          State(name.get + "-" + state.name) -> data
+        }
+      } ++
+      that.stateSourceMap.map{
+        case(state: State, data: MatchData) => {
+          State(that.name.get + "-" + state.name) -> data
+        }
+      }
+    } 
+
+    NFA(
+      newStates + newStartState,
+      symbols ++ that.symbols + Symbol.epsilon,
+      Relation(newRelationTable),
+      newStartState,
+      newAcceptingStates,
+      Some(newName),
+      newStateSourceMap
+    )
+  }
 }
