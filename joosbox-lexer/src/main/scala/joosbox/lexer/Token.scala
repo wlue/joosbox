@@ -58,60 +58,60 @@ object Token {
 
   object Num extends Token
   object Identifier extends Token {
-      val Keywords : Map[String, Token.Token] = Map(
-        "abstract" -> Token.AbstractKeyword,
-        "boolean" -> Token.BooleanKeyword,
-        "break" -> Token.BreakKeyword,
-        "byte" -> Token.ByteKeyword,
-        "case" -> Token.CaseKeyword,
-        "catch" -> Token.CatchKeyword,
-        "char" -> Token.CharKeyword,
-        "class" -> Token.ClassKeyword,
-        "const" -> Token.ConstKeyword,
-        "continue" -> Token.ContinueKeyword,
-        "default" -> Token.DefaultKeyword,
-        "do" -> Token.DoKeyword,
-        "double" -> Token.DoubleKeyword,
-        "else" -> Token.ElseKeyword,
-        "extends" -> Token.ExtendsKeyword,
-        "final" -> Token.FinalKeyword,
-        "finally" -> Token.FinallyKeyword,
-        "float" -> Token.FloatKeyword,
-        "for" -> Token.ForKeyword,
-        "goto" -> Token.GotoKeyword,
-        "if" -> Token.IfKeyword,
-        "implements" -> Token.ImplementsKeyword,
-        "import" -> Token.ImportKeyword,
-        "instanceof" -> Token.InstanceofKeyword,
-        "int" -> Token.IntKeyword,
-        "interface" -> Token.InterfaceKeyword,
-        "long" -> Token.LongKeyword,
-        "native" -> Token.NativeKeyword,
-        "new" -> Token.NewKeyword,
-        "package" -> Token.PackageKeyword,
-        "private" -> Token.PrivateKeyword,
-        "protected" -> Token.ProtectedKeyword,
-        "public" -> Token.PublicKeyword,
-        "return" -> Token.ReturnKeyword,
-        "short" -> Token.ShortKeyword,
-        "static" -> Token.StaticKeyword,
-        "strictfp" -> Token.StrictfpKeyword,
-        "super" -> Token.SuperKeyword,
-        "switch" -> Token.SwitchKeyword,
-        "synchronized" -> Token.SynchronizedKeyword,
-        "this" -> Token.ThisKeyword,
-        "throw" -> Token.ThrowKeyword,
-        "throws" -> Token.ThrowsKeyword,
-        "transient" -> Token.TransientKeyword,
-        "try" -> Token.TryKeyword,
-        "void" -> Token.VoidKeyword,
-        "volatile" -> Token.VolatileKeyword,
-        "while" -> Token.WhileKeyword,
+    val Keywords : Map[String, Token.Token] = Map(
+      "abstract" -> Token.AbstractKeyword,
+      "boolean" -> Token.BooleanKeyword,
+      "break" -> Token.BreakKeyword,
+      "byte" -> Token.ByteKeyword,
+      "case" -> Token.CaseKeyword,
+      "catch" -> Token.CatchKeyword,
+      "char" -> Token.CharKeyword,
+      "class" -> Token.ClassKeyword,
+      "const" -> Token.ConstKeyword,
+      "continue" -> Token.ContinueKeyword,
+      "default" -> Token.DefaultKeyword,
+      "do" -> Token.DoKeyword,
+      "double" -> Token.DoubleKeyword,
+      "else" -> Token.ElseKeyword,
+      "extends" -> Token.ExtendsKeyword,
+      "final" -> Token.FinalKeyword,
+      "finally" -> Token.FinallyKeyword,
+      "float" -> Token.FloatKeyword,
+      "for" -> Token.ForKeyword,
+      "goto" -> Token.GotoKeyword,
+      "if" -> Token.IfKeyword,
+      "implements" -> Token.ImplementsKeyword,
+      "import" -> Token.ImportKeyword,
+      "instanceof" -> Token.InstanceofKeyword,
+      "int" -> Token.IntKeyword,
+      "interface" -> Token.InterfaceKeyword,
+      "long" -> Token.LongKeyword,
+      "native" -> Token.NativeKeyword,
+      "new" -> Token.NewKeyword,
+      "package" -> Token.PackageKeyword,
+      "private" -> Token.PrivateKeyword,
+      "protected" -> Token.ProtectedKeyword,
+      "public" -> Token.PublicKeyword,
+      "return" -> Token.ReturnKeyword,
+      "short" -> Token.ShortKeyword,
+      "static" -> Token.StaticKeyword,
+      "strictfp" -> Token.StrictfpKeyword,
+      "super" -> Token.SuperKeyword,
+      "switch" -> Token.SwitchKeyword,
+      "synchronized" -> Token.SynchronizedKeyword,
+      "this" -> Token.ThisKeyword,
+      "throw" -> Token.ThrowKeyword,
+      "throws" -> Token.ThrowsKeyword,
+      "transient" -> Token.TransientKeyword,
+      "try" -> Token.TryKeyword,
+      "void" -> Token.VoidKeyword,
+      "volatile" -> Token.VolatileKeyword,
+      "while" -> Token.WhileKeyword,
 
-        "true" -> Token.TrueLiteral,
-        "false" -> Token.FalseLiteral,
-        "null" -> Token.NullLiteral
-      )
+      "true" -> Token.TrueLiteral,
+      "false" -> Token.FalseLiteral,
+      "null" -> Token.NullLiteral
+    )
   }
 
   object CharLiteral extends Token
@@ -172,9 +172,7 @@ object Token {
 }
 
 object TokenNFA {
-  lazy val nfa: NFA = {
-    NFA.union(nfas.values.toSet)
-  }
+  lazy val nfa: NFA = NFA.union(nfas.values.toSet)
 
   val nfas: Map[Token.Token, NFA] = Map(
     Token.Question -> NFA(

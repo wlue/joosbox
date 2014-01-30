@@ -215,7 +215,7 @@ object NFA {
   def union(nfas: Set[NFA]): NFA = {
     val prefixedNFAs: Set[NFA] = nfas.map(_.toPrefixedForm)
 
-    //  TODO: If there is no name here, generate one.
+    // TODO: If there is no name here, generate one.
     val newName: String = prefixedNFAs.flatMap(_.name).mkString("|")
     val newStartState: State = State(newName)
 
@@ -223,9 +223,9 @@ object NFA {
     val newRelationTable: Map[State, Map[Symbol, Set[State]]] = {
       val existingRelations = prefixedNFAs.map(_.relation.table).reduce((_ ++ _))
       val startStates: Set[State] = prefixedNFAs.map(_.startState)
-
       existingRelations + (newStartState -> Map(Symbol.epsilon -> startStates))
     }
+
     val newStateSourceMap: Map[State, MatchData] = prefixedNFAs.map(_.stateSourceMap).reduce((_ ++ _))
     val newStates: Set[State] = prefixedNFAs.map(_.states).reduce((_ ++ _)) + newStartState
     val newSymbols: Set[Symbol] = prefixedNFAs.map(_.symbols).reduce((_ ++ _)) + Symbol.epsilon
@@ -256,14 +256,16 @@ class NFA(
    * Return an identical NFA with a different name.
    */
   def withName(newName: String) = {
-    val renamedStateSourceMap = stateSourceMap.map {
-      case (state: State, data: MatchData) => {
+    val renamedStateSourceMap =
+      stateSourceMap.map { case (state: State, data: MatchData) =>
         data match {
-          case MatchData(name, input) => state -> MatchData(newName, input)
-          case _ => state -> data
+          case MatchData(_, input) =>
+            state -> MatchData(newName, input)
+          case _ =>
+            state -> data
         }
       }
-    }
+
     NFA(states, symbols, relation, startState, acceptingStates, Some(newName), renamedStateSourceMap)
   }
 
@@ -306,7 +308,9 @@ class NFA(
         if (reachableStates.size > 0) {
           val value: Map[Symbol, Set[State]] =
             reachableStates.map { case (symbol: Symbol, states: Set[State]) =>
-              val combinedStates: Set[State] = states.flatMap { state: State => relation.epsilonClosure(state) }
+              val combinedStates: Set[State] = states.flatMap { (state: State) =>
+                relation.epsilonClosure(state) 
+              }
               symbol -> Set(State.combine(combinedStates))
             }
 
@@ -346,46 +350,35 @@ class NFA(
     )
   }
 
-  def toPrefixedForm: NFA = {
-    name match {
-      case None => this
-      case Some(name) => {
+  def toPrefixedForm: NFA = name match {
+    case None => this
+    case Some(name) => {
+      val newStates: Set[State] = states.map(State.prefixed(name, _))
+      val newAcceptingStates: Set[State] = acceptingStates.map(State.prefixed(name, _))
 
-        val newStates: Set[State] = states.map(State.prefixed(name, _))
-        val newAcceptingStates: Set[State] = acceptingStates.map(State.prefixed(name, _))
-
-        val newRelationTable: Map[State, Map[Symbol, Set[State]]] = {
-          relation.table.map{
-            case(state: State, transitions: Map[Symbol, Set[State]]) => {
-              State.prefixed(name, state) -> transitions.map {
-                case(symbol: Symbol, states: Set[State]) => {
-                  symbol -> states.map { (destState: State) => 
-                    State.prefixed(name, destState)
-                  }
-                }
-              }
+      val newRelationTable: Map[State, Map[Symbol, Set[State]]] =
+        relation.table.map { case (state: State, transitions: Map[Symbol, Set[State]]) =>
+          State.prefixed(name, state) -> transitions.map { case (symbol: Symbol, states: Set[State]) =>
+            symbol -> states.map { (destState: State) =>
+              State.prefixed(name, destState)
             }
           }
         }
 
-        val newStateSourceMap: Map[State, MatchData] = {
-          stateSourceMap.map{
-            case(state: State, data: MatchData) => {
-              State.prefixed(name, state) -> data
-            }
-          }
+      val newStateSourceMap: Map[State, MatchData] =
+        stateSourceMap.map { case (state: State, data: MatchData) =>
+          State.prefixed(name, state) -> data
         }
 
-        NFA(
-          newStates,
-          symbols,
-          Relation(newRelationTable),
-          State.prefixed(name, startState),
-          newAcceptingStates,
-          Some(name),
-          newStateSourceMap
-        )
-      }
+      NFA(
+        newStates,
+        symbols,
+        Relation(newRelationTable),
+        State.prefixed(name, startState),
+        newAcceptingStates,
+        Some(name),
+        newStateSourceMap
+      )
     }
   }
 
