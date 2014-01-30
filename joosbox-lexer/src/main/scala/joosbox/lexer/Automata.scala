@@ -24,10 +24,10 @@ abstract class Automata(
   val acceptingStates:    Set[State],
 
   //  Optional name.
-  val name: Option[String] = None,
+  val token: Option[Token.Kind] = None,
 
   //  Map from states to match data.
-  var _stateSourceMap: Map[State, MatchData] = Map.empty[State, MatchData]
+  var _stateSourceMap: Map[State, Token.Kind] = Map.empty[State, Token.Kind]
 ) {
   if (!states.contains(startState)) {
     throw new IllegalArgumentException("Start state is not contained within provided states.")
@@ -55,8 +55,8 @@ abstract class Automata(
     throw new IllegalArgumentException("Transition table contains symbols that are not found within provided symbols.")
   }
 
-  if (_stateSourceMap.size == 0 && name != None) {
-    _stateSourceMap = states.map{ case (state: State) => (state, MatchData(name.get)) }.toMap
+  if (_stateSourceMap.size == 0 && token != None) {
+    _stateSourceMap = states.map{ case (state: State) => (state, token.get) }.toMap
   }
 
   val stateSourceMap = _stateSourceMap
@@ -75,6 +75,7 @@ abstract class Automata(
       automata.relation.equals(relation) &&
       automata.startState.equals(startState) &&
       automata.acceptingStates.equals(acceptingStates) &&
+      automata.token.equals(token) &&
       automata.stateSourceMap.equals(stateSourceMap)
     case _ => false
   }
@@ -85,6 +86,7 @@ abstract class Automata(
     relation + ", " +
     startState + ", " +
     acceptingStates + "," + 
+    token + "," +
     stateSourceMap + ")"
 
   def toGraphViz: String = {
@@ -113,12 +115,12 @@ object DFA {
     relation: Relation,
     startState: State,
     acceptingStates: Set[State],
-    name: Option[String] = None,
-    _stateSourceMap: Map[State, MatchData] = Map.empty[State, MatchData]
-  ) = new DFA(states, symbols, relation, startState, acceptingStates, name, _stateSourceMap)
+    token: Option[Token.Kind] = None,
+    _stateSourceMap: Map[State, Token.Kind] = Map.empty[State, Token.Kind]
+  ) = new DFA(states, symbols, relation, startState, acceptingStates, token, _stateSourceMap)
 
   def unapply(dfa: DFA) = Some((
-    dfa.states, dfa.symbols, dfa.relation, dfa.startState, dfa.acceptingStates, dfa.name, dfa.stateSourceMap
+    dfa.states, dfa.symbols, dfa.relation, dfa.startState, dfa.acceptingStates, dfa.token, dfa.stateSourceMap
   ))
 }
 
@@ -128,9 +130,9 @@ class DFA(
   relation: Relation,
   startState: State,
   acceptingStates: Set[State],
-  name: Option[String] = None,
-  _stateSourceMap: Map[State, MatchData] = Map.empty[State, MatchData]
-) extends Automata(states, symbols, relation, startState, acceptingStates, name, _stateSourceMap) {
+  token: Option[Token.Kind] = None,
+  _stateSourceMap: Map[State, Token.Kind] = Map.empty[State, Token.Kind]
+) extends Automata(states, symbols, relation, startState, acceptingStates, token, _stateSourceMap) {
   if (symbols.contains(Symbol.epsilon)) {
     throw new IllegalArgumentException("DFA cannot contain epsilon transitions.")
   }
@@ -174,16 +176,16 @@ class DFA(
     }
   }
 
-  def matchString(inputString: String): Option[List[MatchData]] = {
-    consume(inputString, startState).flatMap[List[MatchData]] {
-      case (state: State, remaining: String) => {
-        if (remaining.length == 0) {
-          Some(List[MatchData](stateSourceMap(state).withInput(inputString)))
+  def matchString(inputString: String): Option[List[Token.Kind]] = {
+    consume(inputString, startState).flatMap[List[Token.Kind]] {
+      case (state: State, remainingString: String) => {
+        if (remainingString.length == 0) {
+          Some(List[Token.Kind](stateSourceMap(state).consume(inputString)))
         } else {
-          matchString(remaining) match {
-            case Some(remainingMatchData) => {
-              val consumedInput: String = inputString.slice(0, inputString.size - remaining.size)
-              Some(List[MatchData](stateSourceMap(state).withInput(consumedInput)) ++ remainingMatchData)
+          matchString(remainingString) match {
+            case Some(remainingTokens) => {
+              val consumedInput: String = inputString.slice(0, inputString.size - remainingString.size)
+              Some(List[Token.Kind](stateSourceMap(state).consume(consumedInput)) ++ remainingTokens)
             }
             case None => None
           }
@@ -204,19 +206,19 @@ object NFA {
     relation: Relation,
     startState: State,
     acceptingStates: Set[State],
-    name: Option[String] = None,
-    _stateSourceMap: Map[State, MatchData] = Map.empty[State, MatchData]
-  ) = new NFA(states, symbols, relation, startState, acceptingStates, name, _stateSourceMap)
+    token: Option[Token.Kind] = None,
+    _stateSourceMap: Map[State, Token.Kind] = Map.empty[State, Token.Kind]
+  ) = new NFA(states, symbols, relation, startState, acceptingStates, token, _stateSourceMap)
 
   def unapply(nfa: NFA) = Some((
-    nfa.states, nfa.symbols, nfa.relation, nfa.startState, nfa.acceptingStates, nfa.name, nfa.stateSourceMap
+    nfa.states, nfa.symbols, nfa.relation, nfa.startState, nfa.acceptingStates, nfa.token, nfa.stateSourceMap
   ))
 
   def union(nfas: Set[NFA]): NFA = {
     val prefixedNFAs: Set[NFA] = nfas.map(_.toPrefixedForm)
 
-    // TODO: If there is no name here, generate one.
-    val newName: String = prefixedNFAs.flatMap(_.name).mkString("|")
+    //  TODO: If there is no name here, generate one.
+    val newName: String = prefixedNFAs.flatMap(_.token).map(_.tokenKind).mkString("|")
     val newStartState: State = State(newName)
 
     val newAcceptingStates: Set[State] = prefixedNFAs.map(_.acceptingStates).reduce((_ ++ _))
@@ -226,7 +228,7 @@ object NFA {
       existingRelations + (newStartState -> Map(Symbol.epsilon -> startStates))
     }
 
-    val newStateSourceMap: Map[State, MatchData] = prefixedNFAs.map(_.stateSourceMap).reduce((_ ++ _))
+    val newStateSourceMap: Map[State, Token.Kind] = prefixedNFAs.map(_.stateSourceMap).reduce((_ ++ _))
     val newStates: Set[State] = prefixedNFAs.map(_.states).reduce((_ ++ _)) + newStartState
     val newSymbols: Set[Symbol] = prefixedNFAs.map(_.symbols).reduce((_ ++ _)) + Symbol.epsilon
 
@@ -236,7 +238,7 @@ object NFA {
       Relation(newRelationTable),
       newStartState,
       newAcceptingStates,
-      Some(newName),
+      Some(Token.Combined(newName)),
       newStateSourceMap
     )
   }
@@ -248,25 +250,23 @@ class NFA(
   relation: Relation,
   startState: State,
   acceptingStates: Set[State],
-  name: Option[String] = None,
-  _stateSourceMap: Map[State, MatchData] = Map.empty[State, MatchData]
-) extends Automata(states, symbols, relation, startState, acceptingStates, name, _stateSourceMap) {
+  token: Option[Token.Kind] = None,
+  _stateSourceMap: Map[State, Token.Kind] = Map.empty[State, Token.Kind]
+) extends Automata(states, symbols, relation, startState, acceptingStates, token, _stateSourceMap) {
 
   /**
    * Return an identical NFA with a different name.
    */
-  def withName(newName: String) = {
-    val renamedStateSourceMap =
-      stateSourceMap.map { case (state: State, data: MatchData) =>
+  def withToken(newKind: Token.Kind) = {
+    val renamedStateSourceMap = stateSourceMap.map {
+      case (state: State, data: Token.Kind) => {
         data match {
-          case MatchData(_, input) =>
-            state -> MatchData(newName, input)
-          case _ =>
-            state -> data
+          case (_: Token.Kind)  => state -> newKind
+          case _                => state -> data
         }
       }
-
-    NFA(states, symbols, relation, startState, acceptingStates, Some(newName), renamedStateSourceMap)
+    }
+    NFA(states, symbols, relation, startState, acceptingStates, Some(newKind), renamedStateSourceMap)
   }
 
   /**
@@ -279,8 +279,8 @@ class NFA(
       originalAllStates: Set[State],
       originalAcceptingStates: Set[State],
       originalRelationTable: Map[State, Map[Symbol, Set[State]]],
-      originalStateSourceMap: Map[State, MatchData]
-    ): (Set[State], Set[State], Map[State, Map[Symbol, Set[State]]], Map[State, MatchData]) = {
+      originalStateSourceMap: Map[State, Token.Kind]
+    ): (Set[State], Set[State], Map[State, Map[Symbol, Set[State]]], Map[State, Token.Kind]) = {
       val originalEpsilonClosure: Set[State] = originalStates.flatMap { state: State =>
         relation.epsilonClosure(state)
       }
@@ -295,10 +295,10 @@ class NFA(
           originalAcceptingStates
         }
 
-      val stateSourceMap: Map[State, MatchData] = {
-        val sourceMatchData: Set[State] = originalEpsilonClosure.intersect(originalStateSourceMap.keys.toSet).intersect(acceptingStates)
-        if (sourceMatchData.size > 0) {
-          originalStateSourceMap + (newState -> originalStateSourceMap(sourceMatchData.head))
+      val stateSourceMap: Map[State, Token.Kind] = {
+        val sourceToken: Set[State] = originalEpsilonClosure.intersect(originalStateSourceMap.keys.toSet).intersect(acceptingStates)
+        if (sourceToken.size > 0) {
+          originalStateSourceMap + (newState -> originalStateSourceMap(sourceToken.head))
         } else {
           originalStateSourceMap
         }
@@ -335,7 +335,7 @@ class NFA(
     )
 
     val prunedStateSourceMap = newStateSourceMap.flatMap {
-      case (state: State, data: MatchData) => if (newStates.contains(state)) Some(state -> data) else None
+      case (state: State, data: Token.Kind) => if (newStates.contains(state)) Some(state -> data) else None
     }.toMap
     val pnac = newAcceptingStates.intersect(newStates)
 
@@ -345,12 +345,12 @@ class NFA(
       Relation(newRelationTable),
       State.combine(startSet),
       pnac,
-      name,
+      token,
       prunedStateSourceMap
     )
   }
 
-  def toPrefixedForm: NFA = name match {
+  def toPrefixedForm: NFA = token match {
     case None => this
     case Some(name) => {
       val newStates: Set[State] = states.map(State.prefixed(name, _))
@@ -365,8 +365,8 @@ class NFA(
           }
         }
 
-      val newStateSourceMap: Map[State, MatchData] =
-        stateSourceMap.map { case (state: State, data: MatchData) =>
+      val newStateSourceMap: Map[State, Token.Kind] =
+        stateSourceMap.map { case (state: State, data: Token.Kind) =>
           State.prefixed(name, state) -> data
         }
 

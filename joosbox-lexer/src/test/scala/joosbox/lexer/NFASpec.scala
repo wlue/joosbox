@@ -23,7 +23,7 @@ class NFASpec extends Specification {
       val relation = Relation(Map(State("p") -> Map(Symbol("1") -> Set(State("k")))))
       val startState = State("p")
       val acceptingStates = Set(State("k"))
-      val name = Some("TestName")
+      val name = Some(Token.Test("TEST"))
 
       val nfa = NFA(states, symbols, relation, startState, acceptingStates, name)
       val NFA(states2, symbols2, relation2, startState2, acceptingStates2, name2, stateSourceMap2) = nfa
@@ -223,7 +223,7 @@ class NFASpec extends Specification {
           ))),
           State("p"),
           Set(State("k")),
-          Some("HELLO")
+          Some(Token.Test("HELLO"))
         ).toPrefixedForm must beEqualTo(
           NFA(
             Set(State("HELLO-p"), State("HELLO-k"), State("HELLO-t")),
@@ -233,7 +233,7 @@ class NFASpec extends Specification {
             ))),
             State("HELLO-p"),
             Set(State("HELLO-k")),
-            Some("HELLO")
+            Some(Token.Test("HELLO"))
           )
         )
       }
@@ -348,15 +348,19 @@ class NFASpec extends Specification {
 
     "union" in {
       "simple case" in {
+
+        case class A(data: String) extends Token.Kind
+        case class B(data: String) extends Token.Kind
+
         val first = NFA(
           Set(State("1")),
           Set.empty,
           Relation.empty,
           State("1"),
           Set(State("1")),
-          Some("A")
+          Some(A(""))
         )
-        val second = first.withName("B")
+        val second = first.withToken(B(""))
         val combined = NFA(
           Set(State("A|B"), State("A-1"), State("B-1")),
           Set(Symbol.epsilon),
@@ -367,10 +371,10 @@ class NFASpec extends Specification {
           )),
           State("A|B"),
           Set(State("A-1"), State("B-1")),
-          Some("AB"),
+          Some(Token.Combined("A|B")),
           Map(
-            State("A-1") -> MatchData("A"),
-            State("B-1") -> MatchData("B")
+            State("A-1") -> A(""),
+            State("B-1") -> B("")
           )
         )
 

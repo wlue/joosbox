@@ -3,62 +3,137 @@ package joosbox.lexer
 import scala.util.matching.Regex
 
 object Token {
-  sealed trait Token
-  object Question extends Token
-  object LeftParen extends Token
-  object RightParen extends Token
-  object LeftBracket extends Token
-  object RightBracket extends Token
-  object LeftCurly extends Token
-  object RightCurly extends Token
-  object Colon extends Token
-  object Comma extends Token
-  object Dot extends Token
-  object Assign extends Token
-  object Equal extends Token
-  object LogicalNot extends Token
-  object BinaryNot extends Token
-  object NotEqual extends Token
-  object Divide extends Token
-  object DivideAssign extends Token
-  object Plus extends Token
-  object PlusAssign extends Token
-  object Increment extends Token
-  object Minus extends Token
-  object MinusAssign extends Token
-  object Decrement extends Token
-  object Star extends Token
-  object StarAssign extends Token
-  object Modulo extends Token
-  object ModuloAssign extends Token
-  object GreaterThan extends Token
-  object GreaterEqual extends Token
-  object ShiftRight extends Token
-  object ShiftRightAssign extends Token
-  object BinaryShiftRight extends Token
-  object BinaryShiftRightAssign extends Token
-  object LessThan extends Token
-  object LessEqual extends Token
-  object ShiftLeft extends Token
-  object ShiftLeftAssign extends Token
-  object BinaryXor extends Token
-  object BinaryXorAssign extends Token
-  object BinaryOr extends Token
-  object BinaryOrAssign extends Token
-  object LogicalOr extends Token
-  object BinaryAnd extends Token
-  object BinaryAndAssign extends Token
-  object LogicalAnd extends Token
-  object Semicolon extends Token
+  trait Kind {
+    val data: String
 
-  object Whitespace extends Token
-  object SingleLineComment extends Token
-  object MultiLineComment extends Token
-  object JavaDocComment extends Token
+    def consume(data: String): Kind = {
+      //  For any of the below case classes, we can create a new instance of
+      //  the case class by calling consume on it with the token that it should contain.
 
-  object Num extends Token
-  object Identifier extends Token {
-    val Keywords : Map[String, Token.Token] = Map(
+      val constructor = this.getClass.getConstructors.head
+      val args = Array[AnyRef](data)
+      constructor.newInstance(args: _*).asInstanceOf[Token.Kind]
+    }
+
+    def tokenKind(): String = {
+      data match {
+        case "" => toString.replace("()", "")
+        case _ => data
+      }
+    }
+  }
+
+  case class Question(data: String) extends Kind
+  case class LeftParen(data: String) extends Kind
+  case class RightParen(data: String) extends Kind
+  case class LeftBracket(data: String) extends Kind
+  case class RightBracket(data: String) extends Kind
+  case class LeftCurly(data: String) extends Kind
+  case class RightCurly(data: String) extends Kind
+  case class Colon(data: String) extends Kind
+  case class Comma(data: String) extends Kind
+  case class Dot(data: String) extends Kind
+  case class Assign(data: String) extends Kind
+  case class Equal(data: String) extends Kind
+  case class LogicalNot(data: String) extends Kind
+  case class BinaryNot(data: String) extends Kind
+  case class NotEqual(data: String) extends Kind
+  case class Divide(data: String) extends Kind
+  case class DivideAssign(data: String) extends Kind
+  case class Plus(data: String) extends Kind
+  case class PlusAssign(data: String) extends Kind
+  case class Increment(data: String) extends Kind
+  case class Minus(data: String) extends Kind
+  case class MinusAssign(data: String) extends Kind
+  case class Decrement(data: String) extends Kind
+  case class Star(data: String) extends Kind
+  case class StarAssign(data: String) extends Kind
+  case class Modulo(data: String) extends Kind
+  case class ModuloAssign(data: String) extends Kind
+  case class GreaterThan(data: String) extends Kind
+  case class GreaterEqual(data: String) extends Kind
+  case class ShiftRight(data: String) extends Kind
+  case class ShiftRightAssign(data: String) extends Kind
+  case class BinaryShiftRight(data: String) extends Kind
+  case class BinaryShiftRightAssign(data: String) extends Kind
+  case class LessThan(data: String) extends Kind
+  case class LessEqual(data: String) extends Kind
+  case class ShiftLeft(data: String) extends Kind
+  case class ShiftLeftAssign(data: String) extends Kind
+  case class BinaryXor(data: String) extends Kind
+  case class BinaryXorAssign(data: String) extends Kind
+  case class BinaryOr(data: String) extends Kind
+  case class BinaryOrAssign(data: String) extends Kind
+  case class LogicalOr(data: String) extends Kind
+  case class BinaryAnd(data: String) extends Kind
+  case class BinaryAndAssign(data: String) extends Kind
+  case class LogicalAnd(data: String) extends Kind
+  case class Semicolon(data: String) extends Kind
+
+  case class Whitespace(data: String) extends Kind
+  case class SingleLineComment(data: String) extends Kind
+  case class MultiLineComment(data: String) extends Kind
+  case class JavaDocComment(data: String) extends Kind
+
+  case class Num(data: String) extends Kind
+  case class CharLiteral(data: String) extends Kind
+  case class StringLiteral(data: String) extends Kind
+
+  case class AbstractKeyword(data: String) extends Kind
+  case class BooleanKeyword(data: String) extends Kind
+  case class BreakKeyword(data: String) extends Kind
+  case class ByteKeyword(data: String) extends Kind
+  case class CaseKeyword(data: String) extends Kind
+  case class CatchKeyword(data: String) extends Kind
+  case class CharKeyword(data: String) extends Kind
+  case class ClassKeyword(data: String) extends Kind
+  case class ConstKeyword(data: String) extends Kind
+  case class ContinueKeyword(data: String) extends Kind
+  case class DefaultKeyword(data: String) extends Kind
+  case class DoKeyword(data: String) extends Kind
+  case class DoubleKeyword(data: String) extends Kind
+  case class ElseKeyword(data: String) extends Kind
+  case class ExtendsKeyword(data: String) extends Kind
+  case class FinalKeyword(data: String) extends Kind
+  case class FinallyKeyword(data: String) extends Kind
+  case class FloatKeyword(data: String) extends Kind
+  case class ForKeyword(data: String) extends Kind
+  case class GotoKeyword(data: String) extends Kind
+  case class IfKeyword(data: String) extends Kind
+  case class ImplementsKeyword(data: String) extends Kind
+  case class ImportKeyword(data: String) extends Kind
+  case class InstanceofKeyword(data: String) extends Kind
+  case class IntKeyword(data: String) extends Kind
+  case class InterfaceKeyword(data: String) extends Kind
+  case class LongKeyword(data: String) extends Kind
+  case class NativeKeyword(data: String) extends Kind
+  case class NewKeyword(data: String) extends Kind
+  case class PackageKeyword(data: String) extends Kind
+  case class PrivateKeyword(data: String) extends Kind
+  case class ProtectedKeyword(data: String) extends Kind
+  case class PublicKeyword(data: String) extends Kind
+  case class ReturnKeyword(data: String) extends Kind
+  case class ShortKeyword(data: String) extends Kind
+  case class StaticKeyword(data: String) extends Kind
+  case class StrictfpKeyword(data: String) extends Kind
+  case class SuperKeyword(data: String) extends Kind
+  case class SwitchKeyword(data: String) extends Kind
+  case class SynchronizedKeyword(data: String) extends Kind
+  case class ThisKeyword(data: String) extends Kind
+  case class ThrowKeyword(data: String) extends Kind
+  case class ThrowsKeyword(data: String) extends Kind
+  case class TransientKeyword(data: String) extends Kind
+  case class TryKeyword(data: String) extends Kind
+  case class VoidKeyword(data: String) extends Kind
+  case class VolatileKeyword(data: String) extends Kind
+  case class WhileKeyword(data: String) extends Kind
+
+  case class TrueLiteral(data: String) extends Kind
+  case class FalseLiteral(data: String) extends Kind
+  case class NullLiteral(data: String) extends Kind
+
+  case class Identifier(data: String) extends Kind {
+    val Keywords = Map(
       "abstract" -> Token.AbstractKeyword,
       "boolean" -> Token.BooleanKeyword,
       "break" -> Token.BreakKeyword,
@@ -114,74 +189,25 @@ object Token {
     )
   }
 
-  object CharLiteral extends Token
-  object StringLiteral extends Token
-
-	object AbstractKeyword extends Token
-	object BooleanKeyword extends Token
-	object BreakKeyword extends Token
-	object ByteKeyword extends Token
-	object CaseKeyword extends Token
-	object CatchKeyword extends Token
-	object CharKeyword extends Token
-	object ClassKeyword extends Token
-	object ConstKeyword extends Token
-	object ContinueKeyword extends Token
-	object DefaultKeyword extends Token
-	object DoKeyword extends Token
-	object DoubleKeyword extends Token
-	object ElseKeyword extends Token
-	object ExtendsKeyword extends Token
-	object FinalKeyword extends Token
-	object FinallyKeyword extends Token
-	object FloatKeyword extends Token
-	object ForKeyword extends Token
-	object GotoKeyword extends Token
-	object IfKeyword extends Token
-	object ImplementsKeyword extends Token
-	object ImportKeyword extends Token
-	object InstanceofKeyword extends Token
-	object IntKeyword extends Token
-	object InterfaceKeyword extends Token
-	object LongKeyword extends Token
-	object NativeKeyword extends Token
-	object NewKeyword extends Token
-	object PackageKeyword extends Token
-	object PrivateKeyword extends Token
-	object ProtectedKeyword extends Token
-	object PublicKeyword extends Token
-	object ReturnKeyword extends Token
-	object ShortKeyword extends Token
-	object StaticKeyword extends Token
-	object StrictfpKeyword extends Token
-	object SuperKeyword extends Token
-	object SwitchKeyword extends Token
-	object SynchronizedKeyword extends Token
-	object ThisKeyword extends Token
-	object ThrowKeyword extends Token
-	object ThrowsKeyword extends Token
-	object TransientKeyword extends Token
-	object TryKeyword extends Token
-	object VoidKeyword extends Token
-	object VolatileKeyword extends Token
-	object WhileKeyword extends Token
-
-  object TrueLiteral extends Token
-  object FalseLiteral extends Token
-  object NullLiteral extends Token
+  //  Dummy tokens for our NFAs
+  case class Test(data: String) extends Kind
+  case class Combined(data: String) extends Kind
 }
 
 object TokenNFA {
   lazy val nfa: NFA = NFA.union(nfas.values.toSet)
 
-  val nfas: Map[Token.Token, NFA] = Map(
+  lazy val nfas = rawNFAs.map {
+    case (token, nfa: NFA) => token -> nfa.withToken(token.apply(""))
+  }
+
+  private val rawNFAs = Map(
     Token.Question -> NFA(
       Set(State("i"), State("?")),
       Set(Symbol.epsilon, Symbol("?")),
       Relation(Map(State("i") -> Map(Symbol("?") -> Set(State("?"))))),
       State("i"),
-      Set(State("?")),
-      Some("QUESTION")
+      Set(State("?"))
     ),
 
     Token.LeftParen -> NFA(
@@ -189,8 +215,7 @@ object TokenNFA {
       Set(Symbol.epsilon, Symbol("(")),
       Relation(Map(State("i") -> Map(Symbol("(") -> Set(State("("))))),
       State("i"),
-      Set(State("(")),
-      Some("LPAREN")
+      Set(State("("))
     ),
 
     Token.RightParen -> NFA(
@@ -198,8 +223,7 @@ object TokenNFA {
       Set(Symbol.epsilon, Symbol(")")),
       Relation(Map(State("i") -> Map(Symbol(")") -> Set(State(")"))))),
       State("i"),
-      Set(State(")")),
-      Some("RPAREN")
+      Set(State(")"))
     ),
 
     Token.LeftBracket -> NFA(
@@ -207,8 +231,7 @@ object TokenNFA {
       Set(Symbol.epsilon, Symbol("[")),
       Relation(Map(State("i") -> Map(Symbol("[") -> Set(State("["))))),
       State("i"),
-      Set(State("[")),
-      Some("LBRACK")
+      Set(State("["))
     ),
 
     Token.RightBracket -> NFA(
@@ -216,8 +239,7 @@ object TokenNFA {
       Set(Symbol.epsilon, Symbol("]")),
       Relation(Map(State("i") -> Map(Symbol("]") -> Set(State("]"))))),
       State("i"),
-      Set(State("]")),
-      Some("RBRACK")
+      Set(State("]"))
     ),
 
     Token.LeftCurly -> NFA(
@@ -225,8 +247,7 @@ object TokenNFA {
       Set(Symbol.epsilon, Symbol("{")),
       Relation(Map(State("i") -> Map(Symbol("{") -> Set(State("{"))))),
       State("i"),
-      Set(State("{")),
-      Some("LCURLY")
+      Set(State("{"))
     ),
 
     Token.RightCurly -> NFA(
@@ -234,8 +255,7 @@ object TokenNFA {
       Set(Symbol.epsilon, Symbol("}")),
       Relation(Map(State("i") -> Map(Symbol("}") -> Set(State("}"))))),
       State("i"),
-      Set(State("}")),
-      Some("RCURLY")
+      Set(State("}"))
     ),
 
     Token.Colon -> NFA(
@@ -243,8 +263,7 @@ object TokenNFA {
       Set(Symbol.epsilon, Symbol(":")),
       Relation(Map(State("i") -> Map(Symbol(":") -> Set(State(":"))))),
       State("i"),
-      Set(State(":")),
-      Some("COLON")
+      Set(State(":"))
     ),
 
     Token.Comma -> NFA(
@@ -252,8 +271,7 @@ object TokenNFA {
       Set(Symbol.epsilon, Symbol(",")),
       Relation(Map(State("i") -> Map(Symbol(",") -> Set(State(","))))),
       State("i"),
-      Set(State(",")),
-      Some("COMMA")
+      Set(State(","))
     ),
 
     Token.Dot -> NFA(
@@ -261,8 +279,7 @@ object TokenNFA {
       Set(Symbol.epsilon, Symbol(".")),
       Relation(Map(State("i") -> Map(Symbol(".") -> Set(State("."))))),
       State("i"),
-      Set(State(".")),
-      Some("DOT")
+      Set(State("."))
     ),
 
     Token.Assign -> NFA(
@@ -270,8 +287,7 @@ object TokenNFA {
       Set(Symbol.epsilon, Symbol("=")),
       Relation(Map(State("i") -> Map(Symbol("=") -> Set(State("="))))),
       State("i"),
-      Set(State("=")),
-      Some("ASSIGN")
+      Set(State("="))
     ),
 
     Token.Equal -> NFA(
@@ -281,8 +297,7 @@ object TokenNFA {
                    State("=") -> Map(Symbol("=") -> Set(State("==")))
                )),
       State("i"),
-      Set(State("==")),
-      Some("EQUAL")
+      Set(State("=="))
     ),
 
     Token.LogicalNot -> NFA(
@@ -290,8 +305,7 @@ object TokenNFA {
       Set(Symbol.epsilon, Symbol("!")),
       Relation(Map(State("i") -> Map(Symbol("!") -> Set(State("!"))))),
       State("i"),
-      Set(State("!")),
-      Some("LNOT")
+      Set(State("!"))
     ),
 
     Token.BinaryNot -> NFA(
@@ -299,8 +313,7 @@ object TokenNFA {
       Set(Symbol.epsilon, Symbol("~")),
       Relation(Map(State("i") -> Map(Symbol("~") -> Set(State("~"))))),
       State("i"),
-      Set(State("~")),
-      Some("BNOT")
+      Set(State("~"))
     ),
 
     Token.NotEqual -> NFA(
@@ -310,8 +323,7 @@ object TokenNFA {
                    State("!") -> Map(Symbol("=") -> Set(State("!=")))
                )),
       State("i"),
-      Set(State("!=")),
-      Some("NOT_EQUAL")
+      Set(State("!="))
     ),
 
     Token.Divide -> NFA(
@@ -319,8 +331,7 @@ object TokenNFA {
       Set(Symbol.epsilon, Symbol("/")),
       Relation(Map(State("i") -> Map(Symbol("/") -> Set(State("/"))))),
       State("i"),
-      Set(State("/")),
-      Some("DIV")
+      Set(State("/"))
     ),
 
     Token.DivideAssign -> NFA(
@@ -330,8 +341,7 @@ object TokenNFA {
                    State("/") -> Map(Symbol("=") -> Set(State("/=")))
                )),
       State("i"),
-      Set(State("/=")),
-      Some("DIV_ASSIGN")
+      Set(State("/="))
     ),
 
     Token.Plus -> NFA(
@@ -339,8 +349,7 @@ object TokenNFA {
       Set(Symbol.epsilon, Symbol("+")),
       Relation(Map(State("i") -> Map(Symbol("+") -> Set(State("+"))))),
       State("i"),
-      Set(State("+")),
-      Some("PLUS")
+      Set(State("+"))
     ),
 
     Token.PlusAssign -> NFA(
@@ -350,8 +359,7 @@ object TokenNFA {
                    State("+") -> Map(Symbol("=") -> Set(State("+=")))
                )),
       State("i"),
-      Set(State("+=")),
-      Some("PLUS_ASSIGN")
+      Set(State("+="))
     ),
 
     Token.Increment -> NFA(
@@ -361,8 +369,7 @@ object TokenNFA {
                    State("+") -> Map(Symbol("+") -> Set(State("++")))
                )),
       State("i"),
-      Set(State("++")),
-      Some("INC")
+      Set(State("++"))
     ),
 
     Token.Minus -> NFA(
@@ -370,8 +377,7 @@ object TokenNFA {
       Set(Symbol.epsilon, Symbol("-")),
       Relation(Map(State("i") -> Map(Symbol("-") -> Set(State("-"))))),
       State("i"),
-      Set(State("-")),
-      Some("MINUS")
+      Set(State("-"))
     ),
 
     Token.MinusAssign -> NFA(
@@ -381,8 +387,7 @@ object TokenNFA {
                    State("-") -> Map(Symbol("=") -> Set(State("-=")))
                )),
       State("i"),
-      Set(State("-=")),
-      Some("MINUS_ASSIGN")
+      Set(State("-="))
     ),
 
     Token.Decrement -> NFA(
@@ -392,8 +397,7 @@ object TokenNFA {
                    State("-") -> Map(Symbol("-") -> Set(State("--")))
                )),
       State("i"),
-      Set(State("--")),
-      Some("DEC")
+      Set(State("--"))
     ),
 
     Token.Star -> NFA(
@@ -401,8 +405,7 @@ object TokenNFA {
       Set(Symbol.epsilon, Symbol("*")),
       Relation(Map(State("i") -> Map(Symbol("*") -> Set(State("*"))))),
       State("i"),
-      Set(State("*")),
-      Some("STAR")
+      Set(State("*"))
     ),
 
     Token.StarAssign -> NFA(
@@ -412,8 +415,7 @@ object TokenNFA {
                    State("*") -> Map(Symbol("=") -> Set(State("*=")))
                )),
       State("i"),
-      Set(State("*=")),
-      Some("STAR_ASSIGN")
+      Set(State("*="))
     ),
 
     Token.Modulo -> NFA(
@@ -421,8 +423,7 @@ object TokenNFA {
       Set(Symbol.epsilon, Symbol("%")),
       Relation(Map(State("i") -> Map(Symbol("%") -> Set(State("%"))))),
       State("i"),
-      Set(State("%")),
-      Some("MOD")
+      Set(State("%"))
     ),
 
     Token.ModuloAssign -> NFA(
@@ -432,8 +433,7 @@ object TokenNFA {
                    State("%") -> Map(Symbol("=") -> Set(State("%=")))
                )),
       State("i"),
-      Set(State("%=")),
-      Some("MOD_ASSIGN")
+      Set(State("%="))
     ),
 
     Token.GreaterThan -> NFA(
@@ -441,8 +441,7 @@ object TokenNFA {
       Set(Symbol.epsilon, Symbol(">")),
       Relation(Map(State("i") -> Map(Symbol(">") -> Set(State(">"))))),
       State("i"),
-      Set(State(">")),
-      Some("GT")
+      Set(State(">"))
     ),
 
     Token.GreaterEqual -> NFA(
@@ -452,8 +451,7 @@ object TokenNFA {
                    State(">") -> Map(Symbol("=") -> Set(State(">=")))
                )),
       State("i"),
-      Set(State(">=")),
-      Some("GTE")
+      Set(State(">="))
     ),
 
     Token.ShiftRight -> NFA(
@@ -463,8 +461,7 @@ object TokenNFA {
                    State(">") -> Map(Symbol(">") -> Set(State(">>")))
                )),
       State("i"),
-      Set(State(">>")),
-      Some("SR")
+      Set(State(">>"))
     ),
 
     Token.ShiftRightAssign -> NFA(
@@ -475,8 +472,7 @@ object TokenNFA {
                    State(">>")  -> Map(Symbol("=") -> Set(State(">>=")))
                )),
       State("i"),
-      Set(State(">>=")),
-      Some("SR_ASSIGN")
+      Set(State(">>="))
     ),
 
     Token.BinaryShiftRight -> NFA(
@@ -487,8 +483,7 @@ object TokenNFA {
                    State(">>")  -> Map(Symbol(">") -> Set(State(">>>")))
                )),
       State("i"),
-      Set(State(">>>")),
-      Some("BSR")
+      Set(State(">>>"))
     ),
 
     Token.BinaryShiftRightAssign -> NFA(
@@ -500,8 +495,7 @@ object TokenNFA {
                    State(">>>") -> Map(Symbol("=") -> Set(State(">>>=")))
                )),
       State("i"),
-      Set(State(">>>=")),
-      Some("BSR_ASSIGN")
+      Set(State(">>>="))
     ),
 
     Token.LessThan -> NFA(
@@ -509,8 +503,7 @@ object TokenNFA {
       Set(Symbol.epsilon, Symbol("<")),
       Relation(Map(State("i") -> Map(Symbol("<") -> Set(State("<"))))),
       State("i"),
-      Set(State("<")),
-      Some("LT")
+      Set(State("<"))
     ),
 
     Token.LessEqual -> NFA(
@@ -520,8 +513,7 @@ object TokenNFA {
                    State("<") -> Map(Symbol("=") -> Set(State("<=")))
                )),
       State("i"),
-      Set(State("<=")),
-      Some("LE")
+      Set(State("<="))
     ),
 
     Token.ShiftLeft -> NFA(
@@ -531,8 +523,7 @@ object TokenNFA {
                    State("<") -> Map(Symbol("<") -> Set(State("<<")))
                )),
       State("i"),
-      Set(State("<<")),
-      Some("SL")
+      Set(State("<<"))
     ),
 
     Token.ShiftLeftAssign -> NFA(
@@ -543,8 +534,7 @@ object TokenNFA {
                    State("<<")  -> Map(Symbol("=") -> Set(State("<<=")))
                )),
       State("i"),
-      Set(State("<<=")),
-      Some("SL_ASSIGN")
+      Set(State("<<="))
     ),
 
     Token.BinaryXor -> NFA(
@@ -552,8 +542,7 @@ object TokenNFA {
       Set(Symbol.epsilon, Symbol("^")),
       Relation(Map(State("i") -> Map(Symbol("^") -> Set(State("^"))))),
       State("i"),
-      Set(State("^")),
-      Some("BXOR")
+      Set(State("^"))
     ),
 
     Token.BinaryXorAssign -> NFA(
@@ -563,8 +552,7 @@ object TokenNFA {
                    State("^") -> Map(Symbol("=") -> Set(State("^=")))
                )),
       State("i"),
-      Set(State("^=")),
-      Some("BXOR_ASSIGN")
+      Set(State("^="))
     ),
 
   Token.BinaryOr -> NFA(
@@ -572,8 +560,7 @@ object TokenNFA {
       Set(Symbol.epsilon, Symbol("|")),
       Relation(Map(State("i") -> Map(Symbol("|") -> Set(State("|"))))),
       State("i"),
-      Set(State("|")),
-      Some("BOR")
+      Set(State("|"))
     ),
 
     Token.BinaryOrAssign -> NFA(
@@ -583,8 +570,7 @@ object TokenNFA {
                    State("|") -> Map(Symbol("=") -> Set(State("|=")))
                )),
       State("i"),
-      Set(State("|=")),
-      Some("BOR_ASSIGN")
+      Set(State("|="))
     ),
 
     Token.LogicalOr -> NFA(
@@ -594,8 +580,7 @@ object TokenNFA {
                    State("|") -> Map(Symbol("|") -> Set(State("||")))
                )),
       State("i"),
-      Set(State("||")),
-      Some("LOR")
+      Set(State("||"))
     ),
 
     Token.BinaryAnd -> NFA(
@@ -603,8 +588,7 @@ object TokenNFA {
       Set(Symbol.epsilon, Symbol("&")),
       Relation(Map(State("i") -> Map(Symbol("&") -> Set(State("&"))))),
       State("i"),
-      Set(State("&")),
-      Some("BAND")
+      Set(State("&"))
     ),
 
     Token.BinaryAndAssign -> NFA(
@@ -614,8 +598,7 @@ object TokenNFA {
                    State("&") -> Map(Symbol("=") -> Set(State("&=")))
                )),
       State("i"),
-      Set(State("&=")),
-      Some("BAND_ASSIGN")
+      Set(State("&="))
     ),
 
     Token.LogicalAnd -> NFA(
@@ -625,8 +608,7 @@ object TokenNFA {
                    State("&") -> Map(Symbol("&") -> Set(State("&&")))
                )),
       State("i"),
-      Set(State("&&")),
-      Some("LAND")
+      Set(State("&&"))
     ),
 
     Token.Semicolon -> NFA(
@@ -634,8 +616,7 @@ object TokenNFA {
       Set(Symbol.epsilon, Symbol(";")),
       Relation(Map(State("i") -> Map(Symbol(";") -> Set(State(";"))))),
       State("i"),
-      Set(State(";")),
-      Some("SEMI")
+      Set(State(";"))
     ),
 
     Token.Whitespace -> NFA(
@@ -663,8 +644,7 @@ object TokenNFA {
         )
       ),
       State("i"),
-      Set(State("ws")),
-      Some("WHITESPACE")
+      Set(State("ws"))
     ),
 
     Token.SingleLineComment -> NFA(
@@ -678,8 +658,7 @@ object TokenNFA {
                    State("eol2")  -> Map( Symbol("\n") -> Set(State("eol")))
               )),
       State("i"),
-      Set(State("eol"), State("eol2")),
-      Some("SL_COMMENT")
+      Set(State("eol"), State("eol2"))
     ),
 
     Token.MultiLineComment -> NFA(
@@ -694,8 +673,7 @@ object TokenNFA {
                                         NegatedSymbols("*", "/") -> Set(State("/*")))
               )),
       State("i"),
-      Set(State("/**/")),
-      Some("ML_COMMENT")
+      Set(State("/**/"))
     ),
 
     Token.JavaDocComment -> NFA(
@@ -711,8 +689,7 @@ object TokenNFA {
                                           NegatedSymbols("*", "/") -> Set(State("/**")))
               )),
       State("i"),
-      Set(State("/***/")),
-      Some("JD_COMMENT")
+      Set(State("/***/"))
     ),
 
     Token.Num -> NFA(
@@ -722,8 +699,7 @@ object TokenNFA {
                    State("digit") -> Map(Symbol.digitsGroup -> Set(State("digit")))
                )),
       State("i"),
-      Set(State("digit")),
-      Some("NUM")
+      Set(State("digit"))
     ),
 
     Token.Identifier -> NFA(
@@ -738,8 +714,7 @@ object TokenNFA {
                                         Symbol("$") -> Set(State("id")))
                )),
       State("i"),
-      Set(State("id")),
-      Some("IDENTIFIER")
+      Set(State("id"))
     ),
 
     Token.CharLiteral -> NFA(
@@ -773,8 +748,7 @@ object TokenNFA {
                    State("part-oct3") -> Map( Symbol("\'") -> Set(State("char")))
                )),
       State("i"),
-      Set(State("char")),
-      Some("CHAR_LITERAL")
+      Set(State("char"))
     ),
 
     Token.StringLiteral -> NFA(
@@ -788,8 +762,7 @@ object TokenNFA {
                    State("\"\\")  -> Map( NegatedSymbols("\n", "\r") -> Set(State("\"")))
                )),
       State("i"),
-      Set(State("string")),
-      Some("STR_LITERAL")
+      Set(State("string"))
     )
 
   )
