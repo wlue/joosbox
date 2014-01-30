@@ -178,11 +178,12 @@ class DFA(
     consume(inputString, startState).flatMap[List[MatchData]] {
       case (state: State, remaining: String) => {
         if (remaining.length == 0) {
-          Some(List[MatchData](stateSourceMap(state)))
+          Some(List[MatchData](stateSourceMap(state).withInput(inputString)))
         } else {
           matchString(remaining) match {
             case Some(remainingMatchData) => {
-              Some(List[MatchData](stateSourceMap(state)) ++ remainingMatchData)
+              val consumedInput: String = inputString.slice(0, inputString.size - remaining.size)
+              Some(List[MatchData](stateSourceMap(state).withInput(consumedInput)) ++ remainingMatchData)
             }
             case None => None
           }
@@ -258,7 +259,7 @@ class NFA(
     val renamedStateSourceMap = stateSourceMap.map {
       case (state: State, data: MatchData) => {
         data match {
-          case MatchData(name) => state -> MatchData(newName)
+          case MatchData(name, input) => state -> MatchData(newName, input)
           case _ => state -> data
         }
       }

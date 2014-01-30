@@ -710,9 +710,9 @@ class TokenSpec extends Specification {
       val testNFAs = Set[NFA](TokenNFA.nfas(Token.Assign), TokenNFA.nfas(Token.Equal))
       val mergedTestDFA = NFA.union(testNFAs).toDFA
 
-      mergedTestDFA.matchString("=") must beEqualTo(Some(List(MatchData("ASSIGN"))))
-      mergedTestDFA.matchString("==") must beEqualTo(Some(List(MatchData("EQUAL"))))
-      mergedTestDFA.matchString("===") must beEqualTo(Some(List(MatchData("EQUAL"), MatchData("ASSIGN"))))
+      mergedTestDFA.matchString("=") must beEqualTo(Some(List(MatchData("ASSIGN", "="))))
+      mergedTestDFA.matchString("==") must beEqualTo(Some(List(MatchData("EQUAL", "=="))))
+      mergedTestDFA.matchString("===") must beEqualTo(Some(List(MatchData("EQUAL", "=="), MatchData("ASSIGN", "="))))
       mergedTestDFA.matchString("+") must beEqualTo(None)
     }
 
@@ -724,9 +724,9 @@ class TokenSpec extends Specification {
       )
       val mergedTestDFA = NFA.union(testNFAs).toDFA
 
-      mergedTestDFA.matchString("=") must beEqualTo(Some(List(MatchData("ASSIGN"))))
-      mergedTestDFA.matchString("==") must beEqualTo(Some(List(MatchData("EQUAL"))))
-      mergedTestDFA.matchString("!") must beEqualTo(Some(List(MatchData("LNOT"))))
+      mergedTestDFA.matchString("=") must beEqualTo(Some(List(MatchData("ASSIGN", "="))))
+      mergedTestDFA.matchString("==") must beEqualTo(Some(List(MatchData("EQUAL", "=="))))
+      mergedTestDFA.matchString("!") must beEqualTo(Some(List(MatchData("LNOT", "!"))))
     }
 
     "simple assign/equal/not/notequal matching" in {
@@ -738,10 +738,10 @@ class TokenSpec extends Specification {
       )
       val mergedTestDFA = NFA.union(testNFAs).toDFA
 
-      mergedTestDFA.matchString("=") must beEqualTo(Some(List(MatchData("ASSIGN"))))
-      mergedTestDFA.matchString("==") must beEqualTo(Some(List(MatchData("EQUAL"))))
-      mergedTestDFA.matchString("!") must beEqualTo(Some(List(MatchData("LNOT"))))
-      mergedTestDFA.matchString("!=") must beEqualTo(Some(List(MatchData("NOT_EQUAL"))))
+      mergedTestDFA.matchString("=") must beEqualTo(Some(List(MatchData("ASSIGN", "="))))
+      mergedTestDFA.matchString("==") must beEqualTo(Some(List(MatchData("EQUAL", "=="))))
+      mergedTestDFA.matchString("!") must beEqualTo(Some(List(MatchData("LNOT", "!"))))
+      mergedTestDFA.matchString("!=") must beEqualTo(Some(List(MatchData("NOT_EQUAL", "!="))))
     }
 
     "matching the entire grammar all at once" in {
@@ -749,73 +749,73 @@ class TokenSpec extends Specification {
       theDFA must haveClass[DFA]
 
       "assign" in {
-        theDFA.matchString("=") must beEqualTo(Some(List(MatchData("ASSIGN"))))
+        theDFA.matchString("=") must beEqualTo(Some(List(MatchData("ASSIGN", "="))))
       }
 
       "equals" in {
-        theDFA.matchString("==") must beEqualTo(Some(List(MatchData("EQUAL"))))
+        theDFA.matchString("==") must beEqualTo(Some(List(MatchData("EQUAL", "=="))))
       }
 
       "logical not" in {
-        theDFA.matchString("!") must beEqualTo(Some(List(MatchData("LNOT"))))
+        theDFA.matchString("!") must beEqualTo(Some(List(MatchData("LNOT", "!"))))
       }
 
       "not equal" in {
-        theDFA.matchString("!=") must beEqualTo(Some(List(MatchData("NOT_EQUAL"))))
+        theDFA.matchString("!=") must beEqualTo(Some(List(MatchData("NOT_EQUAL", "!="))))
       }
 
       "variable inequality" in {
         theDFA.matchString("a != b") must beEqualTo(Some(List(
-          MatchData("IDENTIFIER"),
-          MatchData("WHITESPACE"),
-          MatchData("NOT_EQUAL"),
-          MatchData("WHITESPACE"),
-          MatchData("IDENTIFIER")
+          MatchData("IDENTIFIER", "a"),
+          MatchData("WHITESPACE", " "),
+          MatchData("NOT_EQUAL", "!="),
+          MatchData("WHITESPACE", " "),
+          MatchData("IDENTIFIER", "b")
         )))
       }
 
       "variable equality and assignment" in {
         theDFA.matchString("bool areEqual = (a == b);") must beEqualTo(Some(List(
-          MatchData("IDENTIFIER"),
-          MatchData("WHITESPACE"),
-          MatchData("IDENTIFIER"),
-          MatchData("WHITESPACE"),
-          MatchData("ASSIGN"),
-          MatchData("WHITESPACE"),
-          MatchData("LPAREN"),
-          MatchData("IDENTIFIER"),
-          MatchData("WHITESPACE"),
-          MatchData("EQUAL"),
-          MatchData("WHITESPACE"),
-          MatchData("IDENTIFIER"),
-          MatchData("RPAREN"),
-          MatchData("SEMI")
+          MatchData("IDENTIFIER", "bool"),
+          MatchData("WHITESPACE", " "),
+          MatchData("IDENTIFIER", "areEqual"),
+          MatchData("WHITESPACE", " "),
+          MatchData("ASSIGN", "="),
+          MatchData("WHITESPACE", " "),
+          MatchData("LPAREN", "("),
+          MatchData("IDENTIFIER", "a"),
+          MatchData("WHITESPACE", " "),
+          MatchData("EQUAL", "=="),
+          MatchData("WHITESPACE", " "),
+          MatchData("IDENTIFIER", "b"),
+          MatchData("RPAREN", ")"),
+          MatchData("SEMI", ";")
         )))
       }
 
       "class declaration" in {
         theDFA.matchString("public static Bicycle(int startGear) { gear = startGear; }") must beEqualTo(Some(List(
-          MatchData("IDENTIFIER"),
-          MatchData("WHITESPACE"),
-          MatchData("IDENTIFIER"),
-          MatchData("WHITESPACE"),
-          MatchData("IDENTIFIER"),
-          MatchData("LPAREN"),
-          MatchData("IDENTIFIER"),
-          MatchData("WHITESPACE"),
-          MatchData("IDENTIFIER"),
-          MatchData("RPAREN"),
-          MatchData("WHITESPACE"),
-          MatchData("LCURLY"),
-          MatchData("WHITESPACE"),
-          MatchData("IDENTIFIER"),
-          MatchData("WHITESPACE"),
-          MatchData("ASSIGN"),
-          MatchData("WHITESPACE"),
-          MatchData("IDENTIFIER"),
-          MatchData("SEMI"),
-          MatchData("WHITESPACE"),
-          MatchData("RCURLY")
+          MatchData("IDENTIFIER", "public"),
+          MatchData("WHITESPACE", " "),
+          MatchData("IDENTIFIER", "static"),
+          MatchData("WHITESPACE", " "),
+          MatchData("IDENTIFIER", "Bicycle"),
+          MatchData("LPAREN", "("),
+          MatchData("IDENTIFIER", "int"),
+          MatchData("WHITESPACE", " "),
+          MatchData("IDENTIFIER", "startGear"),
+          MatchData("RPAREN", ")"),
+          MatchData("WHITESPACE", " "),
+          MatchData("LCURLY", "{"),
+          MatchData("WHITESPACE", " "),
+          MatchData("IDENTIFIER", "gear"),
+          MatchData("WHITESPACE", " "),
+          MatchData("ASSIGN", "="),
+          MatchData("WHITESPACE", " "),
+          MatchData("IDENTIFIER", "startGear"),
+          MatchData("SEMI", ";"),
+          MatchData("WHITESPACE", " "),
+          MatchData("RCURLY", "}")
         )))
       }
     }

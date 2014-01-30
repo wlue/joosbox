@@ -259,10 +259,10 @@ class DFASpec extends Specification {
           )
         ).toDFA
 
-        dfa.matchString("abc") must beEqualTo(Some(List(MatchData("C_MATCH"))))
+        dfa.matchString("abc") must beEqualTo(Some(List(MatchData("C_MATCH", "abc"))))
         dfa.matchString("abcdef") must beEqualTo(None)
         dfa.matchString("abcdefghi") must beEqualTo(None)
-        dfa.matchString("abcxyz") must beEqualTo(Some(List(MatchData("C_MATCH"), MatchData("Z_MATCH"))))
+        dfa.matchString("abcxyz") must beEqualTo(Some(List(MatchData("C_MATCH", "abc"), MatchData("Z_MATCH", "xyz"))))
 
         dfa.consume("abc") must beEqualTo(Some(State("c"), ""))
         dfa.consume("abcdef") must beEqualTo(Some(State("c"), "def"))
@@ -305,10 +305,10 @@ class DFASpec extends Specification {
           )
         ).toDFA
 
-        dfa.matchString("abc") must beEqualTo(Some(List(MatchData("C_MATCH"))))
-        dfa.matchString("ayz") must beEqualTo(Some(List(MatchData("Z_MATCH"))))
-        dfa.matchString("ay") must beEqualTo(Some(List(MatchData("C_MATCH"))))
-        dfa.matchString("abcxyz") must beEqualTo(Some(List(MatchData("C_MATCH"), MatchData("Z_MATCH"))))
+        dfa.matchString("abc") must beEqualTo(Some(List(MatchData("C_MATCH", "abc"))))
+        dfa.matchString("ayz") must beEqualTo(Some(List(MatchData("Z_MATCH", "ayz"))))
+        dfa.matchString("ay") must beEqualTo(Some(List(MatchData("C_MATCH", "ay"))))
+        dfa.matchString("abcxyz") must beEqualTo(Some(List(MatchData("C_MATCH", "abc"), MatchData("Z_MATCH", "xyz"))))
       }
     }
   }
