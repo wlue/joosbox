@@ -721,6 +721,12 @@ class TokenSpec extends Specification {
         TokenNFA.nfas(Token.CharLiteral).toDFA.consume("''") must beEqualTo(Some(State("char"), ""))
       }
       "success" in {
+        TokenNFA.nfas(Token.CharLiteral).toDFA.consume("'\\''") must beEqualTo(Some(State("char"), ""))
+      }
+      "success" in {
+        TokenNFA.nfas(Token.CharLiteral).toDFA.consume("'\"'") must beEqualTo(Some(State("char"), ""))
+      }
+      "success" in {
         TokenNFA.nfas(Token.CharLiteral).toDFA.consume("'\\n'") must beEqualTo(Some(State("char"), ""))
       }
       "success" in {
@@ -770,6 +776,33 @@ class TokenSpec extends Specification {
       }
       "failure" in {
         TokenNFA.nfas(Token.CharLiteral).toDFA.consume("'\\3771'") must beEqualTo(None)
+      }
+    }
+
+    "match string literal" in {
+      "success" in {
+        TokenNFA.nfas(Token.StringLiteral).toDFA.consume("\"\"") must beEqualTo(Some(State("string"), ""))
+      }
+      "success" in {
+        TokenNFA.nfas(Token.StringLiteral).toDFA.consume("\"a\"") must beEqualTo(Some(State("string"), ""))
+      }
+      "success" in {
+        TokenNFA.nfas(Token.StringLiteral).toDFA.consume("\"abc\"") must beEqualTo(Some(State("string"), ""))
+      }
+      "success" in {
+        TokenNFA.nfas(Token.StringLiteral).toDFA.consume("\"Hello, world!\\n\"") must beEqualTo(Some(State("string"), ""))
+      }
+      "success" in {
+        TokenNFA.nfas(Token.StringLiteral).toDFA.consume("\"\\\"Nested\\\"\"") must beEqualTo(Some(State("string"), ""))
+      }
+      "failure" in {
+        TokenNFA.nfas(Token.StringLiteral).toDFA.consume("\"\n\"") must beEqualTo(None)
+      }
+      "failure" in {
+        TokenNFA.nfas(Token.StringLiteral).toDFA.consume("\"") must beEqualTo(None)
+      }
+      "failure" in {
+        TokenNFA.nfas(Token.StringLiteral).toDFA.consume("") must beEqualTo(None)
       }
     }
 
