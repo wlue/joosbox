@@ -703,6 +703,76 @@ class TokenSpec extends Specification {
         TokenNFA.nfas(Token.Identifier).toDFA.consume("1world") must beEqualTo(None)
       }
     }
+
+    "match char literal" in {
+      "success" in {
+        TokenNFA.nfas(Token.CharLiteral).toDFA.consume("'a'") must beEqualTo(Some(State("char"), ""))
+      }
+      "success" in {
+        TokenNFA.nfas(Token.CharLiteral).toDFA.consume("'0'") must beEqualTo(Some(State("char"), ""))
+      }
+      "success" in {
+        TokenNFA.nfas(Token.CharLiteral).toDFA.consume("'^'") must beEqualTo(Some(State("char"), ""))
+      }
+      "success" in {
+        TokenNFA.nfas(Token.CharLiteral).toDFA.consume("' '") must beEqualTo(Some(State("char"), ""))
+      }
+      "success" in {
+        TokenNFA.nfas(Token.CharLiteral).toDFA.consume("''") must beEqualTo(Some(State("char"), ""))
+      }
+      "success" in {
+        TokenNFA.nfas(Token.CharLiteral).toDFA.consume("'\\n'") must beEqualTo(Some(State("char"), ""))
+      }
+      "success" in {
+        TokenNFA.nfas(Token.CharLiteral).toDFA.consume("'\\b'") must beEqualTo(Some(State("char"), ""))
+      }
+      "success" in {
+        TokenNFA.nfas(Token.CharLiteral).toDFA.consume("'\\\''") must beEqualTo(Some(State("char"), ""))
+      }
+      "success" in {
+        TokenNFA.nfas(Token.CharLiteral).toDFA.consume("'\\0'") must beEqualTo(Some(State("char"), ""))
+      }
+       "success" in {
+        TokenNFA.nfas(Token.CharLiteral).toDFA.consume("'\\7'") must beEqualTo(Some(State("char"), ""))
+      }
+      "success" in {
+        TokenNFA.nfas(Token.CharLiteral).toDFA.consume("'\\77'") must beEqualTo(Some(State("char"), ""))
+      }
+      "success" in {
+        TokenNFA.nfas(Token.CharLiteral).toDFA.consume("'\\377'") must beEqualTo(Some(State("char"), ""))
+      }
+      "failure" in {
+        TokenNFA.nfas(Token.CharLiteral).toDFA.consume("'abc'") must beEqualTo(None)
+      }
+      "failure" in {
+        TokenNFA.nfas(Token.CharLiteral).toDFA.consume("'\n'") must beEqualTo(None)
+      }
+      "failure" in {
+        TokenNFA.nfas(Token.CharLiteral).toDFA.consume("'\\r\\n'") must beEqualTo(None)
+      }
+      "failure" in {
+        TokenNFA.nfas(Token.CharLiteral).toDFA.consume("'\\9'") must beEqualTo(None)
+      }
+      "failure" in {
+        TokenNFA.nfas(Token.CharLiteral).toDFA.consume("'\\97'") must beEqualTo(None)
+      }
+      "failure" in {
+        TokenNFA.nfas(Token.CharLiteral).toDFA.consume("'\\79'") must beEqualTo(None)
+      }
+      "failure" in {
+        TokenNFA.nfas(Token.CharLiteral).toDFA.consume("'\\477'") must beEqualTo(None)
+      }
+      "failure" in {
+        TokenNFA.nfas(Token.CharLiteral).toDFA.consume("'\\397'") must beEqualTo(None)
+      }
+      "failure" in {
+        TokenNFA.nfas(Token.CharLiteral).toDFA.consume("'\\379'") must beEqualTo(None)
+      }
+      "failure" in {
+        TokenNFA.nfas(Token.CharLiteral).toDFA.consume("'\\3771'") must beEqualTo(None)
+      }
+    }
+
   }
 
   "matchString" in {

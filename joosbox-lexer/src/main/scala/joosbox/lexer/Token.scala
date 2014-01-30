@@ -59,7 +59,6 @@ object Token {
   object Num extends Token
   object Identifier extends Token
 
-  object EscapeChar extends Token
   object CharLiteral extends Token
   object StringLiteral extends Token
 }
@@ -638,9 +637,12 @@ object TokenNFA {
     ),
 
     Token.CharLiteral -> NFA(
-      Set(State("i"), State("\'"), State("\'\\"), State("char-part"), State("char")),
+      Set(State("i"), State("\'"), State("\'\\"), State("char-part"), State("char"),
+          State("oct"), State("oct2"),
+          State("part-oct"), State("part-oct2"), State("part-oct3")),
       Set(Symbol("\\"), Symbol("n"), Symbol("r"), Symbol("t"), Symbol("b"),
-          Symbol("f"), Symbol("\""), Symbol("\'"), NegatedSymbols("\\", "\n", "\r")),
+          Symbol("f"), Symbol("\""), Symbol("\'"), NegatedSymbols("\\", "\n", "\r"),
+          Symbol.octalDigitsGroup, Symbol.quadDigitsGroup),
       Relation(Map(State("i")     -> Map( Symbol("\'") -> Set(State("\'"))),
                    State("\'")    -> Map( Symbol("\\") -> Set(State("\'\\")),
                                           Symbol("\'") -> Set(State("char")),
@@ -651,8 +653,18 @@ object TokenNFA {
                                           Symbol("b") -> Set(State("char-part")),
                                           Symbol("f") -> Set(State("char-part")),
                                           Symbol("\"") -> Set(State("char-part")),
-                                          Symbol("\'") -> Set(State("char-part"))),
-                   State("char-part") -> Map( Symbol("\'") -> Set(State("char")))
+                                          Symbol("\'") -> Set(State("char-part")),
+                                          Symbol.octalDigitsGroup -> Set(State("oct")),
+                                          Symbol.quadDigitsGroup -> Set(State("part-oct"))),
+                   State("char-part") -> Map( Symbol("\'") -> Set(State("char"))),
+                   State("oct")       -> Map( Symbol("\'") -> Set(State("char")),
+                                              Symbol.octalDigitsGroup -> Set(State("oct2"))),
+                   State("oct2")      -> Map( Symbol("\'") -> Set(State("char"))),
+                   State("part-oct")  -> Map( Symbol("\'") -> Set(State("char")),
+                                              Symbol.octalDigitsGroup -> Set(State("part-oct2"))),
+                   State("part-oct2") -> Map( Symbol("\'") -> Set(State("char")),
+                                              Symbol.octalDigitsGroup -> Set(State("part-oct3"))),
+                   State("part-oct3") -> Map( Symbol("\'") -> Set(State("char")))
                )),
       State("i"),
       Set(State("char")),
@@ -734,7 +746,6 @@ object TokenRegex {
   val NUM           = """\d\d*""".r
   val IDENTIFIER    = """[a-zA-Z_\$][a-zA-Z_0-9\$]*""".r
 
-  val ESC_CHAR      = """\\(n|r|t|b|f|"|'|\\|[0..9])""".r
-  val CHAR_LITERAL  = new Regex("\'("+ESC_CHAR+"|([^(\\n|\\r|\\\\|\')]))\'")
-  val STR_LITERAL   = new Regex("\"("+ESC_CHAR+"|([^(\\n|\\r|\\\\|\")]))*\"")
+  val CHAR_LITERAL  = """'(\(\n|\r|\t|\b|\f|\'|\")|^[(\n|\r)])'""".r
+  val STR_LITERAL   = new Regex("\"(\\(^[\\n|\\r])|([^(\\n|\\r|\\\\|\")]))*\"")
 }
