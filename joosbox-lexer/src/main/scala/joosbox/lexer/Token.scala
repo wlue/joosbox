@@ -66,7 +66,7 @@ object Token {
 
 object TokenNFA {
   lazy val nfa: NFA = {
-    nfas.values.reduce { (first, second) => first.union(second) }
+    NFA.union(nfas.values.toSet)
   }
 
   val nfas: Map[Token.Token, NFA] = Map(

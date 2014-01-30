@@ -210,6 +210,35 @@ object NFA {
   def unapply(nfa: NFA) = Some((
     nfa.states, nfa.symbols, nfa.relation, nfa.startState, nfa.acceptingStates, nfa.name, nfa.stateSourceMap
   ))
+
+  def union(nfas: Set[NFA]): NFA = {
+    val prefixedNFAs: Set[NFA] = nfas.map(_.toPrefixedForm)
+
+    //  TODO: If there is no name here, generate one.
+    val newName: String = prefixedNFAs.flatMap(_.name).mkString("|")
+    val newStartState: State = State(newName)
+
+    val newAcceptingStates: Set[State] = prefixedNFAs.map(_.acceptingStates).reduce((_ ++ _))
+    val newRelationTable: Map[State, Map[Symbol, Set[State]]] = {
+      val existingRelations = prefixedNFAs.map(_.relation.table).reduce((_ ++ _))
+      val startStates: Set[State] = prefixedNFAs.map(_.startState)
+
+      existingRelations + (newStartState -> Map(Symbol.epsilon -> startStates))
+    }
+    val newStateSourceMap: Map[State, MatchData] = prefixedNFAs.map(_.stateSourceMap).reduce((_ ++ _))
+    val newStates: Set[State] = prefixedNFAs.map(_.states).reduce((_ ++ _)) + newStartState
+    val newSymbols: Set[Symbol] = prefixedNFAs.map(_.symbols).reduce((_ ++ _)) + Symbol.epsilon
+
+    NFA(
+      newStates,
+      newSymbols,
+      Relation(newRelationTable),
+      newStartState,
+      newAcceptingStates,
+      Some(newName),
+      newStateSourceMap
+    )
+  }
 }
 
 class NFA(
@@ -316,73 +345,49 @@ class NFA(
     )
   }
 
-  def union(that: NFA): NFA = {
-    val newStates: Set[State] = {
-      states.map{ s:State => State(name.get + "-" + s.name) } ++
-      that.states.map{ s:State => State(that.name.get + "-" + s.name) }
-    }
+  def toPrefixedForm: NFA = {
+    name match {
+      case None => this
+      case Some(name) => {
 
-    //  TODO: If there is no name here, generate one.
-    val newName: String = name.get + "-" + that.name.get
-    val newStartState: State = State(name.get + "-" + that.name.get)
+        val newStates: Set[State] = states.map(State.prefixed(name, _))
+        val newAcceptingStates: Set[State] = acceptingStates.map(State.prefixed(name, _))
 
-    val newAcceptingStates: Set[State] = {
-      acceptingStates.map{ s:State => State(name.get + "-" + s.name) } ++
-      that.acceptingStates.map{ s:State => State(that.name.get + "-" + s.name) }
-    }
-
-    val newRelationTable: Map[State, Map[Symbol, Set[State]]] = {
-      relation.table.map{
-        case(state: State, transitions: Map[Symbol, Set[State]]) => {
-          State(name.get + "-" + state.name) -> transitions.map {
-            case(symbol: Symbol, states: Set[State]) => {
-              symbol -> states.map { (destState: State) => 
-                State(name.get + "-" + destState.name)
+        val newRelationTable: Map[State, Map[Symbol, Set[State]]] = {
+          relation.table.map{
+            case(state: State, transitions: Map[Symbol, Set[State]]) => {
+              State.prefixed(name, state) -> transitions.map {
+                case(symbol: Symbol, states: Set[State]) => {
+                  symbol -> states.map { (destState: State) => 
+                    State.prefixed(name, destState)
+                  }
+                }
               }
             }
           }
         }
-      } ++ 
-      that.relation.table.map{
-        case(state: State, transitions: Map[Symbol, Set[State]]) => {
-          State(that.name.get + "-" + state.name) -> transitions.map {
-            case(symbol: Symbol, states: Set[State]) => {
-              symbol -> states.map { (destState: State) => 
-                State(that.name.get + "-" + destState.name)
-              }
+
+        val newStateSourceMap: Map[State, MatchData] = {
+          stateSourceMap.map{
+            case(state: State, data: MatchData) => {
+              State.prefixed(name, state) -> data
             }
           }
         }
-      } ++ 
-      Map[State, Map[Symbol, Set[State]]](
-        newStartState -> Map(Symbol.epsilon -> Set(
-          State(name.get + "-" + startState.name),
-          State(that.name.get + "-" + that.startState.name)
-        ))
-      )
-    }
 
-    val newStateSourceMap: Map[State, MatchData] = {
-      stateSourceMap.map{
-        case(state: State, data: MatchData) => {
-          State(name.get + "-" + state.name) -> data
-        }
-      } ++
-      that.stateSourceMap.map{
-        case(state: State, data: MatchData) => {
-          State(that.name.get + "-" + state.name) -> data
-        }
+        NFA(
+          newStates,
+          symbols,
+          Relation(newRelationTable),
+          State.prefixed(name, startState),
+          newAcceptingStates,
+          Some(name),
+          newStateSourceMap
+        )
       }
-    } 
-
-    NFA(
-      newStates + newStartState,
-      symbols ++ that.symbols + Symbol.epsilon,
-      Relation(newRelationTable),
-      newStartState,
-      newAcceptingStates,
-      Some(newName),
-      newStateSourceMap
-    )
+    }
   }
+
+  def union(that: NFA): NFA = NFA.union(Set(this, that))
+  def union(nfas: Set[NFA]): NFA = NFA.union(nfas + this)
 }

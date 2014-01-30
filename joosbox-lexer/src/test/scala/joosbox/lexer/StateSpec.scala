@@ -6,7 +6,7 @@ import joosbox.lexer._
 
 class StateSpec extends Specification {
   "State" should {
-    "implicity convert from string" in {
+    "implicitly convert from string" in {
       import StateImplicits._
 
       val state: State = "s"

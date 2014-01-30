@@ -6,7 +6,7 @@ import joosbox.lexer._
 
 class SymbolSpec extends Specification {
   "Symbol" should {
-    "implicity convert from string" in {
+    "implicitly convert from string" in {
       import SymbolImplicits._
 
       "input symbol" in {
