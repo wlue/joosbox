@@ -57,10 +57,118 @@ object Token {
   object JavaDocComment extends Token
 
   object Num extends Token
-  object Identifier extends Token
+  object Identifier extends Token {
+      val Keywords : Map[String, Token.Token] = Map(
+        "abstract" -> Token.AbstractKeyword,
+        "boolean" -> Token.BooleanKeyword,
+        "break" -> Token.BreakKeyword,
+        "byte" -> Token.ByteKeyword,
+        "case" -> Token.CaseKeyword,
+        "catch" -> Token.CatchKeyword,
+        "char" -> Token.CharKeyword,
+        "class" -> Token.ClassKeyword,
+        "const" -> Token.ConstKeyword,
+        "continue" -> Token.ContinueKeyword,
+        "default" -> Token.DefaultKeyword,
+        "do" -> Token.DoKeyword,
+        "double" -> Token.DoubleKeyword,
+        "else" -> Token.ElseKeyword,
+        "extends" -> Token.ExtendsKeyword,
+        "final" -> Token.FinalKeyword,
+        "finally" -> Token.FinallyKeyword,
+        "float" -> Token.FloatKeyword,
+        "for" -> Token.ForKeyword,
+        "goto" -> Token.GotoKeyword,
+        "if" -> Token.IfKeyword,
+        "implements" -> Token.ImplementsKeyword,
+        "import" -> Token.ImportKeyword,
+        "instanceof" -> Token.InstanceofKeyword,
+        "int" -> Token.IntKeyword,
+        "interface" -> Token.InterfaceKeyword,
+        "long" -> Token.LongKeyword,
+        "native" -> Token.NativeKeyword,
+        "new" -> Token.NewKeyword,
+        "package" -> Token.PackageKeyword,
+        "private" -> Token.PrivateKeyword,
+        "protected" -> Token.ProtectedKeyword,
+        "public" -> Token.PublicKeyword,
+        "return" -> Token.ReturnKeyword,
+        "short" -> Token.ShortKeyword,
+        "static" -> Token.StaticKeyword,
+        "strictfp" -> Token.StrictfpKeyword,
+        "super" -> Token.SuperKeyword,
+        "switch" -> Token.SwitchKeyword,
+        "synchronized" -> Token.SynchronizedKeyword,
+        "this" -> Token.ThisKeyword,
+        "throw" -> Token.ThrowKeyword,
+        "throws" -> Token.ThrowsKeyword,
+        "transient" -> Token.TransientKeyword,
+        "try" -> Token.TryKeyword,
+        "void" -> Token.VoidKeyword,
+        "volatile" -> Token.VolatileKeyword,
+        "while" -> Token.WhileKeyword,
+
+        "true" -> Token.TrueLiteral,
+        "false" -> Token.FalseLiteral,
+        "null" -> Token.NullLiteral
+      )
+  }
 
   object CharLiteral extends Token
   object StringLiteral extends Token
+
+	object AbstractKeyword extends Token
+	object BooleanKeyword extends Token
+	object BreakKeyword extends Token
+	object ByteKeyword extends Token
+	object CaseKeyword extends Token
+	object CatchKeyword extends Token
+	object CharKeyword extends Token
+	object ClassKeyword extends Token
+	object ConstKeyword extends Token
+	object ContinueKeyword extends Token
+	object DefaultKeyword extends Token
+	object DoKeyword extends Token
+	object DoubleKeyword extends Token
+	object ElseKeyword extends Token
+	object ExtendsKeyword extends Token
+	object FinalKeyword extends Token
+	object FinallyKeyword extends Token
+	object FloatKeyword extends Token
+	object ForKeyword extends Token
+	object GotoKeyword extends Token
+	object IfKeyword extends Token
+	object ImplementsKeyword extends Token
+	object ImportKeyword extends Token
+	object InstanceofKeyword extends Token
+	object IntKeyword extends Token
+	object InterfaceKeyword extends Token
+	object LongKeyword extends Token
+	object NativeKeyword extends Token
+	object NewKeyword extends Token
+	object PackageKeyword extends Token
+	object PrivateKeyword extends Token
+	object ProtectedKeyword extends Token
+	object PublicKeyword extends Token
+	object ReturnKeyword extends Token
+	object ShortKeyword extends Token
+	object StaticKeyword extends Token
+	object StrictfpKeyword extends Token
+	object SuperKeyword extends Token
+	object SwitchKeyword extends Token
+	object SynchronizedKeyword extends Token
+	object ThisKeyword extends Token
+	object ThrowKeyword extends Token
+	object ThrowsKeyword extends Token
+	object TransientKeyword extends Token
+	object TryKeyword extends Token
+	object VoidKeyword extends Token
+	object VolatileKeyword extends Token
+	object WhileKeyword extends Token
+
+  object TrueLiteral extends Token
+  object FalseLiteral extends Token
+  object NullLiteral extends Token
 }
 
 object TokenNFA {
