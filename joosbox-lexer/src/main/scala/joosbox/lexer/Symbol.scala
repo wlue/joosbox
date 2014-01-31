@@ -17,16 +17,12 @@ object Symbol {
 
   lazy val epsilon = Epsilon
   lazy val digits: Set[Symbol] = (0 to 9).map { num => InputSymbol(num.toString) }.toSet
-  lazy val digitsGroup = SymbolGroup(digits)
-
   lazy val octalDigits: Set[Symbol] = (0 to 7).map { num => InputSymbol(num.toString) }.toSet
-  lazy val octalDigitsGroup = SymbolGroup(octalDigits)
-
   lazy val quadDigits: Set[Symbol] = (0 to 3).map { num => InputSymbol(num.toString) }.toSet
-  lazy val quadDigitsGroup = SymbolGroup(quadDigits)
-
   lazy val letters: Set[Symbol] = (('a' to 'z') ++ ('A' to 'Z')).map { letter => InputSymbol(letter.toString) }.toSet
-  lazy val lettersGroup = SymbolGroup(letters)
+
+  def transitionsFromGroup(group: Set[Symbol], states: Set[State]): Map[Symbol, Set[State]] = 
+    group.map{ symbol: Symbol => symbol -> states }.toMap
 }
 
 sealed trait Symbol {

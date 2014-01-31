@@ -700,9 +700,9 @@ object TokenNFA {
 
     Token.Num -> NFA(
       Set(State("i"), State("digit")),
-      Set(Symbol.epsilon, Symbol.digitsGroup),
-      Relation(Map(State("i") -> Map(Symbol.digitsGroup -> Set(State("digit"))),
-                   State("digit") -> Map(Symbol.digitsGroup -> Set(State("digit")))
+      Set(Symbol.epsilon) ++ Symbol.digits,
+      Relation(Map(State("i") -> Symbol.transitionsFromGroup(Symbol.digits, Set(State("digit"))),
+                   State("digit") -> Symbol.transitionsFromGroup(Symbol.digits, Set(State("digit")))
                )),
       State("i"),
       Set(State("digit"))
@@ -710,14 +710,14 @@ object TokenNFA {
 
     Token.Identifier -> NFA(
       Set(State("i"), State("id")),
-      Set(Symbol.epsilon, Symbol("_"), Symbol("$"), Symbol.lettersGroup, Symbol.digitsGroup),
-      Relation(Map(State("i")   -> Map( Symbol.lettersGroup -> Set(State("id")),
-                                        Symbol("_") -> Set(State("id")),
-                                        Symbol("$") -> Set(State("id"))),
-                   State("id")  -> Map( Symbol.lettersGroup -> Set(State("id")),
-                                        Symbol.digitsGroup -> Set(State("id")),
-                                        Symbol("_") -> Set(State("id")),
-                                        Symbol("$") -> Set(State("id")))
+      Set(Symbol.epsilon, Symbol("_"), Symbol("$")) ++ Symbol.letters ++ Symbol.digits,
+      Relation(Map(State("i")   -> (Map(Symbol("_") -> Set(State("id")),
+                                        Symbol("$") -> Set(State("id"))) ++
+                                    Symbol.transitionsFromGroup(Symbol.letters, Set(State("id")))),
+                   State("id")  -> (Map(Symbol("_") -> Set(State("id")),
+                                        Symbol("$") -> Set(State("id"))) ++ 
+                                    Symbol.transitionsFromGroup(Symbol.letters, Set(State("id"))) ++ 
+                                    Symbol.transitionsFromGroup(Symbol.digits, Set(State("id"))))
                )),
       State("i"),
       Set(State("id"))
@@ -728,29 +728,31 @@ object TokenNFA {
           State("oct"), State("oct2"),
           State("part-oct"), State("part-oct2"), State("part-oct3")),
       Set(Symbol("\\"), Symbol("n"), Symbol("r"), Symbol("t"), Symbol("b"),
-          Symbol("f"), Symbol("\""), Symbol("\'"), NegatedSymbols("\\", "\n", "\r"),
-          Symbol.octalDigitsGroup, Symbol.quadDigitsGroup),
+          Symbol("f"), Symbol("\""), Symbol("\'"), NegatedSymbols("\\", "\n", "\r")) ++ (
+            Symbol.octalDigits ++ Symbol.quadDigits
+          ),
       Relation(Map(State("i")     -> Map( Symbol("\'") -> Set(State("\'"))),
                    State("\'")    -> Map( Symbol("\\") -> Set(State("\'\\")),
                                           Symbol("\'") -> Set(State("char")),
                                           NegatedSymbols("\\", "\n", "\r") -> Set(State("char-part"))),
-                   State("\'\\")  -> Map( Symbol("n") -> Set(State("char-part")),
+                   State("\'\\")  -> (Map( Symbol("n") -> Set(State("char-part")),
                                           Symbol("r") -> Set(State("char-part")),
                                           Symbol("t") -> Set(State("char-part")),
                                           Symbol("b") -> Set(State("char-part")),
                                           Symbol("f") -> Set(State("char-part")),
                                           Symbol("\"") -> Set(State("char-part")),
-                                          Symbol("\'") -> Set(State("char-part")),
-                                          Symbol.octalDigitsGroup -> Set(State("oct")),
-                                          Symbol.quadDigitsGroup -> Set(State("part-oct"))),
+                                          Symbol("\'") -> Set(State("char-part"))) ++ (
+                                            Symbol.transitionsFromGroup(Symbol.octalDigits, Set(State("oct"))) ++
+                                            Symbol.transitionsFromGroup(Symbol.quadDigits, Set(State("part-oct")))
+                                          )),
                    State("char-part") -> Map( Symbol("\'") -> Set(State("char"))),
-                   State("oct")       -> Map( Symbol("\'") -> Set(State("char")),
-                                              Symbol.octalDigitsGroup -> Set(State("oct2"))),
+                   State("oct")       -> (Map( Symbol("\'") -> Set(State("char"))) ++
+                                         Symbol.transitionsFromGroup(Symbol.octalDigits, Set(State("oct2")))),
                    State("oct2")      -> Map( Symbol("\'") -> Set(State("char"))),
-                   State("part-oct")  -> Map( Symbol("\'") -> Set(State("char")),
-                                              Symbol.octalDigitsGroup -> Set(State("part-oct2"))),
-                   State("part-oct2") -> Map( Symbol("\'") -> Set(State("char")),
-                                              Symbol.octalDigitsGroup -> Set(State("part-oct3"))),
+                   State("part-oct")  -> (Map( Symbol("\'") -> Set(State("char"))) ++
+                                         Symbol.transitionsFromGroup(Symbol.octalDigits, Set(State("part-oct2")))),
+                   State("part-oct2") -> (Map( Symbol("\'") -> Set(State("char"))) ++
+                                         Symbol.transitionsFromGroup(Symbol.octalDigits, Set(State("part-oct3")))),
                    State("part-oct3") -> Map( Symbol("\'") -> Set(State("char")))
                )),
       State("i"),
