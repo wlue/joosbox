@@ -878,8 +878,8 @@ class TokenSpec extends Specification {
       }
 
       "variable equality and assignment" in {
-        theDFA.matchString("bool areEqual = (a == b);") must beEqualTo(Some(List(
-          Token.Identifier("bool"),
+        theDFA.matchString("boolean areEqual = (a == b);") must beEqualTo(Some(List(
+          Token.BooleanKeyword("boolean"),
           Token.Whitespace(" "),
           Token.Identifier("areEqual"),
           Token.Whitespace(" "),
@@ -898,13 +898,13 @@ class TokenSpec extends Specification {
 
       "class declaration" in {
         theDFA.matchString("public static Bicycle(int startGear) { gear = startGear; }") must beEqualTo(Some(List(
-          Token.Identifier("public"),
+          Token.PublicKeyword("public"),
           Token.Whitespace(" "),
-          Token.Identifier("static"),
+          Token.StaticKeyword("static"),
           Token.Whitespace(" "),
           Token.Identifier("Bicycle"),
           Token.LeftParen("("),
-          Token.Identifier("int"),
+          Token.IntKeyword("int"),
           Token.Whitespace(" "),
           Token.Identifier("startGear"),
           Token.RightParen(")"),

@@ -12,7 +12,7 @@ object Token {
 
       val constructor = this.getClass.getConstructors.head
       val args = Array[AnyRef](data)
-      constructor.newInstance(args: _*).asInstanceOf[Token.Kind]
+      constructor.newInstance(args: _*).asInstanceOf[Token.Kind].resolve
     }
 
     def tokenKind(): String = {
@@ -21,6 +21,8 @@ object Token {
         case _ => data
       }
     }
+
+    def resolve: Token.Kind = this
   }
 
   case class Question(data: String) extends Kind
@@ -133,60 +135,62 @@ object Token {
   case class NullLiteral(data: String) extends Kind
 
   case class Identifier(data: String) extends Kind {
-    val Keywords = Map(
-      "abstract" -> Token.AbstractKeyword,
-      "boolean" -> Token.BooleanKeyword,
-      "break" -> Token.BreakKeyword,
-      "byte" -> Token.ByteKeyword,
-      "case" -> Token.CaseKeyword,
-      "catch" -> Token.CatchKeyword,
-      "char" -> Token.CharKeyword,
-      "class" -> Token.ClassKeyword,
-      "const" -> Token.ConstKeyword,
-      "continue" -> Token.ContinueKeyword,
-      "default" -> Token.DefaultKeyword,
-      "do" -> Token.DoKeyword,
-      "double" -> Token.DoubleKeyword,
-      "else" -> Token.ElseKeyword,
-      "extends" -> Token.ExtendsKeyword,
-      "final" -> Token.FinalKeyword,
-      "finally" -> Token.FinallyKeyword,
-      "float" -> Token.FloatKeyword,
-      "for" -> Token.ForKeyword,
-      "goto" -> Token.GotoKeyword,
-      "if" -> Token.IfKeyword,
-      "implements" -> Token.ImplementsKeyword,
-      "import" -> Token.ImportKeyword,
-      "instanceof" -> Token.InstanceofKeyword,
-      "int" -> Token.IntKeyword,
-      "interface" -> Token.InterfaceKeyword,
-      "long" -> Token.LongKeyword,
-      "native" -> Token.NativeKeyword,
-      "new" -> Token.NewKeyword,
-      "package" -> Token.PackageKeyword,
-      "private" -> Token.PrivateKeyword,
-      "protected" -> Token.ProtectedKeyword,
-      "public" -> Token.PublicKeyword,
-      "return" -> Token.ReturnKeyword,
-      "short" -> Token.ShortKeyword,
-      "static" -> Token.StaticKeyword,
-      "strictfp" -> Token.StrictfpKeyword,
-      "super" -> Token.SuperKeyword,
-      "switch" -> Token.SwitchKeyword,
-      "synchronized" -> Token.SynchronizedKeyword,
-      "this" -> Token.ThisKeyword,
-      "throw" -> Token.ThrowKeyword,
-      "throws" -> Token.ThrowsKeyword,
-      "transient" -> Token.TransientKeyword,
-      "try" -> Token.TryKeyword,
-      "void" -> Token.VoidKeyword,
-      "volatile" -> Token.VolatileKeyword,
-      "while" -> Token.WhileKeyword,
+    override def resolve: Token.Kind = data match {
+      case "abstract" =>      Token.AbstractKeyword(data)
+      case "boolean" =>       Token.BooleanKeyword(data)
+      case "break" =>         Token.BreakKeyword(data)
+      case "byte" =>          Token.ByteKeyword(data)
+      case "case" =>          Token.CaseKeyword(data)
+      case "catch" =>         Token.CatchKeyword(data)
+      case "char" =>          Token.CharKeyword(data)
+      case "class" =>         Token.ClassKeyword(data)
+      case "const" =>         Token.ConstKeyword(data)
+      case "continue" =>      Token.ContinueKeyword(data)
+      case "default" =>       Token.DefaultKeyword(data)
+      case "do" =>            Token.DoKeyword(data)
+      case "double" =>        Token.DoubleKeyword(data)
+      case "else" =>          Token.ElseKeyword(data)
+      case "extends" =>       Token.ExtendsKeyword(data)
+      case "final" =>         Token.FinalKeyword(data)
+      case "finally" =>       Token.FinallyKeyword(data)
+      case "float" =>         Token.FloatKeyword(data)
+      case "for" =>           Token.ForKeyword(data)
+      case "goto" =>          Token.GotoKeyword(data)
+      case "if" =>            Token.IfKeyword(data)
+      case "implements" =>    Token.ImplementsKeyword(data)
+      case "import" =>        Token.ImportKeyword(data)
+      case "instanceof" =>    Token.InstanceofKeyword(data)
+      case "int" =>           Token.IntKeyword(data)
+      case "interface" =>     Token.InterfaceKeyword(data)
+      case "long" =>          Token.LongKeyword(data)
+      case "native" =>        Token.NativeKeyword(data)
+      case "new" =>           Token.NewKeyword(data)
+      case "package" =>       Token.PackageKeyword(data)
+      case "private" =>       Token.PrivateKeyword(data)
+      case "protected" =>     Token.ProtectedKeyword(data)
+      case "public" =>        Token.PublicKeyword(data)
+      case "return" =>        Token.ReturnKeyword(data)
+      case "short" =>         Token.ShortKeyword(data)
+      case "static" =>        Token.StaticKeyword(data)
+      case "strictfp" =>      Token.StrictfpKeyword(data)
+      case "super" =>         Token.SuperKeyword(data)
+      case "switch" =>        Token.SwitchKeyword(data)
+      case "synchronized" =>  Token.SynchronizedKeyword(data)
+      case "this" =>          Token.ThisKeyword(data)
+      case "throw" =>         Token.ThrowKeyword(data)
+      case "throws" =>        Token.ThrowsKeyword(data)
+      case "transient" =>     Token.TransientKeyword(data)
+      case "try" =>           Token.TryKeyword(data)
+      case "void" =>          Token.VoidKeyword(data)
+      case "volatile" =>      Token.VolatileKeyword(data)
+      case "while" =>         Token.WhileKeyword(data)
+  
+      case "true" =>          Token.TrueLiteral(data)
+      case "false" =>         Token.FalseLiteral(data)
+      case "null" =>          Token.NullLiteral(data)
 
-      "true" -> Token.TrueLiteral,
-      "false" -> Token.FalseLiteral,
-      "null" -> Token.NullLiteral
-    )
+      case _ => this
+    }
   }
 
   //  Dummy tokens for our NFAs
