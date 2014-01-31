@@ -381,5 +381,32 @@ class NFASpec extends Specification {
         first.union(second) must beEqualTo(combined)
       }
     }
+
+    "fromString" in {
+      "abc" in {
+        val nfa = NFA.fromString("abc", Token.Test(""))
+        val dfa = nfa.toDFA
+        dfa.matchString("ab") must beNone
+        dfa.matchString("abc") must beEqualTo(Some(List(Token.Test("abc"))))
+        dfa.matchString("abcabc") must beEqualTo(Some(List(Token.Test("abc"), Token.Test("abc"))))
+      }
+
+      "public" in {
+        val nfa = NFA.fromString("public", Token.Test(""))
+        val dfa = nfa.toDFA
+        dfa.matchString("static") must beNone
+        dfa.matchString("public") must beEqualTo(Some(List(Token.Test("public"))))
+        dfa.matchString("publicpublic") must beEqualTo(Some(List(Token.Test("public"), Token.Test("public"))))
+      }
+
+      "finally" in {
+        val nfa = NFA.fromString("finally", Token.Test(""))
+        val dfa = nfa.toDFA
+
+        dfa.matchString("static") must beNone
+        dfa.matchString("finally") must beEqualTo(Some(List(Token.Test("finally"))))
+        dfa.matchString("finallyfinally") must beEqualTo(Some(List(Token.Test("finally"), Token.Test("finally"))))
+      }
+    }
   }
 }

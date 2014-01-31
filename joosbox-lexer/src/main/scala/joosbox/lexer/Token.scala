@@ -1,4 +1,4 @@
-package joosbox.lexer
+package joosbox.lexer 
 
 import scala.util.matching.Regex
 
@@ -21,6 +21,12 @@ object Token {
         case _ => data
       }
     }
+
+    def priority: Int = 2
+  }
+
+  trait KeywordKind extends Kind {
+    override def priority: Int = 1
   }
 
   case class Question(data: String) extends Kind
@@ -79,61 +85,62 @@ object Token {
   case class CharLiteral(data: String) extends Kind
   case class StringLiteral(data: String) extends Kind
 
-  case class AbstractKeyword(data: String) extends Kind
-  case class BooleanKeyword(data: String) extends Kind
-  case class BreakKeyword(data: String) extends Kind
-  case class ByteKeyword(data: String) extends Kind
-  case class CaseKeyword(data: String) extends Kind
-  case class CatchKeyword(data: String) extends Kind
-  case class CharKeyword(data: String) extends Kind
-  case class ClassKeyword(data: String) extends Kind
-  case class ConstKeyword(data: String) extends Kind
-  case class ContinueKeyword(data: String) extends Kind
-  case class DefaultKeyword(data: String) extends Kind
-  case class DoKeyword(data: String) extends Kind
-  case class DoubleKeyword(data: String) extends Kind
-  case class ElseKeyword(data: String) extends Kind
-  case class ExtendsKeyword(data: String) extends Kind
-  case class FinalKeyword(data: String) extends Kind
-  case class FinallyKeyword(data: String) extends Kind
-  case class FloatKeyword(data: String) extends Kind
-  case class ForKeyword(data: String) extends Kind
-  case class GotoKeyword(data: String) extends Kind
-  case class IfKeyword(data: String) extends Kind
-  case class ImplementsKeyword(data: String) extends Kind
-  case class ImportKeyword(data: String) extends Kind
-  case class InstanceofKeyword(data: String) extends Kind
-  case class IntKeyword(data: String) extends Kind
-  case class InterfaceKeyword(data: String) extends Kind
-  case class LongKeyword(data: String) extends Kind
-  case class NativeKeyword(data: String) extends Kind
-  case class NewKeyword(data: String) extends Kind
-  case class PackageKeyword(data: String) extends Kind
-  case class PrivateKeyword(data: String) extends Kind
-  case class ProtectedKeyword(data: String) extends Kind
-  case class PublicKeyword(data: String) extends Kind
-  case class ReturnKeyword(data: String) extends Kind
-  case class ShortKeyword(data: String) extends Kind
-  case class StaticKeyword(data: String) extends Kind
-  case class StrictfpKeyword(data: String) extends Kind
-  case class SuperKeyword(data: String) extends Kind
-  case class SwitchKeyword(data: String) extends Kind
-  case class SynchronizedKeyword(data: String) extends Kind
-  case class ThisKeyword(data: String) extends Kind
-  case class ThrowKeyword(data: String) extends Kind
-  case class ThrowsKeyword(data: String) extends Kind
-  case class TransientKeyword(data: String) extends Kind
-  case class TryKeyword(data: String) extends Kind
-  case class VoidKeyword(data: String) extends Kind
-  case class VolatileKeyword(data: String) extends Kind
-  case class WhileKeyword(data: String) extends Kind
+  case class Identifier(data: String) extends Kind 
 
-  case class TrueLiteral(data: String) extends Kind
-  case class FalseLiteral(data: String) extends Kind
-  case class NullLiteral(data: String) extends Kind
+  case class AbstractKeyword(data: String) extends KeywordKind
+  case class BooleanKeyword(data: String) extends KeywordKind
+  case class BreakKeyword(data: String) extends KeywordKind
+  case class ByteKeyword(data: String) extends KeywordKind
+  case class CaseKeyword(data: String) extends KeywordKind
+  case class CatchKeyword(data: String) extends KeywordKind
+  case class CharKeyword(data: String) extends KeywordKind
+  case class ClassKeyword(data: String) extends KeywordKind
+  case class ConstKeyword(data: String) extends KeywordKind
+  case class ContinueKeyword(data: String) extends KeywordKind
+  case class DefaultKeyword(data: String) extends KeywordKind
+  case class DoKeyword(data: String) extends KeywordKind
+  case class DoubleKeyword(data: String) extends KeywordKind
+  case class ElseKeyword(data: String) extends KeywordKind
+  case class ExtendsKeyword(data: String) extends KeywordKind
+  case class FinalKeyword(data: String) extends KeywordKind
+  case class FinallyKeyword(data: String) extends KeywordKind
+  case class FloatKeyword(data: String) extends KeywordKind
+  case class ForKeyword(data: String) extends KeywordKind
+  case class GotoKeyword(data: String) extends KeywordKind
+  case class IfKeyword(data: String) extends KeywordKind
+  case class ImplementsKeyword(data: String) extends KeywordKind
+  case class ImportKeyword(data: String) extends KeywordKind
+  case class InstanceofKeyword(data: String) extends KeywordKind
+  case class IntKeyword(data: String) extends KeywordKind
+  case class InterfaceKeyword(data: String) extends KeywordKind
+  case class LongKeyword(data: String) extends KeywordKind
+  case class NativeKeyword(data: String) extends KeywordKind
+  case class NewKeyword(data: String) extends KeywordKind
+  case class PackageKeyword(data: String) extends KeywordKind
+  case class PrivateKeyword(data: String) extends KeywordKind
+  case class ProtectedKeyword(data: String) extends KeywordKind
+  case class PublicKeyword(data: String) extends KeywordKind
+  case class ReturnKeyword(data: String) extends KeywordKind
+  case class ShortKeyword(data: String) extends KeywordKind
+  case class StaticKeyword(data: String) extends KeywordKind
+  case class StrictfpKeyword(data: String) extends KeywordKind
+  case class SuperKeyword(data: String) extends KeywordKind
+  case class SwitchKeyword(data: String) extends KeywordKind
+  case class SynchronizedKeyword(data: String) extends KeywordKind
+  case class ThisKeyword(data: String) extends KeywordKind
+  case class ThrowKeyword(data: String) extends KeywordKind
+  case class ThrowsKeyword(data: String) extends KeywordKind
+  case class TransientKeyword(data: String) extends KeywordKind
+  case class TryKeyword(data: String) extends KeywordKind
+  case class VoidKeyword(data: String) extends KeywordKind
+  case class VolatileKeyword(data: String) extends KeywordKind
+  case class WhileKeyword(data: String) extends KeywordKind
 
-  case class Identifier(data: String) extends Kind {
-    val Keywords = Map(
+  case class TrueLiteral(data: String) extends KeywordKind
+  case class FalseLiteral(data: String) extends KeywordKind
+  case class NullLiteral(data: String) extends KeywordKind
+
+  val Keywords = Map(
       "abstract" -> Token.AbstractKeyword,
       "boolean" -> Token.BooleanKeyword,
       "break" -> Token.BreakKeyword,
@@ -187,7 +194,6 @@ object Token {
       "false" -> Token.FalseLiteral,
       "null" -> Token.NullLiteral
     )
-  }
 
   //  Dummy tokens for our NFAs
   case class Test(data: String) extends Kind
@@ -764,7 +770,12 @@ object TokenNFA {
       State("i"),
       Set(State("string"))
     )
+  ) ++ (
 
+    //  Map our keywords to their generated NFAs
+    Token.Keywords.map {
+      case (keyword: String, token) => token -> NFA.fromString(keyword, token(""))
+    }.toMap
   )
 }
 

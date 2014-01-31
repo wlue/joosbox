@@ -91,16 +91,16 @@ abstract class Automata(
 
   def toGraphViz: String = {
     """digraph FiniteAutomaton {
-  rankdir=LR;
-  node [shape = doublecircle]; """ + acceptingStates.map{ s => "\"" + s.name + "\"" }.mkString(" ") + """;
-  node [shape = circle];
-  """ + relation.table.flatMap {
-    case (start, transitions) => transitions.flatMap {
-      case (symbol, states) => states.flatMap ( (state) => {
-        Some("\"" + escapeJava(start.name) + "\" -> \"" + escapeJava(state.name) + "\" [ label = \"" + escapeJava(symbol.toString) + "\" ];")
-      })
-    }
-  }.mkString("\n") + "\n}"
+    rankdir=LR;
+    node [shape = doublecircle]; """ + acceptingStates.map{ s => "\"" + s.name + "\"" }.mkString(" ") + """;
+    node [shape = circle];
+    """ + relation.table.flatMap {
+      case (start, transitions) => transitions.flatMap {
+        case (symbol, states) => states.flatMap ( (state) => {
+          Some("\"" + escapeJava(start.name) + "\" -> \"" + escapeJava(state.name) + "\" [ label = \"" + escapeJava(symbol.toString) + "\" ];")
+        })
+      }
+    }.mkString("\n") + "\n}"
   }
 }
 
@@ -214,6 +214,32 @@ object NFA {
     nfa.states, nfa.symbols, nfa.relation, nfa.startState, nfa.acceptingStates, nfa.token, nfa.stateSourceMap
   ))
 
+  def fromString(inputString: String, token: Token.Kind) = {
+    val states: Set[State] = inputString.toSet[Char].map(_.toString).map(State(_)) + State("start")
+    val symbols: Set[Symbol] = inputString.toSet[Char].map(_.toString).map(InputSymbol(_))
+    val table: Map[State, Map[Symbol, Set[State]]] = 
+      inputString.zip(inputString.drop(1)).foldLeft(Map.empty[State, Map[Symbol, Set[State]]]) {
+        case (table, pair) => {
+          val (from: Char, to: Char) = pair
+          val fromState: State = State(from.toString)
+          val toState: State = State(to.toString)
+          val symbol: Symbol = Symbol(to.toString)
+
+          val map: Map[Symbol, Set[State]] = table.getOrElse(fromState, Map.empty[Symbol, Set[State]])
+          val newMap: Map[Symbol, Set[State]] = map + (symbol -> Set(toState))
+
+          table + (fromState -> newMap)
+        }
+      } + (
+        State("start") -> Map(Symbol(inputString.head.toString) -> Set(State(inputString.head.toString)))
+      )
+    val startState: State = State("start")
+    val acceptingStates: Set[State] = Set(State(inputString.last.toString))
+    val stateSourceMap: Map[State, Token.Kind] = states.map{ s:State => s -> token }.toMap
+
+    NFA(states, symbols, Relation(table), startState, acceptingStates, Some(token), stateSourceMap)
+  }
+
   def union(nfas: Set[NFA]): NFA = {
     val prefixedNFAs: Set[NFA] = nfas.map(_.toPrefixedForm)
 
@@ -221,6 +247,7 @@ object NFA {
     val newName: String = prefixedNFAs.flatMap(_.token).map(_.tokenKind).mkString("|")
     val newStartState: State = State(newName)
 
+    //                                                        the double asshole butt -v
     val newAcceptingStates: Set[State] = prefixedNFAs.map(_.acceptingStates).reduce((_ ++ _))
     val newRelationTable: Map[State, Map[Symbol, Set[State]]] = {
       val existingRelations = prefixedNFAs.map(_.relation.table).reduce((_ ++ _))
@@ -228,7 +255,26 @@ object NFA {
       existingRelations + (newStartState -> Map(Symbol.epsilon -> startStates))
     }
 
-    val newStateSourceMap: Map[State, Token.Kind] = prefixedNFAs.map(_.stateSourceMap).reduce((_ ++ _))
+    val newStateSourceMap: Map[State, Token.Kind] = 
+      prefixedNFAs.map(_.stateSourceMap).foldLeft(Map.empty[State, Token.Kind]) {
+        case (accumulator: Map[State, Token.Kind], map: Map[State, Token.Kind]) => {
+          accumulator ++ map.map{
+            case (state: State, token: Token.Kind) => {
+              accumulator.get(state) match {
+                case existing: Token.Kind => {
+                  //println("Comparing tokens " + token + " and existing " + existing)
+                  (state -> (if (token.priority > existing.priority) token else existing))
+                }
+                case _ => {
+                  //println("Accumulator does not have mapping " + state + " -> " + token)
+                  (state -> token)
+                }
+              }
+            }
+          }
+        }
+      }
+
     val newStates: Set[State] = prefixedNFAs.map(_.states).reduce((_ ++ _)) + newStartState
     val newSymbols: Set[Symbol] = prefixedNFAs.map(_.symbols).reduce((_ ++ _)) + Symbol.epsilon
 
