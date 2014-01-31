@@ -847,6 +847,434 @@ class TokenSpec extends Specification {
       mergedTestDFA.matchString("!=") must beEqualTo(Some(List(Token.NotEqual("!="))))
     }
 
+    "keywords in identifier" in {
+      val matchAgainst = TokenNFA.nfas(Token.Identifier).toDFA
+
+      "abstract" in {
+        matchAgainst.matchString("abstract") must beEqualTo(Some(List(Token.AbstractKeyword("abstract"))))
+      }
+
+      "boolean" in {
+        matchAgainst.matchString("boolean") must beEqualTo(Some(List(Token.BooleanKeyword("boolean"))))
+      }
+
+      "break" in {
+        matchAgainst.matchString("break") must beEqualTo(Some(List(Token.BreakKeyword("break"))))
+      }
+
+      "byte" in {
+        matchAgainst.matchString("byte") must beEqualTo(Some(List(Token.ByteKeyword("byte"))))
+      }
+
+      "case" in {
+        matchAgainst.matchString("case") must beEqualTo(Some(List(Token.CaseKeyword("case"))))
+      }
+
+      "catch" in {
+        matchAgainst.matchString("catch") must beEqualTo(Some(List(Token.CatchKeyword("catch"))))
+      }
+
+      "char" in {
+        matchAgainst.matchString("char") must beEqualTo(Some(List(Token.CharKeyword("char"))))
+      }
+
+      "class" in {
+        matchAgainst.matchString("class") must beEqualTo(Some(List(Token.ClassKeyword("class"))))
+      }
+
+      "const" in {
+        matchAgainst.matchString("const") must beEqualTo(Some(List(Token.ConstKeyword("const"))))
+      }
+
+      "continue" in {
+        matchAgainst.matchString("continue") must beEqualTo(Some(List(Token.ContinueKeyword("continue"))))
+      }
+
+      "default" in {
+        matchAgainst.matchString("default") must beEqualTo(Some(List(Token.DefaultKeyword("default"))))
+      }
+
+      "do" in {
+        matchAgainst.matchString("do") must beEqualTo(Some(List(Token.DoKeyword("do"))))
+      }
+
+      "double" in {
+        matchAgainst.matchString("double") must beEqualTo(Some(List(Token.DoubleKeyword("double"))))
+      }
+
+      "else" in {
+        matchAgainst.matchString("else") must beEqualTo(Some(List(Token.ElseKeyword("else"))))
+      }
+
+      "extends" in {
+        matchAgainst.matchString("extends") must beEqualTo(Some(List(Token.ExtendsKeyword("extends"))))
+      }
+
+      "final" in {
+        matchAgainst.matchString("final") must beEqualTo(Some(List(Token.FinalKeyword("final"))))
+      }
+
+      "finally" in {
+        matchAgainst.matchString("finally") must beEqualTo(Some(List(Token.FinallyKeyword("finally"))))
+      }
+
+      "float" in {
+        matchAgainst.matchString("float") must beEqualTo(Some(List(Token.FloatKeyword("float"))))
+      }
+
+      "for" in {
+        matchAgainst.matchString("for") must beEqualTo(Some(List(Token.ForKeyword("for"))))
+      }
+
+      "goto" in {
+        matchAgainst.matchString("goto") must beEqualTo(Some(List(Token.GotoKeyword("goto"))))
+      }
+
+      "if" in {
+        matchAgainst.matchString("if") must beEqualTo(Some(List(Token.IfKeyword("if"))))
+      }
+
+      "implements" in {
+        matchAgainst.matchString("implements") must beEqualTo(Some(List(Token.ImplementsKeyword("implements"))))
+      }
+
+      "import" in {
+        matchAgainst.matchString("import") must beEqualTo(Some(List(Token.ImportKeyword("import"))))
+      }
+
+      "instanceof" in {
+        matchAgainst.matchString("instanceof") must beEqualTo(Some(List(Token.InstanceofKeyword("instanceof"))))
+      }
+
+      "int" in {
+        matchAgainst.matchString("int") must beEqualTo(Some(List(Token.IntKeyword("int"))))
+      }
+
+      "interface" in {
+        matchAgainst.matchString("interface") must beEqualTo(Some(List(Token.InterfaceKeyword("interface"))))
+      }
+
+      "long" in {
+        matchAgainst.matchString("long") must beEqualTo(Some(List(Token.LongKeyword("long"))))
+      }
+
+      "native" in {
+        matchAgainst.matchString("native") must beEqualTo(Some(List(Token.NativeKeyword("native"))))
+      }
+
+      "new" in {
+        matchAgainst.matchString("new") must beEqualTo(Some(List(Token.NewKeyword("new"))))
+      }
+
+      "package" in {
+        matchAgainst.matchString("package") must beEqualTo(Some(List(Token.PackageKeyword("package"))))
+      }
+
+      "private" in {
+        matchAgainst.matchString("private") must beEqualTo(Some(List(Token.PrivateKeyword("private"))))
+      }
+
+      "protected" in {
+        matchAgainst.matchString("protected") must beEqualTo(Some(List(Token.ProtectedKeyword("protected"))))
+      }
+
+      "public" in {
+        matchAgainst.matchString("public") must beEqualTo(Some(List(Token.PublicKeyword("public"))))
+      }
+
+      "return" in {
+        matchAgainst.matchString("return") must beEqualTo(Some(List(Token.ReturnKeyword("return"))))
+      }
+
+      "short" in {
+        matchAgainst.matchString("short") must beEqualTo(Some(List(Token.ShortKeyword("short"))))
+      }
+
+      "static" in {
+        matchAgainst.matchString("static") must beEqualTo(Some(List(Token.StaticKeyword("static"))))
+      }
+
+      "strictfp" in {
+        matchAgainst.matchString("strictfp") must beEqualTo(Some(List(Token.StrictfpKeyword("strictfp"))))
+      }
+
+      "super" in {
+        matchAgainst.matchString("super") must beEqualTo(Some(List(Token.SuperKeyword("super"))))
+      }
+
+      "switch" in {
+        matchAgainst.matchString("switch") must beEqualTo(Some(List(Token.SwitchKeyword("switch"))))
+      }
+
+      "synchronized" in {
+        matchAgainst.matchString("synchronized") must beEqualTo(Some(List(Token.SynchronizedKeyword("synchronized"))))
+      }
+
+      "this" in {
+        matchAgainst.matchString("this") must beEqualTo(Some(List(Token.ThisKeyword("this"))))
+      }
+
+      "throw" in {
+        matchAgainst.matchString("throw") must beEqualTo(Some(List(Token.ThrowKeyword("throw"))))
+      }
+
+      "throws" in {
+        matchAgainst.matchString("throws") must beEqualTo(Some(List(Token.ThrowsKeyword("throws"))))
+      }
+
+      "transient" in {
+        val nfa = TokenNFA.nfas(Token.Identifier)
+        matchAgainst.matchString("transient") must beEqualTo(Some(List(Token.TransientKeyword("transient"))))
+      }
+
+      "try" in {
+        matchAgainst.matchString("try") must beEqualTo(Some(List(Token.TryKeyword("try"))))
+      }
+
+      "void" in {
+        matchAgainst.matchString("void") must beEqualTo(Some(List(Token.VoidKeyword("void"))))
+      }
+
+      "volatile" in {
+        matchAgainst.matchString("volatile") must beEqualTo(Some(List(Token.VolatileKeyword("volatile"))))
+      }
+
+      "while" in {
+        matchAgainst.matchString("while") must beEqualTo(Some(List(Token.WhileKeyword("while"))))
+      }
+
+
+      "true" in {
+        matchAgainst.matchString("true") must beEqualTo(Some(List(Token.TrueLiteral("true"))))
+      }
+
+      "false" in {
+        matchAgainst.matchString("false") must beEqualTo(Some(List(Token.FalseLiteral("false"))))
+      }
+
+      "null" in {
+        matchAgainst.matchString("null") must beEqualTo(Some(List(Token.NullLiteral("null"))))
+      }
+    }
+
+    "keywords in total NFA" in {
+      val totalDFA: DFA = TokenNFA.nfa.toDFA
+
+      "abstract" in {
+        totalDFA.matchString("abstract") must beEqualTo(Some(List(Token.AbstractKeyword("abstract"))))
+      }
+
+      "boolean" in {
+        totalDFA.matchString("boolean") must beEqualTo(Some(List(Token.BooleanKeyword("boolean"))))
+      }
+
+      "break" in {
+        totalDFA.matchString("break") must beEqualTo(Some(List(Token.BreakKeyword("break"))))
+      }
+
+      "byte" in {
+        totalDFA.matchString("byte") must beEqualTo(Some(List(Token.ByteKeyword("byte"))))
+      }
+
+      "case" in {
+        totalDFA.matchString("case") must beEqualTo(Some(List(Token.CaseKeyword("case"))))
+      }
+
+      "catch" in {
+        totalDFA.matchString("catch") must beEqualTo(Some(List(Token.CatchKeyword("catch"))))
+      }
+
+      "char" in {
+        totalDFA.matchString("char") must beEqualTo(Some(List(Token.CharKeyword("char"))))
+      }
+
+      "class" in {
+        totalDFA.matchString("class") must beEqualTo(Some(List(Token.ClassKeyword("class"))))
+      }
+
+      "const" in {
+        totalDFA.matchString("const") must beEqualTo(Some(List(Token.ConstKeyword("const"))))
+      }
+
+      "continue" in {
+        totalDFA.matchString("continue") must beEqualTo(Some(List(Token.ContinueKeyword("continue"))))
+      }
+
+      "default" in {
+        totalDFA.matchString("default") must beEqualTo(Some(List(Token.DefaultKeyword("default"))))
+      }
+
+      "do" in {
+        totalDFA.matchString("do") must beEqualTo(Some(List(Token.DoKeyword("do"))))
+      }
+
+      "double" in {
+        totalDFA.matchString("double") must beEqualTo(Some(List(Token.DoubleKeyword("double"))))
+      }
+
+      "else" in {
+        totalDFA.matchString("else") must beEqualTo(Some(List(Token.ElseKeyword("else"))))
+      }
+
+      "extends" in {
+        totalDFA.matchString("extends") must beEqualTo(Some(List(Token.ExtendsKeyword("extends"))))
+      }
+
+      "final" in {
+        totalDFA.matchString("final") must beEqualTo(Some(List(Token.FinalKeyword("final"))))
+      }
+
+      "finally" in {
+        totalDFA.matchString("finally") must beEqualTo(Some(List(Token.FinallyKeyword("finally"))))
+      }
+
+      "float" in {
+        totalDFA.matchString("float") must beEqualTo(Some(List(Token.FloatKeyword("float"))))
+      }
+
+      "for" in {
+        totalDFA.matchString("for") must beEqualTo(Some(List(Token.ForKeyword("for"))))
+      }
+
+      "goto" in {
+        totalDFA.matchString("goto") must beEqualTo(Some(List(Token.GotoKeyword("goto"))))
+      }
+
+      "if" in {
+        totalDFA.matchString("if") must beEqualTo(Some(List(Token.IfKeyword("if"))))
+      }
+
+      "implements" in {
+        totalDFA.matchString("implements") must beEqualTo(Some(List(Token.ImplementsKeyword("implements"))))
+      }
+
+      "import" in {
+        totalDFA.matchString("import") must beEqualTo(Some(List(Token.ImportKeyword("import"))))
+      }
+
+      "instanceof" in {
+        totalDFA.matchString("instanceof") must beEqualTo(Some(List(Token.InstanceofKeyword("instanceof"))))
+      }
+
+      "int" in {
+        totalDFA.matchString("int") must beEqualTo(Some(List(Token.IntKeyword("int"))))
+      }
+
+      "interface" in {
+        totalDFA.matchString("interface") must beEqualTo(Some(List(Token.InterfaceKeyword("interface"))))
+      }
+
+      "long" in {
+        totalDFA.matchString("long") must beEqualTo(Some(List(Token.LongKeyword("long"))))
+      }
+
+      "native" in {
+        totalDFA.matchString("native") must beEqualTo(Some(List(Token.NativeKeyword("native"))))
+      }
+
+      "new" in {
+        totalDFA.matchString("new") must beEqualTo(Some(List(Token.NewKeyword("new"))))
+      }
+
+      "package" in {
+        totalDFA.matchString("package") must beEqualTo(Some(List(Token.PackageKeyword("package"))))
+      }
+
+      "private" in {
+        totalDFA.matchString("private") must beEqualTo(Some(List(Token.PrivateKeyword("private"))))
+      }
+
+      "protected" in {
+        totalDFA.matchString("protected") must beEqualTo(Some(List(Token.ProtectedKeyword("protected"))))
+      }
+
+      "public" in {
+        totalDFA.matchString("public") must beEqualTo(Some(List(Token.PublicKeyword("public"))))
+      }
+
+      "return" in {
+        totalDFA.matchString("return") must beEqualTo(Some(List(Token.ReturnKeyword("return"))))
+      }
+
+      "short" in {
+        totalDFA.matchString("short") must beEqualTo(Some(List(Token.ShortKeyword("short"))))
+      }
+
+      "static" in {
+        totalDFA.matchString("static") must beEqualTo(Some(List(Token.StaticKeyword("static"))))
+      }
+
+      "strictfp" in {
+        totalDFA.matchString("strictfp") must beEqualTo(Some(List(Token.StrictfpKeyword("strictfp"))))
+      }
+
+      "super" in {
+        totalDFA.matchString("super") must beEqualTo(Some(List(Token.SuperKeyword("super"))))
+      }
+
+      "switch" in {
+        totalDFA.matchString("switch") must beEqualTo(Some(List(Token.SwitchKeyword("switch"))))
+      }
+
+      "synchronized" in {
+        totalDFA.matchString("synchronized") must beEqualTo(Some(List(Token.SynchronizedKeyword("synchronized"))))
+      }
+
+      "this" in {
+        totalDFA.matchString("this") must beEqualTo(Some(List(Token.ThisKeyword("this"))))
+      }
+
+      "throw" in {
+        totalDFA.matchString("throw") must beEqualTo(Some(List(Token.ThrowKeyword("throw"))))
+      }
+
+      "throws" in {
+        totalDFA.matchString("throws") must beEqualTo(Some(List(Token.ThrowsKeyword("throws"))))
+      }
+
+      "transient" in {
+        totalDFA.matchString("transient") must beEqualTo(Some(List(Token.TransientKeyword("transient"))))
+      }
+
+      "try" in {
+        totalDFA.matchString("try") must beEqualTo(Some(List(Token.TryKeyword("try"))))
+      }
+
+      "void" in {
+        totalDFA.matchString("void") must beEqualTo(Some(List(Token.VoidKeyword("void"))))
+      }
+
+      "volatile" in {
+        totalDFA.matchString("volatile") must beEqualTo(Some(List(Token.VolatileKeyword("volatile"))))
+      }
+
+      "while" in {
+        totalDFA.matchString("while") must beEqualTo(Some(List(Token.WhileKeyword("while"))))
+      }
+
+      "true" in {
+        totalDFA.matchString("true") must beEqualTo(Some(List(Token.TrueLiteral("true"))))
+      }
+
+      "false" in {
+        totalDFA.matchString("false") must beEqualTo(Some(List(Token.FalseLiteral("false"))))
+      }
+
+      "null" in {
+        totalDFA.matchString("null") must beEqualTo(Some(List(Token.NullLiteral("null"))))
+      }
+    }
+
+    "similar prefixes" in {
+      "case, catch" in {
+        val totalDFA: DFA = TokenNFA.nfas(Token.Identifier).toDFA
+
+        totalDFA.matchString("case") must beEqualTo(Some(List(Token.CaseKeyword("case"))))
+        totalDFA.matchString("catch") must beEqualTo(Some(List(Token.CatchKeyword("catch"))))
+        totalDFA.matchString("neither") must beEqualTo(Some(List(Token.Identifier("neither"))))
+      }
+    }
+
     "matching the entire grammar all at once" in {
       val theDFA = TokenNFA.nfa.toDFA
       theDFA must haveClass[DFA]
