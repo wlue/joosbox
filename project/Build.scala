@@ -49,6 +49,16 @@ object JoosboxBuild extends Build {
     name := "joosbox-lexer"
   ).dependsOn(core)
 
+  lazy val parser = Project(
+    id = "joosbox-parser",
+    base = file("joosbox-parser"),
+    settings = sharedSettings ++ Seq(
+      mainClass := Some("joosbox.lexer.ParserRunner")
+    )
+  ).settings(
+    name := "joosbox-parser"
+  ).dependsOn(core)
+
   lazy val compiler = Project(
     id = "joosbox-compiler",
     base = file("joosbox-compiler"),
