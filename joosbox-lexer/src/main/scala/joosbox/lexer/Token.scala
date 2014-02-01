@@ -1,4 +1,4 @@
-package joosbox.lexer
+package joosbox.lexer 
 
 import scala.util.matching.Regex
 
@@ -12,7 +12,7 @@ object Token {
 
       val constructor = this.getClass.getConstructors.head
       val args = Array[AnyRef](data)
-      constructor.newInstance(args: _*).asInstanceOf[Token.Kind].resolve
+      constructor.newInstance(args: _*).asInstanceOf[Token.Kind]
     }
 
     def tokenKind(): String = {
@@ -22,7 +22,11 @@ object Token {
       }
     }
 
-    def resolve: Token.Kind = this
+    def priority: Int = 2
+  }
+
+  trait KeywordKind extends Kind {
+    override def priority: Int = 1
   }
 
   case class Question(data: String) extends Kind
@@ -81,117 +85,115 @@ object Token {
   case class CharLiteral(data: String) extends Kind
   case class StringLiteral(data: String) extends Kind
 
-  case class AbstractKeyword(data: String) extends Kind
-  case class BooleanKeyword(data: String) extends Kind
-  case class BreakKeyword(data: String) extends Kind
-  case class ByteKeyword(data: String) extends Kind
-  case class CaseKeyword(data: String) extends Kind
-  case class CatchKeyword(data: String) extends Kind
-  case class CharKeyword(data: String) extends Kind
-  case class ClassKeyword(data: String) extends Kind
-  case class ConstKeyword(data: String) extends Kind
-  case class ContinueKeyword(data: String) extends Kind
-  case class DefaultKeyword(data: String) extends Kind
-  case class DoKeyword(data: String) extends Kind
-  case class DoubleKeyword(data: String) extends Kind
-  case class ElseKeyword(data: String) extends Kind
-  case class ExtendsKeyword(data: String) extends Kind
-  case class FinalKeyword(data: String) extends Kind
-  case class FinallyKeyword(data: String) extends Kind
-  case class FloatKeyword(data: String) extends Kind
-  case class ForKeyword(data: String) extends Kind
-  case class GotoKeyword(data: String) extends Kind
-  case class IfKeyword(data: String) extends Kind
-  case class ImplementsKeyword(data: String) extends Kind
-  case class ImportKeyword(data: String) extends Kind
-  case class InstanceofKeyword(data: String) extends Kind
-  case class IntKeyword(data: String) extends Kind
-  case class InterfaceKeyword(data: String) extends Kind
-  case class LongKeyword(data: String) extends Kind
-  case class NativeKeyword(data: String) extends Kind
-  case class NewKeyword(data: String) extends Kind
-  case class PackageKeyword(data: String) extends Kind
-  case class PrivateKeyword(data: String) extends Kind
-  case class ProtectedKeyword(data: String) extends Kind
-  case class PublicKeyword(data: String) extends Kind
-  case class ReturnKeyword(data: String) extends Kind
-  case class ShortKeyword(data: String) extends Kind
-  case class StaticKeyword(data: String) extends Kind
-  case class StrictfpKeyword(data: String) extends Kind
-  case class SuperKeyword(data: String) extends Kind
-  case class SwitchKeyword(data: String) extends Kind
-  case class SynchronizedKeyword(data: String) extends Kind
-  case class ThisKeyword(data: String) extends Kind
-  case class ThrowKeyword(data: String) extends Kind
-  case class ThrowsKeyword(data: String) extends Kind
-  case class TransientKeyword(data: String) extends Kind
-  case class TryKeyword(data: String) extends Kind
-  case class VoidKeyword(data: String) extends Kind
-  case class VolatileKeyword(data: String) extends Kind
-  case class WhileKeyword(data: String) extends Kind
+  case class Identifier(data: String) extends Kind 
 
-  case class TrueLiteral(data: String) extends Kind
-  case class FalseLiteral(data: String) extends Kind
-  case class NullLiteral(data: String) extends Kind
+  case class AbstractKeyword(data: String) extends KeywordKind
+  case class BooleanKeyword(data: String) extends KeywordKind
+  case class BreakKeyword(data: String) extends KeywordKind
+  case class ByteKeyword(data: String) extends KeywordKind
+  case class CaseKeyword(data: String) extends KeywordKind
+  case class CatchKeyword(data: String) extends KeywordKind
+  case class CharKeyword(data: String) extends KeywordKind
+  case class ClassKeyword(data: String) extends KeywordKind
+  case class ConstKeyword(data: String) extends KeywordKind
+  case class ContinueKeyword(data: String) extends KeywordKind
+  case class DefaultKeyword(data: String) extends KeywordKind
+  case class DoKeyword(data: String) extends KeywordKind
+  case class DoubleKeyword(data: String) extends KeywordKind
+  case class ElseKeyword(data: String) extends KeywordKind
+  case class ExtendsKeyword(data: String) extends KeywordKind
+  case class FinalKeyword(data: String) extends KeywordKind
+  case class FinallyKeyword(data: String) extends KeywordKind
+  case class FloatKeyword(data: String) extends KeywordKind
+  case class ForKeyword(data: String) extends KeywordKind
+  case class GotoKeyword(data: String) extends KeywordKind
+  case class IfKeyword(data: String) extends KeywordKind
+  case class ImplementsKeyword(data: String) extends KeywordKind
+  case class ImportKeyword(data: String) extends KeywordKind
+  case class InstanceofKeyword(data: String) extends KeywordKind
+  case class IntKeyword(data: String) extends KeywordKind
+  case class InterfaceKeyword(data: String) extends KeywordKind
+  case class LongKeyword(data: String) extends KeywordKind
+  case class NativeKeyword(data: String) extends KeywordKind
+  case class NewKeyword(data: String) extends KeywordKind
+  case class PackageKeyword(data: String) extends KeywordKind
+  case class PrivateKeyword(data: String) extends KeywordKind
+  case class ProtectedKeyword(data: String) extends KeywordKind
+  case class PublicKeyword(data: String) extends KeywordKind
+  case class ReturnKeyword(data: String) extends KeywordKind
+  case class ShortKeyword(data: String) extends KeywordKind
+  case class StaticKeyword(data: String) extends KeywordKind
+  case class StrictfpKeyword(data: String) extends KeywordKind
+  case class SuperKeyword(data: String) extends KeywordKind
+  case class SwitchKeyword(data: String) extends KeywordKind
+  case class SynchronizedKeyword(data: String) extends KeywordKind
+  case class ThisKeyword(data: String) extends KeywordKind
+  case class ThrowKeyword(data: String) extends KeywordKind
+  case class ThrowsKeyword(data: String) extends KeywordKind
+  case class TransientKeyword(data: String) extends KeywordKind
+  case class TryKeyword(data: String) extends KeywordKind
+  case class VoidKeyword(data: String) extends KeywordKind
+  case class VolatileKeyword(data: String) extends KeywordKind
+  case class WhileKeyword(data: String) extends KeywordKind
 
-  case class Identifier(data: String) extends Kind {
-    override def resolve: Token.Kind = data match {
-      case "abstract" =>      Token.AbstractKeyword(data)
-      case "boolean" =>       Token.BooleanKeyword(data)
-      case "break" =>         Token.BreakKeyword(data)
-      case "byte" =>          Token.ByteKeyword(data)
-      case "case" =>          Token.CaseKeyword(data)
-      case "catch" =>         Token.CatchKeyword(data)
-      case "char" =>          Token.CharKeyword(data)
-      case "class" =>         Token.ClassKeyword(data)
-      case "const" =>         Token.ConstKeyword(data)
-      case "continue" =>      Token.ContinueKeyword(data)
-      case "default" =>       Token.DefaultKeyword(data)
-      case "do" =>            Token.DoKeyword(data)
-      case "double" =>        Token.DoubleKeyword(data)
-      case "else" =>          Token.ElseKeyword(data)
-      case "extends" =>       Token.ExtendsKeyword(data)
-      case "final" =>         Token.FinalKeyword(data)
-      case "finally" =>       Token.FinallyKeyword(data)
-      case "float" =>         Token.FloatKeyword(data)
-      case "for" =>           Token.ForKeyword(data)
-      case "goto" =>          Token.GotoKeyword(data)
-      case "if" =>            Token.IfKeyword(data)
-      case "implements" =>    Token.ImplementsKeyword(data)
-      case "import" =>        Token.ImportKeyword(data)
-      case "instanceof" =>    Token.InstanceofKeyword(data)
-      case "int" =>           Token.IntKeyword(data)
-      case "interface" =>     Token.InterfaceKeyword(data)
-      case "long" =>          Token.LongKeyword(data)
-      case "native" =>        Token.NativeKeyword(data)
-      case "new" =>           Token.NewKeyword(data)
-      case "package" =>       Token.PackageKeyword(data)
-      case "private" =>       Token.PrivateKeyword(data)
-      case "protected" =>     Token.ProtectedKeyword(data)
-      case "public" =>        Token.PublicKeyword(data)
-      case "return" =>        Token.ReturnKeyword(data)
-      case "short" =>         Token.ShortKeyword(data)
-      case "static" =>        Token.StaticKeyword(data)
-      case "strictfp" =>      Token.StrictfpKeyword(data)
-      case "super" =>         Token.SuperKeyword(data)
-      case "switch" =>        Token.SwitchKeyword(data)
-      case "synchronized" =>  Token.SynchronizedKeyword(data)
-      case "this" =>          Token.ThisKeyword(data)
-      case "throw" =>         Token.ThrowKeyword(data)
-      case "throws" =>        Token.ThrowsKeyword(data)
-      case "transient" =>     Token.TransientKeyword(data)
-      case "try" =>           Token.TryKeyword(data)
-      case "void" =>          Token.VoidKeyword(data)
-      case "volatile" =>      Token.VolatileKeyword(data)
-      case "while" =>         Token.WhileKeyword(data)
-  
-      case "true" =>          Token.TrueLiteral(data)
-      case "false" =>         Token.FalseLiteral(data)
-      case "null" =>          Token.NullLiteral(data)
+  case class TrueLiteral(data: String) extends KeywordKind
+  case class FalseLiteral(data: String) extends KeywordKind
+  case class NullLiteral(data: String) extends KeywordKind
 
-      case _ => this
-    }
-  }
+  val Keywords = Map(
+      "abstract" -> Token.AbstractKeyword,
+      "boolean" -> Token.BooleanKeyword,
+      "break" -> Token.BreakKeyword,
+      "byte" -> Token.ByteKeyword,
+      "case" -> Token.CaseKeyword,
+      "catch" -> Token.CatchKeyword,
+      "char" -> Token.CharKeyword,
+      "class" -> Token.ClassKeyword,
+      "const" -> Token.ConstKeyword,
+      "continue" -> Token.ContinueKeyword,
+      "default" -> Token.DefaultKeyword,
+      "do" -> Token.DoKeyword,
+      "double" -> Token.DoubleKeyword,
+      "else" -> Token.ElseKeyword,
+      "extends" -> Token.ExtendsKeyword,
+      "final" -> Token.FinalKeyword,
+      "finally" -> Token.FinallyKeyword,
+      "float" -> Token.FloatKeyword,
+      "for" -> Token.ForKeyword,
+      "goto" -> Token.GotoKeyword,
+      "if" -> Token.IfKeyword,
+      "implements" -> Token.ImplementsKeyword,
+      "import" -> Token.ImportKeyword,
+      "instanceof" -> Token.InstanceofKeyword,
+      "int" -> Token.IntKeyword,
+      "interface" -> Token.InterfaceKeyword,
+      "long" -> Token.LongKeyword,
+      "native" -> Token.NativeKeyword,
+      "new" -> Token.NewKeyword,
+      "package" -> Token.PackageKeyword,
+      "private" -> Token.PrivateKeyword,
+      "protected" -> Token.ProtectedKeyword,
+      "public" -> Token.PublicKeyword,
+      "return" -> Token.ReturnKeyword,
+      "short" -> Token.ShortKeyword,
+      "static" -> Token.StaticKeyword,
+      "strictfp" -> Token.StrictfpKeyword,
+      "super" -> Token.SuperKeyword,
+      "switch" -> Token.SwitchKeyword,
+      "synchronized" -> Token.SynchronizedKeyword,
+      "this" -> Token.ThisKeyword,
+      "throw" -> Token.ThrowKeyword,
+      "throws" -> Token.ThrowsKeyword,
+      "transient" -> Token.TransientKeyword,
+      "try" -> Token.TryKeyword,
+      "void" -> Token.VoidKeyword,
+      "volatile" -> Token.VolatileKeyword,
+      "while" -> Token.WhileKeyword,
+
+      "true" -> Token.TrueLiteral,
+      "false" -> Token.FalseLiteral,
+      "null" -> Token.NullLiteral
+    )
 
   //  Dummy tokens for our NFAs
   case class Test(data: String) extends Kind
@@ -204,6 +206,12 @@ object TokenNFA {
   lazy val nfas = rawNFAs.map {
     case (token, nfa: NFA) => token -> nfa.withToken(token.apply(""))
   }
+
+  lazy val keyword = NFA.union(keywords.values.toSet)
+
+  lazy val keywords = Token.Keywords.map {
+    case (keyword: String, token) => token -> NFA.fromString(keyword, token(""))
+  }.toMap
 
   private val rawNFAs = Map(
     Token.Question -> NFA(
@@ -698,9 +706,9 @@ object TokenNFA {
 
     Token.Num -> NFA(
       Set(State("i"), State("digit")),
-      Set(Symbol.epsilon, Symbol.digitsGroup),
-      Relation(Map(State("i") -> Map(Symbol.digitsGroup -> Set(State("digit"))),
-                   State("digit") -> Map(Symbol.digitsGroup -> Set(State("digit")))
+      Set(Symbol.epsilon) ++ Symbol.digits,
+      Relation(Map(State("i") -> Symbol.transitionsFromGroup(Symbol.digits, Set(State("digit"))),
+                   State("digit") -> Symbol.transitionsFromGroup(Symbol.digits, Set(State("digit")))
                )),
       State("i"),
       Set(State("digit"))
@@ -708,14 +716,14 @@ object TokenNFA {
 
     Token.Identifier -> NFA(
       Set(State("i"), State("id")),
-      Set(Symbol.epsilon, Symbol("_"), Symbol("$"), Symbol.lettersGroup, Symbol.digitsGroup),
-      Relation(Map(State("i")   -> Map( Symbol.lettersGroup -> Set(State("id")),
-                                        Symbol("_") -> Set(State("id")),
-                                        Symbol("$") -> Set(State("id"))),
-                   State("id")  -> Map( Symbol.lettersGroup -> Set(State("id")),
-                                        Symbol.digitsGroup -> Set(State("id")),
-                                        Symbol("_") -> Set(State("id")),
-                                        Symbol("$") -> Set(State("id")))
+      Set(Symbol.epsilon, Symbol("_"), Symbol("$")) ++ Symbol.letters ++ Symbol.digits,
+      Relation(Map(State("i")   -> (Map(Symbol("_") -> Set(State("id")),
+                                        Symbol("$") -> Set(State("id"))) ++
+                                    Symbol.transitionsFromGroup(Symbol.letters, Set(State("id")))),
+                   State("id")  -> (Map(Symbol("_") -> Set(State("id")),
+                                        Symbol("$") -> Set(State("id"))) ++ 
+                                    Symbol.transitionsFromGroup(Symbol.letters, Set(State("id"))) ++ 
+                                    Symbol.transitionsFromGroup(Symbol.digits, Set(State("id"))))
                )),
       State("i"),
       Set(State("id"))
@@ -726,29 +734,31 @@ object TokenNFA {
           State("oct"), State("oct2"),
           State("part-oct"), State("part-oct2"), State("part-oct3")),
       Set(Symbol("\\"), Symbol("n"), Symbol("r"), Symbol("t"), Symbol("b"),
-          Symbol("f"), Symbol("\""), Symbol("\'"), NegatedSymbols("\\", "\n", "\r"),
-          Symbol.octalDigitsGroup, Symbol.quadDigitsGroup),
+          Symbol("f"), Symbol("\""), Symbol("\'"), NegatedSymbols("\\", "\n", "\r")) ++ (
+            Symbol.octalDigits ++ Symbol.quadDigits
+          ),
       Relation(Map(State("i")     -> Map( Symbol("\'") -> Set(State("\'"))),
                    State("\'")    -> Map( Symbol("\\") -> Set(State("\'\\")),
                                           Symbol("\'") -> Set(State("char")),
                                           NegatedSymbols("\\", "\n", "\r") -> Set(State("char-part"))),
-                   State("\'\\")  -> Map( Symbol("n") -> Set(State("char-part")),
+                   State("\'\\")  -> (Map( Symbol("n") -> Set(State("char-part")),
                                           Symbol("r") -> Set(State("char-part")),
                                           Symbol("t") -> Set(State("char-part")),
                                           Symbol("b") -> Set(State("char-part")),
                                           Symbol("f") -> Set(State("char-part")),
                                           Symbol("\"") -> Set(State("char-part")),
-                                          Symbol("\'") -> Set(State("char-part")),
-                                          Symbol.octalDigitsGroup -> Set(State("oct")),
-                                          Symbol.quadDigitsGroup -> Set(State("part-oct"))),
+                                          Symbol("\'") -> Set(State("char-part"))) ++ (
+                                            Symbol.transitionsFromGroup(Symbol.octalDigits, Set(State("oct"))) ++
+                                            Symbol.transitionsFromGroup(Symbol.quadDigits, Set(State("part-oct")))
+                                          )),
                    State("char-part") -> Map( Symbol("\'") -> Set(State("char"))),
-                   State("oct")       -> Map( Symbol("\'") -> Set(State("char")),
-                                              Symbol.octalDigitsGroup -> Set(State("oct2"))),
+                   State("oct")       -> (Map( Symbol("\'") -> Set(State("char"))) ++
+                                         Symbol.transitionsFromGroup(Symbol.octalDigits, Set(State("oct2")))),
                    State("oct2")      -> Map( Symbol("\'") -> Set(State("char"))),
-                   State("part-oct")  -> Map( Symbol("\'") -> Set(State("char")),
-                                              Symbol.octalDigitsGroup -> Set(State("part-oct2"))),
-                   State("part-oct2") -> Map( Symbol("\'") -> Set(State("char")),
-                                              Symbol.octalDigitsGroup -> Set(State("part-oct3"))),
+                   State("part-oct")  -> (Map( Symbol("\'") -> Set(State("char"))) ++
+                                         Symbol.transitionsFromGroup(Symbol.octalDigits, Set(State("part-oct2")))),
+                   State("part-oct2") -> (Map( Symbol("\'") -> Set(State("char"))) ++
+                                         Symbol.transitionsFromGroup(Symbol.octalDigits, Set(State("part-oct3")))),
                    State("part-oct3") -> Map( Symbol("\'") -> Set(State("char")))
                )),
       State("i"),
@@ -768,8 +778,7 @@ object TokenNFA {
       State("i"),
       Set(State("string"))
     )
-
-  )
+  ) ++ keywords
 }
 
 // Only here for hand-conveting to NFAs

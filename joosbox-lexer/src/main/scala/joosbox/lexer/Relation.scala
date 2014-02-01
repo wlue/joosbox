@@ -17,10 +17,11 @@ case class Relation(table: Map[State, Map[Symbol, Set[State]]]) {
         }
       }
       .foldLeft(Map.empty[Symbol, Set[State]]) {
-        case (b, m: Map[Symbol, Set[State]]) =>
-          m.flatMap { case (symbol: Symbol, states: Set[State]) =>
-            b updated (symbol, b.getOrElse(symbol, Set.empty[State]) ++ states)
+        case (b: Map[Symbol, Set[State]], m: Map[Symbol, Set[State]]) => {
+          b ++ m.flatMap { case (symbol: Symbol, states: Set[State]) => 
+              Some(symbol -> (b.getOrElse(symbol, Set.empty[State]) ++ states))
           }
+        }
         case (b, x) => b
       }
   }
