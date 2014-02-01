@@ -808,13 +808,13 @@ class TokenSpec extends Specification {
 
     "match keywords" in {
       "public" in {
-        TokenNFA.nfas(Token.PublicKeyword).toDFA.consume("public") must beEqualTo(Some(State("c"), ""))
+        TokenNFA.nfas(Token.PublicKeyword).toDFA.consume("public") must beEqualTo(Some(State("public"), ""))
       }
       "static" in {
-        TokenNFA.nfas(Token.StaticKeyword).toDFA.consume("static") must beEqualTo(Some(State("c"), ""))
+        TokenNFA.nfas(Token.StaticKeyword).toDFA.consume("static") must beEqualTo(Some(State("static"), ""))
       }
       "boolean" in {
-        TokenNFA.nfas(Token.BooleanKeyword).toDFA.consume("boolean") must beEqualTo(Some(State("n"), ""))
+        TokenNFA.nfas(Token.BooleanKeyword).toDFA.consume("boolean") must beEqualTo(Some(State("boolean"), ""))
       }
     }
   }
@@ -1384,6 +1384,19 @@ class TokenSpec extends Specification {
     }
 
     "similar prefixes" in {
+      "pathological case" in {
+        val keywordsNFA: NFA = NFA.union(Set(
+          TokenNFA.nfas(Token.CaseKeyword),
+          TokenNFA.nfas(Token.CatchKeyword),
+          TokenNFA.nfas(Token.CharKeyword)
+        ))
+        val keywordsDFA: DFA = keywordsNFA.toDFA
+
+        keywordsDFA.matchString("case") must beEqualTo(Some(List(Token.CaseKeyword("case"))))
+        keywordsDFA.matchString("char") must beEqualTo(Some(List(Token.CharKeyword("char"))))
+        keywordsDFA.matchString("catch") must beEqualTo(Some(List(Token.CatchKeyword("catch"))))
+      }
+
       "case, catch" in {
         val keywordsNFA: NFA = NFA.union(Set(
           TokenNFA.nfas(Token.CaseKeyword),
@@ -1392,15 +1405,12 @@ class TokenSpec extends Specification {
         ))
         val keywordsDFA: DFA = keywordsNFA.toDFA
 
-        println(keywordsNFA.toGraphViz)
-        println(keywordsDFA.toGraphViz)
-
         keywordsDFA.matchString("case") must beEqualTo(Some(List(Token.CaseKeyword("case"))))
         keywordsDFA.matchString("catch") must beEqualTo(Some(List(Token.CatchKeyword("catch"))))
-        keywordsDFA.matchString("neither") must beEqualTo(Some(List(Token.Identifier("neither"))))
+        keywordsDFA.matchString("cats") must beEqualTo(Some(List(Token.Identifier("cats"))))
       }
     }
-/*
+
     "matching the entire grammar all at once" in {
       val theDFA = TokenNFA.nfa.toDFA
       theDFA must haveClass[DFA]
@@ -1458,7 +1468,7 @@ class TokenSpec extends Specification {
           Token.Whitespace(" "),
           Token.Identifier("Bicycle"),
           Token.LeftParen("("),
-          Token.Identifier("int"),
+          Token.IntKeyword("int"),
           Token.Whitespace(" "),
           Token.Identifier("startGear"),
           Token.RightParen(")"),
@@ -1475,6 +1485,6 @@ class TokenSpec extends Specification {
           Token.RightCurly("}")
         )))
       }
-    }*/
+    }
   }
 }

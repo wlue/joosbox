@@ -215,15 +215,16 @@ object NFA {
   ))
 
   def fromString(inputString: String, token: Token.Kind) = {
-    val states: Set[State] = inputString.toSet[Char].map(_.toString).map(State(_)) + State("start")
+    val prefixes: Set[State] = (1 to inputString.size).map(inputString.slice(0, _)).map(State(_)).toSet
+    val states: Set[State] = prefixes + State("start")
     val symbols: Set[Symbol] = inputString.toSet[Char].map(_.toString).map(InputSymbol(_))
     val table: Map[State, Map[Symbol, Set[State]]] = 
-      inputString.zip(inputString.drop(1)).foldLeft(Map.empty[State, Map[Symbol, Set[State]]]) {
+      inputString.zipWithIndex.drop(1).foldLeft(Map.empty[State, Map[Symbol, Set[State]]]) {
         case (table, pair) => {
-          val (from: Char, to: Char) = pair
-          val fromState: State = State(from.toString)
-          val toState: State = State(to.toString)
-          val symbol: Symbol = Symbol(to.toString)
+          val (c: Char, index: Int) = pair
+          val fromState: State = State(inputString.slice(0, index))
+          val toState: State = State(inputString.slice(0, index + 1))
+          val symbol: Symbol = Symbol(c.toString)
 
           val map: Map[Symbol, Set[State]] = table.getOrElse(fromState, Map.empty[Symbol, Set[State]])
           val newMap: Map[Symbol, Set[State]] = map + (symbol -> Set(toState))
@@ -234,7 +235,7 @@ object NFA {
         State("start") -> Map(Symbol(inputString.head.toString) -> Set(State(inputString.head.toString)))
       )
     val startState: State = State("start")
-    val acceptingStates: Set[State] = Set(State(inputString.last.toString))
+    val acceptingStates: Set[State] = Set(State(inputString))
     val stateSourceMap: Map[State, Token.Kind] = states.map{ s:State => s -> token }.toMap
 
     NFA(states, symbols, Relation(table), startState, acceptingStates, Some(token), stateSourceMap)
@@ -255,25 +256,7 @@ object NFA {
       existingRelations + (newStartState -> Map(Symbol.epsilon -> startStates))
     }
 
-    val newStateSourceMap: Map[State, Token.Kind] = 
-      prefixedNFAs.map(_.stateSourceMap).foldLeft(Map.empty[State, Token.Kind]) {
-        case (accumulator: Map[State, Token.Kind], map: Map[State, Token.Kind]) => {
-          accumulator ++ map.map{
-            case (state: State, token: Token.Kind) => {
-              accumulator.get(state) match {
-                case existing: Token.Kind => {
-                  //println("Comparing tokens " + token + " and existing " + existing)
-                  (state -> (if (token.priority > existing.priority) token else existing))
-                }
-                case _ => {
-                  //println("Accumulator does not have mapping " + state + " -> " + token)
-                  (state -> token)
-                }
-              }
-            }
-          }
-        }
-      }
+    val newStateSourceMap: Map[State, Token.Kind] = prefixedNFAs.map(_.stateSourceMap).reduce((_ ++ _))
 
     val newStates: Set[State] = prefixedNFAs.map(_.states).reduce((_ ++ _)) + newStartState
     val newSymbols: Set[Symbol] = prefixedNFAs.map(_.symbols).reduce((_ ++ _)) + Symbol.epsilon
@@ -342,9 +325,12 @@ class NFA(
         }
 
       val stateSourceMap: Map[State, Token.Kind] = {
-        val sourceToken: Set[State] = originalEpsilonClosure.intersect(originalStateSourceMap.keys.toSet).intersect(acceptingStates)
-        if (sourceToken.size > 0) {
-          originalStateSourceMap + (newState -> originalStateSourceMap(sourceToken.head))
+        val sourceStates: Set[State] = 
+          originalEpsilonClosure.intersect(originalStateSourceMap.keys.toSet).intersect(acceptingStates)
+        if (sourceStates.size > 0) {
+          val possibleTokens: Set[Token.Kind] = sourceStates.map(originalStateSourceMap(_))
+          val highestPriority: Token.Kind = possibleTokens.toList.sortWith(_.priority < _.priority).head
+          originalStateSourceMap + (newState -> highestPriority)
         } else {
           originalStateSourceMap
         }
@@ -355,7 +341,7 @@ class NFA(
           val value: Map[Symbol, Set[State]] =
             reachableStates.map { case (symbol: Symbol, states: Set[State]) =>
               val combinedStates: Set[State] = states.flatMap { (state: State) =>
-                relation.epsilonClosure(state) 
+                relation.epsilonClosure(state)
               }
               symbol -> Set(State.combine(combinedStates))
             }
