@@ -4,18 +4,24 @@ import scala.util.control.Exception._
 
 class ProductionRule(val nonTerminal: String, val others: List[String]) {
   override def toString: String = nonTerminal + " " + others.mkString(" ")
+  def dropCount: Int = others.size
 }
 
-abstract class Transition(symbol: String) {
-
-}
-
-class ShiftTransition(symbol: String, shiftToState: Int) extends Transition(symbol) {
+abstract class Transition {
 
 }
 
-class ReduceTransition(terminal: String, rule: ProductionRule) extends Transition(terminal) {
+class ShiftTransition(val shiftToState: Int) extends Transition {
 
+}
+object ShiftTransition {
+  def unapply(t: ShiftTransition): Option[Int] = Some(t.shiftToState)
+}
+
+class ReduceTransition(val rule: ProductionRule) extends Transition {
+}
+object ReduceTransition {
+  def unapply(t: ReduceTransition): Option[ProductionRule] = Some(t.rule)
 }
 
 object Parser {
@@ -66,8 +72,8 @@ object Parser {
     val transitionStrings:Array[String] =
       lines.slice(numTerminalSymbols + numNonTerminalSymbols + 5 + numProductionRules + 1, lines.size)
 
-    val transitionTable:Map[Int, Set[Transition]] = transitionStrings.foldLeft(Map.empty[Int, Set[Transition]]) {
-      case (map: Map[Int, Set[Transition]], transitionString: String) => {
+    val transitionTable:Map[Int, Map[String, Transition]] = transitionStrings.foldLeft(Map.empty[Int, Map[String, Transition]]) {
+      case (map: Map[Int, Map[String, Transition]], transitionString: String) => {
         val segments:Array[String] = transitionString.split(" ")
         if (segments.size == 4) {
           val (sourceStateString, symbol, action, targetString) = (segments(0), segments(1), segments(2), segments(3))
@@ -75,11 +81,11 @@ object Parser {
           val sourceState:Int = sourceStateString.toInt
           val target:Int = targetString.toInt
           val transition:Transition = action match {
-            case "shift" => new ShiftTransition(symbol, target)
-            case "reduce" => new ReduceTransition(symbol, productionRules(target))
+            case "shift" => new ShiftTransition(target)
+            case "reduce" => new ReduceTransition(productionRules(target))
           }
 
-          map + (sourceState -> (map.getOrElse(sourceState, Set.empty[Transition]) + transition))
+          map + (sourceState -> (map.getOrElse(sourceState, Map.empty[String, Transition]) + (symbol -> transition)))
         } else {
           map
         }
@@ -95,7 +101,39 @@ class Parser(
   val nonTerminalSymbols: Set[String],
   val startSymbol: String,
   val productionRules: List[ProductionRule],
-  val transitionTable: Map[Int, Set[Transition]]
+  val transitionTable: Map[Int, Map[String, Transition]]
 ) {
+  def parse(symbols: List[String]): List[String] = {
 
+    var stateStack : scala.collection.mutable.Stack[Int] = scala.collection.mutable.Stack[Int]()
+    var symbolStack : scala.collection.mutable.Stack[String] = scala.collection.mutable.Stack[String]()
+
+    symbolStack.push("BOF")
+    stateStack.push(transitionTable(0)("BOF") match { case ShiftTransition(x) => x })
+
+    (symbols ++ List[String]("EOF")).foreach {
+      (a: String) => {
+        var reducing = true
+        while(reducing) {
+          transitionTable(stateStack.top).get(a) match {
+            case Some(ReduceTransition(rule: ProductionRule)) => {
+              symbolStack = symbolStack.drop(rule.dropCount)
+              stateStack = stateStack.drop(rule.dropCount)
+
+              symbolStack.push(rule.nonTerminal)
+              stateStack.push(transitionTable(stateStack.top)(rule.nonTerminal) match { case ShiftTransition(x) => x })
+            }
+            case Some(ShiftTransition(_)) => reducing = false
+            case None => reducing = false
+          }
+        }
+
+        symbolStack.push(a)
+        //  reject if Trans[stateStack.top; a] = ERROR
+        stateStack.push(transitionTable(stateStack.top)(a) match { case ShiftTransition(x) => x })
+      }
+    }
+
+    symbolStack.toList.reverse
+  }
 }

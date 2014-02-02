@@ -56,8 +56,10 @@ term ( expr )
 3 term shift 9
 8 expr shift 10
       """
-      Parser.fromLR1Definition(lr1)
-      true
+      val parser: Parser = Parser.fromLR1Definition(lr1)
+      
+      //  TODO: Does this actually need to be equal to S, not BOF expr EOF?
+      parser.parse(List("(", "id", "-","id", ")")) must beEqualTo(List("BOF", "expr", "EOF"))
     }
   }
 }
