@@ -58,8 +58,29 @@ term ( expr )
       """
       val parser: Parser = Parser.fromLR1Definition(lr1)
       
-      //  TODO: Does this actually need to be equal to S, not BOF expr EOF?
-      parser.parse(List("(", "id", "-","id", ")")) must beEqualTo(List("BOF", "expr", "EOF"))
+      val expectedParseTree: ParseNode = ParseNode("S", List[ParseNode](
+        ParseNode("BOF"),
+        ParseNode("expr", List[ParseNode](
+          ParseNode("term", List[ParseNode](
+            ParseNode("("),
+            ParseNode("expr", List[ParseNode](
+              ParseNode("expr", List[ParseNode](
+                ParseNode("term", List[ParseNode](
+                  ParseNode("id")
+                ))
+              )),
+              ParseNode("-"),
+              ParseNode("term", List[ParseNode](
+                ParseNode("id")
+              ))
+            )),
+            ParseNode(")")
+          ))
+        )),
+        ParseNode("EOF")
+      ))
+
+      parser.parse(List("(", "id", "-", "id", ")")) must beEqualTo(expectedParseTree)
     }
   }
 }

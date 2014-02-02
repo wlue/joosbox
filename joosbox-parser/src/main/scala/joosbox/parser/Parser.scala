@@ -2,24 +2,42 @@ package joosbox.parser
 
 import scala.util.control.Exception._
 
+class ParseNode(val kind: String, val value: Option[String], val children: List[ParseNode]) {
+  override def toString: String = if (children.size > 0) {
+    "{\"kind\": \"" + kind + "\", \"value\": \"" + value + "\", \"children\": [" + children.map(_.toString).mkString(", ") + "]}"
+  } else {
+    "{\"kind\": \"" + kind + "\", \"value\": \"" + value + "\"}"
+  }
+
+  override def equals(obj: Any) = obj match {
+    case node: ParseNode => node.kind.equals(kind) && node.value.equals(value) && node.children.equals(children)
+    case _ => false
+  }
+}
+
+object ParseNode {
+  def apply(kind: String, value:AnyRef = None): ParseNode = {
+    value match {
+      case (list: List[ParseNode]) => new ParseNode(kind, None, list)
+      case (string: String) => new ParseNode(kind, Some(string), List.empty[ParseNode])
+      case None => new ParseNode(kind, None, List.empty[ParseNode])
+    }
+  }
+}
+
 class ProductionRule(val nonTerminal: String, val others: List[String]) {
   override def toString: String = nonTerminal + " " + others.mkString(" ")
   def dropCount: Int = others.size
 }
 
-abstract class Transition {
+abstract class Transition {}
 
-}
-
-class ShiftTransition(val shiftToState: Int) extends Transition {
-
-}
+class ShiftTransition(val shiftToState: Int) extends Transition {}
 object ShiftTransition {
   def unapply(t: ShiftTransition): Option[Int] = Some(t.shiftToState)
 }
 
-class ReduceTransition(val rule: ProductionRule) extends Transition {
-}
+class ReduceTransition(val rule: ProductionRule) extends Transition {}
 object ReduceTransition {
   def unapply(t: ReduceTransition): Option[ProductionRule] = Some(t.rule)
 }
@@ -103,24 +121,26 @@ class Parser(
   val productionRules: List[ProductionRule],
   val transitionTable: Map[Int, Map[String, Transition]]
 ) {
-  def parse(symbols: List[String]): List[String] = {
+  def parse(symbols: List[String]): ParseNode = {
 
+    var nodeStack : scala.collection.mutable.Stack[ParseNode] = scala.collection.mutable.Stack[ParseNode]()
     var stateStack : scala.collection.mutable.Stack[Int] = scala.collection.mutable.Stack[Int]()
-    var symbolStack : scala.collection.mutable.Stack[String] = scala.collection.mutable.Stack[String]()
 
-    symbolStack.push("BOF")
+    nodeStack.push(ParseNode("BOF"))
     stateStack.push(transitionTable(0)("BOF") match { case ShiftTransition(x) => x })
 
     (symbols ++ List[String]("EOF")).foreach {
       (a: String) => {
         var reducing = true
-        while(reducing) {
+        while (reducing) {
           transitionTable(stateStack.top).get(a) match {
             case Some(ReduceTransition(rule: ProductionRule)) => {
-              symbolStack = symbolStack.drop(rule.dropCount)
+              val temp : scala.collection.mutable.Stack[ParseNode] = scala.collection.mutable.Stack[ParseNode]()
+              (1 to rule.dropCount) foreach (_ => temp.push(nodeStack.pop()))
+
               stateStack = stateStack.drop(rule.dropCount)
 
-              symbolStack.push(rule.nonTerminal)
+              nodeStack.push(ParseNode(rule.nonTerminal, temp.toList))
               stateStack.push(transitionTable(stateStack.top)(rule.nonTerminal) match { case ShiftTransition(x) => x })
             }
             case Some(ShiftTransition(_)) => reducing = false
@@ -128,12 +148,12 @@ class Parser(
           }
         }
 
-        symbolStack.push(a)
+        nodeStack.push(ParseNode(a))
         //  reject if Trans[stateStack.top; a] = ERROR
         stateStack.push(transitionTable(stateStack.top)(a) match { case ShiftTransition(x) => x })
       }
-    }
+    } 
 
-    symbolStack.toList.reverse
+    ParseNode("S", nodeStack.toList.reverse)
   }
 }
