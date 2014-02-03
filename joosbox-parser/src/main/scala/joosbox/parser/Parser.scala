@@ -2,6 +2,8 @@ package joosbox.parser
 
 import scala.util.control.Exception._
 
+class SyntaxError(msg: String) extends RuntimeException(msg)
+
 class ParseNode(val kind: String, val value: Option[String], val children: List[ParseNode]) {
   override def toString: String = if (children.size > 0) {
     "{\"kind\": \"" + kind + "\", \"value\": \"" + value + "\", \"children\": [" + children.map(_.toString).mkString(", ") + "]}"
@@ -112,6 +114,13 @@ object Parser {
 
     new Parser(terminalSymbols, nonTerminalSymbols, startSymbol, productionRules, transitionTable)
   }
+
+  def fromLR1File(filename: String) = {
+    val source = scala.io.Source.fromFile(filename)
+    val definition = source.mkString
+    source.close()
+    fromLR1Definition(definition)
+  }
 }
 
 class Parser(
@@ -122,7 +131,6 @@ class Parser(
   val transitionTable: Map[Int, Map[String, Transition]]
 ) {
   def parse(symbols: List[String]): ParseNode = {
-
     var nodeStack : scala.collection.mutable.Stack[ParseNode] = scala.collection.mutable.Stack[ParseNode]()
     var stateStack : scala.collection.mutable.Stack[Int] = scala.collection.mutable.Stack[Int]()
 
@@ -150,7 +158,13 @@ class Parser(
 
         nodeStack.push(ParseNode(a))
         //  reject if Trans[stateStack.top; a] = ERROR
-        stateStack.push(transitionTable(stateStack.top)(a) match { case ShiftTransition(x) => x })
+        val newPossibleStates: Map[String, Transition] = transitionTable(stateStack.top)
+        newPossibleStates.get(a) match {
+          case Some(ShiftTransition(newState)) => stateStack.push(newState)
+          case None => {
+            throw new SyntaxError("Expected one of: " + newPossibleStates.keys.mkString(", "))
+          }
+        }
       }
     } 
 

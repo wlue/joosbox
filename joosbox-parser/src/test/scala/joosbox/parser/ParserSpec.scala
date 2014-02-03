@@ -5,7 +5,7 @@ import joosbox.parser._
 
 class ParserSpec extends Specification {
   "Parser" should {
-    "consume basic lr1 grammar" in {
+    "consume basic LR1 grammar" in {
       val lr1 = """6
 BOF
 EOF
@@ -81,6 +81,27 @@ term ( expr )
       ))
 
       parser.parse(List("(", "id", "-", "id", ")")) must beEqualTo(expectedParseTree)
+    }
+
+    "read in full LR1 grammar" in {
+      Parser.fromLR1File("joos1w.lr1") must not(throwA[Exception])
+    }
+
+    "parse full LR1 grammar" in {
+      val p: Parser = Parser.fromLR1File("joos1w.lr1")
+
+      p.parse(List(
+        "ClassKeyword", "Identifier", "LeftCurly", "RightCurly"
+      )) must not(throwA[Exception])
+    }
+
+    "parse full LR1 grammar and then syntax error" in {
+      val p: Parser = Parser.fromLR1File("joos1w.lr1")
+
+      p.parse(List(
+        "PackageKeyword", "Name", "Semicolon", "ImportKeyword", 
+        "ClassKeyword", "Identifier", "LeftCurly", "RightCurly"
+      )) must throwA[SyntaxError]
     }
   }
 }
