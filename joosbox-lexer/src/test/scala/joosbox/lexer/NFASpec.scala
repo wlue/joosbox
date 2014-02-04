@@ -353,13 +353,17 @@ class NFASpec extends Specification {
           override def apply(data: String = ""): Token = new A(verify(data))
           override def name: String = "A"
         }
-        case class A(override val data: String) extends VariableToken(data)
+        case class A(override val data: String) extends VariableToken(data) {
+          override def tokenType: TokenType = AType
+        }
 
         object BType extends VariableTokenType {
           override def apply(data: String = ""): Token = new B(verify(data))
           override def name: String = "B"
         }
-        case class B(override val data: String) extends VariableToken(data)
+        case class B(override val data: String) extends VariableToken(data) {
+          override def tokenType: TokenType = BType
+        }
 
         val first = NFA(
           Set(State("1")),
