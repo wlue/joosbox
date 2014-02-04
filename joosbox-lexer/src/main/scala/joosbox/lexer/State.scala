@@ -7,7 +7,7 @@ object StateImplicits {
 
 object State {
   def combine(states: Iterable[State]) = State(states.map(_.name).toList.sorted.mkString(","))
-  def prefixed(prefix: Token.Kind, state: State) = State(prefix.tokenKind + "-" + state.name)
+  def prefixed(prefix: TokenType, state: State) = State(prefix.name + "-" + state.name)
 }
 
 case class State(name: String)

@@ -252,17 +252,17 @@ class DFASpec extends Specification {
           )),
           State("start"),
           Set(State("c"), State("z")),
-          Some(Token.Test("TEST")),
-          Map[State, Token.Kind](
-            State("c") -> Token.Test(""),
-            State("z") -> Token.Test("")
+          Some(TokenTypes.Identifier),
+          Map[State, TokenType](
+            State("c") -> TokenTypes.Identifier,
+            State("z") -> TokenTypes.Identifier
           )
         ).toDFA
 
-        dfa.matchString("abc") must beEqualTo(Some(List(Token.Test("abc"))))
+        dfa.matchString("abc") must beEqualTo(Some(List(Tokens.Identifier("abc"))))
         dfa.matchString("abcdef") must beEqualTo(None)
         dfa.matchString("abcdefghi") must beEqualTo(None)
-        dfa.matchString("abcxyz") must beEqualTo(Some(List(Token.Test("abc"), Token.Test("xyz"))))
+        dfa.matchString("abcxyz") must beEqualTo(Some(List(Tokens.Identifier("abc"), Tokens.Identifier("xyz"))))
 
         dfa.consume("abc") must beEqualTo(Some(State("c"), ""))
         dfa.consume("abcdef") must beEqualTo(Some(State("c"), "def"))
@@ -298,17 +298,17 @@ class DFASpec extends Specification {
           )),
           State("start"),
           Set(State("c"), State("z")),
-          Some(Token.Test("BASIC")),
-          Map[State, Token.Kind](
-            State("c") -> Token.Test(""),
-            State("z") -> Token.Test("")
+          Some(TokenTypes.Identifier),
+          Map[State, TokenType](
+            State("c") -> TokenTypes.Identifier,
+            State("z") -> TokenTypes.Identifier
           )
         ).toDFA
 
-        dfa.matchString("abc") must beEqualTo(Some(List(Token.Test("abc"))))
-        dfa.matchString("ayz") must beEqualTo(Some(List(Token.Test("ayz"))))
-        dfa.matchString("ay") must beEqualTo(Some(List(Token.Test("ay"))))
-        dfa.matchString("abcxyz") must beEqualTo(Some(List(Token.Test("abc"), Token.Test("xyz"))))
+        dfa.matchString("abc") must beEqualTo(Some(List(Tokens.Identifier("abc"))))
+        dfa.matchString("ayz") must beEqualTo(Some(List(Tokens.Identifier("ayz"))))
+        dfa.matchString("ay") must beEqualTo(Some(List(Tokens.Identifier("ay"))))
+        dfa.matchString("abcxyz") must beEqualTo(Some(List(Tokens.Identifier("abc"), Tokens.Identifier("xyz"))))
       }
     }
   }
