@@ -141,7 +141,7 @@ class Parser(
         }
 
         //  Create a new parse node from the token
-        nodeStack.push(ParseNodeTypes.fromTokenType(a.tokenType)())
+        nodeStack.push(ParseNodes.fromToken(a))
         
         //  reject if Trans[stateStack.top; a] = ERROR
         val newPossibleStates: Map[ParseNodeType, Transition] = transitionTable(stateStack.top)

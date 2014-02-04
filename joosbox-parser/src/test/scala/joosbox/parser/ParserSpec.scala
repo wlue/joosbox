@@ -25,11 +25,11 @@ class ParserSpec extends Specification {
           ParseNodes.TypeDeclarations(List[ParseNode](
             ParseNodes.TypeDeclaration(List[ParseNode](
               ParseNodes.ClassDeclaration(List[ParseNode](
-                ParseNodes.ClassKeyword(),
-                ParseNodes.Identifier(),
+                ParseNodes.ClassKeyword(List.empty[ParseNode], Some("class")),
+                ParseNodes.Identifier(List.empty[ParseNode], Some("identifier")),
                 ParseNodes.ClassBody(List[ParseNode](
-                  ParseNodes.LeftCurly(),
-                  ParseNodes.RightCurly()
+                  ParseNodes.LeftCurly(List.empty[ParseNode], Some("{")),
+                  ParseNodes.RightCurly(List.empty[ParseNode], Some("}"))
                 ))
               ))
             ))

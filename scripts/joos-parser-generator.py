@@ -71,6 +71,7 @@ print "  }"
 print "}"
 print
 print "object ParseNodes {"
+print "  def fromToken(input: Token) : ParseNode = ParseNodeTypes.fromTokenType(input.tokenType)(List.empty[ParseNode], if (input.data == "") None else Some(input.data))"
 for token in terminals + nonterminals:
     if token_exists(token):
         token_type = "Some(TokenTypes.%s)" % token

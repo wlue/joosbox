@@ -1,4 +1,5 @@
 package joosbox.parser
+import joosbox.lexer.Token
 import joosbox.lexer.TokenType
 import joosbox.lexer.TokenTypes
 
@@ -1259,6 +1260,8 @@ object ParseNodeTypes {
 }
 
 object ParseNodes {
+  def fromToken(input: Token) : ParseNode = ParseNodeTypes.fromTokenType(input.tokenType)(List.empty[ParseNode], if (input.data == "") None else Some(input.data))
+
   case class BOF(override val children: List[ParseNode] = List.empty[ParseNode], override val value: Option[String] = None) extends ParseNode {
     def tokenType: Option[TokenType] = Some(TokenTypes.BOF)
   }
