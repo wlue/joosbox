@@ -53,5 +53,43 @@ class ParserSpec extends Specification {
         Tokens.RightCurly("}")
       )) must throwA[SyntaxError]
     }
+
+    "scan and parse a valid Joos program on the LR1 grammar" in {
+      val test : String = """
+class Test {
+    public static void main(String args[]) {
+        System.out.println("Hello world!");
+    }
+}
+      """
+
+      Parser.fromLR1File("joos1w.lr1").parseString(test) must not(throwA[SyntaxError])
+    }
+
+    "scan and parse a valid Joos program on the LR1 grammar" in {
+      val test : String = """
+class Test {
+    public static void main(String[] args) {
+        System.out.println("Hello world!");
+    }
+}
+      """
+      Parser.fromLR1File("joos1w.lr1").parseString(test) must not(throwA[SyntaxError])
+    }
+
+    "scan and parse a valid Joos program on the LR1 grammar" in {
+      val test : String = """
+class Test {
+    public static void main(String args) {
+        System.out.println("Hello world!");
+        System.out.println("Hello world!");
+        System.out.println("Hello world!");
+        System.out.println("Hello world!");
+    }
+}
+      """
+
+      Parser.fromLR1File("joos1w.lr1").parseString(test) must not(throwA[SyntaxError])
+    }
   }
 }

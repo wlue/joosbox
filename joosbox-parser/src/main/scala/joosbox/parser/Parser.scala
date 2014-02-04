@@ -5,6 +5,7 @@ import joosbox.lexer.TokenTypes
 import joosbox.lexer.TokenType
 import joosbox.lexer.Tokens
 import joosbox.lexer.Token
+import joosbox.lexer.TokenNFA
 
 class SyntaxError(msg: String) extends RuntimeException(msg)
 
@@ -112,7 +113,15 @@ class Parser(
   val productionRules: List[ProductionRule],
   val transitionTable: Map[Int, Map[ParseNodeType, Transition]]
 ) {
-  def parse(symbols: List[joosbox.lexer.Token]): ParseNode = {
+  lazy val lexer = TokenNFA.nfa.toDFA
+
+  def parseString(str: String): ParseNode = parse(lexer.matchString(str).get)
+
+  def parse(_symbols: List[joosbox.lexer.Token]): ParseNode = {
+    //  Remove whitespace. TODO: Should we be doing this here?
+    val symbols: List[joosbox.lexer.Token] =
+      _symbols.filter((s: joosbox.lexer.Token) => s.tokenType != TokenTypes.Whitespace)
+
     var nodeStack : scala.collection.mutable.Stack[ParseNode] = scala.collection.mutable.Stack[ParseNode]()
     var stateStack : scala.collection.mutable.Stack[Int] = scala.collection.mutable.Stack[Int]()
 
@@ -148,7 +157,7 @@ class Parser(
         newPossibleStates.get(ParseNodeTypes.fromTokenType(a.tokenType)) match {
           case Some(ShiftTransition(newState)) => stateStack.push(newState)
           case None => {
-            throw new SyntaxError("Expected one of: " + newPossibleStates.keys.mkString(", "))
+            throw new SyntaxError("Got '" + a + "', expected one of: " + newPossibleStates.keys.map(_.getClass.getSimpleName).mkString(", "))
           }
         }
       }
