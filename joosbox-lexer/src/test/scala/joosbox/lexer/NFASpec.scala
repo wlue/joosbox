@@ -23,7 +23,7 @@ class NFASpec extends Specification {
       val relation = Relation(Map(State("p") -> Map(Symbol("1") -> Set(State("k")))))
       val startState = State("p")
       val acceptingStates = Set(State("k"))
-      val name = Some(Token.Test("TEST"))
+      val name = Some(TokenTypes.Identifier)
 
       val nfa = NFA(states, symbols, relation, startState, acceptingStates, name)
       val NFA(states2, symbols2, relation2, startState2, acceptingStates2, name2, stateSourceMap2) = nfa
@@ -223,17 +223,17 @@ class NFASpec extends Specification {
           ))),
           State("p"),
           Set(State("k")),
-          Some(Token.Test("HELLO"))
+          Some(TokenTypes.Identifier)
         ).toPrefixedForm must beEqualTo(
           NFA(
-            Set(State("HELLO-p"), State("HELLO-k"), State("HELLO-t")),
+            Set(State("Identifier-p"), State("Identifier-k"), State("Identifier-t")),
             Set(Symbol("1")),
-            Relation(Map(State("HELLO-p") -> Map(
-              Symbol("1") -> Set(State("HELLO-k"))
+            Relation(Map(State("Identifier-p") -> Map(
+              Symbol("1") -> Set(State("Identifier-k"))
             ))),
-            State("HELLO-p"),
-            Set(State("HELLO-k")),
-            Some(Token.Test("HELLO"))
+            State("Identifier-p"),
+            Set(State("Identifier-k")),
+            Some(TokenTypes.Identifier)
           )
         )
       }
@@ -349,8 +349,17 @@ class NFASpec extends Specification {
     "union" in {
       "simple case" in {
 
-        case class A(data: String) extends Token.Kind
-        case class B(data: String) extends Token.Kind
+        object AType extends VariableTokenType {
+          override def apply(data: String = ""): Token = new A(verify(data))
+          override def name: String = "A"
+        }
+        case class A(override val data: String) extends VariableToken(data)
+
+        object BType extends VariableTokenType {
+          override def apply(data: String = ""): Token = new B(verify(data))
+          override def name: String = "B"
+        }
+        case class B(override val data: String) extends VariableToken(data)
 
         val first = NFA(
           Set(State("1")),
@@ -358,9 +367,9 @@ class NFASpec extends Specification {
           Relation.empty,
           State("1"),
           Set(State("1")),
-          Some(A(""))
+          Some(AType)
         )
-        val second = first.withToken(B(""))
+        val second = first.withToken(BType)
         val combined = NFA(
           Set(State("A|B"), State("A-1"), State("B-1")),
           Set(Symbol.epsilon),
@@ -371,10 +380,10 @@ class NFASpec extends Specification {
           )),
           State("A|B"),
           Set(State("A-1"), State("B-1")),
-          Some(Token.Combined("A|B")),
+          Some(CombinedTokenType.createFrom("A|B")),
           Map(
-            State("A-1") -> A(""),
-            State("B-1") -> B("")
+            State("A-1") -> AType,
+            State("B-1") -> BType
           )
         )
 
@@ -384,28 +393,28 @@ class NFASpec extends Specification {
 
     "fromString" in {
       "abc" in {
-        val nfa = NFA.fromString("abc", Token.Test(""))
+        val nfa = NFA.fromString("abc", TokenTypes.Identifier)
         val dfa = nfa.toDFA
         dfa.matchString("ab") must beNone
-        dfa.matchString("abc") must beEqualTo(Some(List(Token.Test("abc"))))
-        dfa.matchString("abcabc") must beEqualTo(Some(List(Token.Test("abc"), Token.Test("abc"))))
+        dfa.matchString("abc") must beEqualTo(Some(List(Tokens.Identifier("abc"))))
+        dfa.matchString("abcabc") must beEqualTo(Some(List(Tokens.Identifier("abc"), Tokens.Identifier("abc"))))
       }
 
       "public" in {
-        val nfa = NFA.fromString("public", Token.Test(""))
+        val nfa = NFA.fromString("public", TokenTypes.Identifier)
         val dfa = nfa.toDFA
         dfa.matchString("static") must beNone
-        dfa.matchString("public") must beEqualTo(Some(List(Token.Test("public"))))
-        dfa.matchString("publicpublic") must beEqualTo(Some(List(Token.Test("public"), Token.Test("public"))))
+        dfa.matchString("public") must beEqualTo(Some(List(Tokens.Identifier("public"))))
+        dfa.matchString("publicpublic") must beEqualTo(Some(List(Tokens.Identifier("public"), Tokens.Identifier("public"))))
       }
 
       "finally" in {
-        val nfa = NFA.fromString("finally", Token.Test(""))
+        val nfa = NFA.fromString("finally", TokenTypes.Identifier)
         val dfa = nfa.toDFA
 
         dfa.matchString("static") must beNone
-        dfa.matchString("finally") must beEqualTo(Some(List(Token.Test("finally"))))
-        dfa.matchString("finallyfinally") must beEqualTo(Some(List(Token.Test("finally"), Token.Test("finally"))))
+        dfa.matchString("finally") must beEqualTo(Some(List(Tokens.Identifier("finally"))))
+        dfa.matchString("finallyfinally") must beEqualTo(Some(List(Tokens.Identifier("finally"), Tokens.Identifier("finally"))))
       }
     }
   }

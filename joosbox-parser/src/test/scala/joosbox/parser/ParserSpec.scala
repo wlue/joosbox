@@ -2,87 +2,10 @@ package joosbox.parser.test
 
 import org.specs2.mutable._
 import joosbox.parser._
+import joosbox.lexer._
 
 class ParserSpec extends Specification {
   "Parser" should {
-    "consume basic LR1 grammar" in {
-      val lr1 = """6
-BOF
-EOF
-id
--
-(
-)
-3
-S
-expr
-term
-S
-5
-S BOF expr EOF
-expr term
-expr expr - term
-term id
-term ( expr )
-11
-29
-1 ( shift 1
-8 ( shift 1
-9 EOF reduce 2
-3 ( shift 1
-1 expr shift 2
-4 EOF reduce 3
-10 - shift 3
-6 - reduce 1
-1 id shift 4
-4 - reduce 3
-4 ) reduce 3
-10 EOF shift 5
-1 term shift 6
-7 - reduce 4
-7 ) reduce 4
-8 term shift 6
-3 id shift 4
-9 - reduce 2
-8 id shift 4
-5 BOF reduce 0
-2 ) shift 7
-0 BOF shift 8
-9 ) reduce 2
-7 EOF reduce 4
-2 - shift 3
-6 ) reduce 1
-6 EOF reduce 1
-3 term shift 9
-8 expr shift 10
-      """
-      val parser: Parser = Parser.fromLR1Definition(lr1)
-      
-      val expectedParseTree: ParseNode = ParseNode("S", List[ParseNode](
-        ParseNode("BOF"),
-        ParseNode("expr", List[ParseNode](
-          ParseNode("term", List[ParseNode](
-            ParseNode("("),
-            ParseNode("expr", List[ParseNode](
-              ParseNode("expr", List[ParseNode](
-                ParseNode("term", List[ParseNode](
-                  ParseNode("id")
-                ))
-              )),
-              ParseNode("-"),
-              ParseNode("term", List[ParseNode](
-                ParseNode("id")
-              ))
-            )),
-            ParseNode(")")
-          ))
-        )),
-        ParseNode("EOF")
-      ))
-
-      parser.parse(List("(", "id", "-", "id", ")")) must beEqualTo(expectedParseTree)
-    }
-
     "read in full LR1 grammar" in {
       Parser.fromLR1File("joos1w.lr1") must not(throwA[Exception])
     }
@@ -90,17 +13,44 @@ term ( expr )
     "parse full LR1 grammar" in {
       val p: Parser = Parser.fromLR1File("joos1w.lr1")
 
-      p.parse(List(
-        "ClassKeyword", "Identifier", "LeftCurly", "RightCurly"
-      )) must not(throwA[Exception])
+      val result: ParseNode = p.parse(List(
+        Tokens.ClassKeyword("class"),
+        Tokens.Identifier("identifier"),
+        Tokens.LeftCurly("{"),
+        Tokens.RightCurly("}")
+      ))
+      result must beEqualTo(ParseNodes.S(List[ParseNode](
+        ParseNodes.BOF(),
+        ParseNodes.CompilationUnit(List[ParseNode](
+          ParseNodes.TypeDeclarations(List[ParseNode](
+            ParseNodes.TypeDeclaration(List[ParseNode](
+              ParseNodes.ClassDeclaration(List[ParseNode](
+                ParseNodes.ClassKeyword(),
+                ParseNodes.Identifier(),
+                ParseNodes.ClassBody(List[ParseNode](
+                  ParseNodes.LeftCurly(),
+                  ParseNodes.RightCurly()
+                ))
+              ))
+            ))
+          ))
+        )),
+        ParseNodes.EOF()
+      )))
     }
 
     "parse full LR1 grammar and then syntax error" in {
       val p: Parser = Parser.fromLR1File("joos1w.lr1")
 
       p.parse(List(
-        "PackageKeyword", "Name", "Semicolon", "ImportKeyword", 
-        "ClassKeyword", "Identifier", "LeftCurly", "RightCurly"
+        Tokens.PackageKeyword("package"),
+        Tokens.Identifier("mypackage"),
+        Tokens.Semicolon(";"),
+        Tokens.ImportKeyword("import"), 
+        Tokens.ClassKeyword("class"),
+        Tokens.Identifier("myclass"),
+        Tokens.LeftCurly("{"),
+        Tokens.RightCurly("}")
       )) must throwA[SyntaxError]
     }
   }

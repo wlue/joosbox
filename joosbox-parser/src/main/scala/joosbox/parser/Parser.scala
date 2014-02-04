@@ -1,33 +1,14 @@
 package joosbox.parser 
 
-import scala.util.control.Exception._
+import scala.util.control.Exception._ 
+import joosbox.lexer.TokenTypes
+import joosbox.lexer.TokenType
+import joosbox.lexer.Tokens
+import joosbox.lexer.Token
 
 class SyntaxError(msg: String) extends RuntimeException(msg)
 
-class ParseNode(val kind: String, val value: Option[String], val children: List[ParseNode]) {
-  override def toString: String = if (children.size > 0) {
-    "{\"kind\": \"" + kind + "\", \"value\": \"" + value + "\", \"children\": [" + children.map(_.toString).mkString(", ") + "]}"
-  } else {
-    "{\"kind\": \"" + kind + "\", \"value\": \"" + value + "\"}"
-  }
-
-  override def equals(obj: Any) = obj match {
-    case node: ParseNode => node.kind.equals(kind) && node.value.equals(value) && node.children.equals(children)
-    case _ => false
-  }
-}
-
-object ParseNode {
-  def apply(kind: String, value:AnyRef = None): ParseNode = {
-    value match {
-      case (list: List[ParseNode]) => new ParseNode(kind, None, list)
-      case (string: String) => new ParseNode(kind, Some(string), List.empty[ParseNode])
-      case None => new ParseNode(kind, None, List.empty[ParseNode])
-    }
-  }
-}
-
-class ProductionRule(val nonTerminal: String, val others: List[String]) {
+class ProductionRule(val nonTerminal: ParseNodeType, val others: List[ParseNodeType]) {
   override def toString: String = nonTerminal + " " + others.mkString(" ")
   def dropCount: Int = others.size
 }
@@ -49,18 +30,18 @@ object Parser {
     val lines:Array[String] = definition.split("\n")
 
     val numTerminalSymbols:Int = lines(0).toInt
-    val terminalSymbols:Set[String] = lines.slice(1, 1 + numTerminalSymbols).toSet
+    val terminalSymbols:Set[ParseNodeType] = lines.slice(1, 1 + numTerminalSymbols).toSet.map((s: String) => ParseNodeTypes.fromString(s))
 
     val numNonTerminalSymbols:Int = lines(numTerminalSymbols + 1).toInt
-    val nonTerminalSymbols:Set[String] =
+    val nonTerminalSymbols:Set[ParseNodeType] =
       lines.slice(numTerminalSymbols + 2,
-                  numTerminalSymbols + 2 + numNonTerminalSymbols).toSet
+                  numTerminalSymbols + 2 + numNonTerminalSymbols).toSet.map((s: String) => ParseNodeTypes.fromString(s))
 
     if (nonTerminalSymbols.intersect(terminalSymbols).size > 0) {
       throw new IllegalArgumentException("Symbols shared between nonterminals and terminals!")
     }
 
-    val startSymbol:String = lines(numTerminalSymbols + numNonTerminalSymbols + 2)
+    val startSymbol:ParseNodeType = ParseNodeTypes.fromString(lines(numTerminalSymbols + numNonTerminalSymbols + 2))
     if (!nonTerminalSymbols.contains(startSymbol)) {
       throw new IllegalArgumentException("Start symbol not contained within nonterminals.")
     }
@@ -73,12 +54,12 @@ object Parser {
     val productionRules:List[ProductionRule] = productionRuleStrings.map {
       (ruleString: String) => {
         val tokens: Array[String] = ruleString.split(" ")
-        val nonTerminal: String = tokens.head
+        val nonTerminal: ParseNodeType = ParseNodeTypes.fromString(tokens.head)
         if (!nonTerminalSymbols.contains(nonTerminal)) {
           throw new IllegalArgumentException("Nonterminal on left side of production rule is not in nonterminal symbol set.")
         }
 
-        val otherTokens: Array[String] = tokens.drop(1)
+        val otherTokens: Array[ParseNodeType] = tokens.drop(1).map((s: String) => ParseNodeTypes.fromString(s))
         if ((nonTerminalSymbols ++ terminalSymbols).intersect(otherTokens.toSet).size < otherTokens.toSet.size) {
           throw new IllegalArgumentException("Tokens on right side of production rule is not in symbol sets.")
         }
@@ -92,11 +73,12 @@ object Parser {
     val transitionStrings:Array[String] =
       lines.slice(numTerminalSymbols + numNonTerminalSymbols + 5 + numProductionRules + 1, lines.size)
 
-    val transitionTable:Map[Int, Map[String, Transition]] = transitionStrings.foldLeft(Map.empty[Int, Map[String, Transition]]) {
-      case (map: Map[Int, Map[String, Transition]], transitionString: String) => {
+    val transitionTable:Map[Int, Map[ParseNodeType, Transition]] = transitionStrings.foldLeft(Map.empty[Int, Map[ParseNodeType, Transition]]) {
+      case (map: Map[Int, Map[ParseNodeType, Transition]], transitionString: String) => {
         val segments:Array[String] = transitionString.split(" ")
         if (segments.size == 4) {
-          val (sourceStateString, symbol, action, targetString) = (segments(0), segments(1), segments(2), segments(3))
+          val (sourceStateString, symbol_s, action, targetString) = (segments(0), segments(1), segments(2), segments(3))
+          val symbol:ParseNodeType = ParseNodeTypes.fromString(symbol_s)
             
           val sourceState:Int = sourceStateString.toInt
           val target:Int = targetString.toInt
@@ -105,7 +87,7 @@ object Parser {
             case "reduce" => new ReduceTransition(productionRules(target))
           }
 
-          map + (sourceState -> (map.getOrElse(sourceState, Map.empty[String, Transition]) + (symbol -> transition)))
+          map + (sourceState -> (map.getOrElse(sourceState, Map.empty[ParseNodeType, Transition]) + (symbol -> transition)))
         } else {
           map
         }
@@ -124,42 +106,46 @@ object Parser {
 }
 
 class Parser(
-  val terminalSymbols: Set[String],
-  val nonTerminalSymbols: Set[String],
-  val startSymbol: String,
+  val terminalSymbols: Set[ParseNodeType],
+  val nonTerminalSymbols: Set[ParseNodeType],
+  val startSymbol: ParseNodeType,
   val productionRules: List[ProductionRule],
-  val transitionTable: Map[Int, Map[String, Transition]]
+  val transitionTable: Map[Int, Map[ParseNodeType, Transition]]
 ) {
-  def parse(symbols: List[String]): ParseNode = {
+  def parse(symbols: List[joosbox.lexer.Token]): ParseNode = {
     var nodeStack : scala.collection.mutable.Stack[ParseNode] = scala.collection.mutable.Stack[ParseNode]()
     var stateStack : scala.collection.mutable.Stack[Int] = scala.collection.mutable.Stack[Int]()
 
-    nodeStack.push(ParseNode("BOF"))
-    stateStack.push(transitionTable(0)("BOF") match { case ShiftTransition(x) => x })
+    nodeStack.push(ParseNodes.BOF())
+    stateStack.push(transitionTable(0)(ParseNodeTypes.BOF) match { case ShiftTransition(x) => x })
 
-    (symbols ++ List[String]("EOF")).foreach {
-      (a: String) => {
+    (symbols ++ List[joosbox.lexer.Token](joosbox.lexer.TokenTypes.EOF())).foreach {
+      (a: Token) => {
         var reducing = true
         while (reducing) {
-          transitionTable(stateStack.top).get(a) match {
+          transitionTable(stateStack.top).get(ParseNodeTypes.fromTokenType(a.tokenType)) match {
             case Some(ReduceTransition(rule: ProductionRule)) => {
               val temp : scala.collection.mutable.Stack[ParseNode] = scala.collection.mutable.Stack[ParseNode]()
               (1 to rule.dropCount) foreach (_ => temp.push(nodeStack.pop()))
 
               stateStack = stateStack.drop(rule.dropCount)
 
-              nodeStack.push(ParseNode(rule.nonTerminal, temp.toList))
-              stateStack.push(transitionTable(stateStack.top)(rule.nonTerminal) match { case ShiftTransition(x) => x })
+              nodeStack.push(rule.nonTerminal(temp.toList))
+              stateStack.push(transitionTable(stateStack.top)(rule.nonTerminal) match {
+                case ShiftTransition(x) => x
+              })
             }
             case Some(ShiftTransition(_)) => reducing = false
             case None => reducing = false
           }
         }
 
-        nodeStack.push(ParseNode(a))
+        //  Create a new parse node from the token
+        nodeStack.push(ParseNodeTypes.fromTokenType(a.tokenType)())
+        
         //  reject if Trans[stateStack.top; a] = ERROR
-        val newPossibleStates: Map[String, Transition] = transitionTable(stateStack.top)
-        newPossibleStates.get(a) match {
+        val newPossibleStates: Map[ParseNodeType, Transition] = transitionTable(stateStack.top)
+        newPossibleStates.get(ParseNodeTypes.fromTokenType(a.tokenType)) match {
           case Some(ShiftTransition(newState)) => stateStack.push(newState)
           case None => {
             throw new SyntaxError("Expected one of: " + newPossibleStates.keys.mkString(", "))
@@ -168,6 +154,6 @@ class Parser(
       }
     } 
 
-    ParseNode("S", nodeStack.toList.reverse)
+    new ParseNodes.S(nodeStack.toList.reverse)
   }
 }

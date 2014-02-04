@@ -28,6 +28,7 @@ object JoosboxBuild extends Build {
     settings = sharedSettings
   ).aggregate(
     lexer,
+    parser,
     compiler
   )
 
@@ -57,7 +58,7 @@ object JoosboxBuild extends Build {
     )
   ).settings(
     name := "joosbox-parser"
-  ).dependsOn(core)
+  ).dependsOn(core, lexer)
 
   lazy val compiler = Project(
     id = "joosbox-compiler",

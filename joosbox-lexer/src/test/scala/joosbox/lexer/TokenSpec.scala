@@ -8,813 +8,813 @@ class TokenSpec extends Specification {
   "Token" should {
     "match question" in {
       "success" in {
-        TokenNFA.nfas(Token.Question).toDFA.consume("?") must beEqualTo(Some(State("?"), ""))
+        TokenNFA.nfas(TokenTypes.Question).toDFA.consume("?") must beEqualTo(Some(State("?"), ""))
       }
       "failed as expected" in {
-        TokenNFA.nfas(Token.Question).toDFA.consume("!") must beEqualTo(None)
+        TokenNFA.nfas(TokenTypes.Question).toDFA.consume("!") must beEqualTo(None)
       }
     }
 
     "match parens" in {
       "leftparen success" in {
-        TokenNFA.nfas(Token.LeftParen).toDFA.consume("(") must beEqualTo(Some(State("("), ""))
+        TokenNFA.nfas(TokenTypes.LeftParen).toDFA.consume("(") must beEqualTo(Some(State("("), ""))
       }
       "leftparen failure" in {
-        TokenNFA.nfas(Token.LeftParen).toDFA.consume(")") must beEqualTo(None)
+        TokenNFA.nfas(TokenTypes.LeftParen).toDFA.consume(")") must beEqualTo(None)
       }
       "rightparen success" in {
-        TokenNFA.nfas(Token.RightParen).toDFA.consume(")") must beEqualTo(Some(State(")"), ""))
+        TokenNFA.nfas(TokenTypes.RightParen).toDFA.consume(")") must beEqualTo(Some(State(")"), ""))
       }
       "rightparen failure" in {
-        TokenNFA.nfas(Token.RightParen).toDFA.consume("(") must beEqualTo(None)
+        TokenNFA.nfas(TokenTypes.RightParen).toDFA.consume("(") must beEqualTo(None)
       }
     }
 
     "match brackets" in {
       "leftbracket success" in {
-        TokenNFA.nfas(Token.LeftBracket).toDFA.consume("[") must beEqualTo(Some(State("["), ""))
+        TokenNFA.nfas(TokenTypes.LeftBracket).toDFA.consume("[") must beEqualTo(Some(State("["), ""))
       }
       "leftbracket failure" in {
-        TokenNFA.nfas(Token.LeftBracket).toDFA.consume("]") must beEqualTo(None)
+        TokenNFA.nfas(TokenTypes.LeftBracket).toDFA.consume("]") must beEqualTo(None)
       }
       "rightbracket success" in {
-        TokenNFA.nfas(Token.RightBracket).toDFA.consume("]") must beEqualTo(Some(State("]"), ""))
+        TokenNFA.nfas(TokenTypes.RightBracket).toDFA.consume("]") must beEqualTo(Some(State("]"), ""))
       }
       "rightbracket failure" in {
-        TokenNFA.nfas(Token.RightBracket).toDFA.consume("[") must beEqualTo(None)
+        TokenNFA.nfas(TokenTypes.RightBracket).toDFA.consume("[") must beEqualTo(None)
       }
     }
 
     "match curlies" in {
       "leftcurly success" in {
-        TokenNFA.nfas(Token.LeftCurly).toDFA.consume("{") must beEqualTo(Some(State("{"), ""))
+        TokenNFA.nfas(TokenTypes.LeftCurly).toDFA.consume("{") must beEqualTo(Some(State("{"), ""))
       }
       "leftcurly failure" in {
-        TokenNFA.nfas(Token.LeftCurly).toDFA.consume("(") must beEqualTo(None)
+        TokenNFA.nfas(TokenTypes.LeftCurly).toDFA.consume("(") must beEqualTo(None)
       }
       "rightcurly success" in {
-        TokenNFA.nfas(Token.RightCurly).toDFA.consume("}") must beEqualTo(Some(State("}"), ""))
+        TokenNFA.nfas(TokenTypes.RightCurly).toDFA.consume("}") must beEqualTo(Some(State("}"), ""))
       }
       "rightcurly failure" in {
-        TokenNFA.nfas(Token.RightCurly).toDFA.consume("]") must beEqualTo(None)
+        TokenNFA.nfas(TokenTypes.RightCurly).toDFA.consume("]") must beEqualTo(None)
       }
     }
 
     "match colon" in {
       "success" in {
-        TokenNFA.nfas(Token.Colon).toDFA.consume(":") must beEqualTo(Some(State(":"), ""))
+        TokenNFA.nfas(TokenTypes.Colon).toDFA.consume(":") must beEqualTo(Some(State(":"), ""))
       }
       "failed as expected" in {
-        TokenNFA.nfas(Token.Colon).toDFA.consume(";") must beEqualTo(None)
+        TokenNFA.nfas(TokenTypes.Colon).toDFA.consume(";") must beEqualTo(None)
       }
     }
 
     "match comma" in {
       "success" in {
-        TokenNFA.nfas(Token.Comma).toDFA.consume(",") must beEqualTo(Some(State(","), ""))
+        TokenNFA.nfas(TokenTypes.Comma).toDFA.consume(",") must beEqualTo(Some(State(","), ""))
       }
       "failed as expected" in {
-        TokenNFA.nfas(Token.Comma).toDFA.consume(";") must beEqualTo(None)
+        TokenNFA.nfas(TokenTypes.Comma).toDFA.consume(";") must beEqualTo(None)
       }
     }
 
     "match dot" in {
       "success" in {
-        TokenNFA.nfas(Token.Dot).toDFA.consume(".") must beEqualTo(Some(State("."), ""))
+        TokenNFA.nfas(TokenTypes.Dot).toDFA.consume(".") must beEqualTo(Some(State("."), ""))
       }
       "failed as expected" in {
-        TokenNFA.nfas(Token.Dot).toDFA.consume(";") must beEqualTo(None)
+        TokenNFA.nfas(TokenTypes.Dot).toDFA.consume(";") must beEqualTo(None)
       }
     }
 
     "match assign" in {
       "success" in {
-        TokenNFA.nfas(Token.Assign).toDFA.consume("=") must beEqualTo(Some(State("="), ""))
+        TokenNFA.nfas(TokenTypes.Assign).toDFA.consume("=") must beEqualTo(Some(State("="), ""))
       }
       "failed as expected" in {
-        TokenNFA.nfas(Token.Assign).toDFA.consume(",") must beEqualTo(None)
+        TokenNFA.nfas(TokenTypes.Assign).toDFA.consume(",") must beEqualTo(None)
       }
     }
 
     "match equal" in {
       "success" in {
-        TokenNFA.nfas(Token.Equal).toDFA.consume("==") must beEqualTo(Some(State("=="), ""))
+        TokenNFA.nfas(TokenTypes.Equal).toDFA.consume("==") must beEqualTo(Some(State("=="), ""))
       }
       "failed as expected" in {
-        TokenNFA.nfas(Token.Equal).toDFA.consume("=") must beEqualTo(None)
+        TokenNFA.nfas(TokenTypes.Equal).toDFA.consume("=") must beEqualTo(None)
       }
       "failed as expected" in {
-        TokenNFA.nfas(Token.Equal).toDFA.consume(",") must beEqualTo(None)
+        TokenNFA.nfas(TokenTypes.Equal).toDFA.consume(",") must beEqualTo(None)
       }
     }
 
     "match logical not" in {
       "success" in {
-        TokenNFA.nfas(Token.LogicalNot).toDFA.consume("!") must beEqualTo(Some(State("!"), ""))
+        TokenNFA.nfas(TokenTypes.LogicalNot).toDFA.consume("!") must beEqualTo(Some(State("!"), ""))
       }
       "failed as expected" in {
-        TokenNFA.nfas(Token.LogicalNot).toDFA.consume("~") must beEqualTo(None)
+        TokenNFA.nfas(TokenTypes.LogicalNot).toDFA.consume("~") must beEqualTo(None)
       }
     }
 
     "match binary not" in {
       "success" in {
-        TokenNFA.nfas(Token.BinaryNot).toDFA.consume("~") must beEqualTo(Some(State("~"), ""))
+        TokenNFA.nfas(TokenTypes.BinaryNot).toDFA.consume("~") must beEqualTo(Some(State("~"), ""))
       }
       "failed as expected" in {
-        TokenNFA.nfas(Token.BinaryNot).toDFA.consume("!") must beEqualTo(None)
+        TokenNFA.nfas(TokenTypes.BinaryNot).toDFA.consume("!") must beEqualTo(None)
       }
     }
 
     "match not equal" in {
       "success" in {
-        TokenNFA.nfas(Token.NotEqual).toDFA.consume("!=") must beEqualTo(Some(State("!="), ""))
+        TokenNFA.nfas(TokenTypes.NotEqual).toDFA.consume("!=") must beEqualTo(Some(State("!="), ""))
       }
       "failed as expected" in {
-        TokenNFA.nfas(Token.NotEqual).toDFA.consume("!") must beEqualTo(None)
+        TokenNFA.nfas(TokenTypes.NotEqual).toDFA.consume("!") must beEqualTo(None)
       }
       "failed as expected" in {
-        TokenNFA.nfas(Token.NotEqual).toDFA.consume("=") must beEqualTo(None)
+        TokenNFA.nfas(TokenTypes.NotEqual).toDFA.consume("=") must beEqualTo(None)
       }
       "failed as expected" in {
-        TokenNFA.nfas(Token.NotEqual).toDFA.consume("==") must beEqualTo(None)
+        TokenNFA.nfas(TokenTypes.NotEqual).toDFA.consume("==") must beEqualTo(None)
       }
     }
 
     "match divide" in {
       "success" in {
-        TokenNFA.nfas(Token.Divide).toDFA.consume("/") must beEqualTo(Some(State("/"), ""))
+        TokenNFA.nfas(TokenTypes.Divide).toDFA.consume("/") must beEqualTo(Some(State("/"), ""))
       }
       "failed as expected" in {
-        TokenNFA.nfas(Token.Divide).toDFA.consume("\\") must beEqualTo(None)
+        TokenNFA.nfas(TokenTypes.Divide).toDFA.consume("\\") must beEqualTo(None)
       }
     }
 
     "match divide-assign" in {
       "success" in {
-        TokenNFA.nfas(Token.DivideAssign).toDFA.consume("/=") must beEqualTo(Some(State("/="), ""))
+        TokenNFA.nfas(TokenTypes.DivideAssign).toDFA.consume("/=") must beEqualTo(Some(State("/="), ""))
       }
       "failed as expected" in {
-        TokenNFA.nfas(Token.DivideAssign).toDFA.consume("\\=") must beEqualTo(None)
+        TokenNFA.nfas(TokenTypes.DivideAssign).toDFA.consume("\\=") must beEqualTo(None)
       }
       "failed as expected" in {
-        TokenNFA.nfas(Token.DivideAssign).toDFA.consume("/") must beEqualTo(None)
+        TokenNFA.nfas(TokenTypes.DivideAssign).toDFA.consume("/") must beEqualTo(None)
       }
     }
 
     "match plus" in {
       "success" in {
-        TokenNFA.nfas(Token.Plus).toDFA.consume("+") must beEqualTo(Some(State("+"), ""))
+        TokenNFA.nfas(TokenTypes.Plus).toDFA.consume("+") must beEqualTo(Some(State("+"), ""))
       }
       "failed as expected" in {
-        TokenNFA.nfas(Token.Plus).toDFA.consume("-") must beEqualTo(None)
+        TokenNFA.nfas(TokenTypes.Plus).toDFA.consume("-") must beEqualTo(None)
       }
     }
 
     "match plus-assign" in {
       "success" in {
-        TokenNFA.nfas(Token.PlusAssign).toDFA.consume("+=") must beEqualTo(Some(State("+="), ""))
+        TokenNFA.nfas(TokenTypes.PlusAssign).toDFA.consume("+=") must beEqualTo(Some(State("+="), ""))
       }
       "failed as expected" in {
-        TokenNFA.nfas(Token.PlusAssign).toDFA.consume("+") must beEqualTo(None)
+        TokenNFA.nfas(TokenTypes.PlusAssign).toDFA.consume("+") must beEqualTo(None)
       }
       "failed as expected" in {
-        TokenNFA.nfas(Token.PlusAssign).toDFA.consume("=") must beEqualTo(None)
+        TokenNFA.nfas(TokenTypes.PlusAssign).toDFA.consume("=") must beEqualTo(None)
       }
     }
 
     "match increment" in {
       "success" in {
-        TokenNFA.nfas(Token.Increment).toDFA.consume("++") must beEqualTo(Some(State("++"), ""))
+        TokenNFA.nfas(TokenTypes.Increment).toDFA.consume("++") must beEqualTo(Some(State("++"), ""))
       }
       "failed as expected" in {
-        TokenNFA.nfas(Token.Increment).toDFA.consume("+") must beEqualTo(None)
+        TokenNFA.nfas(TokenTypes.Increment).toDFA.consume("+") must beEqualTo(None)
       }
       "failed as expected" in {
-        TokenNFA.nfas(Token.Increment).toDFA.consume("=") must beEqualTo(None)
+        TokenNFA.nfas(TokenTypes.Increment).toDFA.consume("=") must beEqualTo(None)
       }
     }
 
     "match minus" in {
       "success" in {
-        TokenNFA.nfas(Token.Minus).toDFA.consume("-") must beEqualTo(Some(State("-"), ""))
+        TokenNFA.nfas(TokenTypes.Minus).toDFA.consume("-") must beEqualTo(Some(State("-"), ""))
       }
       "failed as expected" in {
-        TokenNFA.nfas(Token.Minus).toDFA.consume("+") must beEqualTo(None)
+        TokenNFA.nfas(TokenTypes.Minus).toDFA.consume("+") must beEqualTo(None)
       }
     }
 
     "match minus-assign" in {
       "success" in {
-        TokenNFA.nfas(Token.MinusAssign).toDFA.consume("-=") must beEqualTo(Some(State("-="), ""))
+        TokenNFA.nfas(TokenTypes.MinusAssign).toDFA.consume("-=") must beEqualTo(Some(State("-="), ""))
       }
       "failed as expected" in {
-        TokenNFA.nfas(Token.PlusAssign).toDFA.consume("-") must beEqualTo(None)
+        TokenNFA.nfas(TokenTypes.PlusAssign).toDFA.consume("-") must beEqualTo(None)
       }
       "failed as expected" in {
-        TokenNFA.nfas(Token.PlusAssign).toDFA.consume("=") must beEqualTo(None)
+        TokenNFA.nfas(TokenTypes.PlusAssign).toDFA.consume("=") must beEqualTo(None)
       }
     }
 
     "match decrement" in {
       "success" in {
-        TokenNFA.nfas(Token.Decrement).toDFA.consume("--") must beEqualTo(Some(State("--"), ""))
+        TokenNFA.nfas(TokenTypes.Decrement).toDFA.consume("--") must beEqualTo(Some(State("--"), ""))
       }
       "failed as expected" in {
-        TokenNFA.nfas(Token.Decrement).toDFA.consume("-") must beEqualTo(None)
+        TokenNFA.nfas(TokenTypes.Decrement).toDFA.consume("-") must beEqualTo(None)
       }
       "failed as expected" in {
-        TokenNFA.nfas(Token.Decrement).toDFA.consume("+") must beEqualTo(None)
+        TokenNFA.nfas(TokenTypes.Decrement).toDFA.consume("+") must beEqualTo(None)
       }
     }
 
     "match star" in {
       "success" in {
-        TokenNFA.nfas(Token.Star).toDFA.consume("*") must beEqualTo(Some(State("*"), ""))
+        TokenNFA.nfas(TokenTypes.Star).toDFA.consume("*") must beEqualTo(Some(State("*"), ""))
       }
       "failed as expected" in {
-        TokenNFA.nfas(Token.Star).toDFA.consume("+") must beEqualTo(None)
+        TokenNFA.nfas(TokenTypes.Star).toDFA.consume("+") must beEqualTo(None)
       }
     }
 
     "match star-assign" in {
       "success" in {
-        TokenNFA.nfas(Token.StarAssign).toDFA.consume("*=") must beEqualTo(Some(State("*="), ""))
+        TokenNFA.nfas(TokenTypes.StarAssign).toDFA.consume("*=") must beEqualTo(Some(State("*="), ""))
       }
       "failed as expected" in {
-        TokenNFA.nfas(Token.StarAssign).toDFA.consume("*") must beEqualTo(None)
+        TokenNFA.nfas(TokenTypes.StarAssign).toDFA.consume("*") must beEqualTo(None)
       }
       "failed as expected" in {
-        TokenNFA.nfas(Token.StarAssign).toDFA.consume("=") must beEqualTo(None)
+        TokenNFA.nfas(TokenTypes.StarAssign).toDFA.consume("=") must beEqualTo(None)
       }
     }
 
     "match modulo" in {
       "success" in {
-        TokenNFA.nfas(Token.Modulo).toDFA.consume("%") must beEqualTo(Some(State("%"), ""))
+        TokenNFA.nfas(TokenTypes.Modulo).toDFA.consume("%") must beEqualTo(Some(State("%"), ""))
       }
       "failed as expected" in {
-        TokenNFA.nfas(Token.Modulo).toDFA.consume("+") must beEqualTo(None)
+        TokenNFA.nfas(TokenTypes.Modulo).toDFA.consume("+") must beEqualTo(None)
       }
     }
 
     "match modulo-assign" in {
       "success" in {
-        TokenNFA.nfas(Token.ModuloAssign).toDFA.consume("%=") must beEqualTo(Some(State("%="), ""))
+        TokenNFA.nfas(TokenTypes.ModuloAssign).toDFA.consume("%=") must beEqualTo(Some(State("%="), ""))
       }
       "failed as expected" in {
-        TokenNFA.nfas(Token.ModuloAssign).toDFA.consume("%") must beEqualTo(None)
+        TokenNFA.nfas(TokenTypes.ModuloAssign).toDFA.consume("%") must beEqualTo(None)
       }
       "failed as expected" in {
-        TokenNFA.nfas(Token.ModuloAssign).toDFA.consume("=") must beEqualTo(None)
+        TokenNFA.nfas(TokenTypes.ModuloAssign).toDFA.consume("=") must beEqualTo(None)
       }
     }
 
     "match greater than" in {
       "success" in {
-        TokenNFA.nfas(Token.GreaterThan).toDFA.consume(">") must beEqualTo(Some(State(">"), ""))
+        TokenNFA.nfas(TokenTypes.GreaterThan).toDFA.consume(">") must beEqualTo(Some(State(">"), ""))
       }
       "failed as expected" in {
-        TokenNFA.nfas(Token.GreaterThan).toDFA.consume("<") must beEqualTo(None)
+        TokenNFA.nfas(TokenTypes.GreaterThan).toDFA.consume("<") must beEqualTo(None)
       }
     }
 
     "match greater than equal" in {
       "success" in {
-        TokenNFA.nfas(Token.GreaterEqual).toDFA.consume(">=") must beEqualTo(Some(State(">="), ""))
+        TokenNFA.nfas(TokenTypes.GreaterEqual).toDFA.consume(">=") must beEqualTo(Some(State(">="), ""))
       }
       "failed as expected" in {
-        TokenNFA.nfas(Token.GreaterEqual).toDFA.consume(">") must beEqualTo(None)
+        TokenNFA.nfas(TokenTypes.GreaterEqual).toDFA.consume(">") must beEqualTo(None)
       }
       "failed as expected" in {
-        TokenNFA.nfas(Token.GreaterEqual).toDFA.consume("=") must beEqualTo(None)
+        TokenNFA.nfas(TokenTypes.GreaterEqual).toDFA.consume("=") must beEqualTo(None)
       }
     }
 
     "match shift right" in {
       "success" in {
-        TokenNFA.nfas(Token.ShiftRight).toDFA.consume(">>") must beEqualTo(Some(State(">>"), ""))
+        TokenNFA.nfas(TokenTypes.ShiftRight).toDFA.consume(">>") must beEqualTo(Some(State(">>"), ""))
       }
       "failed as expected" in {
-        TokenNFA.nfas(Token.ShiftRight).toDFA.consume(">=") must beEqualTo(None)
+        TokenNFA.nfas(TokenTypes.ShiftRight).toDFA.consume(">=") must beEqualTo(None)
       }
       "failed as expected" in {
-        TokenNFA.nfas(Token.ShiftRight).toDFA.consume(">") must beEqualTo(None)
+        TokenNFA.nfas(TokenTypes.ShiftRight).toDFA.consume(">") must beEqualTo(None)
       }
     }
 
     "match shift right assign" in {
       "success" in {
-        TokenNFA.nfas(Token.ShiftRightAssign).toDFA.consume(">>=") must beEqualTo(Some(State(">>="), ""))
+        TokenNFA.nfas(TokenTypes.ShiftRightAssign).toDFA.consume(">>=") must beEqualTo(Some(State(">>="), ""))
       }
       "failed as expected" in {
-        TokenNFA.nfas(Token.ShiftRightAssign).toDFA.consume(">>") must beEqualTo(None)
+        TokenNFA.nfas(TokenTypes.ShiftRightAssign).toDFA.consume(">>") must beEqualTo(None)
       }
       "failed as expected" in {
-        TokenNFA.nfas(Token.ShiftRightAssign).toDFA.consume(">=") must beEqualTo(None)
+        TokenNFA.nfas(TokenTypes.ShiftRightAssign).toDFA.consume(">=") must beEqualTo(None)
       }
     }
 
     "match binary shift right" in {
       "success" in {
-        TokenNFA.nfas(Token.BinaryShiftRight).toDFA.consume(">>>") must beEqualTo(Some(State(">>>"), ""))
+        TokenNFA.nfas(TokenTypes.BinaryShiftRight).toDFA.consume(">>>") must beEqualTo(Some(State(">>>"), ""))
       }
       "failed as expected" in {
-        TokenNFA.nfas(Token.BinaryShiftRight).toDFA.consume(">>=") must beEqualTo(None)
+        TokenNFA.nfas(TokenTypes.BinaryShiftRight).toDFA.consume(">>=") must beEqualTo(None)
       }
       "failed as expected" in {
-        TokenNFA.nfas(Token.BinaryShiftRight).toDFA.consume(">>") must beEqualTo(None)
+        TokenNFA.nfas(TokenTypes.BinaryShiftRight).toDFA.consume(">>") must beEqualTo(None)
       }
     }
 
     "match binary shift right assign" in {
       "success" in {
-        TokenNFA.nfas(Token.BinaryShiftRightAssign).toDFA.consume(">>>=") must beEqualTo(Some(State(">>>="), ""))
+        TokenNFA.nfas(TokenTypes.BinaryShiftRightAssign).toDFA.consume(">>>=") must beEqualTo(Some(State(">>>="), ""))
       }
       "failed as expected" in {
-        TokenNFA.nfas(Token.BinaryShiftRightAssign).toDFA.consume(">>>") must beEqualTo(None)
+        TokenNFA.nfas(TokenTypes.BinaryShiftRightAssign).toDFA.consume(">>>") must beEqualTo(None)
       }
       "failed as expected" in {
-        TokenNFA.nfas(Token.BinaryShiftRightAssign).toDFA.consume(">>=") must beEqualTo(None)
+        TokenNFA.nfas(TokenTypes.BinaryShiftRightAssign).toDFA.consume(">>=") must beEqualTo(None)
       }
       "failed as expected" in {
-        TokenNFA.nfas(Token.BinaryShiftRightAssign).toDFA.consume(">>") must beEqualTo(None)
+        TokenNFA.nfas(TokenTypes.BinaryShiftRightAssign).toDFA.consume(">>") must beEqualTo(None)
       }
     }
 
     "match less than" in {
       "success" in {
-        TokenNFA.nfas(Token.LessThan).toDFA.consume("<") must beEqualTo(Some(State("<"), ""))
+        TokenNFA.nfas(TokenTypes.LessThan).toDFA.consume("<") must beEqualTo(Some(State("<"), ""))
       }
       "failed as expected" in {
-        TokenNFA.nfas(Token.LessThan).toDFA.consume(">") must beEqualTo(None)
+        TokenNFA.nfas(TokenTypes.LessThan).toDFA.consume(">") must beEqualTo(None)
       }
     }
 
     "match less than equal" in {
       "success" in {
-        TokenNFA.nfas(Token.LessEqual).toDFA.consume("<=") must beEqualTo(Some(State("<="), ""))
+        TokenNFA.nfas(TokenTypes.LessEqual).toDFA.consume("<=") must beEqualTo(Some(State("<="), ""))
       }
       "failed as expected" in {
-        TokenNFA.nfas(Token.LessEqual).toDFA.consume("<") must beEqualTo(None)
+        TokenNFA.nfas(TokenTypes.LessEqual).toDFA.consume("<") must beEqualTo(None)
       }
       "failed as expected" in {
-        TokenNFA.nfas(Token.LessEqual).toDFA.consume("=") must beEqualTo(None)
+        TokenNFA.nfas(TokenTypes.LessEqual).toDFA.consume("=") must beEqualTo(None)
       }
     }
 
     "match shift left" in {
       "success" in {
-        TokenNFA.nfas(Token.ShiftLeft).toDFA.consume("<<") must beEqualTo(Some(State("<<"), ""))
+        TokenNFA.nfas(TokenTypes.ShiftLeft).toDFA.consume("<<") must beEqualTo(Some(State("<<"), ""))
       }
       "failed as expected" in {
-        TokenNFA.nfas(Token.ShiftLeft).toDFA.consume("<=") must beEqualTo(None)
+        TokenNFA.nfas(TokenTypes.ShiftLeft).toDFA.consume("<=") must beEqualTo(None)
       }
       "failed as expected" in {
-        TokenNFA.nfas(Token.ShiftLeft).toDFA.consume("<") must beEqualTo(None)
+        TokenNFA.nfas(TokenTypes.ShiftLeft).toDFA.consume("<") must beEqualTo(None)
       }
     }
 
     "match shift left assign" in {
       "success" in {
-        TokenNFA.nfas(Token.ShiftLeftAssign).toDFA.consume("<<=") must beEqualTo(Some(State("<<="), ""))
+        TokenNFA.nfas(TokenTypes.ShiftLeftAssign).toDFA.consume("<<=") must beEqualTo(Some(State("<<="), ""))
       }
       "failed as expected" in {
-        TokenNFA.nfas(Token.ShiftLeftAssign).toDFA.consume("<<") must beEqualTo(None)
+        TokenNFA.nfas(TokenTypes.ShiftLeftAssign).toDFA.consume("<<") must beEqualTo(None)
       }
       "failed as expected" in {
-        TokenNFA.nfas(Token.ShiftLeftAssign).toDFA.consume("<=") must beEqualTo(None)
+        TokenNFA.nfas(TokenTypes.ShiftLeftAssign).toDFA.consume("<=") must beEqualTo(None)
       }
     }
 
     "match binary xor" in {
       "success" in {
-        TokenNFA.nfas(Token.BinaryXor).toDFA.consume("^") must beEqualTo(Some(State("^"), ""))
+        TokenNFA.nfas(TokenTypes.BinaryXor).toDFA.consume("^") must beEqualTo(Some(State("^"), ""))
       }
       "failed as expected" in {
-        TokenNFA.nfas(Token.BinaryXor).toDFA.consume(">") must beEqualTo(None)
+        TokenNFA.nfas(TokenTypes.BinaryXor).toDFA.consume(">") must beEqualTo(None)
       }
     }
 
     "match binary xor assign" in {
       "success" in {
-        TokenNFA.nfas(Token.BinaryXorAssign).toDFA.consume("^=") must beEqualTo(Some(State("^="), ""))
+        TokenNFA.nfas(TokenTypes.BinaryXorAssign).toDFA.consume("^=") must beEqualTo(Some(State("^="), ""))
       }
       "failed as expected" in {
-        TokenNFA.nfas(Token.BinaryXorAssign).toDFA.consume("^") must beEqualTo(None)
+        TokenNFA.nfas(TokenTypes.BinaryXorAssign).toDFA.consume("^") must beEqualTo(None)
       }
       "failed as expected" in {
-        TokenNFA.nfas(Token.BinaryXorAssign).toDFA.consume("=") must beEqualTo(None)
+        TokenNFA.nfas(TokenTypes.BinaryXorAssign).toDFA.consume("=") must beEqualTo(None)
       }
       "failed as expected" in {
-        TokenNFA.nfas(Token.BinaryXorAssign).toDFA.consume("^ ") must beEqualTo(None)
+        TokenNFA.nfas(TokenTypes.BinaryXorAssign).toDFA.consume("^ ") must beEqualTo(None)
       }
     }
 
 
     "match binary or" in {
       "success" in {
-        TokenNFA.nfas(Token.BinaryOr).toDFA.consume("|") must beEqualTo(Some(State("|"), ""))
+        TokenNFA.nfas(TokenTypes.BinaryOr).toDFA.consume("|") must beEqualTo(Some(State("|"), ""))
       }
       "failed as expected" in {
-        TokenNFA.nfas(Token.BinaryOr).toDFA.consume("^") must beEqualTo(None)
+        TokenNFA.nfas(TokenTypes.BinaryOr).toDFA.consume("^") must beEqualTo(None)
       }
     }
 
     "match binary or assign" in {
       "success" in {
-        TokenNFA.nfas(Token.BinaryOrAssign).toDFA.consume("|=") must beEqualTo(Some(State("|="), ""))
+        TokenNFA.nfas(TokenTypes.BinaryOrAssign).toDFA.consume("|=") must beEqualTo(Some(State("|="), ""))
       }
       "failed as expected" in {
-        TokenNFA.nfas(Token.BinaryOrAssign).toDFA.consume("|") must beEqualTo(None)
+        TokenNFA.nfas(TokenTypes.BinaryOrAssign).toDFA.consume("|") must beEqualTo(None)
       }
       "failed as expected" in {
-        TokenNFA.nfas(Token.BinaryOrAssign).toDFA.consume("=") must beEqualTo(None)
+        TokenNFA.nfas(TokenTypes.BinaryOrAssign).toDFA.consume("=") must beEqualTo(None)
       }
       "failed as expected" in {
-        TokenNFA.nfas(Token.BinaryOrAssign).toDFA.consume("| ") must beEqualTo(None)
+        TokenNFA.nfas(TokenTypes.BinaryOrAssign).toDFA.consume("| ") must beEqualTo(None)
       }
     }
 
     "match binary and" in {
       "success" in {
-        TokenNFA.nfas(Token.BinaryAnd).toDFA.consume("&") must beEqualTo(Some(State("&"), ""))
+        TokenNFA.nfas(TokenTypes.BinaryAnd).toDFA.consume("&") must beEqualTo(Some(State("&"), ""))
       }
       "failed as expected" in {
-        TokenNFA.nfas(Token.BinaryAnd).toDFA.consume("|") must beEqualTo(None)
+        TokenNFA.nfas(TokenTypes.BinaryAnd).toDFA.consume("|") must beEqualTo(None)
       }
     }
 
     "match binary and assign" in {
       "success" in {
-        TokenNFA.nfas(Token.BinaryAndAssign).toDFA.consume("&=") must beEqualTo(Some(State("&="), ""))
+        TokenNFA.nfas(TokenTypes.BinaryAndAssign).toDFA.consume("&=") must beEqualTo(Some(State("&="), ""))
       }
       "failed as expected" in {
-        TokenNFA.nfas(Token.BinaryAndAssign).toDFA.consume("&") must beEqualTo(None)
+        TokenNFA.nfas(TokenTypes.BinaryAndAssign).toDFA.consume("&") must beEqualTo(None)
       }
       "failed as expected" in {
-        TokenNFA.nfas(Token.BinaryAndAssign).toDFA.consume("=") must beEqualTo(None)
+        TokenNFA.nfas(TokenTypes.BinaryAndAssign).toDFA.consume("=") must beEqualTo(None)
       }
       "failed as expected" in {
-        TokenNFA.nfas(Token.BinaryAndAssign).toDFA.consume("& ") must beEqualTo(None)
+        TokenNFA.nfas(TokenTypes.BinaryAndAssign).toDFA.consume("& ") must beEqualTo(None)
       }
     }
 
 
     "match logical or" in {
       "success" in {
-        TokenNFA.nfas(Token.LogicalOr).toDFA.consume("||") must beEqualTo(Some(State("||"), ""))
+        TokenNFA.nfas(TokenTypes.LogicalOr).toDFA.consume("||") must beEqualTo(Some(State("||"), ""))
       }
       "failed as expected" in {
-        TokenNFA.nfas(Token.LogicalOr).toDFA.consume("|") must beEqualTo(None)
+        TokenNFA.nfas(TokenTypes.LogicalOr).toDFA.consume("|") must beEqualTo(None)
       }
       "failed as expected" in {
-        TokenNFA.nfas(Token.LogicalOr).toDFA.consume("| ") must beEqualTo(None)
+        TokenNFA.nfas(TokenTypes.LogicalOr).toDFA.consume("| ") must beEqualTo(None)
       }
       "failed as expected" in {
-        TokenNFA.nfas(Token.LogicalOr).toDFA.consume("&&") must beEqualTo(None)
+        TokenNFA.nfas(TokenTypes.LogicalOr).toDFA.consume("&&") must beEqualTo(None)
       }
     }
 
     "match logical and" in {
       "success" in {
-        TokenNFA.nfas(Token.LogicalAnd).toDFA.consume("&&") must beEqualTo(Some(State("&&"), ""))
+        TokenNFA.nfas(TokenTypes.LogicalAnd).toDFA.consume("&&") must beEqualTo(Some(State("&&"), ""))
       }
       "failed as expected" in {
-        TokenNFA.nfas(Token.LogicalAnd).toDFA.consume("&") must beEqualTo(None)
+        TokenNFA.nfas(TokenTypes.LogicalAnd).toDFA.consume("&") must beEqualTo(None)
       }
       "failed as expected" in {
-        TokenNFA.nfas(Token.LogicalAnd).toDFA.consume("& ") must beEqualTo(None)
+        TokenNFA.nfas(TokenTypes.LogicalAnd).toDFA.consume("& ") must beEqualTo(None)
       }
       "failed as expected" in {
-        TokenNFA.nfas(Token.LogicalAnd).toDFA.consume("||") must beEqualTo(None)
+        TokenNFA.nfas(TokenTypes.LogicalAnd).toDFA.consume("||") must beEqualTo(None)
       }
     }
 
     "match semicolon" in {
       "success" in {
-        TokenNFA.nfas(Token.Semicolon).toDFA.consume(";") must beEqualTo(Some(State(";"), ""))
+        TokenNFA.nfas(TokenTypes.Semicolon).toDFA.consume(";") must beEqualTo(Some(State(";"), ""))
       }
       "failed as expected" in {
-        TokenNFA.nfas(Token.Semicolon).toDFA.consume("|") must beEqualTo(None)
+        TokenNFA.nfas(TokenTypes.Semicolon).toDFA.consume("|") must beEqualTo(None)
       }
     }
 
     "match whitespace" in {
       "success" in {
-        TokenNFA.nfas(Token.Whitespace).toDFA.consume(" ") must beEqualTo(Some(State("ws"), ""))
+        TokenNFA.nfas(TokenTypes.Whitespace).toDFA.consume(" ") must beEqualTo(Some(State("ws"), ""))
       }
       "success" in {
-        TokenNFA.nfas(Token.Whitespace).toDFA.consume("\n") must beEqualTo(Some(State("ws"), ""))
+        TokenNFA.nfas(TokenTypes.Whitespace).toDFA.consume("\n") must beEqualTo(Some(State("ws"), ""))
       }
       "success" in {
-        TokenNFA.nfas(Token.Whitespace).toDFA.consume("\r") must beEqualTo(Some(State("ws"), ""))
+        TokenNFA.nfas(TokenTypes.Whitespace).toDFA.consume("\r") must beEqualTo(Some(State("ws"), ""))
       }
       "success" in {
-        TokenNFA.nfas(Token.Whitespace).toDFA.consume("\t") must beEqualTo(Some(State("ws"), ""))
+        TokenNFA.nfas(TokenTypes.Whitespace).toDFA.consume("\t") must beEqualTo(Some(State("ws"), ""))
       }
       "success" in {
-        TokenNFA.nfas(Token.Whitespace).toDFA.consume("\f") must beEqualTo(Some(State("ws"), ""))
+        TokenNFA.nfas(TokenTypes.Whitespace).toDFA.consume("\f") must beEqualTo(Some(State("ws"), ""))
       }
       "success" in {
-        TokenNFA.nfas(Token.Whitespace).toDFA.consume("\13") must beEqualTo(Some(State("ws"), ""))
+        TokenNFA.nfas(TokenTypes.Whitespace).toDFA.consume("\13") must beEqualTo(Some(State("ws"), ""))
       }
       "success" in {
-        TokenNFA.nfas(Token.Whitespace).toDFA.consume("\r\n") must beEqualTo(Some(State("ws"), ""))
+        TokenNFA.nfas(TokenTypes.Whitespace).toDFA.consume("\r\n") must beEqualTo(Some(State("ws"), ""))
       }
       "success" in {
-        TokenNFA.nfas(Token.Whitespace).toDFA.consume("\n\n") must beEqualTo(Some(State("ws"), ""))
+        TokenNFA.nfas(TokenTypes.Whitespace).toDFA.consume("\n\n") must beEqualTo(Some(State("ws"), ""))
       }
       "success" in {
-        TokenNFA.nfas(Token.Whitespace).toDFA.consume("\r\r") must beEqualTo(Some(State("ws"), ""))
+        TokenNFA.nfas(TokenTypes.Whitespace).toDFA.consume("\r\r") must beEqualTo(Some(State("ws"), ""))
       }
       "success" in {
-        TokenNFA.nfas(Token.Whitespace).toDFA.consume("\r\r\n") must beEqualTo(Some(State("ws"), ""))
+        TokenNFA.nfas(TokenTypes.Whitespace).toDFA.consume("\r\r\n") must beEqualTo(Some(State("ws"), ""))
       }
       "success" in {
-        TokenNFA.nfas(Token.Whitespace).toDFA.consume("      ") must beEqualTo(Some(State("ws"), ""))
+        TokenNFA.nfas(TokenTypes.Whitespace).toDFA.consume("      ") must beEqualTo(Some(State("ws"), ""))
       }
       "failed as expected" in {
-        TokenNFA.nfas(Token.Whitespace).toDFA.consume("\b") must beEqualTo(None)
+        TokenNFA.nfas(TokenTypes.Whitespace).toDFA.consume("\b") must beEqualTo(None)
       }
       "failed as expected" in {
-        TokenNFA.nfas(Token.Whitespace).toDFA.consume("") must beEqualTo(None)
+        TokenNFA.nfas(TokenTypes.Whitespace).toDFA.consume("") must beEqualTo(None)
       }
       "failed as expected" in {
-        TokenNFA.nfas(Token.Whitespace).toDFA.consume("a  ") must beEqualTo(None)
+        TokenNFA.nfas(TokenTypes.Whitespace).toDFA.consume("a  ") must beEqualTo(None)
       }
     }
 
     "match single line comment" in {
       "success" in {
-        TokenNFA.nfas(Token.SingleLineComment).toDFA.consume("//\n") must beEqualTo(Some(State("eol"), ""))
+        TokenNFA.nfas(TokenTypes.SingleLineComment).toDFA.consume("//\n") must beEqualTo(Some(State("eol"), ""))
       }
       "success" in {
-        TokenNFA.nfas(Token.SingleLineComment).toDFA.consume("// Hello World\n") must beEqualTo(Some(State("eol"), ""))
+        TokenNFA.nfas(TokenTypes.SingleLineComment).toDFA.consume("// Hello World\n") must beEqualTo(Some(State("eol"), ""))
       }
       "success" in {
-        TokenNFA.nfas(Token.SingleLineComment).toDFA.consume("// Hello // World\n") must beEqualTo(Some(State("eol"), ""))
+        TokenNFA.nfas(TokenTypes.SingleLineComment).toDFA.consume("// Hello // World\n") must beEqualTo(Some(State("eol"), ""))
       }
       "success" in {
-        TokenNFA.nfas(Token.SingleLineComment).toDFA.consume("//\r") must beEqualTo(Some(State("eol2"), ""))
+        TokenNFA.nfas(TokenTypes.SingleLineComment).toDFA.consume("//\r") must beEqualTo(Some(State("eol2"), ""))
       }
       "success" in {
-        TokenNFA.nfas(Token.SingleLineComment).toDFA.consume("// Hello World\r") must beEqualTo(Some(State("eol2"), ""))
+        TokenNFA.nfas(TokenTypes.SingleLineComment).toDFA.consume("// Hello World\r") must beEqualTo(Some(State("eol2"), ""))
       }
       "success" in {
-        TokenNFA.nfas(Token.SingleLineComment).toDFA.consume("// Hello // World\r") must beEqualTo(Some(State("eol2"), ""))
+        TokenNFA.nfas(TokenTypes.SingleLineComment).toDFA.consume("// Hello // World\r") must beEqualTo(Some(State("eol2"), ""))
       }
       "success" in {
-        TokenNFA.nfas(Token.SingleLineComment).toDFA.consume("//\r\n") must beEqualTo(Some(State("eol"), ""))
+        TokenNFA.nfas(TokenTypes.SingleLineComment).toDFA.consume("//\r\n") must beEqualTo(Some(State("eol"), ""))
       }
       "success" in {
-        TokenNFA.nfas(Token.SingleLineComment).toDFA.consume("// Hello World\r\n") must beEqualTo(Some(State("eol"), ""))
+        TokenNFA.nfas(TokenTypes.SingleLineComment).toDFA.consume("// Hello World\r\n") must beEqualTo(Some(State("eol"), ""))
       }
       "success" in {
-        TokenNFA.nfas(Token.SingleLineComment).toDFA.consume("// Hello // World\r\n") must beEqualTo(Some(State("eol"), ""))
+        TokenNFA.nfas(TokenTypes.SingleLineComment).toDFA.consume("// Hello // World\r\n") must beEqualTo(Some(State("eol"), ""))
       }
       "failed as expected" in {
-        TokenNFA.nfas(Token.SingleLineComment).toDFA.consume("/**\n* Hello\n* World\n */") must beEqualTo(None)
+        TokenNFA.nfas(TokenTypes.SingleLineComment).toDFA.consume("/**\n* Hello\n* World\n */") must beEqualTo(None)
       }
       "failed as expected" in {
-        TokenNFA.nfas(Token.SingleLineComment).toDFA.consume("/* Hello World */") must beEqualTo(None)
+        TokenNFA.nfas(TokenTypes.SingleLineComment).toDFA.consume("/* Hello World */") must beEqualTo(None)
       }
       "failed as expected" in {
-        TokenNFA.nfas(Token.SingleLineComment).toDFA.consume("Hello // World\n") must beEqualTo(None)
+        TokenNFA.nfas(TokenTypes.SingleLineComment).toDFA.consume("Hello // World\n") must beEqualTo(None)
       }
     }
 
     "match multiline comment" in {
       "success" in {
-        TokenNFA.nfas(Token.MultiLineComment).toDFA.consume("/* Hello World */") must beEqualTo(Some(State("/**/"), ""))
+        TokenNFA.nfas(TokenTypes.MultiLineComment).toDFA.consume("/* Hello World */") must beEqualTo(Some(State("/**/"), ""))
       }
       "success" in {
-        TokenNFA.nfas(Token.MultiLineComment).toDFA.consume("/* Hello World\n*/") must beEqualTo(Some(State("/**/"), ""))
+        TokenNFA.nfas(TokenTypes.MultiLineComment).toDFA.consume("/* Hello World\n*/") must beEqualTo(Some(State("/**/"), ""))
       }
       "success" in {
-        TokenNFA.nfas(Token.MultiLineComment).toDFA.consume("/* Hello\n World*/") must beEqualTo(Some(State("/**/"), ""))
+        TokenNFA.nfas(TokenTypes.MultiLineComment).toDFA.consume("/* Hello\n World*/") must beEqualTo(Some(State("/**/"), ""))
       }
       "success" in {
-        TokenNFA.nfas(Token.MultiLineComment).toDFA.consume("/* Hello // World*/") must beEqualTo(Some(State("/**/"), ""))
+        TokenNFA.nfas(TokenTypes.MultiLineComment).toDFA.consume("/* Hello // World*/") must beEqualTo(Some(State("/**/"), ""))
       }
       "success" in {
-        TokenNFA.nfas(Token.MultiLineComment).toDFA.consume("/**\n* Hello\n*  World\n */") must beEqualTo(Some(State("/**/"), ""))
+        TokenNFA.nfas(TokenTypes.MultiLineComment).toDFA.consume("/**\n* Hello\n*  World\n */") must beEqualTo(Some(State("/**/"), ""))
       }
       "success" in {
-        TokenNFA.nfas(Token.MultiLineComment).toDFA.consume("/**/") must beEqualTo(Some(State("/**/"), ""))
+        TokenNFA.nfas(TokenTypes.MultiLineComment).toDFA.consume("/**/") must beEqualTo(Some(State("/**/"), ""))
       }
       "success" in {
-        TokenNFA.nfas(Token.MultiLineComment).toDFA.consume("/*\n*/") must beEqualTo(Some(State("/**/"), ""))
+        TokenNFA.nfas(TokenTypes.MultiLineComment).toDFA.consume("/*\n*/") must beEqualTo(Some(State("/**/"), ""))
       }
       "failed as expected" in {
-        TokenNFA.nfas(Token.MultiLineComment).toDFA.consume("//") must beEqualTo(None)
+        TokenNFA.nfas(TokenTypes.MultiLineComment).toDFA.consume("//") must beEqualTo(None)
       }
       "failed as expected" in {
-        TokenNFA.nfas(Token.MultiLineComment).toDFA.consume("Hello /* World */") must beEqualTo(None)
+        TokenNFA.nfas(TokenTypes.MultiLineComment).toDFA.consume("Hello /* World */") must beEqualTo(None)
       }
     }
 
     "match javadoc comment" in {
       "success" in {
-        TokenNFA.nfas(Token.JavaDocComment).toDFA.consume("/** Hello World */") must beEqualTo(Some(State("/***/"), ""))
+        TokenNFA.nfas(TokenTypes.JavaDocComment).toDFA.consume("/** Hello World */") must beEqualTo(Some(State("/***/"), ""))
       }
       "success" in {
-        TokenNFA.nfas(Token.JavaDocComment).toDFA.consume("/** Hello World\n*/") must beEqualTo(Some(State("/***/"), ""))
+        TokenNFA.nfas(TokenTypes.JavaDocComment).toDFA.consume("/** Hello World\n*/") must beEqualTo(Some(State("/***/"), ""))
       }
       "success" in {
-        TokenNFA.nfas(Token.JavaDocComment).toDFA.consume("/** Hello\n World*/") must beEqualTo(Some(State("/***/"), ""))
+        TokenNFA.nfas(TokenTypes.JavaDocComment).toDFA.consume("/** Hello\n World*/") must beEqualTo(Some(State("/***/"), ""))
       }
       "success" in {
-        TokenNFA.nfas(Token.JavaDocComment).toDFA.consume("/** Hello // World*/") must beEqualTo(Some(State("/***/"), ""))
+        TokenNFA.nfas(TokenTypes.JavaDocComment).toDFA.consume("/** Hello // World*/") must beEqualTo(Some(State("/***/"), ""))
       }
       "success" in {
-        TokenNFA.nfas(Token.JavaDocComment).toDFA.consume("/**\n* Hello\n*  World\n */") must beEqualTo(Some(State("/***/"), ""))
+        TokenNFA.nfas(TokenTypes.JavaDocComment).toDFA.consume("/**\n* Hello\n*  World\n */") must beEqualTo(Some(State("/***/"), ""))
       }
       "success" in {
-        TokenNFA.nfas(Token.JavaDocComment).toDFA.consume("/***/") must beEqualTo(Some(State("/***/"), ""))
+        TokenNFA.nfas(TokenTypes.JavaDocComment).toDFA.consume("/***/") must beEqualTo(Some(State("/***/"), ""))
       }
       "success" in {
-        TokenNFA.nfas(Token.JavaDocComment).toDFA.consume("/**\n*/") must beEqualTo(Some(State("/***/"), ""))
+        TokenNFA.nfas(TokenTypes.JavaDocComment).toDFA.consume("/**\n*/") must beEqualTo(Some(State("/***/"), ""))
       }
       "failed as expected" in {
-        TokenNFA.nfas(Token.JavaDocComment).toDFA.consume("/*\n**/") must beEqualTo(None)
+        TokenNFA.nfas(TokenTypes.JavaDocComment).toDFA.consume("/*\n**/") must beEqualTo(None)
       }
       "failed as expected" in {
-        TokenNFA.nfas(Token.JavaDocComment).toDFA.consume("//") must beEqualTo(None)
+        TokenNFA.nfas(TokenTypes.JavaDocComment).toDFA.consume("//") must beEqualTo(None)
       }
       "failed as expected" in {
-        TokenNFA.nfas(Token.JavaDocComment).toDFA.consume("Hello /** World */") must beEqualTo(None)
+        TokenNFA.nfas(TokenTypes.JavaDocComment).toDFA.consume("Hello /** World */") must beEqualTo(None)
       }
     }
 
     "match number" in {
       "success" in {
-        TokenNFA.nfas(Token.Num).toDFA.consume("0") must beEqualTo(Some(State("digit"), ""))
+        TokenNFA.nfas(TokenTypes.Num).toDFA.consume("0") must beEqualTo(Some(State("digit"), ""))
       }
       "success" in {
-        TokenNFA.nfas(Token.Num).toDFA.consume("1") must beEqualTo(Some(State("digit"), ""))
+        TokenNFA.nfas(TokenTypes.Num).toDFA.consume("1") must beEqualTo(Some(State("digit"), ""))
       }
       "success" in {
-        TokenNFA.nfas(Token.Num).toDFA.consume("10") must beEqualTo(Some(State("digit"), ""))
+        TokenNFA.nfas(TokenTypes.Num).toDFA.consume("10") must beEqualTo(Some(State("digit"), ""))
       }
       "success" in {
-        TokenNFA.nfas(Token.Num).toDFA.consume("1234567890") must beEqualTo(Some(State("digit"), ""))
+        TokenNFA.nfas(TokenTypes.Num).toDFA.consume("1234567890") must beEqualTo(Some(State("digit"), ""))
       }
       "failed as expected" in {
-        TokenNFA.nfas(Token.Num).toDFA.consume("") must beEqualTo(None)
+        TokenNFA.nfas(TokenTypes.Num).toDFA.consume("") must beEqualTo(None)
       }
       "failed as expected" in {
-        TokenNFA.nfas(Token.Num).toDFA.consume("-1") must beEqualTo(None)
+        TokenNFA.nfas(TokenTypes.Num).toDFA.consume("-1") must beEqualTo(None)
       }
       "failed as expected" in {
-        TokenNFA.nfas(Token.Num).toDFA.consume("one") must beEqualTo(None)
+        TokenNFA.nfas(TokenTypes.Num).toDFA.consume("one") must beEqualTo(None)
       }
     }
 
     "match identifier" in {
       "success" in {
-        TokenNFA.nfas(Token.Identifier).toDFA.consume("a") must beEqualTo(Some(State("id"), ""))
+        TokenNFA.nfas(TokenTypes.Identifier).toDFA.consume("a") must beEqualTo(Some(State("id"), ""))
       }
       "success" in {
-        TokenNFA.nfas(Token.Identifier).toDFA.consume("abc") must beEqualTo(Some(State("id"), ""))
+        TokenNFA.nfas(TokenTypes.Identifier).toDFA.consume("abc") must beEqualTo(Some(State("id"), ""))
       }
       "success" in {
-        TokenNFA.nfas(Token.Identifier).toDFA.consume("AbCdEf") must beEqualTo(Some(State("id"), ""))
+        TokenNFA.nfas(TokenTypes.Identifier).toDFA.consume("AbCdEf") must beEqualTo(Some(State("id"), ""))
       }
       "success" in {
-        TokenNFA.nfas(Token.Identifier).toDFA.consume("abc_def$") must beEqualTo(Some(State("id"), ""))
+        TokenNFA.nfas(TokenTypes.Identifier).toDFA.consume("abc_def$") must beEqualTo(Some(State("id"), ""))
       }
       "success" in {
-        TokenNFA.nfas(Token.Identifier).toDFA.consume("$hello") must beEqualTo(Some(State("id"), ""))
+        TokenNFA.nfas(TokenTypes.Identifier).toDFA.consume("$hello") must beEqualTo(Some(State("id"), ""))
       }
       "success" in {
-        TokenNFA.nfas(Token.Identifier).toDFA.consume("_hello") must beEqualTo(Some(State("id"), ""))
+        TokenNFA.nfas(TokenTypes.Identifier).toDFA.consume("_hello") must beEqualTo(Some(State("id"), ""))
       }
       "success" in {
-        TokenNFA.nfas(Token.Identifier).toDFA.consume("world1") must beEqualTo(Some(State("id"), ""))
+        TokenNFA.nfas(TokenTypes.Identifier).toDFA.consume("world1") must beEqualTo(Some(State("id"), ""))
       }
       "failed as expected" in {
-        TokenNFA.nfas(Token.Identifier).toDFA.consume("") must beEqualTo(None)
+        TokenNFA.nfas(TokenTypes.Identifier).toDFA.consume("") must beEqualTo(None)
       }
       "failed as expected" in {
-        TokenNFA.nfas(Token.Identifier).toDFA.consume("-world") must beEqualTo(None)
+        TokenNFA.nfas(TokenTypes.Identifier).toDFA.consume("-world") must beEqualTo(None)
       }
       "failed as expected" in {
-        TokenNFA.nfas(Token.Identifier).toDFA.consume("1world") must beEqualTo(None)
+        TokenNFA.nfas(TokenTypes.Identifier).toDFA.consume("1world") must beEqualTo(None)
       }
     }
 
     "match char literal" in {
       "success" in {
-        TokenNFA.nfas(Token.CharLiteral).toDFA.consume("'a'") must beEqualTo(Some(State("char"), ""))
+        TokenNFA.nfas(TokenTypes.CharLiteral).toDFA.consume("'a'") must beEqualTo(Some(State("char"), ""))
       }
       "success" in {
-        TokenNFA.nfas(Token.CharLiteral).toDFA.consume("'0'") must beEqualTo(Some(State("char"), ""))
+        TokenNFA.nfas(TokenTypes.CharLiteral).toDFA.consume("'0'") must beEqualTo(Some(State("char"), ""))
       }
       "success" in {
-        TokenNFA.nfas(Token.CharLiteral).toDFA.consume("'^'") must beEqualTo(Some(State("char"), ""))
+        TokenNFA.nfas(TokenTypes.CharLiteral).toDFA.consume("'^'") must beEqualTo(Some(State("char"), ""))
       }
       "success" in {
-        TokenNFA.nfas(Token.CharLiteral).toDFA.consume("' '") must beEqualTo(Some(State("char"), ""))
+        TokenNFA.nfas(TokenTypes.CharLiteral).toDFA.consume("' '") must beEqualTo(Some(State("char"), ""))
       }
       "success" in {
-        TokenNFA.nfas(Token.CharLiteral).toDFA.consume("''") must beEqualTo(Some(State("char"), ""))
+        TokenNFA.nfas(TokenTypes.CharLiteral).toDFA.consume("''") must beEqualTo(Some(State("char"), ""))
       }
       "success" in {
-        TokenNFA.nfas(Token.CharLiteral).toDFA.consume("'\\''") must beEqualTo(Some(State("char"), ""))
+        TokenNFA.nfas(TokenTypes.CharLiteral).toDFA.consume("'\\''") must beEqualTo(Some(State("char"), ""))
       }
       "success" in {
-        TokenNFA.nfas(Token.CharLiteral).toDFA.consume("'\"'") must beEqualTo(Some(State("char"), ""))
+        TokenNFA.nfas(TokenTypes.CharLiteral).toDFA.consume("'\"'") must beEqualTo(Some(State("char"), ""))
       }
       "success" in {
-        TokenNFA.nfas(Token.CharLiteral).toDFA.consume("'\\n'") must beEqualTo(Some(State("char"), ""))
+        TokenNFA.nfas(TokenTypes.CharLiteral).toDFA.consume("'\\n'") must beEqualTo(Some(State("char"), ""))
       }
       "success" in {
-        TokenNFA.nfas(Token.CharLiteral).toDFA.consume("'\\b'") must beEqualTo(Some(State("char"), ""))
+        TokenNFA.nfas(TokenTypes.CharLiteral).toDFA.consume("'\\b'") must beEqualTo(Some(State("char"), ""))
       }
       "success" in {
-        TokenNFA.nfas(Token.CharLiteral).toDFA.consume("'\\\''") must beEqualTo(Some(State("char"), ""))
+        TokenNFA.nfas(TokenTypes.CharLiteral).toDFA.consume("'\\\''") must beEqualTo(Some(State("char"), ""))
       }
       "success" in {
-        TokenNFA.nfas(Token.CharLiteral).toDFA.consume("'\\0'") must beEqualTo(Some(State("char"), ""))
+        TokenNFA.nfas(TokenTypes.CharLiteral).toDFA.consume("'\\0'") must beEqualTo(Some(State("char"), ""))
       }
        "success" in {
-        TokenNFA.nfas(Token.CharLiteral).toDFA.consume("'\\7'") must beEqualTo(Some(State("char"), ""))
+        TokenNFA.nfas(TokenTypes.CharLiteral).toDFA.consume("'\\7'") must beEqualTo(Some(State("char"), ""))
       }
       "success" in {
-        TokenNFA.nfas(Token.CharLiteral).toDFA.consume("'\\77'") must beEqualTo(Some(State("char"), ""))
+        TokenNFA.nfas(TokenTypes.CharLiteral).toDFA.consume("'\\77'") must beEqualTo(Some(State("char"), ""))
       }
       "success" in {
-        TokenNFA.nfas(Token.CharLiteral).toDFA.consume("'\\377'") must beEqualTo(Some(State("char"), ""))
+        TokenNFA.nfas(TokenTypes.CharLiteral).toDFA.consume("'\\377'") must beEqualTo(Some(State("char"), ""))
       }
       "failed as expected" in {
-        TokenNFA.nfas(Token.CharLiteral).toDFA.consume("'abc'") must beEqualTo(None)
+        TokenNFA.nfas(TokenTypes.CharLiteral).toDFA.consume("'abc'") must beEqualTo(None)
       }
       "failed as expected" in {
-        TokenNFA.nfas(Token.CharLiteral).toDFA.consume("'\n'") must beEqualTo(None)
+        TokenNFA.nfas(TokenTypes.CharLiteral).toDFA.consume("'\n'") must beEqualTo(None)
       }
       "failed as expected" in {
-        TokenNFA.nfas(Token.CharLiteral).toDFA.consume("'\\r\\n'") must beEqualTo(None)
+        TokenNFA.nfas(TokenTypes.CharLiteral).toDFA.consume("'\\r\\n'") must beEqualTo(None)
       }
       "failed as expected" in {
-        TokenNFA.nfas(Token.CharLiteral).toDFA.consume("'\\9'") must beEqualTo(None)
+        TokenNFA.nfas(TokenTypes.CharLiteral).toDFA.consume("'\\9'") must beEqualTo(None)
       }
       "failed as expected" in {
-        TokenNFA.nfas(Token.CharLiteral).toDFA.consume("'\\97'") must beEqualTo(None)
+        TokenNFA.nfas(TokenTypes.CharLiteral).toDFA.consume("'\\97'") must beEqualTo(None)
       }
       "failed as expected" in {
-        TokenNFA.nfas(Token.CharLiteral).toDFA.consume("'\\79'") must beEqualTo(None)
+        TokenNFA.nfas(TokenTypes.CharLiteral).toDFA.consume("'\\79'") must beEqualTo(None)
       }
       "failed as expected" in {
-        TokenNFA.nfas(Token.CharLiteral).toDFA.consume("'\\477'") must beEqualTo(None)
+        TokenNFA.nfas(TokenTypes.CharLiteral).toDFA.consume("'\\477'") must beEqualTo(None)
       }
       "failed as expected" in {
-        TokenNFA.nfas(Token.CharLiteral).toDFA.consume("'\\397'") must beEqualTo(None)
+        TokenNFA.nfas(TokenTypes.CharLiteral).toDFA.consume("'\\397'") must beEqualTo(None)
       }
       "failed as expected" in {
-        TokenNFA.nfas(Token.CharLiteral).toDFA.consume("'\\379'") must beEqualTo(None)
+        TokenNFA.nfas(TokenTypes.CharLiteral).toDFA.consume("'\\379'") must beEqualTo(None)
       }
       "failed as expected" in {
-        TokenNFA.nfas(Token.CharLiteral).toDFA.consume("'\\3771'") must beEqualTo(None)
+        TokenNFA.nfas(TokenTypes.CharLiteral).toDFA.consume("'\\3771'") must beEqualTo(None)
       }
     }
 
     "match string literal" in {
       "success" in {
-        TokenNFA.nfas(Token.StringLiteral).toDFA.consume("\"\"") must beEqualTo(Some(State("string"), ""))
+        TokenNFA.nfas(TokenTypes.StringLiteral).toDFA.consume("\"\"") must beEqualTo(Some(State("string"), ""))
       }
       "success" in {
-        TokenNFA.nfas(Token.StringLiteral).toDFA.consume("\"a\"") must beEqualTo(Some(State("string"), ""))
+        TokenNFA.nfas(TokenTypes.StringLiteral).toDFA.consume("\"a\"") must beEqualTo(Some(State("string"), ""))
       }
       "success" in {
-        TokenNFA.nfas(Token.StringLiteral).toDFA.consume("\"abc\"") must beEqualTo(Some(State("string"), ""))
+        TokenNFA.nfas(TokenTypes.StringLiteral).toDFA.consume("\"abc\"") must beEqualTo(Some(State("string"), ""))
       }
       "success" in {
-        TokenNFA.nfas(Token.StringLiteral).toDFA.consume("\"Hello, world!\\n\"") must beEqualTo(Some(State("string"), ""))
+        TokenNFA.nfas(TokenTypes.StringLiteral).toDFA.consume("\"Hello, world!\\n\"") must beEqualTo(Some(State("string"), ""))
       }
       "success" in {
-        TokenNFA.nfas(Token.StringLiteral).toDFA.consume("\"\\\"Nested\\\"\"") must beEqualTo(Some(State("string"), ""))
+        TokenNFA.nfas(TokenTypes.StringLiteral).toDFA.consume("\"\\\"Nested\\\"\"") must beEqualTo(Some(State("string"), ""))
       }
       "failed as expected" in {
-        TokenNFA.nfas(Token.StringLiteral).toDFA.consume("\"\n\"") must beEqualTo(None)
+        TokenNFA.nfas(TokenTypes.StringLiteral).toDFA.consume("\"\n\"") must beEqualTo(None)
       }
       "failed as expected" in {
-        TokenNFA.nfas(Token.StringLiteral).toDFA.consume("\"") must beEqualTo(None)
+        TokenNFA.nfas(TokenTypes.StringLiteral).toDFA.consume("\"") must beEqualTo(None)
       }
       "failed as expected" in {
-        TokenNFA.nfas(Token.StringLiteral).toDFA.consume("") must beEqualTo(None)
+        TokenNFA.nfas(TokenTypes.StringLiteral).toDFA.consume("") must beEqualTo(None)
       }
     }
 
     "match keywords" in {
       "public" in {
-        TokenNFA.nfas(Token.PublicKeyword).toDFA.consume("public") must beEqualTo(Some(State("public"), ""))
+        TokenNFA.nfas(TokenTypes.PublicKeyword).toDFA.consume("public") must beEqualTo(Some(State("public"), ""))
       }
       "static" in {
-        TokenNFA.nfas(Token.StaticKeyword).toDFA.consume("static") must beEqualTo(Some(State("static"), ""))
+        TokenNFA.nfas(TokenTypes.StaticKeyword).toDFA.consume("static") must beEqualTo(Some(State("static"), ""))
       }
       "boolean" in {
-        TokenNFA.nfas(Token.BooleanKeyword).toDFA.consume("boolean") must beEqualTo(Some(State("boolean"), ""))
+        TokenNFA.nfas(TokenTypes.BooleanKeyword).toDFA.consume("boolean") must beEqualTo(Some(State("boolean"), ""))
       }
     }
   }
@@ -822,805 +822,805 @@ class TokenSpec extends Specification {
   "matchString" in {
     "non-string tokens" in {
       "simple assign/equals matching" in {
-        val testNFAs = Set[NFA](TokenNFA.nfas(Token.Assign), TokenNFA.nfas(Token.Equal))
+        val testNFAs = Set[NFA](TokenNFA.nfas(TokenTypes.Assign), TokenNFA.nfas(TokenTypes.Equal))
         val mergedTestDFA = NFA.union(testNFAs).toDFA
 
-        mergedTestDFA.matchString("=") must beEqualTo(Some(List(Token.Assign("="))))
-        mergedTestDFA.matchString("==") must beEqualTo(Some(List(Token.Equal("=="))))
-        mergedTestDFA.matchString("===") must beEqualTo(Some(List(Token.Equal("=="), Token.Assign("="))))
+        mergedTestDFA.matchString("=") must beEqualTo(Some(List(Tokens.Assign("="))))
+        mergedTestDFA.matchString("==") must beEqualTo(Some(List(Tokens.Equal("=="))))
+        mergedTestDFA.matchString("===") must beEqualTo(Some(List(Tokens.Equal("=="), Tokens.Assign("="))))
         mergedTestDFA.matchString("+") must beEqualTo(None)
       }
 
       "simple assign/equal/not matching" in {
         val testNFAs = Set[NFA](
-          TokenNFA.nfas(Token.Assign),
-          TokenNFA.nfas(Token.Equal),
-          TokenNFA.nfas(Token.LogicalNot)
+          TokenNFA.nfas(TokenTypes.Assign),
+          TokenNFA.nfas(TokenTypes.Equal),
+          TokenNFA.nfas(TokenTypes.LogicalNot)
         )
         val mergedTestDFA = NFA.union(testNFAs).toDFA
 
-        mergedTestDFA.matchString("=") must beEqualTo(Some(List(Token.Assign("="))))
-        mergedTestDFA.matchString("==") must beEqualTo(Some(List(Token.Equal("=="))))
-        mergedTestDFA.matchString("!") must beEqualTo(Some(List(Token.LogicalNot("!"))))
+        mergedTestDFA.matchString("=") must beEqualTo(Some(List(Tokens.Assign("="))))
+        mergedTestDFA.matchString("==") must beEqualTo(Some(List(Tokens.Equal("=="))))
+        mergedTestDFA.matchString("!") must beEqualTo(Some(List(TokenTypes.LogicalNot("!"))))
       }
 
       "simple assign/equal/not/notequal matching" in {
         val testNFAs = Set[NFA](
-          TokenNFA.nfas(Token.Assign),
-          TokenNFA.nfas(Token.Equal),
-          TokenNFA.nfas(Token.LogicalNot),
-          TokenNFA.nfas(Token.NotEqual)        
+          TokenNFA.nfas(TokenTypes.Assign),
+          TokenNFA.nfas(TokenTypes.Equal),
+          TokenNFA.nfas(TokenTypes.LogicalNot),
+          TokenNFA.nfas(TokenTypes.NotEqual)        
         )
         val mergedTestDFA = NFA.union(testNFAs).toDFA
 
-        mergedTestDFA.matchString("=") must beEqualTo(Some(List(Token.Assign("="))))
-        mergedTestDFA.matchString("==") must beEqualTo(Some(List(Token.Equal("=="))))
-        mergedTestDFA.matchString("!") must beEqualTo(Some(List(Token.LogicalNot("!"))))
-        mergedTestDFA.matchString("!=") must beEqualTo(Some(List(Token.NotEqual("!="))))
+        mergedTestDFA.matchString("=") must beEqualTo(Some(List(Tokens.Assign("="))))
+        mergedTestDFA.matchString("==") must beEqualTo(Some(List(Tokens.Equal("=="))))
+        mergedTestDFA.matchString("!") must beEqualTo(Some(List(TokenTypes.LogicalNot("!"))))
+        mergedTestDFA.matchString("!=") must beEqualTo(Some(List(TokenTypes.NotEqual("!="))))
       }
     }
 
     "individual keywords" in {
       "abstract" in {
-        val nfa = NFA.fromString("abstract", Token.AbstractKeyword("abstract"))
-        val matchAgainst = NFA.union(Set(nfa, TokenNFA.nfas(Token.Identifier))).toDFA
-        matchAgainst.matchString("abstract") must beEqualTo(Some(List(Token.AbstractKeyword("abstract"))))
+        val nfa = NFA.fromString("abstract", TokenTypes.AbstractKeyword)
+        val matchAgainst = NFA.union(Set(nfa, TokenNFA.nfas(TokenTypes.Identifier))).toDFA
+        matchAgainst.matchString("abstract") must beEqualTo(Some(List(Tokens.AbstractKeyword("abstract"))))
       }
 
       "boolean" in {
-        val nfa = NFA.fromString("boolean", Token.BooleanKeyword("boolean"))
-        val matchAgainst = NFA.union(Set(nfa, TokenNFA.nfas(Token.Identifier))).toDFA
-        matchAgainst.matchString("boolean") must beEqualTo(Some(List(Token.BooleanKeyword("boolean"))))
+        val nfa = NFA.fromString("boolean", TokenTypes.BooleanKeyword)
+        val matchAgainst = NFA.union(Set(nfa, TokenNFA.nfas(TokenTypes.Identifier))).toDFA
+        matchAgainst.matchString("boolean") must beEqualTo(Some(List(Tokens.BooleanKeyword("boolean"))))
       }
 
       "break" in {
-        val nfa = NFA.fromString("break", Token.BreakKeyword("break"))
-        val matchAgainst = NFA.union(Set(nfa, TokenNFA.nfas(Token.Identifier))).toDFA
-        matchAgainst.matchString("break") must beEqualTo(Some(List(Token.BreakKeyword("break"))))
+        val nfa = NFA.fromString("break", TokenTypes.BreakKeyword)
+        val matchAgainst = NFA.union(Set(nfa, TokenNFA.nfas(TokenTypes.Identifier))).toDFA
+        matchAgainst.matchString("break") must beEqualTo(Some(List(Tokens.BreakKeyword("break"))))
       }
 
       "byte" in {
-        val nfa = NFA.fromString("byte", Token.ByteKeyword("byte"))
-        val matchAgainst = NFA.union(Set(nfa, TokenNFA.nfas(Token.Identifier))).toDFA
-        matchAgainst.matchString("byte") must beEqualTo(Some(List(Token.ByteKeyword("byte"))))
+        val nfa = NFA.fromString("byte", TokenTypes.ByteKeyword)
+        val matchAgainst = NFA.union(Set(nfa, TokenNFA.nfas(TokenTypes.Identifier))).toDFA
+        matchAgainst.matchString("byte") must beEqualTo(Some(List(Tokens.ByteKeyword("byte"))))
       }
 
       "case" in {
-        val nfa = NFA.fromString("case", Token.CaseKeyword("case"))
-        val matchAgainst = NFA.union(Set(nfa, TokenNFA.nfas(Token.Identifier))).toDFA
-        matchAgainst.matchString("case") must beEqualTo(Some(List(Token.CaseKeyword("case"))))
+        val nfa = NFA.fromString("case", TokenTypes.CaseKeyword)
+        val matchAgainst = NFA.union(Set(nfa, TokenNFA.nfas(TokenTypes.Identifier))).toDFA
+        matchAgainst.matchString("case") must beEqualTo(Some(List(Tokens.CaseKeyword("case"))))
       }
 
       "catch" in {
-        val nfa = NFA.fromString("catch", Token.CatchKeyword("catch"))
-        val matchAgainst = NFA.union(Set(nfa, TokenNFA.nfas(Token.Identifier))).toDFA
-        matchAgainst.matchString("catch") must beEqualTo(Some(List(Token.CatchKeyword("catch"))))
+        val nfa = NFA.fromString("catch", TokenTypes.CatchKeyword)
+        val matchAgainst = NFA.union(Set(nfa, TokenNFA.nfas(TokenTypes.Identifier))).toDFA
+        matchAgainst.matchString("catch") must beEqualTo(Some(List(Tokens.CatchKeyword("catch"))))
       }
 
       "char" in {
-        val nfa = NFA.fromString("char", Token.CharKeyword("char"))
-        val matchAgainst = NFA.union(Set(nfa, TokenNFA.nfas(Token.Identifier))).toDFA
-        matchAgainst.matchString("char") must beEqualTo(Some(List(Token.CharKeyword("char"))))
+        val nfa = NFA.fromString("char", TokenTypes.CharKeyword)
+        val matchAgainst = NFA.union(Set(nfa, TokenNFA.nfas(TokenTypes.Identifier))).toDFA
+        matchAgainst.matchString("char") must beEqualTo(Some(List(Tokens.CharKeyword("char"))))
       }
 
       "class" in {
-        val nfa = NFA.fromString("class", Token.ClassKeyword("class"))
-        val matchAgainst = NFA.union(Set(nfa, TokenNFA.nfas(Token.Identifier))).toDFA
-        matchAgainst.matchString("class") must beEqualTo(Some(List(Token.ClassKeyword("class"))))
+        val nfa = NFA.fromString("class", TokenTypes.ClassKeyword)
+        val matchAgainst = NFA.union(Set(nfa, TokenNFA.nfas(TokenTypes.Identifier))).toDFA
+        matchAgainst.matchString("class") must beEqualTo(Some(List(Tokens.ClassKeyword("class"))))
       }
 
       "const" in {
-        val nfa = NFA.fromString("const", Token.ConstKeyword("const"))
-        val matchAgainst = NFA.union(Set(nfa, TokenNFA.nfas(Token.Identifier))).toDFA
-        matchAgainst.matchString("const") must beEqualTo(Some(List(Token.ConstKeyword("const"))))
+        val nfa = NFA.fromString("const", TokenTypes.ConstKeyword)
+        val matchAgainst = NFA.union(Set(nfa, TokenNFA.nfas(TokenTypes.Identifier))).toDFA
+        matchAgainst.matchString("const") must beEqualTo(Some(List(Tokens.ConstKeyword("const"))))
       }
 
       "continue" in {
-        val nfa = NFA.fromString("continue", Token.ContinueKeyword("continue"))
-        val matchAgainst = NFA.union(Set(nfa, TokenNFA.nfas(Token.Identifier))).toDFA
-        matchAgainst.matchString("continue") must beEqualTo(Some(List(Token.ContinueKeyword("continue"))))
+        val nfa = NFA.fromString("continue", TokenTypes.ContinueKeyword)
+        val matchAgainst = NFA.union(Set(nfa, TokenNFA.nfas(TokenTypes.Identifier))).toDFA
+        matchAgainst.matchString("continue") must beEqualTo(Some(List(Tokens.ContinueKeyword("continue"))))
       }
 
       "default" in {
-        val nfa = NFA.fromString("default", Token.DefaultKeyword("default"))
-        val matchAgainst = NFA.union(Set(nfa, TokenNFA.nfas(Token.Identifier))).toDFA
-        matchAgainst.matchString("default") must beEqualTo(Some(List(Token.DefaultKeyword("default"))))
+        val nfa = NFA.fromString("default", TokenTypes.DefaultKeyword)
+        val matchAgainst = NFA.union(Set(nfa, TokenNFA.nfas(TokenTypes.Identifier))).toDFA
+        matchAgainst.matchString("default") must beEqualTo(Some(List(Tokens.DefaultKeyword("default"))))
       }
 
       "do" in {
-        val nfa = NFA.fromString("do", Token.DoKeyword("do"))
-        val matchAgainst = NFA.union(Set(nfa, TokenNFA.nfas(Token.Identifier))).toDFA
-        matchAgainst.matchString("do") must beEqualTo(Some(List(Token.DoKeyword("do"))))
+        val nfa = NFA.fromString("do", TokenTypes.DoKeyword)
+        val matchAgainst = NFA.union(Set(nfa, TokenNFA.nfas(TokenTypes.Identifier))).toDFA
+        matchAgainst.matchString("do") must beEqualTo(Some(List(Tokens.DoKeyword("do"))))
       }
 
       "double" in {
-        val nfa = NFA.fromString("double", Token.DoubleKeyword("double"))
-        val matchAgainst = NFA.union(Set(nfa, TokenNFA.nfas(Token.Identifier))).toDFA
-        matchAgainst.matchString("double") must beEqualTo(Some(List(Token.DoubleKeyword("double"))))
+        val nfa = NFA.fromString("double", TokenTypes.DoubleKeyword)
+        val matchAgainst = NFA.union(Set(nfa, TokenNFA.nfas(TokenTypes.Identifier))).toDFA
+        matchAgainst.matchString("double") must beEqualTo(Some(List(Tokens.DoubleKeyword("double"))))
       }
 
       "else" in {
-        val nfa = NFA.fromString("else", Token.ElseKeyword("else"))
-        val matchAgainst = NFA.union(Set(nfa, TokenNFA.nfas(Token.Identifier))).toDFA
-        matchAgainst.matchString("else") must beEqualTo(Some(List(Token.ElseKeyword("else"))))
+        val nfa = NFA.fromString("else", TokenTypes.ElseKeyword)
+        val matchAgainst = NFA.union(Set(nfa, TokenNFA.nfas(TokenTypes.Identifier))).toDFA
+        matchAgainst.matchString("else") must beEqualTo(Some(List(Tokens.ElseKeyword("else"))))
       }
 
       "extends" in {
-        val nfa = NFA.fromString("extends", Token.ExtendsKeyword("extends"))
-        val matchAgainst = NFA.union(Set(nfa, TokenNFA.nfas(Token.Identifier))).toDFA
-        matchAgainst.matchString("extends") must beEqualTo(Some(List(Token.ExtendsKeyword("extends"))))
+        val nfa = NFA.fromString("extends", TokenTypes.ExtendsKeyword)
+        val matchAgainst = NFA.union(Set(nfa, TokenNFA.nfas(TokenTypes.Identifier))).toDFA
+        matchAgainst.matchString("extends") must beEqualTo(Some(List(Tokens.ExtendsKeyword("extends"))))
       }
 
       "final" in {
-        val nfa = NFA.fromString("final", Token.FinalKeyword("final"))
-        val matchAgainst = NFA.union(Set(nfa, TokenNFA.nfas(Token.Identifier))).toDFA
-        matchAgainst.matchString("final") must beEqualTo(Some(List(Token.FinalKeyword("final"))))
+        val nfa = NFA.fromString("final", TokenTypes.FinalKeyword)
+        val matchAgainst = NFA.union(Set(nfa, TokenNFA.nfas(TokenTypes.Identifier))).toDFA
+        matchAgainst.matchString("final") must beEqualTo(Some(List(Tokens.FinalKeyword("final"))))
       }
 
       "finally" in {
-        val nfa = NFA.fromString("finally", Token.FinallyKeyword("finally"))
-        val matchAgainst = NFA.union(Set(nfa, TokenNFA.nfas(Token.Identifier))).toDFA
-        matchAgainst.matchString("finally") must beEqualTo(Some(List(Token.FinallyKeyword("finally"))))
+        val nfa = NFA.fromString("finally", TokenTypes.FinallyKeyword)
+        val matchAgainst = NFA.union(Set(nfa, TokenNFA.nfas(TokenTypes.Identifier))).toDFA
+        matchAgainst.matchString("finally") must beEqualTo(Some(List(Tokens.FinallyKeyword("finally"))))
       }
 
       "float" in {
-        val nfa = NFA.fromString("float", Token.FloatKeyword("float"))
-        val matchAgainst = NFA.union(Set(nfa, TokenNFA.nfas(Token.Identifier))).toDFA
-        matchAgainst.matchString("float") must beEqualTo(Some(List(Token.FloatKeyword("float"))))
+        val nfa = NFA.fromString("float", TokenTypes.FloatKeyword)
+        val matchAgainst = NFA.union(Set(nfa, TokenNFA.nfas(TokenTypes.Identifier))).toDFA
+        matchAgainst.matchString("float") must beEqualTo(Some(List(Tokens.FloatKeyword("float"))))
       }
 
       "for" in {
-        val nfa = NFA.fromString("for", Token.ForKeyword("for"))
-        val matchAgainst = NFA.union(Set(nfa, TokenNFA.nfas(Token.Identifier))).toDFA
-        matchAgainst.matchString("for") must beEqualTo(Some(List(Token.ForKeyword("for"))))
+        val nfa = NFA.fromString("for", TokenTypes.ForKeyword)
+        val matchAgainst = NFA.union(Set(nfa, TokenNFA.nfas(TokenTypes.Identifier))).toDFA
+        matchAgainst.matchString("for") must beEqualTo(Some(List(Tokens.ForKeyword("for"))))
       }
 
       "goto" in {
-        val nfa = NFA.fromString("goto", Token.GotoKeyword("goto"))
-        val matchAgainst = NFA.union(Set(nfa, TokenNFA.nfas(Token.Identifier))).toDFA
-        matchAgainst.matchString("goto") must beEqualTo(Some(List(Token.GotoKeyword("goto"))))
+        val nfa = NFA.fromString("goto", TokenTypes.GotoKeyword)
+        val matchAgainst = NFA.union(Set(nfa, TokenNFA.nfas(TokenTypes.Identifier))).toDFA
+        matchAgainst.matchString("goto") must beEqualTo(Some(List(Tokens.GotoKeyword("goto"))))
       }
 
       "if" in {
-        val nfa = NFA.fromString("if", Token.IfKeyword("if"))
-        val matchAgainst = NFA.union(Set(nfa, TokenNFA.nfas(Token.Identifier))).toDFA
-        matchAgainst.matchString("if") must beEqualTo(Some(List(Token.IfKeyword("if"))))
+        val nfa = NFA.fromString("if", TokenTypes.IfKeyword)
+        val matchAgainst = NFA.union(Set(nfa, TokenNFA.nfas(TokenTypes.Identifier))).toDFA
+        matchAgainst.matchString("if") must beEqualTo(Some(List(Tokens.IfKeyword("if"))))
       }
 
       "implements" in {
-        val nfa = NFA.fromString("implements", Token.ImplementsKeyword("implements"))
-        val matchAgainst = NFA.union(Set(nfa, TokenNFA.nfas(Token.Identifier))).toDFA
-        matchAgainst.matchString("implements") must beEqualTo(Some(List(Token.ImplementsKeyword("implements"))))
+        val nfa = NFA.fromString("implements", TokenTypes.ImplementsKeyword)
+        val matchAgainst = NFA.union(Set(nfa, TokenNFA.nfas(TokenTypes.Identifier))).toDFA
+        matchAgainst.matchString("implements") must beEqualTo(Some(List(Tokens.ImplementsKeyword("implements"))))
       }
 
       "import" in {
-        val nfa = NFA.fromString("import", Token.ImportKeyword("import"))
-        val matchAgainst = NFA.union(Set(nfa, TokenNFA.nfas(Token.Identifier))).toDFA
-        matchAgainst.matchString("import") must beEqualTo(Some(List(Token.ImportKeyword("import"))))
+        val nfa = NFA.fromString("import", TokenTypes.ImportKeyword)
+        val matchAgainst = NFA.union(Set(nfa, TokenNFA.nfas(TokenTypes.Identifier))).toDFA
+        matchAgainst.matchString("import") must beEqualTo(Some(List(Tokens.ImportKeyword("import"))))
       }
 
       "instanceof" in {
-        val nfa = NFA.fromString("instanceof", Token.InstanceofKeyword("instanceof"))
-        val matchAgainst = NFA.union(Set(nfa, TokenNFA.nfas(Token.Identifier))).toDFA
-        matchAgainst.matchString("instanceof") must beEqualTo(Some(List(Token.InstanceofKeyword("instanceof"))))
+        val nfa = NFA.fromString("instanceof", TokenTypes.InstanceofKeyword)
+        val matchAgainst = NFA.union(Set(nfa, TokenNFA.nfas(TokenTypes.Identifier))).toDFA
+        matchAgainst.matchString("instanceof") must beEqualTo(Some(List(Tokens.InstanceofKeyword("instanceof"))))
       }
 
       "int" in {
-        val nfa = NFA.fromString("int", Token.IntKeyword("int"))
-        val matchAgainst = NFA.union(Set(nfa, TokenNFA.nfas(Token.Identifier))).toDFA
-        matchAgainst.matchString("int") must beEqualTo(Some(List(Token.IntKeyword("int"))))
+        val nfa = NFA.fromString("int", TokenTypes.IntKeyword)
+        val matchAgainst = NFA.union(Set(nfa, TokenNFA.nfas(TokenTypes.Identifier))).toDFA
+        matchAgainst.matchString("int") must beEqualTo(Some(List(Tokens.IntKeyword("int"))))
       }
 
       "interface" in {
-        val nfa = NFA.fromString("interface", Token.InterfaceKeyword("interface"))
-        val matchAgainst = NFA.union(Set(nfa, TokenNFA.nfas(Token.Identifier))).toDFA
-        matchAgainst.matchString("interface") must beEqualTo(Some(List(Token.InterfaceKeyword("interface"))))
+        val nfa = NFA.fromString("interface", TokenTypes.InterfaceKeyword)
+        val matchAgainst = NFA.union(Set(nfa, TokenNFA.nfas(TokenTypes.Identifier))).toDFA
+        matchAgainst.matchString("interface") must beEqualTo(Some(List(Tokens.InterfaceKeyword("interface"))))
       }
 
       "long" in {
-        val nfa = NFA.fromString("long", Token.LongKeyword("long"))
-        val matchAgainst = NFA.union(Set(nfa, TokenNFA.nfas(Token.Identifier))).toDFA
-        matchAgainst.matchString("long") must beEqualTo(Some(List(Token.LongKeyword("long"))))
+        val nfa = NFA.fromString("long", TokenTypes.LongKeyword)
+        val matchAgainst = NFA.union(Set(nfa, TokenNFA.nfas(TokenTypes.Identifier))).toDFA
+        matchAgainst.matchString("long") must beEqualTo(Some(List(Tokens.LongKeyword("long"))))
       }
 
       "native" in {
-        val nfa = NFA.fromString("native", Token.NativeKeyword("native"))
-        val matchAgainst = NFA.union(Set(nfa, TokenNFA.nfas(Token.Identifier))).toDFA
-        matchAgainst.matchString("native") must beEqualTo(Some(List(Token.NativeKeyword("native"))))
+        val nfa = NFA.fromString("native", TokenTypes.NativeKeyword)
+        val matchAgainst = NFA.union(Set(nfa, TokenNFA.nfas(TokenTypes.Identifier))).toDFA
+        matchAgainst.matchString("native") must beEqualTo(Some(List(Tokens.NativeKeyword("native"))))
       }
 
       "new" in {
-        val nfa = NFA.fromString("new", Token.NewKeyword("new"))
-        val matchAgainst = NFA.union(Set(nfa, TokenNFA.nfas(Token.Identifier))).toDFA
-        matchAgainst.matchString("new") must beEqualTo(Some(List(Token.NewKeyword("new"))))
+        val nfa = NFA.fromString("new", TokenTypes.NewKeyword)
+        val matchAgainst = NFA.union(Set(nfa, TokenNFA.nfas(TokenTypes.Identifier))).toDFA
+        matchAgainst.matchString("new") must beEqualTo(Some(List(Tokens.NewKeyword("new"))))
       }
 
       "package" in {
-        val nfa = NFA.fromString("package", Token.PackageKeyword("package"))
-        val matchAgainst = NFA.union(Set(nfa, TokenNFA.nfas(Token.Identifier))).toDFA
-        matchAgainst.matchString("package") must beEqualTo(Some(List(Token.PackageKeyword("package"))))
+        val nfa = NFA.fromString("package", TokenTypes.PackageKeyword)
+        val matchAgainst = NFA.union(Set(nfa, TokenNFA.nfas(TokenTypes.Identifier))).toDFA
+        matchAgainst.matchString("package") must beEqualTo(Some(List(Tokens.PackageKeyword("package"))))
       }
 
       "private" in {
-        val nfa = NFA.fromString("private", Token.PrivateKeyword("private"))
-        val matchAgainst = NFA.union(Set(nfa, TokenNFA.nfas(Token.Identifier))).toDFA
-        matchAgainst.matchString("private") must beEqualTo(Some(List(Token.PrivateKeyword("private"))))
+        val nfa = NFA.fromString("private", TokenTypes.PrivateKeyword)
+        val matchAgainst = NFA.union(Set(nfa, TokenNFA.nfas(TokenTypes.Identifier))).toDFA
+        matchAgainst.matchString("private") must beEqualTo(Some(List(Tokens.PrivateKeyword("private"))))
       }
 
       "protected" in {
-        val nfa = NFA.fromString("protected", Token.ProtectedKeyword("protected"))
-        val matchAgainst = NFA.union(Set(nfa, TokenNFA.nfas(Token.Identifier))).toDFA
-        matchAgainst.matchString("protected") must beEqualTo(Some(List(Token.ProtectedKeyword("protected"))))
+        val nfa = NFA.fromString("protected", TokenTypes.ProtectedKeyword)
+        val matchAgainst = NFA.union(Set(nfa, TokenNFA.nfas(TokenTypes.Identifier))).toDFA
+        matchAgainst.matchString("protected") must beEqualTo(Some(List(Tokens.ProtectedKeyword("protected"))))
       }
 
       "public" in {
-        val nfa = NFA.fromString("public", Token.PublicKeyword("public"))
-        val matchAgainst = NFA.union(Set(nfa, TokenNFA.nfas(Token.Identifier))).toDFA
-        matchAgainst.matchString("public") must beEqualTo(Some(List(Token.PublicKeyword("public"))))
+        val nfa = NFA.fromString("public", TokenTypes.PublicKeyword)
+        val matchAgainst = NFA.union(Set(nfa, TokenNFA.nfas(TokenTypes.Identifier))).toDFA
+        matchAgainst.matchString("public") must beEqualTo(Some(List(Tokens.PublicKeyword("public"))))
       }
 
       "return" in {
-        val nfa = NFA.fromString("return", Token.ReturnKeyword("return"))
-        val matchAgainst = NFA.union(Set(nfa, TokenNFA.nfas(Token.Identifier))).toDFA
-        matchAgainst.matchString("return") must beEqualTo(Some(List(Token.ReturnKeyword("return"))))
+        val nfa = NFA.fromString("return", TokenTypes.ReturnKeyword)
+        val matchAgainst = NFA.union(Set(nfa, TokenNFA.nfas(TokenTypes.Identifier))).toDFA
+        matchAgainst.matchString("return") must beEqualTo(Some(List(Tokens.ReturnKeyword("return"))))
       }
 
       "short" in {
-        val nfa = NFA.fromString("short", Token.ShortKeyword("short"))
-        val matchAgainst = NFA.union(Set(nfa, TokenNFA.nfas(Token.Identifier))).toDFA
-        matchAgainst.matchString("short") must beEqualTo(Some(List(Token.ShortKeyword("short"))))
+        val nfa = NFA.fromString("short", TokenTypes.ShortKeyword)
+        val matchAgainst = NFA.union(Set(nfa, TokenNFA.nfas(TokenTypes.Identifier))).toDFA
+        matchAgainst.matchString("short") must beEqualTo(Some(List(Tokens.ShortKeyword("short"))))
       }
 
       "static" in {
-        val nfa = NFA.fromString("static", Token.StaticKeyword("static"))
-        val matchAgainst = NFA.union(Set(nfa, TokenNFA.nfas(Token.Identifier))).toDFA
-        matchAgainst.matchString("static") must beEqualTo(Some(List(Token.StaticKeyword("static"))))
+        val nfa = NFA.fromString("static", TokenTypes.StaticKeyword)
+        val matchAgainst = NFA.union(Set(nfa, TokenNFA.nfas(TokenTypes.Identifier))).toDFA
+        matchAgainst.matchString("static") must beEqualTo(Some(List(Tokens.StaticKeyword("static"))))
       }
 
       "strictfp" in {
-        val nfa = NFA.fromString("strictfp", Token.StrictfpKeyword("strictfp"))
-        val matchAgainst = NFA.union(Set(nfa, TokenNFA.nfas(Token.Identifier))).toDFA
-        matchAgainst.matchString("strictfp") must beEqualTo(Some(List(Token.StrictfpKeyword("strictfp"))))
+        val nfa = NFA.fromString("strictfp", TokenTypes.StrictfpKeyword)
+        val matchAgainst = NFA.union(Set(nfa, TokenNFA.nfas(TokenTypes.Identifier))).toDFA
+        matchAgainst.matchString("strictfp") must beEqualTo(Some(List(Tokens.StrictfpKeyword("strictfp"))))
       }
 
       "super" in {
-        val nfa = NFA.fromString("super", Token.SuperKeyword("super"))
-        val matchAgainst = NFA.union(Set(nfa, TokenNFA.nfas(Token.Identifier))).toDFA
-        matchAgainst.matchString("super") must beEqualTo(Some(List(Token.SuperKeyword("super"))))
+        val nfa = NFA.fromString("super", TokenTypes.SuperKeyword)
+        val matchAgainst = NFA.union(Set(nfa, TokenNFA.nfas(TokenTypes.Identifier))).toDFA
+        matchAgainst.matchString("super") must beEqualTo(Some(List(Tokens.SuperKeyword("super"))))
       }
 
       "switch" in {
-        val nfa = NFA.fromString("switch", Token.SwitchKeyword("switch"))
-        val matchAgainst = NFA.union(Set(nfa, TokenNFA.nfas(Token.Identifier))).toDFA
-        matchAgainst.matchString("switch") must beEqualTo(Some(List(Token.SwitchKeyword("switch"))))
+        val nfa = NFA.fromString("switch", TokenTypes.SwitchKeyword)
+        val matchAgainst = NFA.union(Set(nfa, TokenNFA.nfas(TokenTypes.Identifier))).toDFA
+        matchAgainst.matchString("switch") must beEqualTo(Some(List(Tokens.SwitchKeyword("switch"))))
       }
 
       "synchronized" in {
-        val nfa = NFA.fromString("synchronized", Token.SynchronizedKeyword("synchronized"))
-        val matchAgainst = NFA.union(Set(nfa, TokenNFA.nfas(Token.Identifier))).toDFA
-        matchAgainst.matchString("synchronized") must beEqualTo(Some(List(Token.SynchronizedKeyword("synchronized"))))
+        val nfa = NFA.fromString("synchronized", TokenTypes.SynchronizedKeyword)
+        val matchAgainst = NFA.union(Set(nfa, TokenNFA.nfas(TokenTypes.Identifier))).toDFA
+        matchAgainst.matchString("synchronized") must beEqualTo(Some(List(Tokens.SynchronizedKeyword("synchronized"))))
       }
 
       "this" in {
-        val nfa = NFA.fromString("this", Token.ThisKeyword("this"))
-        val matchAgainst = NFA.union(Set(nfa, TokenNFA.nfas(Token.Identifier))).toDFA
-        matchAgainst.matchString("this") must beEqualTo(Some(List(Token.ThisKeyword("this"))))
+        val nfa = NFA.fromString("this", TokenTypes.ThisKeyword)
+        val matchAgainst = NFA.union(Set(nfa, TokenNFA.nfas(TokenTypes.Identifier))).toDFA
+        matchAgainst.matchString("this") must beEqualTo(Some(List(Tokens.ThisKeyword("this"))))
       }
 
       "throw" in {
-        val nfa = NFA.fromString("throw", Token.ThrowKeyword("throw"))
-        val matchAgainst = NFA.union(Set(nfa, TokenNFA.nfas(Token.Identifier))).toDFA
-        matchAgainst.matchString("throw") must beEqualTo(Some(List(Token.ThrowKeyword("throw"))))
+        val nfa = NFA.fromString("throw", TokenTypes.ThrowKeyword)
+        val matchAgainst = NFA.union(Set(nfa, TokenNFA.nfas(TokenTypes.Identifier))).toDFA
+        matchAgainst.matchString("throw") must beEqualTo(Some(List(Tokens.ThrowKeyword("throw"))))
       }
 
       "throws" in {
-        val nfa = NFA.fromString("throws", Token.ThrowsKeyword("throws"))
-        val matchAgainst = NFA.union(Set(nfa, TokenNFA.nfas(Token.Identifier))).toDFA
-        matchAgainst.matchString("throws") must beEqualTo(Some(List(Token.ThrowsKeyword("throws"))))
+        val nfa = NFA.fromString("throws", TokenTypes.ThrowsKeyword)
+        val matchAgainst = NFA.union(Set(nfa, TokenNFA.nfas(TokenTypes.Identifier))).toDFA
+        matchAgainst.matchString("throws") must beEqualTo(Some(List(Tokens.ThrowsKeyword("throws"))))
       }
 
       "transient" in {
-        val nfa = NFA.fromString("transient", Token.TransientKeyword("transient"))
-        val matchAgainst = NFA.union(Set(nfa, TokenNFA.nfas(Token.Identifier))).toDFA
-        matchAgainst.matchString("transient") must beEqualTo(Some(List(Token.TransientKeyword("transient"))))
+        val nfa = NFA.fromString("transient", TokenTypes.TransientKeyword)
+        val matchAgainst = NFA.union(Set(nfa, TokenNFA.nfas(TokenTypes.Identifier))).toDFA
+        matchAgainst.matchString("transient") must beEqualTo(Some(List(Tokens.TransientKeyword("transient"))))
       }
 
       "try" in {
-        val nfa = NFA.fromString("try", Token.TryKeyword("try"))
-        val matchAgainst = NFA.union(Set(nfa, TokenNFA.nfas(Token.Identifier))).toDFA
-        matchAgainst.matchString("try") must beEqualTo(Some(List(Token.TryKeyword("try"))))
+        val nfa = NFA.fromString("try", TokenTypes.TryKeyword)
+        val matchAgainst = NFA.union(Set(nfa, TokenNFA.nfas(TokenTypes.Identifier))).toDFA
+        matchAgainst.matchString("try") must beEqualTo(Some(List(Tokens.TryKeyword("try"))))
       }
 
       "void" in {
-        val nfa = NFA.fromString("void", Token.VoidKeyword("void"))
-        val matchAgainst = NFA.union(Set(nfa, TokenNFA.nfas(Token.Identifier))).toDFA
-        matchAgainst.matchString("void") must beEqualTo(Some(List(Token.VoidKeyword("void"))))
+        val nfa = NFA.fromString("void", TokenTypes.VoidKeyword)
+        val matchAgainst = NFA.union(Set(nfa, TokenNFA.nfas(TokenTypes.Identifier))).toDFA
+        matchAgainst.matchString("void") must beEqualTo(Some(List(Tokens.VoidKeyword("void"))))
       }
 
       "volatile" in {
-        val nfa = NFA.fromString("volatile", Token.VolatileKeyword("volatile"))
-        val matchAgainst = NFA.union(Set(nfa, TokenNFA.nfas(Token.Identifier))).toDFA
-        matchAgainst.matchString("volatile") must beEqualTo(Some(List(Token.VolatileKeyword("volatile"))))
+        val nfa = NFA.fromString("volatile", TokenTypes.VolatileKeyword)
+        val matchAgainst = NFA.union(Set(nfa, TokenNFA.nfas(TokenTypes.Identifier))).toDFA
+        matchAgainst.matchString("volatile") must beEqualTo(Some(List(Tokens.VolatileKeyword("volatile"))))
       }
 
       "while" in {
-        val nfa = NFA.fromString("while", Token.WhileKeyword("while"))
-        val matchAgainst = NFA.union(Set(nfa, TokenNFA.nfas(Token.Identifier))).toDFA
-        matchAgainst.matchString("while") must beEqualTo(Some(List(Token.WhileKeyword("while"))))
+        val nfa = NFA.fromString("while", TokenTypes.WhileKeyword)
+        val matchAgainst = NFA.union(Set(nfa, TokenNFA.nfas(TokenTypes.Identifier))).toDFA
+        matchAgainst.matchString("while") must beEqualTo(Some(List(Tokens.WhileKeyword("while"))))
       }
 
 
       "true" in {
-        val nfa = NFA.fromString("true", Token.TrueLiteral("true"))
-        val matchAgainst = NFA.union(Set(nfa, TokenNFA.nfas(Token.Identifier))).toDFA
-        matchAgainst.matchString("true") must beEqualTo(Some(List(Token.TrueLiteral("true"))))
+        val nfa = NFA.fromString("true", TokenTypes.TrueLiteral)
+        val matchAgainst = NFA.union(Set(nfa, TokenNFA.nfas(TokenTypes.Identifier))).toDFA
+        matchAgainst.matchString("true") must beEqualTo(Some(List(Tokens.TrueLiteral("true"))))
       }
 
       "false" in {
-        val nfa = NFA.fromString("false", Token.FalseLiteral("false"))
-        val matchAgainst = NFA.union(Set(nfa, TokenNFA.nfas(Token.Identifier))).toDFA
-        matchAgainst.matchString("false") must beEqualTo(Some(List(Token.FalseLiteral("false"))))
+        val nfa = NFA.fromString("false", TokenTypes.FalseLiteral)
+        val matchAgainst = NFA.union(Set(nfa, TokenNFA.nfas(TokenTypes.Identifier))).toDFA
+        matchAgainst.matchString("false") must beEqualTo(Some(List(Tokens.FalseLiteral("false"))))
       }
 
       "null" in {
-        val nfa = NFA.fromString("null", Token.NullLiteral("null"))
-        val matchAgainst = NFA.union(Set(nfa, TokenNFA.nfas(Token.Identifier))).toDFA
-        matchAgainst.matchString("null") must beEqualTo(Some(List(Token.NullLiteral("null"))))
+        val nfa = NFA.fromString("null", TokenTypes.NullLiteral)
+        val matchAgainst = NFA.union(Set(nfa, TokenNFA.nfas(TokenTypes.Identifier))).toDFA
+        matchAgainst.matchString("null") must beEqualTo(Some(List(Tokens.NullLiteral("null"))))
       }
     }
 
     "keyword union" in {
-      val keywordsNFAWithoutIdentifier: Set[NFA] = Token.Keywords.map {
-        case (keyword: String, token) => NFA.fromString(keyword, token(keyword))
+      val keywordsNFAWithoutIdentifier: Set[NFA] = TokenTypes.Keywords.map {
+        case (keyword: String, token: TokenType) => NFA.fromString(keyword, token)
       }.toSet
 
-      val keywordsNFA: NFA = NFA.union(keywordsNFAWithoutIdentifier + TokenNFA.nfas(Token.Identifier))
+      val keywordsNFA: NFA = NFA.union(keywordsNFAWithoutIdentifier + TokenNFA.nfas(TokenTypes.Identifier))
       val keywordsDFA: DFA = keywordsNFA.toDFA
 
       "abstract" in {
-        keywordsDFA.matchString("abstract") must beEqualTo(Some(List(Token.AbstractKeyword("abstract"))))
+        keywordsDFA.matchString("abstract") must beEqualTo(Some(List(Tokens.AbstractKeyword("abstract"))))
       }
 
       "boolean" in {
-        keywordsDFA.matchString("boolean") must beEqualTo(Some(List(Token.BooleanKeyword("boolean"))))
+        keywordsDFA.matchString("boolean") must beEqualTo(Some(List(Tokens.BooleanKeyword("boolean"))))
       }
 
       "break" in {
-        keywordsDFA.matchString("break") must beEqualTo(Some(List(Token.BreakKeyword("break"))))
+        keywordsDFA.matchString("break") must beEqualTo(Some(List(Tokens.BreakKeyword("break"))))
       }
 
       "byte" in {
-        keywordsDFA.matchString("byte") must beEqualTo(Some(List(Token.ByteKeyword("byte"))))
+        keywordsDFA.matchString("byte") must beEqualTo(Some(List(Tokens.ByteKeyword("byte"))))
       }
 
       "case" in {
-        keywordsDFA.matchString("case") must beEqualTo(Some(List(Token.CaseKeyword("case"))))
+        keywordsDFA.matchString("case") must beEqualTo(Some(List(Tokens.CaseKeyword("case"))))
       }
 
       "catch" in {
-        keywordsDFA.matchString("catch") must beEqualTo(Some(List(Token.CatchKeyword("catch"))))
+        keywordsDFA.matchString("catch") must beEqualTo(Some(List(Tokens.CatchKeyword("catch"))))
       }
 
       "char" in {
-        keywordsDFA.matchString("char") must beEqualTo(Some(List(Token.CharKeyword("char"))))
+        keywordsDFA.matchString("char") must beEqualTo(Some(List(Tokens.CharKeyword("char"))))
       }
 
       "class" in {
-        keywordsDFA.matchString("class") must beEqualTo(Some(List(Token.ClassKeyword("class"))))
+        keywordsDFA.matchString("class") must beEqualTo(Some(List(Tokens.ClassKeyword("class"))))
       }
 
       "const" in {
-        keywordsDFA.matchString("const") must beEqualTo(Some(List(Token.ConstKeyword("const"))))
+        keywordsDFA.matchString("const") must beEqualTo(Some(List(Tokens.ConstKeyword("const"))))
       }
 
       "continue" in {
-        keywordsDFA.matchString("continue") must beEqualTo(Some(List(Token.ContinueKeyword("continue"))))
+        keywordsDFA.matchString("continue") must beEqualTo(Some(List(Tokens.ContinueKeyword("continue"))))
       }
 
       "default" in {
-        keywordsDFA.matchString("default") must beEqualTo(Some(List(Token.DefaultKeyword("default"))))
+        keywordsDFA.matchString("default") must beEqualTo(Some(List(Tokens.DefaultKeyword("default"))))
       }
 
       "do" in {
-        keywordsDFA.matchString("do") must beEqualTo(Some(List(Token.DoKeyword("do"))))
+        keywordsDFA.matchString("do") must beEqualTo(Some(List(Tokens.DoKeyword("do"))))
       }
 
       "double" in {
-        keywordsDFA.matchString("double") must beEqualTo(Some(List(Token.DoubleKeyword("double"))))
+        keywordsDFA.matchString("double") must beEqualTo(Some(List(Tokens.DoubleKeyword("double"))))
       }
 
       "else" in {
-        keywordsDFA.matchString("else") must beEqualTo(Some(List(Token.ElseKeyword("else"))))
+        keywordsDFA.matchString("else") must beEqualTo(Some(List(Tokens.ElseKeyword("else"))))
       }
 
       "extends" in {
-        keywordsDFA.matchString("extends") must beEqualTo(Some(List(Token.ExtendsKeyword("extends"))))
+        keywordsDFA.matchString("extends") must beEqualTo(Some(List(Tokens.ExtendsKeyword("extends"))))
       }
 
       "final" in {
-        keywordsDFA.matchString("final") must beEqualTo(Some(List(Token.FinalKeyword("final"))))
+        keywordsDFA.matchString("final") must beEqualTo(Some(List(Tokens.FinalKeyword("final"))))
       }
 
       "finally" in {
-        keywordsDFA.matchString("finally") must beEqualTo(Some(List(Token.FinallyKeyword("finally"))))
+        keywordsDFA.matchString("finally") must beEqualTo(Some(List(Tokens.FinallyKeyword("finally"))))
       }
 
       "float" in {
-        keywordsDFA.matchString("float") must beEqualTo(Some(List(Token.FloatKeyword("float"))))
+        keywordsDFA.matchString("float") must beEqualTo(Some(List(Tokens.FloatKeyword("float"))))
       }
 
       "for" in {
-        keywordsDFA.matchString("for") must beEqualTo(Some(List(Token.ForKeyword("for"))))
+        keywordsDFA.matchString("for") must beEqualTo(Some(List(Tokens.ForKeyword("for"))))
       }
 
       "goto" in {
-        keywordsDFA.matchString("goto") must beEqualTo(Some(List(Token.GotoKeyword("goto"))))
+        keywordsDFA.matchString("goto") must beEqualTo(Some(List(Tokens.GotoKeyword("goto"))))
       }
 
       "if" in {
-        keywordsDFA.matchString("if") must beEqualTo(Some(List(Token.IfKeyword("if"))))
+        keywordsDFA.matchString("if") must beEqualTo(Some(List(Tokens.IfKeyword("if"))))
       }
 
       "implements" in {
-        keywordsDFA.matchString("implements") must beEqualTo(Some(List(Token.ImplementsKeyword("implements"))))
+        keywordsDFA.matchString("implements") must beEqualTo(Some(List(Tokens.ImplementsKeyword("implements"))))
       }
 
       "import" in {
-        keywordsDFA.matchString("import") must beEqualTo(Some(List(Token.ImportKeyword("import"))))
+        keywordsDFA.matchString("import") must beEqualTo(Some(List(Tokens.ImportKeyword("import"))))
       }
 
       "instanceof" in {
-        keywordsDFA.matchString("instanceof") must beEqualTo(Some(List(Token.InstanceofKeyword("instanceof"))))
+        keywordsDFA.matchString("instanceof") must beEqualTo(Some(List(Tokens.InstanceofKeyword("instanceof"))))
       }
 
       "int" in {
-        keywordsDFA.matchString("int") must beEqualTo(Some(List(Token.IntKeyword("int"))))
+        keywordsDFA.matchString("int") must beEqualTo(Some(List(Tokens.IntKeyword("int"))))
       }
 
       "interface" in {
-        keywordsDFA.matchString("interface") must beEqualTo(Some(List(Token.InterfaceKeyword("interface"))))
+        keywordsDFA.matchString("interface") must beEqualTo(Some(List(Tokens.InterfaceKeyword("interface"))))
       }
 
       "long" in {
-        keywordsDFA.matchString("long") must beEqualTo(Some(List(Token.LongKeyword("long"))))
+        keywordsDFA.matchString("long") must beEqualTo(Some(List(Tokens.LongKeyword("long"))))
       }
 
       "native" in {
-        keywordsDFA.matchString("native") must beEqualTo(Some(List(Token.NativeKeyword("native"))))
+        keywordsDFA.matchString("native") must beEqualTo(Some(List(Tokens.NativeKeyword("native"))))
       }
 
       "new" in {
-        keywordsDFA.matchString("new") must beEqualTo(Some(List(Token.NewKeyword("new"))))
+        keywordsDFA.matchString("new") must beEqualTo(Some(List(Tokens.NewKeyword("new"))))
       }
 
       "package" in {
-        keywordsDFA.matchString("package") must beEqualTo(Some(List(Token.PackageKeyword("package"))))
+        keywordsDFA.matchString("package") must beEqualTo(Some(List(Tokens.PackageKeyword("package"))))
       }
 
       "private" in {
-        keywordsDFA.matchString("private") must beEqualTo(Some(List(Token.PrivateKeyword("private"))))
+        keywordsDFA.matchString("private") must beEqualTo(Some(List(Tokens.PrivateKeyword("private"))))
       }
 
       "protected" in {
-        keywordsDFA.matchString("protected") must beEqualTo(Some(List(Token.ProtectedKeyword("protected"))))
+        keywordsDFA.matchString("protected") must beEqualTo(Some(List(Tokens.ProtectedKeyword("protected"))))
       }
 
       "public" in {
-        keywordsDFA.matchString("public") must beEqualTo(Some(List(Token.PublicKeyword("public"))))
+        keywordsDFA.matchString("public") must beEqualTo(Some(List(Tokens.PublicKeyword("public"))))
       }
 
       "return" in {
-        keywordsDFA.matchString("return") must beEqualTo(Some(List(Token.ReturnKeyword("return"))))
+        keywordsDFA.matchString("return") must beEqualTo(Some(List(Tokens.ReturnKeyword("return"))))
       }
 
       "short" in {
-        keywordsDFA.matchString("short") must beEqualTo(Some(List(Token.ShortKeyword("short"))))
+        keywordsDFA.matchString("short") must beEqualTo(Some(List(Tokens.ShortKeyword("short"))))
       }
 
       "static" in {
-        keywordsDFA.matchString("static") must beEqualTo(Some(List(Token.StaticKeyword("static"))))
+        keywordsDFA.matchString("static") must beEqualTo(Some(List(Tokens.StaticKeyword("static"))))
       }
 
       "strictfp" in {
-        keywordsDFA.matchString("strictfp") must beEqualTo(Some(List(Token.StrictfpKeyword("strictfp"))))
+        keywordsDFA.matchString("strictfp") must beEqualTo(Some(List(Tokens.StrictfpKeyword("strictfp"))))
       }
 
       "super" in {
-        keywordsDFA.matchString("super") must beEqualTo(Some(List(Token.SuperKeyword("super"))))
+        keywordsDFA.matchString("super") must beEqualTo(Some(List(Tokens.SuperKeyword("super"))))
       }
 
       "switch" in {
-        keywordsDFA.matchString("switch") must beEqualTo(Some(List(Token.SwitchKeyword("switch"))))
+        keywordsDFA.matchString("switch") must beEqualTo(Some(List(Tokens.SwitchKeyword("switch"))))
       }
 
       "synchronized" in {
-        keywordsDFA.matchString("synchronized") must beEqualTo(Some(List(Token.SynchronizedKeyword("synchronized"))))
+        keywordsDFA.matchString("synchronized") must beEqualTo(Some(List(Tokens.SynchronizedKeyword("synchronized"))))
       }
 
       "this" in {
-        keywordsDFA.matchString("this") must beEqualTo(Some(List(Token.ThisKeyword("this"))))
+        keywordsDFA.matchString("this") must beEqualTo(Some(List(Tokens.ThisKeyword("this"))))
       }
 
       "throw" in {
-        keywordsDFA.matchString("throw") must beEqualTo(Some(List(Token.ThrowKeyword("throw"))))
+        keywordsDFA.matchString("throw") must beEqualTo(Some(List(Tokens.ThrowKeyword("throw"))))
       }
 
       "throws" in {
-        keywordsDFA.matchString("throws") must beEqualTo(Some(List(Token.ThrowsKeyword("throws"))))
+        keywordsDFA.matchString("throws") must beEqualTo(Some(List(Tokens.ThrowsKeyword("throws"))))
       }
 
       "transient" in {
-        keywordsDFA.matchString("transient") must beEqualTo(Some(List(Token.TransientKeyword("transient"))))
+        keywordsDFA.matchString("transient") must beEqualTo(Some(List(Tokens.TransientKeyword("transient"))))
       }
 
       "try" in {
-        keywordsDFA.matchString("try") must beEqualTo(Some(List(Token.TryKeyword("try"))))
+        keywordsDFA.matchString("try") must beEqualTo(Some(List(Tokens.TryKeyword("try"))))
       }
 
       "void" in {
-        keywordsDFA.matchString("void") must beEqualTo(Some(List(Token.VoidKeyword("void"))))
+        keywordsDFA.matchString("void") must beEqualTo(Some(List(Tokens.VoidKeyword("void"))))
       }
 
       "volatile" in {
-        keywordsDFA.matchString("volatile") must beEqualTo(Some(List(Token.VolatileKeyword("volatile"))))
+        keywordsDFA.matchString("volatile") must beEqualTo(Some(List(Tokens.VolatileKeyword("volatile"))))
       }
 
       "while" in {
-        keywordsDFA.matchString("while") must beEqualTo(Some(List(Token.WhileKeyword("while"))))
+        keywordsDFA.matchString("while") must beEqualTo(Some(List(Tokens.WhileKeyword("while"))))
       }
 
 
       "true" in {
-        keywordsDFA.matchString("true") must beEqualTo(Some(List(Token.TrueLiteral("true"))))
+        keywordsDFA.matchString("true") must beEqualTo(Some(List(Tokens.TrueLiteral("true"))))
       }
 
       "false" in {
-        keywordsDFA.matchString("false") must beEqualTo(Some(List(Token.FalseLiteral("false"))))
+        keywordsDFA.matchString("false") must beEqualTo(Some(List(Tokens.FalseLiteral("false"))))
       }
 
       "null" in {
-        keywordsDFA.matchString("null") must beEqualTo(Some(List(Token.NullLiteral("null"))))
+        keywordsDFA.matchString("null") must beEqualTo(Some(List(Tokens.NullLiteral("null"))))
       }
     }
 
     "similar prefixes" in {
       "pathological case" in {
         val keywordsNFA: NFA = NFA.union(Set(
-          TokenNFA.nfas(Token.CaseKeyword),
-          TokenNFA.nfas(Token.CatchKeyword),
-          TokenNFA.nfas(Token.CharKeyword)
+          TokenNFA.nfas(TokenTypes.CaseKeyword),
+          TokenNFA.nfas(TokenTypes.CatchKeyword),
+          TokenNFA.nfas(TokenTypes.CharKeyword)
         ))
         val keywordsDFA: DFA = keywordsNFA.toDFA
 
-        keywordsDFA.matchString("case") must beEqualTo(Some(List(Token.CaseKeyword("case"))))
-        keywordsDFA.matchString("char") must beEqualTo(Some(List(Token.CharKeyword("char"))))
-        keywordsDFA.matchString("catch") must beEqualTo(Some(List(Token.CatchKeyword("catch"))))
+        keywordsDFA.matchString("case") must beEqualTo(Some(List(Tokens.CaseKeyword("case"))))
+        keywordsDFA.matchString("char") must beEqualTo(Some(List(Tokens.CharKeyword("char"))))
+        keywordsDFA.matchString("catch") must beEqualTo(Some(List(Tokens.CatchKeyword("catch"))))
       }
 
       "case, catch" in {
         val keywordsNFA: NFA = NFA.union(Set(
-          TokenNFA.nfas(Token.CaseKeyword),
-          TokenNFA.nfas(Token.CatchKeyword),
-          TokenNFA.nfas(Token.Identifier)
+          TokenNFA.nfas(TokenTypes.CaseKeyword),
+          TokenNFA.nfas(TokenTypes.CatchKeyword),
+          TokenNFA.nfas(TokenTypes.Identifier)
         ))
         val keywordsDFA: DFA = keywordsNFA.toDFA
 
-        keywordsDFA.matchString("case") must beEqualTo(Some(List(Token.CaseKeyword("case"))))
-        keywordsDFA.matchString("catch") must beEqualTo(Some(List(Token.CatchKeyword("catch"))))
-        keywordsDFA.matchString("cats") must beEqualTo(Some(List(Token.Identifier("cats"))))
+        keywordsDFA.matchString("case") must beEqualTo(Some(List(Tokens.CaseKeyword("case"))))
+        keywordsDFA.matchString("catch") must beEqualTo(Some(List(Tokens.CatchKeyword("catch"))))
+        keywordsDFA.matchString("cats") must beEqualTo(Some(List(Tokens.Identifier("cats"))))
       }
     }
 
     "keywords in identifier" in {
       val matchAgainst = NFA.union(Set(
-        TokenNFA.nfas(Token.Identifier),
+        TokenNFA.nfas(TokenTypes.Identifier),
         TokenNFA.keyword
       )).toDFA
 
       "abstract" in {
-        matchAgainst.matchString("abstract") must beEqualTo(Some(List(Token.AbstractKeyword("abstract"))))
+        matchAgainst.matchString("abstract") must beEqualTo(Some(List(Tokens.AbstractKeyword("abstract"))))
       }
 
       "boolean" in {
-        matchAgainst.matchString("boolean") must beEqualTo(Some(List(Token.BooleanKeyword("boolean"))))
+        matchAgainst.matchString("boolean") must beEqualTo(Some(List(Tokens.BooleanKeyword("boolean"))))
       }
 
       "break" in {
-        matchAgainst.matchString("break") must beEqualTo(Some(List(Token.BreakKeyword("break"))))
+        matchAgainst.matchString("break") must beEqualTo(Some(List(Tokens.BreakKeyword("break"))))
       }
 
       "byte" in {
-        matchAgainst.matchString("byte") must beEqualTo(Some(List(Token.ByteKeyword("byte"))))
+        matchAgainst.matchString("byte") must beEqualTo(Some(List(Tokens.ByteKeyword("byte"))))
       }
 
       "case" in {
-        matchAgainst.matchString("case") must beEqualTo(Some(List(Token.CaseKeyword("case"))))
+        matchAgainst.matchString("case") must beEqualTo(Some(List(Tokens.CaseKeyword("case"))))
       }
 
       "catch" in {
-        matchAgainst.matchString("catch") must beEqualTo(Some(List(Token.CatchKeyword("catch"))))
+        matchAgainst.matchString("catch") must beEqualTo(Some(List(Tokens.CatchKeyword("catch"))))
       }
 
       "char" in {
-        matchAgainst.matchString("char") must beEqualTo(Some(List(Token.CharKeyword("char"))))
+        matchAgainst.matchString("char") must beEqualTo(Some(List(Tokens.CharKeyword("char"))))
       }
 
       "class" in {
-        matchAgainst.matchString("class") must beEqualTo(Some(List(Token.ClassKeyword("class"))))
+        matchAgainst.matchString("class") must beEqualTo(Some(List(Tokens.ClassKeyword("class"))))
       }
 
       "const" in {
-        matchAgainst.matchString("const") must beEqualTo(Some(List(Token.ConstKeyword("const"))))
+        matchAgainst.matchString("const") must beEqualTo(Some(List(Tokens.ConstKeyword("const"))))
       }
 
       "continue" in {
-        matchAgainst.matchString("continue") must beEqualTo(Some(List(Token.ContinueKeyword("continue"))))
+        matchAgainst.matchString("continue") must beEqualTo(Some(List(Tokens.ContinueKeyword("continue"))))
       }
 
       "default" in {
-        matchAgainst.matchString("default") must beEqualTo(Some(List(Token.DefaultKeyword("default"))))
+        matchAgainst.matchString("default") must beEqualTo(Some(List(Tokens.DefaultKeyword("default"))))
       }
 
       "do" in {
-        matchAgainst.matchString("do") must beEqualTo(Some(List(Token.DoKeyword("do"))))
+        matchAgainst.matchString("do") must beEqualTo(Some(List(Tokens.DoKeyword("do"))))
       }
 
       "double" in {
-        matchAgainst.matchString("double") must beEqualTo(Some(List(Token.DoubleKeyword("double"))))
+        matchAgainst.matchString("double") must beEqualTo(Some(List(Tokens.DoubleKeyword("double"))))
       }
 
       "else" in {
-        matchAgainst.matchString("else") must beEqualTo(Some(List(Token.ElseKeyword("else"))))
+        matchAgainst.matchString("else") must beEqualTo(Some(List(Tokens.ElseKeyword("else"))))
       }
 
       "extends" in {
-        matchAgainst.matchString("extends") must beEqualTo(Some(List(Token.ExtendsKeyword("extends"))))
+        matchAgainst.matchString("extends") must beEqualTo(Some(List(Tokens.ExtendsKeyword("extends"))))
       }
 
       "final" in {
-        matchAgainst.matchString("final") must beEqualTo(Some(List(Token.FinalKeyword("final"))))
+        matchAgainst.matchString("final") must beEqualTo(Some(List(Tokens.FinalKeyword("final"))))
       }
 
       "finally" in {
-        matchAgainst.matchString("finally") must beEqualTo(Some(List(Token.FinallyKeyword("finally"))))
+        matchAgainst.matchString("finally") must beEqualTo(Some(List(Tokens.FinallyKeyword("finally"))))
       }
 
       "float" in {
-        matchAgainst.matchString("float") must beEqualTo(Some(List(Token.FloatKeyword("float"))))
+        matchAgainst.matchString("float") must beEqualTo(Some(List(Tokens.FloatKeyword("float"))))
       }
 
       "for" in {
-        matchAgainst.matchString("for") must beEqualTo(Some(List(Token.ForKeyword("for"))))
+        matchAgainst.matchString("for") must beEqualTo(Some(List(Tokens.ForKeyword("for"))))
       }
 
       "goto" in {
-        matchAgainst.matchString("goto") must beEqualTo(Some(List(Token.GotoKeyword("goto"))))
+        matchAgainst.matchString("goto") must beEqualTo(Some(List(Tokens.GotoKeyword("goto"))))
       }
 
       "if" in {
-        matchAgainst.matchString("if") must beEqualTo(Some(List(Token.IfKeyword("if"))))
+        matchAgainst.matchString("if") must beEqualTo(Some(List(Tokens.IfKeyword("if"))))
       }
 
       "implements" in {
-        matchAgainst.matchString("implements") must beEqualTo(Some(List(Token.ImplementsKeyword("implements"))))
+        matchAgainst.matchString("implements") must beEqualTo(Some(List(Tokens.ImplementsKeyword("implements"))))
       }
 
       "import" in {
-        matchAgainst.matchString("import") must beEqualTo(Some(List(Token.ImportKeyword("import"))))
+        matchAgainst.matchString("import") must beEqualTo(Some(List(Tokens.ImportKeyword("import"))))
       }
 
       "instanceof" in {
-        matchAgainst.matchString("instanceof") must beEqualTo(Some(List(Token.InstanceofKeyword("instanceof"))))
+        matchAgainst.matchString("instanceof") must beEqualTo(Some(List(Tokens.InstanceofKeyword("instanceof"))))
       }
 
       "int" in {
-        matchAgainst.matchString("int") must beEqualTo(Some(List(Token.IntKeyword("int"))))
+        matchAgainst.matchString("int") must beEqualTo(Some(List(Tokens.IntKeyword("int"))))
       }
 
       "interface" in {
-        matchAgainst.matchString("interface") must beEqualTo(Some(List(Token.InterfaceKeyword("interface"))))
+        matchAgainst.matchString("interface") must beEqualTo(Some(List(Tokens.InterfaceKeyword("interface"))))
       }
 
       "long" in {
-        matchAgainst.matchString("long") must beEqualTo(Some(List(Token.LongKeyword("long"))))
+        matchAgainst.matchString("long") must beEqualTo(Some(List(Tokens.LongKeyword("long"))))
       }
 
       "native" in {
-        matchAgainst.matchString("native") must beEqualTo(Some(List(Token.NativeKeyword("native"))))
+        matchAgainst.matchString("native") must beEqualTo(Some(List(Tokens.NativeKeyword("native"))))
       }
 
       "new" in {
-        matchAgainst.matchString("new") must beEqualTo(Some(List(Token.NewKeyword("new"))))
+        matchAgainst.matchString("new") must beEqualTo(Some(List(Tokens.NewKeyword("new"))))
       }
 
       "package" in {
-        matchAgainst.matchString("package") must beEqualTo(Some(List(Token.PackageKeyword("package"))))
+        matchAgainst.matchString("package") must beEqualTo(Some(List(Tokens.PackageKeyword("package"))))
       }
 
       "private" in {
-        matchAgainst.matchString("private") must beEqualTo(Some(List(Token.PrivateKeyword("private"))))
+        matchAgainst.matchString("private") must beEqualTo(Some(List(Tokens.PrivateKeyword("private"))))
       }
 
       "protected" in {
-        matchAgainst.matchString("protected") must beEqualTo(Some(List(Token.ProtectedKeyword("protected"))))
+        matchAgainst.matchString("protected") must beEqualTo(Some(List(Tokens.ProtectedKeyword("protected"))))
       }
 
       "public" in {
-        matchAgainst.matchString("public") must beEqualTo(Some(List(Token.PublicKeyword("public"))))
+        matchAgainst.matchString("public") must beEqualTo(Some(List(Tokens.PublicKeyword("public"))))
       }
 
       "return" in {
-        matchAgainst.matchString("return") must beEqualTo(Some(List(Token.ReturnKeyword("return"))))
+        matchAgainst.matchString("return") must beEqualTo(Some(List(Tokens.ReturnKeyword("return"))))
       }
 
       "short" in {
-        matchAgainst.matchString("short") must beEqualTo(Some(List(Token.ShortKeyword("short"))))
+        matchAgainst.matchString("short") must beEqualTo(Some(List(Tokens.ShortKeyword("short"))))
       }
 
       "static" in {
-        matchAgainst.matchString("static") must beEqualTo(Some(List(Token.StaticKeyword("static"))))
+        matchAgainst.matchString("static") must beEqualTo(Some(List(Tokens.StaticKeyword("static"))))
       }
 
       "strictfp" in {
-        matchAgainst.matchString("strictfp") must beEqualTo(Some(List(Token.StrictfpKeyword("strictfp"))))
+        matchAgainst.matchString("strictfp") must beEqualTo(Some(List(Tokens.StrictfpKeyword("strictfp"))))
       }
 
       "super" in {
-        matchAgainst.matchString("super") must beEqualTo(Some(List(Token.SuperKeyword("super"))))
+        matchAgainst.matchString("super") must beEqualTo(Some(List(Tokens.SuperKeyword("super"))))
       }
 
       "switch" in {
-        matchAgainst.matchString("switch") must beEqualTo(Some(List(Token.SwitchKeyword("switch"))))
+        matchAgainst.matchString("switch") must beEqualTo(Some(List(Tokens.SwitchKeyword("switch"))))
       }
 
       "synchronized" in {
-        matchAgainst.matchString("synchronized") must beEqualTo(Some(List(Token.SynchronizedKeyword("synchronized"))))
+        matchAgainst.matchString("synchronized") must beEqualTo(Some(List(Tokens.SynchronizedKeyword("synchronized"))))
       }
 
       "this" in {
-        matchAgainst.matchString("this") must beEqualTo(Some(List(Token.ThisKeyword("this"))))
+        matchAgainst.matchString("this") must beEqualTo(Some(List(Tokens.ThisKeyword("this"))))
       }
 
       "throw" in {
-        matchAgainst.matchString("throw") must beEqualTo(Some(List(Token.ThrowKeyword("throw"))))
+        matchAgainst.matchString("throw") must beEqualTo(Some(List(Tokens.ThrowKeyword("throw"))))
       }
 
       "throws" in {
-        matchAgainst.matchString("throws") must beEqualTo(Some(List(Token.ThrowsKeyword("throws"))))
+        matchAgainst.matchString("throws") must beEqualTo(Some(List(Tokens.ThrowsKeyword("throws"))))
       }
 
       "transient" in {
-        val nfa = TokenNFA.nfas(Token.Identifier)
-        matchAgainst.matchString("transient") must beEqualTo(Some(List(Token.TransientKeyword("transient"))))
+        val nfa = TokenNFA.nfas(TokenTypes.Identifier)
+        matchAgainst.matchString("transient") must beEqualTo(Some(List(Tokens.TransientKeyword("transient"))))
       }
 
       "try" in {
-        matchAgainst.matchString("try") must beEqualTo(Some(List(Token.TryKeyword("try"))))
+        matchAgainst.matchString("try") must beEqualTo(Some(List(Tokens.TryKeyword("try"))))
       }
 
       "void" in {
-        matchAgainst.matchString("void") must beEqualTo(Some(List(Token.VoidKeyword("void"))))
+        matchAgainst.matchString("void") must beEqualTo(Some(List(Tokens.VoidKeyword("void"))))
       }
 
       "volatile" in {
-        matchAgainst.matchString("volatile") must beEqualTo(Some(List(Token.VolatileKeyword("volatile"))))
+        matchAgainst.matchString("volatile") must beEqualTo(Some(List(Tokens.VolatileKeyword("volatile"))))
       }
 
       "while" in {
-        matchAgainst.matchString("while") must beEqualTo(Some(List(Token.WhileKeyword("while"))))
+        matchAgainst.matchString("while") must beEqualTo(Some(List(Tokens.WhileKeyword("while"))))
       }
 
 
       "true" in {
-        matchAgainst.matchString("true") must beEqualTo(Some(List(Token.TrueLiteral("true"))))
+        matchAgainst.matchString("true") must beEqualTo(Some(List(TokenTypes.TrueLiteral("true"))))
       }
 
       "false" in {
-        matchAgainst.matchString("false") must beEqualTo(Some(List(Token.FalseLiteral("false"))))
+        matchAgainst.matchString("false") must beEqualTo(Some(List(TokenTypes.FalseLiteral("false"))))
       }
 
       "null" in {
-        matchAgainst.matchString("null") must beEqualTo(Some(List(Token.NullLiteral("null"))))
+        matchAgainst.matchString("null") must beEqualTo(Some(List(TokenTypes.NullLiteral("null"))))
       }
     }
 
@@ -1628,207 +1628,207 @@ class TokenSpec extends Specification {
       val totalDFA: DFA = TokenNFA.nfa.toDFA
 
       "abstract" in {
-        totalDFA.matchString("abstract") must beEqualTo(Some(List(Token.AbstractKeyword("abstract"))))
+        totalDFA.matchString("abstract") must beEqualTo(Some(List(Tokens.AbstractKeyword("abstract"))))
       }
 
       "boolean" in {
-        totalDFA.matchString("boolean") must beEqualTo(Some(List(Token.BooleanKeyword("boolean"))))
+        totalDFA.matchString("boolean") must beEqualTo(Some(List(Tokens.BooleanKeyword("boolean"))))
       }
 
       "break" in {
-        totalDFA.matchString("break") must beEqualTo(Some(List(Token.BreakKeyword("break"))))
+        totalDFA.matchString("break") must beEqualTo(Some(List(Tokens.BreakKeyword("break"))))
       }
 
       "byte" in {
-        totalDFA.matchString("byte") must beEqualTo(Some(List(Token.ByteKeyword("byte"))))
+        totalDFA.matchString("byte") must beEqualTo(Some(List(Tokens.ByteKeyword("byte"))))
       }
 
       "case" in {
-        totalDFA.matchString("case") must beEqualTo(Some(List(Token.CaseKeyword("case"))))
+        totalDFA.matchString("case") must beEqualTo(Some(List(Tokens.CaseKeyword("case"))))
       }
 
       "catch" in {
-        totalDFA.matchString("catch") must beEqualTo(Some(List(Token.CatchKeyword("catch"))))
+        totalDFA.matchString("catch") must beEqualTo(Some(List(Tokens.CatchKeyword("catch"))))
       }
 
       "char" in {
-        totalDFA.matchString("char") must beEqualTo(Some(List(Token.CharKeyword("char"))))
+        totalDFA.matchString("char") must beEqualTo(Some(List(Tokens.CharKeyword("char"))))
       }
 
       "class" in {
-        totalDFA.matchString("class") must beEqualTo(Some(List(Token.ClassKeyword("class"))))
+        totalDFA.matchString("class") must beEqualTo(Some(List(Tokens.ClassKeyword("class"))))
       }
 
       "const" in {
-        totalDFA.matchString("const") must beEqualTo(Some(List(Token.ConstKeyword("const"))))
+        totalDFA.matchString("const") must beEqualTo(Some(List(Tokens.ConstKeyword("const"))))
       }
 
       "continue" in {
-        totalDFA.matchString("continue") must beEqualTo(Some(List(Token.ContinueKeyword("continue"))))
+        totalDFA.matchString("continue") must beEqualTo(Some(List(Tokens.ContinueKeyword("continue"))))
       }
 
       "default" in {
-        totalDFA.matchString("default") must beEqualTo(Some(List(Token.DefaultKeyword("default"))))
+        totalDFA.matchString("default") must beEqualTo(Some(List(Tokens.DefaultKeyword("default"))))
       }
 
       "do" in {
-        totalDFA.matchString("do") must beEqualTo(Some(List(Token.DoKeyword("do"))))
+        totalDFA.matchString("do") must beEqualTo(Some(List(Tokens.DoKeyword("do"))))
       }
 
       "double" in {
-        totalDFA.matchString("double") must beEqualTo(Some(List(Token.DoubleKeyword("double"))))
+        totalDFA.matchString("double") must beEqualTo(Some(List(Tokens.DoubleKeyword("double"))))
       }
 
       "else" in {
-        totalDFA.matchString("else") must beEqualTo(Some(List(Token.ElseKeyword("else"))))
+        totalDFA.matchString("else") must beEqualTo(Some(List(Tokens.ElseKeyword("else"))))
       }
 
       "extends" in {
-        totalDFA.matchString("extends") must beEqualTo(Some(List(Token.ExtendsKeyword("extends"))))
+        totalDFA.matchString("extends") must beEqualTo(Some(List(Tokens.ExtendsKeyword("extends"))))
       }
 
       "final" in {
-        totalDFA.matchString("final") must beEqualTo(Some(List(Token.FinalKeyword("final"))))
+        totalDFA.matchString("final") must beEqualTo(Some(List(Tokens.FinalKeyword("final"))))
       }
 
       "finally" in {
-        totalDFA.matchString("finally") must beEqualTo(Some(List(Token.FinallyKeyword("finally"))))
+        totalDFA.matchString("finally") must beEqualTo(Some(List(Tokens.FinallyKeyword("finally"))))
       }
 
       "float" in {
-        totalDFA.matchString("float") must beEqualTo(Some(List(Token.FloatKeyword("float"))))
+        totalDFA.matchString("float") must beEqualTo(Some(List(Tokens.FloatKeyword("float"))))
       }
 
       "for" in {
-        totalDFA.matchString("for") must beEqualTo(Some(List(Token.ForKeyword("for"))))
+        totalDFA.matchString("for") must beEqualTo(Some(List(Tokens.ForKeyword("for"))))
       }
 
       "goto" in {
-        totalDFA.matchString("goto") must beEqualTo(Some(List(Token.GotoKeyword("goto"))))
+        totalDFA.matchString("goto") must beEqualTo(Some(List(Tokens.GotoKeyword("goto"))))
       }
 
       "if" in {
-        totalDFA.matchString("if") must beEqualTo(Some(List(Token.IfKeyword("if"))))
+        totalDFA.matchString("if") must beEqualTo(Some(List(Tokens.IfKeyword("if"))))
       }
 
       "implements" in {
-        totalDFA.matchString("implements") must beEqualTo(Some(List(Token.ImplementsKeyword("implements"))))
+        totalDFA.matchString("implements") must beEqualTo(Some(List(Tokens.ImplementsKeyword("implements"))))
       }
 
       "import" in {
-        totalDFA.matchString("import") must beEqualTo(Some(List(Token.ImportKeyword("import"))))
+        totalDFA.matchString("import") must beEqualTo(Some(List(Tokens.ImportKeyword("import"))))
       }
 
       "instanceof" in {
-        totalDFA.matchString("instanceof") must beEqualTo(Some(List(Token.InstanceofKeyword("instanceof"))))
+        totalDFA.matchString("instanceof") must beEqualTo(Some(List(Tokens.InstanceofKeyword("instanceof"))))
       }
 
       "int" in {
-        totalDFA.matchString("int") must beEqualTo(Some(List(Token.IntKeyword("int"))))
+        totalDFA.matchString("int") must beEqualTo(Some(List(Tokens.IntKeyword("int"))))
       }
 
       "interface" in {
-        totalDFA.matchString("interface") must beEqualTo(Some(List(Token.InterfaceKeyword("interface"))))
+        totalDFA.matchString("interface") must beEqualTo(Some(List(Tokens.InterfaceKeyword("interface"))))
       }
 
       "long" in {
-        totalDFA.matchString("long") must beEqualTo(Some(List(Token.LongKeyword("long"))))
+        totalDFA.matchString("long") must beEqualTo(Some(List(Tokens.LongKeyword("long"))))
       }
 
       "native" in {
-        totalDFA.matchString("native") must beEqualTo(Some(List(Token.NativeKeyword("native"))))
+        totalDFA.matchString("native") must beEqualTo(Some(List(Tokens.NativeKeyword("native"))))
       }
 
       "new" in {
-        totalDFA.matchString("new") must beEqualTo(Some(List(Token.NewKeyword("new"))))
+        totalDFA.matchString("new") must beEqualTo(Some(List(Tokens.NewKeyword("new"))))
       }
 
       "package" in {
-        totalDFA.matchString("package") must beEqualTo(Some(List(Token.PackageKeyword("package"))))
+        totalDFA.matchString("package") must beEqualTo(Some(List(Tokens.PackageKeyword("package"))))
       }
 
       "private" in {
-        totalDFA.matchString("private") must beEqualTo(Some(List(Token.PrivateKeyword("private"))))
+        totalDFA.matchString("private") must beEqualTo(Some(List(Tokens.PrivateKeyword("private"))))
       }
 
       "protected" in {
-        totalDFA.matchString("protected") must beEqualTo(Some(List(Token.ProtectedKeyword("protected"))))
+        totalDFA.matchString("protected") must beEqualTo(Some(List(Tokens.ProtectedKeyword("protected"))))
       }
 
       "public" in {
-        totalDFA.matchString("public") must beEqualTo(Some(List(Token.PublicKeyword("public"))))
+        totalDFA.matchString("public") must beEqualTo(Some(List(Tokens.PublicKeyword("public"))))
       }
 
       "return" in {
-        totalDFA.matchString("return") must beEqualTo(Some(List(Token.ReturnKeyword("return"))))
+        totalDFA.matchString("return") must beEqualTo(Some(List(Tokens.ReturnKeyword("return"))))
       }
 
       "short" in {
-        totalDFA.matchString("short") must beEqualTo(Some(List(Token.ShortKeyword("short"))))
+        totalDFA.matchString("short") must beEqualTo(Some(List(Tokens.ShortKeyword("short"))))
       }
 
       "static" in {
-        totalDFA.matchString("static") must beEqualTo(Some(List(Token.StaticKeyword("static"))))
+        totalDFA.matchString("static") must beEqualTo(Some(List(Tokens.StaticKeyword("static"))))
       }
 
       "strictfp" in {
-        totalDFA.matchString("strictfp") must beEqualTo(Some(List(Token.StrictfpKeyword("strictfp"))))
+        totalDFA.matchString("strictfp") must beEqualTo(Some(List(Tokens.StrictfpKeyword("strictfp"))))
       }
 
       "super" in {
-        totalDFA.matchString("super") must beEqualTo(Some(List(Token.SuperKeyword("super"))))
+        totalDFA.matchString("super") must beEqualTo(Some(List(Tokens.SuperKeyword("super"))))
       }
 
       "switch" in {
-        totalDFA.matchString("switch") must beEqualTo(Some(List(Token.SwitchKeyword("switch"))))
+        totalDFA.matchString("switch") must beEqualTo(Some(List(Tokens.SwitchKeyword("switch"))))
       }
 
       "synchronized" in {
-        totalDFA.matchString("synchronized") must beEqualTo(Some(List(Token.SynchronizedKeyword("synchronized"))))
+        totalDFA.matchString("synchronized") must beEqualTo(Some(List(Tokens.SynchronizedKeyword("synchronized"))))
       }
 
       "this" in {
-        totalDFA.matchString("this") must beEqualTo(Some(List(Token.ThisKeyword("this"))))
+        totalDFA.matchString("this") must beEqualTo(Some(List(Tokens.ThisKeyword("this"))))
       }
 
       "throw" in {
-        totalDFA.matchString("throw") must beEqualTo(Some(List(Token.ThrowKeyword("throw"))))
+        totalDFA.matchString("throw") must beEqualTo(Some(List(Tokens.ThrowKeyword("throw"))))
       }
 
       "throws" in {
-        totalDFA.matchString("throws") must beEqualTo(Some(List(Token.ThrowsKeyword("throws"))))
+        totalDFA.matchString("throws") must beEqualTo(Some(List(Tokens.ThrowsKeyword("throws"))))
       }
 
       "transient" in {
-        totalDFA.matchString("transient") must beEqualTo(Some(List(Token.TransientKeyword("transient"))))
+        totalDFA.matchString("transient") must beEqualTo(Some(List(Tokens.TransientKeyword("transient"))))
       }
 
       "try" in {
-        totalDFA.matchString("try") must beEqualTo(Some(List(Token.TryKeyword("try"))))
+        totalDFA.matchString("try") must beEqualTo(Some(List(Tokens.TryKeyword("try"))))
       }
 
       "void" in {
-        totalDFA.matchString("void") must beEqualTo(Some(List(Token.VoidKeyword("void"))))
+        totalDFA.matchString("void") must beEqualTo(Some(List(Tokens.VoidKeyword("void"))))
       }
 
       "volatile" in {
-        totalDFA.matchString("volatile") must beEqualTo(Some(List(Token.VolatileKeyword("volatile"))))
+        totalDFA.matchString("volatile") must beEqualTo(Some(List(Tokens.VolatileKeyword("volatile"))))
       }
 
       "while" in {
-        totalDFA.matchString("while") must beEqualTo(Some(List(Token.WhileKeyword("while"))))
+        totalDFA.matchString("while") must beEqualTo(Some(List(Tokens.WhileKeyword("while"))))
       }
 
       "true" in {
-        totalDFA.matchString("true") must beEqualTo(Some(List(Token.TrueLiteral("true"))))
+        totalDFA.matchString("true") must beEqualTo(Some(List(Tokens.TrueLiteral("true"))))
       }
 
       "false" in {
-        totalDFA.matchString("false") must beEqualTo(Some(List(Token.FalseLiteral("false"))))
+        totalDFA.matchString("false") must beEqualTo(Some(List(Tokens.FalseLiteral("false"))))
       }
 
       "null" in {
-        totalDFA.matchString("null") must beEqualTo(Some(List(Token.NullLiteral("null"))))
+        totalDFA.matchString("null") must beEqualTo(Some(List(Tokens.NullLiteral("null"))))
       }
     }
 
@@ -1837,73 +1837,73 @@ class TokenSpec extends Specification {
       theDFA must haveClass[DFA]
 
       "assign" in {
-        theDFA.matchString("=") must beEqualTo(Some(List(Token.Assign("="))))
+        theDFA.matchString("=") must beEqualTo(Some(List(Tokens.Assign("="))))
       }
 
       "equals" in {
-        theDFA.matchString("==") must beEqualTo(Some(List(Token.Equal("=="))))
+        theDFA.matchString("==") must beEqualTo(Some(List(Tokens.Equal("=="))))
       }
 
       "logical not" in {
-        theDFA.matchString("!") must beEqualTo(Some(List(Token.LogicalNot("!"))))
+        theDFA.matchString("!") must beEqualTo(Some(List(Tokens.LogicalNot("!"))))
       }
 
       "not equal" in {
-        theDFA.matchString("!=") must beEqualTo(Some(List(Token.NotEqual("!="))))
+        theDFA.matchString("!=") must beEqualTo(Some(List(Tokens.NotEqual("!="))))
       }
 
       "variable inequality" in {
         theDFA.matchString("a != b") must beEqualTo(Some(List(
-          Token.Identifier("a"),
-          Token.Whitespace(" "),
-          Token.NotEqual("!="),
-          Token.Whitespace(" "),
-          Token.Identifier("b")
+          Tokens.Identifier("a"),
+          Tokens.Whitespace(" "),
+          Tokens.NotEqual("!="),
+          Tokens.Whitespace(" "),
+          Tokens.Identifier("b")
         )))
       }
 
       "variable equality and assignment" in {
         theDFA.matchString("boolean areEqual = (a == b);") must beEqualTo(Some(List(
-          Token.BooleanKeyword("boolean"),
-          Token.Whitespace(" "),
-          Token.Identifier("areEqual"),
-          Token.Whitespace(" "),
-          Token.Assign("="),
-          Token.Whitespace(" "),
-          Token.LeftParen("("),
-          Token.Identifier("a"),
-          Token.Whitespace(" "),
-          Token.Equal("=="),
-          Token.Whitespace(" "),
-          Token.Identifier("b"),
-          Token.RightParen(")"),
-          Token.Semicolon(";")
+          Tokens.BooleanKeyword("boolean"),
+          Tokens.Whitespace(" "),
+          Tokens.Identifier("areEqual"),
+          Tokens.Whitespace(" "),
+          Tokens.Assign("="),
+          Tokens.Whitespace(" "),
+          Tokens.LeftParen("("),
+          Tokens.Identifier("a"),
+          Tokens.Whitespace(" "),
+          Tokens.Equal("=="),
+          Tokens.Whitespace(" "),
+          Tokens.Identifier("b"),
+          Tokens.RightParen(")"),
+          Tokens.Semicolon(";")
         )))
       }
 
       "class declaration" in {
         theDFA.matchString("public static Bicycle(int startGear) { gear = startGear; }") must beEqualTo(Some(List(
-          Token.PublicKeyword("public"),
-          Token.Whitespace(" "),
-          Token.StaticKeyword("static"),
-          Token.Whitespace(" "),
-          Token.Identifier("Bicycle"),
-          Token.LeftParen("("),
-          Token.IntKeyword("int"),
-          Token.Whitespace(" "),
-          Token.Identifier("startGear"),
-          Token.RightParen(")"),
-          Token.Whitespace(" "),
-          Token.LeftCurly("{"),
-          Token.Whitespace(" "),
-          Token.Identifier("gear"),
-          Token.Whitespace(" "),
-          Token.Assign("="),
-          Token.Whitespace(" "),
-          Token.Identifier("startGear"),
-          Token.Semicolon(";"),
-          Token.Whitespace(" "),
-          Token.RightCurly("}")
+          Tokens.PublicKeyword("public"),
+          Tokens.Whitespace(" "),
+          Tokens.StaticKeyword("static"),
+          Tokens.Whitespace(" "),
+          Tokens.Identifier("Bicycle"),
+          Tokens.LeftParen("("),
+          Tokens.IntKeyword("int"),
+          Tokens.Whitespace(" "),
+          Tokens.Identifier("startGear"),
+          Tokens.RightParen(")"),
+          Tokens.Whitespace(" "),
+          Tokens.LeftCurly("{"),
+          Tokens.Whitespace(" "),
+          Tokens.Identifier("gear"),
+          Tokens.Whitespace(" "),
+          Tokens.Assign("="),
+          Tokens.Whitespace(" "),
+          Tokens.Identifier("startGear"),
+          Tokens.Semicolon(";"),
+          Tokens.Whitespace(" "),
+          Tokens.RightCurly("}")
         )))
       }
     }

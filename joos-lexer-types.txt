@@ -1,0 +1,117 @@
+//  Custom file format to define lexer types
+//  <TokenName> <Fixed|Variable> (ExpectedData)?
+
+BOF Fixed
+EOF Fixed
+S Fixed
+
+Question Fixed ?
+LeftParen Fixed (
+RightParen Fixed )
+LeftBracket Fixed [
+RightBracket Fixed ]
+LeftCurly Fixed {
+RightCurly Fixed }
+Colon Fixed :
+Comma Fixed ,
+Dot Fixed .
+Assign Fixed =
+Equal Fixed ==
+LogicalNot Fixed !
+BinaryNot Fixed ~
+NotEqual Fixed !=
+Divide Fixed /
+DivideAssign Fixed /=
+Plus Fixed +
+PlusAssign Fixed +=
+Increment Fixed ++
+Minus Fixed -
+MinusAssign Fixed -=
+Decrement Fixed --
+Star Fixed *
+StarAssign Fixed *=
+Modulo Fixed %
+ModuloAssign Fixed %=
+GreaterThan Fixed >
+GreaterEqual Fixed >=
+ShiftRight Fixed >>
+ShiftRightAssign Fixed >>=
+BinaryShiftRight Fixed >>>
+BinaryShiftRightAssign Fixed >>>=
+LessThan Fixed <
+LessEqual Fixed <=
+ShiftLeft Fixed <<
+ShiftLeftAssign Fixed <<=
+BinaryXor Fixed ^
+BinaryXorAssign Fixed ^=
+BinaryOr Fixed |
+BinaryOrAssign Fixed |=
+LogicalOr Fixed ||
+BinaryAnd Fixed &
+BinaryAndAssign Fixed &=
+LogicalAnd Fixed &&
+Semicolon Fixed ;
+
+Whitespace Variable
+SingleLineComment Variable
+MultiLineComment Variable
+JavaDocComment Variable
+
+Num Variable
+CharLiteral Variable
+StringLiteral Variable
+
+Identifier Variable
+
+AbstractKeyword Fixed abstract
+BooleanKeyword Fixed boolean
+BreakKeyword Fixed break
+ByteKeyword Fixed byte
+CaseKeyword Fixed case
+CatchKeyword Fixed catch
+CharKeyword Fixed char
+ClassKeyword Fixed class
+ConstKeyword Fixed const
+ContinueKeyword Fixed continue
+DefaultKeyword Fixed default
+DoKeyword Fixed do
+DoubleKeyword Fixed double
+ElseKeyword Fixed else
+ExtendsKeyword Fixed extends
+FinalKeyword Fixed final
+FinallyKeyword Fixed finally
+FloatKeyword Fixed float
+ForKeyword Fixed for
+GotoKeyword Fixed goto
+IfKeyword Fixed if
+ImplementsKeyword Fixed implements
+ImportKeyword Fixed import
+InstanceofKeyword Fixed instanceof
+IntKeyword Fixed int
+InterfaceKeyword Fixed interface
+LongKeyword Fixed long
+NativeKeyword Fixed native
+NewKeyword Fixed new
+PackageKeyword Fixed package
+PrivateKeyword Fixed private
+ProtectedKeyword Fixed protected
+PublicKeyword Fixed public
+ReturnKeyword Fixed return
+ShortKeyword Fixed short
+StaticKeyword Fixed static
+StrictfpKeyword Fixed strictfp
+SuperKeyword Fixed super
+SwitchKeyword Fixed switch
+SynchronizedKeyword Fixed synchronized
+ThisKeyword Fixed this
+ThrowKeyword Fixed throw
+ThrowsKeyword Fixed throws
+TransientKeyword Fixed transient
+TryKeyword Fixed try
+VoidKeyword Fixed void
+VolatileKeyword Fixed volatile
+WhileKeyword Fixed while
+
+TrueLiteral Fixed true
+FalseLiteral Fixed false
+NullLiteral Fixed null
