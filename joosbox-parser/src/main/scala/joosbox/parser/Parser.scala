@@ -123,7 +123,11 @@ class Parser(
   def parse(_symbols: List[joosbox.lexer.Token]): ParseNode = {
     //  Remove whitespace. TODO: Should we be doing this here?
     val symbols: List[joosbox.lexer.Token] =
-      _symbols.filter((s: joosbox.lexer.Token) => s.tokenType != TokenTypes.Whitespace)
+      _symbols.filter((s: joosbox.lexer.Token) => (
+        s.tokenType != TokenTypes.Whitespace &&
+        s.tokenType != TokenTypes.SingleLineComment &&
+        s.tokenType != TokenTypes.MultiLineComment &&
+        s.tokenType != TokenTypes.JavaDocComment))
 
     var nodeStack : scala.collection.mutable.Stack[ParseNode] = scala.collection.mutable.Stack[ParseNode]()
     var stateStack : scala.collection.mutable.Stack[Int] = scala.collection.mutable.Stack[Int]()
