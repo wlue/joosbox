@@ -10,7 +10,7 @@ import joosbox.lexer.TokenNFA
 class SyntaxError(msg: String) extends RuntimeException(msg)
 
 class ProductionRule(val nonTerminal: ParseNodeType, val others: List[ParseNodeType]) {
-  override def toString: String = nonTerminal + " " + others.mkString(" ")
+  override def toString: String = nonTerminal.getClass.getSimpleName + " " + others.map(_.getClass.getSimpleName).mkString(" ")
   def dropCount: Int = others.size
 }
 

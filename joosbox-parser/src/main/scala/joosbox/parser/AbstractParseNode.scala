@@ -28,4 +28,23 @@ abstract class ParseNode(val children: List[ParseNode] = List.empty[ParseNode], 
     case node: ParseNode => node.value.equals(value) && node.children.equals(children)
     case _ => false
   }
+
+  def instantiateThis(args: AnyRef*): ParseNode = instantiate(getClass)(args: _*)
+
+  def instantiate(clazz: java.lang.Class[_ <: ParseNode])(args: AnyRef*): ParseNode = {
+    val constructor = clazz.getConstructors()(0)
+    constructor.newInstance(args:_*).asInstanceOf[ParseNode]
+  }
+
+  def flatten: Option[ParseNode] = {
+    if (value != None || children.size > 1) {
+      Some(instantiateThis(children.flatMap(_.flatten).toList, value))
+    } else {
+      if (children.size == 1) {
+        children.head.flatten
+      } else {
+        None
+      }
+    }
+  }
 }
