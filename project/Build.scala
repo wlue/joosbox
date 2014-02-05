@@ -2,9 +2,11 @@ package joosbox
 
 import sbt._
 import Keys._
+import sbtassembly.Plugin._
+import AssemblyKeys._
 
 object JoosboxBuild extends Build {
-  val sharedSettings = Project.defaultSettings ++ Seq(
+  val sharedSettings = Project.defaultSettings ++ assemblySettings ++ Seq(
     organization := "joosbox",
 
     scalaVersion := "2.10.3",
@@ -19,18 +21,24 @@ object JoosboxBuild extends Build {
 
     parallelExecution in Test := false,
 
-    scalacOptions := Seq("-feature", "-unchecked")
+    scalacOptions := Seq("-feature", "-unchecked", "-deprecation"),
+
+    test in assembly := {}
   )
 
-  lazy val joosbox = Project(
-    id = "joosbox",
-    base = file("."),
-    settings = sharedSettings
-  ).aggregate(
-    lexer,
-    parser,
-    compiler
-  )
+  // lazy val joosbox = Project(
+  //   id = "joosbox",
+  //   base = file("."),
+  //   settings = sharedSettings
+  // ).settings(
+  //   name := "joosbox",
+  //   mainClass in assembly := Some("joosbox.compiler.CompilerRunner"),
+  // ).aggregate(
+  //   lexer,
+  //   parser,
+  //   compiler,
+  //   core
+  // )
 
   lazy val core = Project(
     id = "joosbox-core",
@@ -43,9 +51,7 @@ object JoosboxBuild extends Build {
   lazy val lexer = Project(
     id = "joosbox-lexer",
     base = file("joosbox-lexer"),
-    settings = sharedSettings ++ Seq(
-      mainClass := Some("joosbox.lexer.LexerRunner")
-    )
+    settings = sharedSettings
   ).settings(
     name := "joosbox-lexer"
   ).dependsOn(core)
@@ -53,9 +59,7 @@ object JoosboxBuild extends Build {
   lazy val parser = Project(
     id = "joosbox-parser",
     base = file("joosbox-parser"),
-    settings = sharedSettings ++ Seq(
-      mainClass := Some("joosbox.lexer.ParserRunner")
-    )
+    settings = sharedSettings
   ).settings(
     name := "joosbox-parser"
   ).dependsOn(core, lexer)
@@ -68,6 +72,6 @@ object JoosboxBuild extends Build {
     )
   ).settings(
     name := "joosbox-compiler"
-  ).dependsOn(core)
+  ).dependsOn(core, lexer, parser)
 }
 

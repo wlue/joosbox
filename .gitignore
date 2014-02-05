@@ -20,3 +20,6 @@ project/plugins/project/
 # output dfas, graphs, etc
 *.png
 *.dot
+
+# joosbox
+joosc
