@@ -27,6 +27,8 @@ object ReduceTransition {
 }
 
 object Parser {
+  lazy val Joos: Parser = Parser.fromLR1File("joos1w.lr1")
+
   def fromLR1Definition(definition: String): Parser = {
     val lines:Array[String] = definition.split("\n")
 
@@ -115,6 +117,7 @@ class Parser(
 ) {
   lazy val lexer = TokenNFA.nfa.toDFA
 
+  def parseFilename(filename: String): ParseNode = parseString(scala.io.Source.fromFile(filename).mkString)
   def parseString(str: String): ParseNode = parse(lexer.matchString(str).get)
 
   def parse(_symbols: List[joosbox.lexer.Token]): ParseNode = {

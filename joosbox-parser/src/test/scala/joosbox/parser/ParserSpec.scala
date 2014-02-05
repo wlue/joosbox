@@ -11,7 +11,7 @@ class ParserSpec extends Specification {
     }
 
     "parse full LR1 grammar" in {
-      val p: Parser = Parser.fromLR1File("joos1w.lr1")
+      val p: Parser = Parser.Joos
 
       val result: ParseNode = p.parse(List(
         Tokens.ClassKeyword("class"),
@@ -40,7 +40,7 @@ class ParserSpec extends Specification {
     }
 
     "parse full LR1 grammar and then syntax error" in {
-      val p: Parser = Parser.fromLR1File("joos1w.lr1")
+      val p: Parser = Parser.Joos
 
       p.parse(List(
         Tokens.PackageKeyword("package"),
@@ -63,7 +63,7 @@ class Test {
 }
       """
 
-      Parser.fromLR1File("joos1w.lr1").parseString(test) must not(throwA[SyntaxError])
+      Parser.Joos.parseString(test) must not(throwA[SyntaxError])
     }
 
     "scan and parse a valid Joos program on the LR1 grammar" in {
@@ -74,7 +74,7 @@ class Test {
     }
 }
       """
-      Parser.fromLR1File("joos1w.lr1").parseString(test) must not(throwA[SyntaxError])
+      Parser.Joos.parseString(test) must not(throwA[SyntaxError])
     }
 
     "scan and parse a valid Joos program on the LR1 grammar" in {
@@ -89,7 +89,7 @@ class Test {
 }
       """
 
-      Parser.fromLR1File("joos1w.lr1").parseString(test) must not(throwA[SyntaxError])
+      Parser.Joos.parseString(test) must not(throwA[SyntaxError])
     }
   }
 }
