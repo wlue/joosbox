@@ -700,13 +700,13 @@ class Test {
         parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/Je_1_CastToArrayLvalue.java") must throwA[SyntaxError]
       }
       "Je_1_ClassDeclaration_WrongFileName" in {
-        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/Je_1_ClassDeclaration_WrongFileName.java") must not(throwA[Exception])
+        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/Je_1_ClassDeclaration_WrongFileName.java") must throwA[SyntaxError]
       }
       "Je_1_ClassDeclaration_WrongFileName_Dot.foo" in {
-        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/Je_1_ClassDeclaration_WrongFileName_Dot.foo.java") must not(throwA[Exception])
+        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/Je_1_ClassDeclaration_WrongFileName_Dot.foo.java") must throwA[SyntaxError]
       }
       "Je_1_ClassDeclaration_WrongFileName_Suffix" in {
-        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/Je_1_ClassDeclaration_WrongFileName_Suffix.java") must not(throwA[Exception])
+        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/Je_1_ClassDeclaration_WrongFileName_Suffix.java") must throwA[SyntaxError]
       }
       "Je_1_ClassInstantiation_InstantiateSimpleType" in {
         parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/Je_1_ClassInstantiation_InstantiateSimpleType.java") must throwA[SyntaxError]
@@ -859,19 +859,19 @@ class Test {
         parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/Je_1_Interface_WrongFileName.java") must throwA[SyntaxError]
       }
       "Je_1_IntRange_MinusTooBigInt" in {
-        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/Je_1_IntRange_MinusTooBigInt.java") must not(throwA[Exception])
+        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/Je_1_IntRange_MinusTooBigInt.java") must throwA[SyntaxError]
       }
       "Je_1_IntRange_PlusTooBigInt" in {
-        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/Je_1_IntRange_PlusTooBigInt.java") must not(throwA[Exception])
+        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/Je_1_IntRange_PlusTooBigInt.java") must throwA[SyntaxError]
       }
       "Je_1_IntRange_TooBigInt" in {
-        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/Je_1_IntRange_TooBigInt.java") must not(throwA[Exception])
+        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/Je_1_IntRange_TooBigInt.java") must throwA[SyntaxError]
       }
       "Je_1_IntRange_TooBigInt_InInitializer" in {
-        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/Je_1_IntRange_TooBigInt_InInitializer.java") must not(throwA[Exception])
+        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/Je_1_IntRange_TooBigInt_InInitializer.java") must throwA[SyntaxError]
       }
       "Je_1_IntRange_TooBigIntNegated" in {
-        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/Je_1_IntRange_TooBigIntNegated.java") must not(throwA[Exception])
+        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/Je_1_IntRange_TooBigIntNegated.java") must throwA[SyntaxError]
       }
       "Je_1_JoosTypes_Double" in {
         parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/Je_1_JoosTypes_Double.java") must throwA[SyntaxError]
@@ -934,7 +934,7 @@ class Test {
         parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/Je_1_MultiArrayTypes_Dimensions.java") must throwA[SyntaxError]
       }
       "Je_1_NegIntTooLow" in {
-        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/Je_1_NegIntTooLow.java") must not(throwA[Exception])
+        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/Je_1_NegIntTooLow.java") must throwA[SyntaxError]
       }
       "Je_1_NonJoosConstructs_AssignmentOperations_BitwiseAnd" in {
         parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/Je_1_NonJoosConstructs_AssignmentOperations_BitwiseAnd.java") must throwA[SyntaxError]
