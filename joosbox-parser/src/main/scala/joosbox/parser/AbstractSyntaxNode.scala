@@ -50,10 +50,10 @@ object AbstractSyntaxNode {
   case class ClassType(override val value: InputString) extends ClassOrInterfaceType(value)
   case class InterfaceType(override val value: InputString) extends ClassOrInterfaceType(value)
 
-  abstract class Modifier extends AbstractSyntaxNode
+  sealed trait Modifier extends AbstractSyntaxNode
 
-  abstract class AccessModifier extends Modifier
-  abstract class NonAccessModifier extends Modifier
+  sealed trait AccessModifier extends Modifier
+  sealed trait NonAccessModifier extends Modifier
   case object StaticKeyword extends NonAccessModifier
 
   case object PublicKeyword extends AccessModifier
