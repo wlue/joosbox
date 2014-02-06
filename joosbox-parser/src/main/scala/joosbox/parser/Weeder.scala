@@ -6,7 +6,7 @@ import joosbox.lexer.Token
 import joosbox.lexer.SyntaxError
 
 object PreParseWeeder {
-  def verify(input: Token) : Option[Token] = input.tokenType match {
+  def verify(input: Token): Option[Token] = input.tokenType match {
     case TokenTypes.AbstractKeyword   |
          TokenTypes.Assign            |
          TokenTypes.BOF               |

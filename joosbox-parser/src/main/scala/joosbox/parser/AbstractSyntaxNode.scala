@@ -486,7 +486,7 @@ object AbstractSyntaxNode {
       case s: ParseNodes.S    => fromParseNode(s.children(1))    //  Grab the compilation unit.
       case p: ParseNodes.BOF  => None
       case p: ParseNodes.EOF  => None
-      case p: ParseNode => 
+      case p: ParseNode => {
         println("debug: unmatched node: " + p)
         None
       }
