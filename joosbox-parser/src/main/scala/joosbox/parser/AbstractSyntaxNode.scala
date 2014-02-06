@@ -36,11 +36,56 @@ object AbstractSyntaxNode {
   case class SingleTypeImportDeclaration(name: InputString) extends ImportDeclaration
   case class TypeImportOnDemandDeclaration(name: InputString) extends ImportDeclaration
 
-  sealed trait TypeDeclaration extends AbstractSyntaxNode
-  case object ClassDeclaration extends TypeDeclaration
-  case object InterfaceDeclaration extends TypeDeclaration
-
   case class Identifier(value: InputString) extends AbstractSyntaxNode
+
+  //TODO
+  case class ClassBody() extends AbstractSyntaxNode
+  case class InterfaceBody() extends AbstractSyntaxNode
+
+  abstract class Name(val value: InputString) extends AbstractSyntaxNode 
+  case class SimpleName(override val value: InputString) extends Name(value)
+  case class QualifiedName(override val value: InputString) extends Name(value)
+
+  abstract class ClassOrInterfaceType(override val value: InputString) extends Name(value)
+  case class ClassType(override val value: InputString) extends ClassOrInterfaceType(value)
+  case class InterfaceType(override val value: InputString) extends ClassOrInterfaceType(value)
+
+  abstract class Modifier extends AbstractSyntaxNode
+
+  abstract class AccessModifier extends Modifier
+  abstract class NonAccessModifier extends Modifier
+  case object StaticKeyword extends NonAccessModifier
+
+  case object PublicKeyword extends AccessModifier
+  case object ProtectedKeyword extends AccessModifier
+
+  case object AbstractKeyword extends NonAccessModifier
+  case object FinalKeyword extends NonAccessModifier
+  case object NativeKeyword extends NonAccessModifier
+
+  abstract class TypeDeclaration(
+    val name: InputString,
+    val modifiers: Seq[Modifier] = Seq.empty[Modifier],
+    val interfaces: Seq[InterfaceType] = Seq.empty[InterfaceType]
+  ) extends AbstractSyntaxNode
+
+  case class ClassDeclaration(
+    override val name: InputString,
+    val body: ClassBody,
+
+    override val modifiers: Seq[Modifier] = Seq.empty[Modifier],
+    val superclass: Option[ClassType] = None,
+    override val interfaces: Seq[InterfaceType] = Seq.empty[InterfaceType]
+  ) extends TypeDeclaration(name, modifiers, interfaces)
+
+  case class InterfaceDeclaration(
+    override val name: InputString,
+    val body: InterfaceBody,
+
+    override val modifiers: Seq[Modifier] = Seq.empty[Modifier],
+    override val interfaces: Seq[InterfaceType] = Seq.empty[InterfaceType]
+  ) extends TypeDeclaration(name, modifiers, interfaces)
+
   /*
   case class Star(override val children: List[ParseNode] = List.empty[ParseNode], override val value: Option[InputString] = None) extends ParseNode {
     def tokenType: Option[TokenType] = Some(TokenTypes.Star)
@@ -198,40 +243,11 @@ object AbstractSyntaxNode {
   case class ReferenceType(override val children: List[ParseNode] = List.empty[ParseNode], override val value: Option[InputString] = None) extends ParseNode {
     def tokenType: Option[TokenType] = None
   }
-  case class ClassOrInterfaceType(override val children: List[ParseNode] = List.empty[ParseNode], override val value: Option[InputString] = None) extends ParseNode {
-    def tokenType: Option[TokenType] = None
-  }
-  case class ClassType(override val children: List[ParseNode] = List.empty[ParseNode], override val value: Option[InputString] = None) extends ParseNode {
-    def tokenType: Option[TokenType] = None
-  }
-  case class InterfaceType(override val children: List[ParseNode] = List.empty[ParseNode], override val value: Option[InputString] = None) extends ParseNode {
-    def tokenType: Option[TokenType] = None
-  }
+
   case class ArrayType(override val children: List[ParseNode] = List.empty[ParseNode], override val value: Option[InputString] = None) extends ParseNode {
     def tokenType: Option[TokenType] = None
   }
-  case class Name(override val children: List[ParseNode] = List.empty[ParseNode], override val value: Option[InputString] = None) extends ParseNode {
-    def tokenType: Option[TokenType] = None
-  }
-  case class SimpleName(override val children: List[ParseNode] = List.empty[ParseNode], override val value: Option[InputString] = None) extends ParseNode {
-    def tokenType: Option[TokenType] = None
-  }
-  case class QualifiedName(override val children: List[ParseNode] = List.empty[ParseNode], override val value: Option[InputString] = None) extends ParseNode {
-    def tokenType: Option[TokenType] = None
-  }
 
-  case class Modifiers(override val children: List[ParseNode] = List.empty[ParseNode], override val value: Option[InputString] = None) extends ParseNode {
-    def tokenType: Option[TokenType] = None
-  }
-  case class Modifier(override val children: List[ParseNode] = List.empty[ParseNode], override val value: Option[InputString] = None) extends ParseNode {
-    def tokenType: Option[TokenType] = None
-  }
-  case class AccessModifier(override val children: List[ParseNode] = List.empty[ParseNode], override val value: Option[InputString] = None) extends ParseNode {
-    def tokenType: Option[TokenType] = None
-  }
-  case class NonAccessModifier(override val children: List[ParseNode] = List.empty[ParseNode], override val value: Option[InputString] = None) extends ParseNode {
-    def tokenType: Option[TokenType] = None
-  }
   case class ClassDeclaration(override val children: List[ParseNode] = List.empty[ParseNode], override val value: Option[InputString] = None) extends ParseNode {
     def tokenType: Option[TokenType] = None
   }
@@ -502,10 +518,74 @@ object AbstractSyntaxNode {
     case i: ParseNodes.SingleTypeImportDeclaration   => Seq(SingleTypeImportDeclaration(i.children(1).value.get))
     case i: ParseNodes.TypeImportOnDemandDeclaration => Seq(TypeImportOnDemandDeclaration(i.children(1).value.get))
 
-    //  TODO
-    case t: ParseNodes.ClassDeclaration     => Seq(ClassDeclaration)
-    case t: ParseNodes.InterfaceDeclaration => Seq(InterfaceDeclaration)
+    case c: ParseNodes.ClassDeclaration => {
+      val children:Seq[AbstractSyntaxNode] = c.children.flatMap(fromParseNode(_))
+      
+      val name:Identifier = children.flatMap {
+        case x:Identifier => Some(x)
+        case _ => None
+      }.head
 
+      val modifiers:Seq[Modifier] = children.flatMap {
+        case x:Modifier => Some(x)
+        case _ => None
+      }
+
+      val superclass:Option[ClassType] = children.flatMap {
+        case x:ClassType => Some(x)
+        case _ => None
+      }.headOption
+
+      val interfaces:Seq[InterfaceType] = children.flatMap {
+        case x:InterfaceType => Some(x)
+        case _ => None
+      }
+
+      val body:ClassBody = children.flatMap {
+        case x:ClassBody => Some(x)
+        case _ => None
+      }.head
+
+      Seq(ClassDeclaration(name.value, body, modifiers, superclass, interfaces))
+    }
+
+    case c: ParseNodes.InterfaceDeclaration => {
+      val children:Seq[AbstractSyntaxNode] = c.children.flatMap(fromParseNode(_))
+
+      val name:Identifier = children.flatMap {
+        case x:Identifier => Some(x)
+        case _ => None
+      }.head
+
+      val modifiers:Seq[Modifier] = children.flatMap {
+        case x:Modifier => Some(x)
+        case _ => None
+      }
+
+      val interfaces:Seq[InterfaceType] = children.flatMap {
+        case x:InterfaceType => Some(x)
+        case _ => None
+      }
+
+      val body:InterfaceBody = children.flatMap {
+        case x:InterfaceBody => Some(x)
+        case _ => None
+      }.head
+
+      Seq(InterfaceDeclaration(name.value, body, modifiers, interfaces))
+    }
+
+    case i: ParseNodes.Identifier => Seq(Identifier(i.value.get))
+
+    //  TODO: Temp
+    case i: ParseNodes.ClassBody => Seq(ClassBody())
+
+    case m: ParseNodes.StaticKeyword => Seq(StaticKeyword)
+    case m: ParseNodes.PublicKeyword => Seq(PublicKeyword)
+    case m: ParseNodes.ProtectedKeyword => Seq(ProtectedKeyword)
+    case m: ParseNodes.AbstractKeyword => Seq(AbstractKeyword)
+    case m: ParseNodes.FinalKeyword => Seq(FinalKeyword)
+    case m: ParseNodes.NativeKeyword => Seq(NativeKeyword)
 
     //  If the parse node does not map nicely to an ASN, just hand us its children.
     case p: ParseNode => p.children.flatMap(fromParseNode(_))

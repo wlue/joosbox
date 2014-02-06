@@ -112,7 +112,7 @@ class AbstractSyntaxTreeSpec extends Specification {
             ParseNodes.TypeDeclaration(List[ParseNode](
               ParseNodes.ClassDeclaration(List[ParseNode](
                 ParseNodes.ClassKeyword(List.empty[ParseNode], Some("class")),
-                ParseNodes.Identifier(List.empty[ParseNode], Some("identifier")),
+                ParseNodes.Identifier(List.empty[ParseNode], Some("classname")),
                 ParseNodes.ClassBody(List[ParseNode](
                   ParseNodes.LeftCurly(List.empty[ParseNode], Some("{")),
                   ParseNodes.RightCurly(List.empty[ParseNode], Some("}"))
