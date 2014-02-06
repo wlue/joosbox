@@ -15,6 +15,9 @@ object TokenNFA {
     case (keyword: String, token: TokenType) => token -> NFA.fromString(keyword, token)
   }.toMap
 
+  lazy val octalStrs = (0 to 7).map { num => num.toString }.toArray
+  lazy val digitStrs = (0 to 9).map { num => num.toString }.toArray
+
   private val rawNFAs = Map(
     TokenTypes.Question -> NFA(
       Set(State("i"), State("?")),
@@ -569,14 +572,45 @@ object TokenNFA {
     ),
 
     TokenTypes.StringLiteral -> NFA(
-      Set(State("i"), State("\""), State("\"\\"), State("string")),
+      Set(State("i"), State("\""), State("\"\\"), State("string"),
+          State("oct"), State("oct2"),
+          State("part-oct"), State("part-oct2"), State("part-oct3")),
       Set(Symbol("\""), Symbol("\\"), NegatedSymbols("\"", "\\", "\n", "\r"),
-        NegatedSymbols("\n", "\r")),
+          NegatedSymbols((Array("\"", "\\", "\n", "\r") ++ digitStrs):_*), 
+          NegatedSymbols((Array("\"", "\\", "\n", "\r") ++ octalStrs):_*)) ++ (
+            Symbol.octalDigits ++ Symbol.quadDigits
+          ),
       Relation(Map(State("i")     -> Map( Symbol("\"") -> Set(State("\""))),
                    State("\"")    -> Map( Symbol("\"") -> Set(State("string")),
                                           Symbol("\\") -> Set(State("\"\\")),
                                           NegatedSymbols("\"", "\\", "\n", "\r") -> Set(State("\""))),
-                   State("\"\\")  -> Map( NegatedSymbols("\n", "\r") -> Set(State("\"")))
+                   State("\"\\")  -> (Map(  NegatedSymbols((Array("\"", "\\", "\n", "\r") ++ digitStrs):_*) -> Set(State("\"")),
+                                            Symbol("\"") -> Set(State("\"")),
+                                            Symbol("\\") -> Set(State("\""))) ++ (
+                                            Symbol.transitionsFromGroup(Symbol.octalDigits, Set(State("oct"))) ++
+                                            Symbol.transitionsFromGroup(Symbol.quadDigits, Set(State("part-oct")))
+                                      )),
+                   State("oct")       -> (Map(Symbol("\"") -> Set(State("string")),
+                                              Symbol("\\") -> Set(State("\"\\")),
+                                              NegatedSymbols((Array("\"", "\\", "\n", "\r") ++ octalStrs):_*) ->Set(State("\""))) ++ (
+                                              Symbol.transitionsFromGroup(Symbol.octalDigits, Set(State("oct2")))
+                                         )),
+                   State("oct2")      -> Map( Symbol("\"") -> Set(State("string")),
+                                              Symbol("\\") -> Set(State("\"\\")),
+                                              NegatedSymbols("\"", "\\", "\n", "\r") ->Set(State("\""))),
+                   State("part-oct")  -> (Map(Symbol("\"") -> Set(State("string")),
+                                              Symbol("\\") -> Set(State("\"\\")),
+                                              NegatedSymbols((Array("\"", "\\", "\n", "\r") ++ octalStrs):_*) ->Set(State("\""))) ++ (
+                                              Symbol.transitionsFromGroup(Symbol.octalDigits, Set(State("part-oct2")))
+                                         )),
+                   State("part-oct2") -> (Map(Symbol("\"") -> Set(State("string")),
+                                              Symbol("\\") -> Set(State("\"\\")),
+                                              NegatedSymbols((Array("\"", "\\", "\n", "\r") ++ octalStrs):_*) ->Set(State("\""))) ++ (
+                                              Symbol.transitionsFromGroup(Symbol.octalDigits, Set(State("part-oct3")))
+                                          )),
+                   State("part-oct3") -> Map( Symbol("\"") -> Set(State("string")),
+                                              Symbol("\\") -> Set(State("\"\\")),
+                                              NegatedSymbols("\"", "\\", "\n", "\r") ->Set(State("\"")))
                )),
       State("i"),
       Set(State("string"))
