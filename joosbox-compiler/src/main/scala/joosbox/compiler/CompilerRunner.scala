@@ -1,7 +1,7 @@
 package joosbox.compiler
 
 import joosbox.parser.Parser
-import joosbox.parser.SyntaxError
+import joosbox.lexer.SyntaxError
 
 object CompilerRunner {
   def main(args: Array[String]) {

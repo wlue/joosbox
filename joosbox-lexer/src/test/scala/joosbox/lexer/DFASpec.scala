@@ -261,8 +261,8 @@ class DFASpec extends Specification {
         ).toDFA
 
         dfa.matchString("abc") must beEqualTo(Some(List(Tokens.Identifier(InputString("abc")))))
-        dfa.matchString("abcdef") must beEqualTo(None)
-        dfa.matchString("abcdefghi") must beEqualTo(None)
+        dfa.matchString("abcdef") must throwA[SyntaxError]
+        dfa.matchString("abcdefghi") must throwA[SyntaxError]
         dfa.matchString("abcxyz") must beEqualTo(Some(List(Tokens.Identifier(InputString("abc")), Tokens.Identifier(("xyz", 3)))))
 
         dfa.consume("abc") must beEqualTo(Some(State("c"), ""))

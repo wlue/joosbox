@@ -3,6 +3,7 @@ package joosbox.parser
 import joosbox.lexer.TokenTypes
 import joosbox.lexer.TokenType
 import joosbox.lexer.Token
+import joosbox.lexer.SyntaxError
 
 object PreParseWeeder {
   def verify(input: Token) : Option[Token] = input.tokenType match {

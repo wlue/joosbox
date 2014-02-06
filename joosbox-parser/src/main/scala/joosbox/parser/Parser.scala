@@ -7,11 +7,7 @@ import joosbox.lexer.Tokens
 import joosbox.lexer.Token
 import joosbox.lexer.TokenNFA
 import joosbox.lexer.InputString
-
-class SyntaxError(msg: String) extends RuntimeException(msg)
-object SyntaxError {
-  def apply(token: Token, message: String = ""): SyntaxError = new SyntaxError("Invalid token " + token.data + ". " + message)
-}
+import joosbox.lexer.SyntaxError
 
 class ProductionRule(val nonTerminal: ParseNodeType, val others: List[ParseNodeType]) {
   override def toString: String = nonTerminal.getClass.getSimpleName + " " + others.map(_.getClass.getSimpleName).mkString(" ")
