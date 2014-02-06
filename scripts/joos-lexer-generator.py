@@ -30,22 +30,22 @@ print """package joosbox.lexer
 fixed_template = """
   object %s extends FixedTokenType {
     override def value = "%s"
-    override def apply(data: String = ""): Token = new Tokens.%s(verify(data))
+    override def apply(data: InputString): Token = new Tokens.%s(verify(data))
   }"""
 
 variable_template = """
   object %s extends VariableTokenType {
-    override def apply(data: String = ""): Token = new Tokens.%s(verify(data))
+    override def apply(data: InputString): Token = new Tokens.%s(verify(data))
   }"""
 
 keyword_template = """
   object %s extends KeywordTokenType {
     override def value = "%s"
-    override def apply(data: String = ""): Token = new Tokens.%s(verify(data))
+    override def apply(data: InputString): Token = new Tokens.%s(verify(data))
   }"""
 
 case_class_template = \
-    """  case class %s(override val data: String) extends %s(data) {
+    """  case class %s(override val data: InputString) extends %s(data) {
     override def tokenType: TokenType = TokenTypes.%s
   }
 """

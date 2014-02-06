@@ -1,13 +1,14 @@
 package joosbox.parser
 
 import joosbox.lexer.TokenType
+import joosbox.lexer.InputString
 
 abstract class ParseNodeType {
-  def apply(children: List[ParseNode] = List.empty[ParseNode], value: Option[String] = None): ParseNode
+  def apply(children: List[ParseNode] = List.empty[ParseNode], value: Option[InputString] = None): ParseNode
   def tokenType: Option[TokenType]
 }
 
-abstract class ParseNode(val children: List[ParseNode] = List.empty[ParseNode], val value: Option[String] = None) {
+abstract class ParseNode(val children: List[ParseNode] = List.empty[ParseNode], val value: Option[InputString] = None) {
   def tokenType: Option[TokenType]
 
   override def toString: String = if (children.size > 0) {

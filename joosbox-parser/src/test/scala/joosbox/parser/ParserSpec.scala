@@ -3,6 +3,7 @@ package joosbox.parser.test
 import org.specs2.mutable._
 import joosbox.parser._
 import joosbox.lexer._
+import InputStringImplicits._
 
 class ParserSpec extends Specification {
   "Parser" should {
@@ -103,54 +104,54 @@ class Test {
       Parser.Joos.parseString(test).flatten must beEqualTo(Some(
         ParseNodes.S(List[ParseNode](
           ParseNodes.ClassDeclaration(List[ParseNode](
-            ParseNodes.ClassKeyword(List[ParseNode](), Some("class")),
-            ParseNodes.Identifier(List[ParseNode](), Some("Test")),
+            ParseNodes.ClassKeyword(List[ParseNode](), Some(("class", 2, 0))),
+            ParseNodes.Identifier(List[ParseNode](), Some(("Test", 2, 6))),
             ParseNodes.ClassBody(List[ParseNode](
-              ParseNodes.LeftCurly(List[ParseNode](), Some("{")),
+              ParseNodes.LeftCurly(List[ParseNode](), Some(("{", 2, 11))),
               ParseNodes.MethodDeclaration(List[ParseNode](
                 ParseNodes.MethodHeader(List[ParseNode](
                   ParseNodes.Modifiers(List[ParseNode](
-                    ParseNodes.PublicKeyword(List[ParseNode](), Some("public")),
-                    ParseNodes.StaticKeyword(List[ParseNode](), Some("static"))
+                    ParseNodes.PublicKeyword(List[ParseNode](), Some(("public", 3, 4))),
+                    ParseNodes.StaticKeyword(List[ParseNode](), Some(("static", 3, 11)))
                   )),
-                  ParseNodes.VoidKeyword(List[ParseNode](), Some("void")),
+                  ParseNodes.VoidKeyword(List[ParseNode](), Some(("void", 3, 18))),
                   ParseNodes.MethodDeclarator(List[ParseNode](
-                    ParseNodes.Identifier(List[ParseNode](), Some("main")),
-                    ParseNodes.LeftParen(List[ParseNode](), Some("(")),
+                    ParseNodes.Identifier(List[ParseNode](), Some(("main", 3, 23))),
+                    ParseNodes.LeftParen(List[ParseNode](), Some(("(", 3, 27))),
                       ParseNodes.FormalParameter(List[ParseNode](
-                        ParseNodes.Identifier(List[ParseNode](), Some("String")),
+                        ParseNodes.Identifier(List[ParseNode](), Some(("String", 3, 28))),
                         ParseNodes.VariableDeclaratorId(List[ParseNode](
-                          ParseNodes.Identifier(List[ParseNode](), Some("args")),
-                          ParseNodes.LeftBracket(List[ParseNode](), Some("[")),
-                          ParseNodes.RightBracket(List[ParseNode](), Some("]"))
+                          ParseNodes.Identifier(List[ParseNode](), Some(("args", 3, 35))),
+                          ParseNodes.LeftBracket(List[ParseNode](), Some(("[", 3, 39))),
+                          ParseNodes.RightBracket(List[ParseNode](), Some(("]", 3, 40)))
                         ))
                       )),
-                      ParseNodes.RightParen(List[ParseNode](), Some(")"))
+                      ParseNodes.RightParen(List[ParseNode](), Some((")", 3, 41)))
                     ))
                 )),
                 ParseNodes.Block(List[ParseNode](
-                  ParseNodes.LeftCurly(List[ParseNode](), Some("{")),
+                  ParseNodes.LeftCurly(List[ParseNode](), Some(("{", 3, 43))),
                   ParseNodes.ExpressionStatement(List[ParseNode](
                     ParseNodes.MethodInvocation(List[ParseNode](
                       ParseNodes.QualifiedName(List[ParseNode](
                         ParseNodes.QualifiedName(List[ParseNode](
-                          ParseNodes.Identifier(List[ParseNode](), Some("System")),
-                          ParseNodes.Dot(List[ParseNode](), Some(".")),
-                          ParseNodes.Identifier(List[ParseNode](), Some("out"))
+                          ParseNodes.Identifier(List[ParseNode](), Some(("System", 4, 8))),
+                          ParseNodes.Dot(List[ParseNode](), Some((".", 4, 14))),
+                          ParseNodes.Identifier(List[ParseNode](), Some(("out", 4, 15)))
                         )),
-                        ParseNodes.Dot(List[ParseNode](), Some(".")),
-                        ParseNodes.Identifier(List[ParseNode](), Some("println"))
+                        ParseNodes.Dot(List[ParseNode](), Some((".", 4, 18))),
+                        ParseNodes.Identifier(List[ParseNode](), Some(("println", 4, 19)))
                       )),
-                      ParseNodes.LeftParen(List[ParseNode](), Some("(")),
-                      ParseNodes.StringLiteral(List[ParseNode](), Some("\"Hello world!\"")),
-                      ParseNodes.RightParen(List[ParseNode](), Some(")"))
+                      ParseNodes.LeftParen(List[ParseNode](), Some(("(", 4, 26))),
+                      ParseNodes.StringLiteral(List[ParseNode](), Some(("\"Hello world!\"", 4, 27))),
+                      ParseNodes.RightParen(List[ParseNode](), Some((")", 4, 41)))
                     )),
-                    ParseNodes.Semicolon(List[ParseNode](), Some(";"))
+                    ParseNodes.Semicolon(List[ParseNode](), Some((";", 4, 42)))
                   )),
-                  ParseNodes.RightCurly(List[ParseNode](), Some("}"))
+                  ParseNodes.RightCurly(List[ParseNode](), Some(("}", 5, 4)))
                 ))
               )),
-              ParseNodes.RightCurly(List[ParseNode](), Some("}"))
+              ParseNodes.RightCurly(List[ParseNode](), Some(("}", 6, 0)))
             ))
           ))
         ))

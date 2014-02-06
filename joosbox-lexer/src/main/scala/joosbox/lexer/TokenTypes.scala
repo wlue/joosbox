@@ -8,534 +8,534 @@ object TokenTypes {
 
   object BOF extends FixedTokenType {
     override def value = ""
-    override def apply(data: String = ""): Token = new Tokens.BOF(verify(data))
+    override def apply(data: InputString): Token = new Tokens.BOF(verify(data))
   }
 
   object EOF extends FixedTokenType {
     override def value = ""
-    override def apply(data: String = ""): Token = new Tokens.EOF(verify(data))
+    override def apply(data: InputString): Token = new Tokens.EOF(verify(data))
   }
 
   object S extends FixedTokenType {
     override def value = ""
-    override def apply(data: String = ""): Token = new Tokens.S(verify(data))
+    override def apply(data: InputString): Token = new Tokens.S(verify(data))
   }
 
   object Question extends FixedTokenType {
     override def value = "?"
-    override def apply(data: String = ""): Token = new Tokens.Question(verify(data))
+    override def apply(data: InputString): Token = new Tokens.Question(verify(data))
   }
 
   object LeftParen extends FixedTokenType {
     override def value = "("
-    override def apply(data: String = ""): Token = new Tokens.LeftParen(verify(data))
+    override def apply(data: InputString): Token = new Tokens.LeftParen(verify(data))
   }
 
   object RightParen extends FixedTokenType {
     override def value = ")"
-    override def apply(data: String = ""): Token = new Tokens.RightParen(verify(data))
+    override def apply(data: InputString): Token = new Tokens.RightParen(verify(data))
   }
 
   object LeftBracket extends FixedTokenType {
     override def value = "["
-    override def apply(data: String = ""): Token = new Tokens.LeftBracket(verify(data))
+    override def apply(data: InputString): Token = new Tokens.LeftBracket(verify(data))
   }
 
   object RightBracket extends FixedTokenType {
     override def value = "]"
-    override def apply(data: String = ""): Token = new Tokens.RightBracket(verify(data))
+    override def apply(data: InputString): Token = new Tokens.RightBracket(verify(data))
   }
 
   object LeftCurly extends FixedTokenType {
     override def value = "{"
-    override def apply(data: String = ""): Token = new Tokens.LeftCurly(verify(data))
+    override def apply(data: InputString): Token = new Tokens.LeftCurly(verify(data))
   }
 
   object RightCurly extends FixedTokenType {
     override def value = "}"
-    override def apply(data: String = ""): Token = new Tokens.RightCurly(verify(data))
+    override def apply(data: InputString): Token = new Tokens.RightCurly(verify(data))
   }
 
   object Colon extends FixedTokenType {
     override def value = ":"
-    override def apply(data: String = ""): Token = new Tokens.Colon(verify(data))
+    override def apply(data: InputString): Token = new Tokens.Colon(verify(data))
   }
 
   object Comma extends FixedTokenType {
     override def value = ","
-    override def apply(data: String = ""): Token = new Tokens.Comma(verify(data))
+    override def apply(data: InputString): Token = new Tokens.Comma(verify(data))
   }
 
   object Dot extends FixedTokenType {
     override def value = "."
-    override def apply(data: String = ""): Token = new Tokens.Dot(verify(data))
+    override def apply(data: InputString): Token = new Tokens.Dot(verify(data))
   }
 
   object Assign extends FixedTokenType {
     override def value = "="
-    override def apply(data: String = ""): Token = new Tokens.Assign(verify(data))
+    override def apply(data: InputString): Token = new Tokens.Assign(verify(data))
   }
 
   object Equal extends FixedTokenType {
     override def value = "=="
-    override def apply(data: String = ""): Token = new Tokens.Equal(verify(data))
+    override def apply(data: InputString): Token = new Tokens.Equal(verify(data))
   }
 
   object LogicalNot extends FixedTokenType {
     override def value = "!"
-    override def apply(data: String = ""): Token = new Tokens.LogicalNot(verify(data))
+    override def apply(data: InputString): Token = new Tokens.LogicalNot(verify(data))
   }
 
   object BinaryNot extends FixedTokenType {
     override def value = "~"
-    override def apply(data: String = ""): Token = new Tokens.BinaryNot(verify(data))
+    override def apply(data: InputString): Token = new Tokens.BinaryNot(verify(data))
   }
 
   object NotEqual extends FixedTokenType {
     override def value = "!="
-    override def apply(data: String = ""): Token = new Tokens.NotEqual(verify(data))
+    override def apply(data: InputString): Token = new Tokens.NotEqual(verify(data))
   }
 
   object Divide extends FixedTokenType {
     override def value = "/"
-    override def apply(data: String = ""): Token = new Tokens.Divide(verify(data))
+    override def apply(data: InputString): Token = new Tokens.Divide(verify(data))
   }
 
   object DivideAssign extends FixedTokenType {
     override def value = "/="
-    override def apply(data: String = ""): Token = new Tokens.DivideAssign(verify(data))
+    override def apply(data: InputString): Token = new Tokens.DivideAssign(verify(data))
   }
 
   object Plus extends FixedTokenType {
     override def value = "+"
-    override def apply(data: String = ""): Token = new Tokens.Plus(verify(data))
+    override def apply(data: InputString): Token = new Tokens.Plus(verify(data))
   }
 
   object PlusAssign extends FixedTokenType {
     override def value = "+="
-    override def apply(data: String = ""): Token = new Tokens.PlusAssign(verify(data))
+    override def apply(data: InputString): Token = new Tokens.PlusAssign(verify(data))
   }
 
   object Increment extends FixedTokenType {
     override def value = "++"
-    override def apply(data: String = ""): Token = new Tokens.Increment(verify(data))
+    override def apply(data: InputString): Token = new Tokens.Increment(verify(data))
   }
 
   object Minus extends FixedTokenType {
     override def value = "-"
-    override def apply(data: String = ""): Token = new Tokens.Minus(verify(data))
+    override def apply(data: InputString): Token = new Tokens.Minus(verify(data))
   }
 
   object MinusAssign extends FixedTokenType {
     override def value = "-="
-    override def apply(data: String = ""): Token = new Tokens.MinusAssign(verify(data))
+    override def apply(data: InputString): Token = new Tokens.MinusAssign(verify(data))
   }
 
   object Decrement extends FixedTokenType {
     override def value = "--"
-    override def apply(data: String = ""): Token = new Tokens.Decrement(verify(data))
+    override def apply(data: InputString): Token = new Tokens.Decrement(verify(data))
   }
 
   object Star extends FixedTokenType {
     override def value = "*"
-    override def apply(data: String = ""): Token = new Tokens.Star(verify(data))
+    override def apply(data: InputString): Token = new Tokens.Star(verify(data))
   }
 
   object StarAssign extends FixedTokenType {
     override def value = "*="
-    override def apply(data: String = ""): Token = new Tokens.StarAssign(verify(data))
+    override def apply(data: InputString): Token = new Tokens.StarAssign(verify(data))
   }
 
   object Modulo extends FixedTokenType {
     override def value = "%"
-    override def apply(data: String = ""): Token = new Tokens.Modulo(verify(data))
+    override def apply(data: InputString): Token = new Tokens.Modulo(verify(data))
   }
 
   object ModuloAssign extends FixedTokenType {
     override def value = "%="
-    override def apply(data: String = ""): Token = new Tokens.ModuloAssign(verify(data))
+    override def apply(data: InputString): Token = new Tokens.ModuloAssign(verify(data))
   }
 
   object GreaterThan extends FixedTokenType {
     override def value = ">"
-    override def apply(data: String = ""): Token = new Tokens.GreaterThan(verify(data))
+    override def apply(data: InputString): Token = new Tokens.GreaterThan(verify(data))
   }
 
   object GreaterEqual extends FixedTokenType {
     override def value = ">="
-    override def apply(data: String = ""): Token = new Tokens.GreaterEqual(verify(data))
+    override def apply(data: InputString): Token = new Tokens.GreaterEqual(verify(data))
   }
 
   object ShiftRight extends FixedTokenType {
     override def value = ">>"
-    override def apply(data: String = ""): Token = new Tokens.ShiftRight(verify(data))
+    override def apply(data: InputString): Token = new Tokens.ShiftRight(verify(data))
   }
 
   object ShiftRightAssign extends FixedTokenType {
     override def value = ">>="
-    override def apply(data: String = ""): Token = new Tokens.ShiftRightAssign(verify(data))
+    override def apply(data: InputString): Token = new Tokens.ShiftRightAssign(verify(data))
   }
 
   object BinaryShiftRight extends FixedTokenType {
     override def value = ">>>"
-    override def apply(data: String = ""): Token = new Tokens.BinaryShiftRight(verify(data))
+    override def apply(data: InputString): Token = new Tokens.BinaryShiftRight(verify(data))
   }
 
   object BinaryShiftRightAssign extends FixedTokenType {
     override def value = ">>>="
-    override def apply(data: String = ""): Token = new Tokens.BinaryShiftRightAssign(verify(data))
+    override def apply(data: InputString): Token = new Tokens.BinaryShiftRightAssign(verify(data))
   }
 
   object LessThan extends FixedTokenType {
     override def value = "<"
-    override def apply(data: String = ""): Token = new Tokens.LessThan(verify(data))
+    override def apply(data: InputString): Token = new Tokens.LessThan(verify(data))
   }
 
   object LessEqual extends FixedTokenType {
     override def value = "<="
-    override def apply(data: String = ""): Token = new Tokens.LessEqual(verify(data))
+    override def apply(data: InputString): Token = new Tokens.LessEqual(verify(data))
   }
 
   object ShiftLeft extends FixedTokenType {
     override def value = "<<"
-    override def apply(data: String = ""): Token = new Tokens.ShiftLeft(verify(data))
+    override def apply(data: InputString): Token = new Tokens.ShiftLeft(verify(data))
   }
 
   object ShiftLeftAssign extends FixedTokenType {
     override def value = "<<="
-    override def apply(data: String = ""): Token = new Tokens.ShiftLeftAssign(verify(data))
+    override def apply(data: InputString): Token = new Tokens.ShiftLeftAssign(verify(data))
   }
 
   object BinaryXor extends FixedTokenType {
     override def value = "^"
-    override def apply(data: String = ""): Token = new Tokens.BinaryXor(verify(data))
+    override def apply(data: InputString): Token = new Tokens.BinaryXor(verify(data))
   }
 
   object BinaryXorAssign extends FixedTokenType {
     override def value = "^="
-    override def apply(data: String = ""): Token = new Tokens.BinaryXorAssign(verify(data))
+    override def apply(data: InputString): Token = new Tokens.BinaryXorAssign(verify(data))
   }
 
   object BinaryOr extends FixedTokenType {
     override def value = "|"
-    override def apply(data: String = ""): Token = new Tokens.BinaryOr(verify(data))
+    override def apply(data: InputString): Token = new Tokens.BinaryOr(verify(data))
   }
 
   object BinaryOrAssign extends FixedTokenType {
     override def value = "|="
-    override def apply(data: String = ""): Token = new Tokens.BinaryOrAssign(verify(data))
+    override def apply(data: InputString): Token = new Tokens.BinaryOrAssign(verify(data))
   }
 
   object LogicalOr extends FixedTokenType {
     override def value = "||"
-    override def apply(data: String = ""): Token = new Tokens.LogicalOr(verify(data))
+    override def apply(data: InputString): Token = new Tokens.LogicalOr(verify(data))
   }
 
   object BinaryAnd extends FixedTokenType {
     override def value = "&"
-    override def apply(data: String = ""): Token = new Tokens.BinaryAnd(verify(data))
+    override def apply(data: InputString): Token = new Tokens.BinaryAnd(verify(data))
   }
 
   object BinaryAndAssign extends FixedTokenType {
     override def value = "&="
-    override def apply(data: String = ""): Token = new Tokens.BinaryAndAssign(verify(data))
+    override def apply(data: InputString): Token = new Tokens.BinaryAndAssign(verify(data))
   }
 
   object LogicalAnd extends FixedTokenType {
     override def value = "&&"
-    override def apply(data: String = ""): Token = new Tokens.LogicalAnd(verify(data))
+    override def apply(data: InputString): Token = new Tokens.LogicalAnd(verify(data))
   }
 
   object Semicolon extends FixedTokenType {
     override def value = ";"
-    override def apply(data: String = ""): Token = new Tokens.Semicolon(verify(data))
+    override def apply(data: InputString): Token = new Tokens.Semicolon(verify(data))
   }
 
   object Whitespace extends VariableTokenType {
-    override def apply(data: String = ""): Token = new Tokens.Whitespace(verify(data))
+    override def apply(data: InputString): Token = new Tokens.Whitespace(verify(data))
   }
 
   object SingleLineComment extends VariableTokenType {
-    override def apply(data: String = ""): Token = new Tokens.SingleLineComment(verify(data))
+    override def apply(data: InputString): Token = new Tokens.SingleLineComment(verify(data))
   }
 
   object MultiLineComment extends VariableTokenType {
-    override def apply(data: String = ""): Token = new Tokens.MultiLineComment(verify(data))
+    override def apply(data: InputString): Token = new Tokens.MultiLineComment(verify(data))
   }
 
   object JavaDocComment extends VariableTokenType {
-    override def apply(data: String = ""): Token = new Tokens.JavaDocComment(verify(data))
+    override def apply(data: InputString): Token = new Tokens.JavaDocComment(verify(data))
   }
 
   object Num extends VariableTokenType {
-    override def apply(data: String = ""): Token = new Tokens.Num(verify(data))
+    override def apply(data: InputString): Token = new Tokens.Num(verify(data))
   }
 
   object CharLiteral extends VariableTokenType {
-    override def apply(data: String = ""): Token = new Tokens.CharLiteral(verify(data))
+    override def apply(data: InputString): Token = new Tokens.CharLiteral(verify(data))
   }
 
   object StringLiteral extends VariableTokenType {
-    override def apply(data: String = ""): Token = new Tokens.StringLiteral(verify(data))
+    override def apply(data: InputString): Token = new Tokens.StringLiteral(verify(data))
   }
 
   object Identifier extends VariableTokenType {
-    override def apply(data: String = ""): Token = new Tokens.Identifier(verify(data))
+    override def apply(data: InputString): Token = new Tokens.Identifier(verify(data))
   }
 
   object AbstractKeyword extends KeywordTokenType {
     override def value = "abstract"
-    override def apply(data: String = ""): Token = new Tokens.AbstractKeyword(verify(data))
+    override def apply(data: InputString): Token = new Tokens.AbstractKeyword(verify(data))
   }
 
   object BooleanKeyword extends KeywordTokenType {
     override def value = "boolean"
-    override def apply(data: String = ""): Token = new Tokens.BooleanKeyword(verify(data))
+    override def apply(data: InputString): Token = new Tokens.BooleanKeyword(verify(data))
   }
 
   object BreakKeyword extends KeywordTokenType {
     override def value = "break"
-    override def apply(data: String = ""): Token = new Tokens.BreakKeyword(verify(data))
+    override def apply(data: InputString): Token = new Tokens.BreakKeyword(verify(data))
   }
 
   object ByteKeyword extends KeywordTokenType {
     override def value = "byte"
-    override def apply(data: String = ""): Token = new Tokens.ByteKeyword(verify(data))
+    override def apply(data: InputString): Token = new Tokens.ByteKeyword(verify(data))
   }
 
   object CaseKeyword extends KeywordTokenType {
     override def value = "case"
-    override def apply(data: String = ""): Token = new Tokens.CaseKeyword(verify(data))
+    override def apply(data: InputString): Token = new Tokens.CaseKeyword(verify(data))
   }
 
   object CatchKeyword extends KeywordTokenType {
     override def value = "catch"
-    override def apply(data: String = ""): Token = new Tokens.CatchKeyword(verify(data))
+    override def apply(data: InputString): Token = new Tokens.CatchKeyword(verify(data))
   }
 
   object CharKeyword extends KeywordTokenType {
     override def value = "char"
-    override def apply(data: String = ""): Token = new Tokens.CharKeyword(verify(data))
+    override def apply(data: InputString): Token = new Tokens.CharKeyword(verify(data))
   }
 
   object ClassKeyword extends KeywordTokenType {
     override def value = "class"
-    override def apply(data: String = ""): Token = new Tokens.ClassKeyword(verify(data))
+    override def apply(data: InputString): Token = new Tokens.ClassKeyword(verify(data))
   }
 
   object ConstKeyword extends KeywordTokenType {
     override def value = "const"
-    override def apply(data: String = ""): Token = new Tokens.ConstKeyword(verify(data))
+    override def apply(data: InputString): Token = new Tokens.ConstKeyword(verify(data))
   }
 
   object ContinueKeyword extends KeywordTokenType {
     override def value = "continue"
-    override def apply(data: String = ""): Token = new Tokens.ContinueKeyword(verify(data))
+    override def apply(data: InputString): Token = new Tokens.ContinueKeyword(verify(data))
   }
 
   object DefaultKeyword extends KeywordTokenType {
     override def value = "default"
-    override def apply(data: String = ""): Token = new Tokens.DefaultKeyword(verify(data))
+    override def apply(data: InputString): Token = new Tokens.DefaultKeyword(verify(data))
   }
 
   object DoKeyword extends KeywordTokenType {
     override def value = "do"
-    override def apply(data: String = ""): Token = new Tokens.DoKeyword(verify(data))
+    override def apply(data: InputString): Token = new Tokens.DoKeyword(verify(data))
   }
 
   object DoubleKeyword extends KeywordTokenType {
     override def value = "double"
-    override def apply(data: String = ""): Token = new Tokens.DoubleKeyword(verify(data))
+    override def apply(data: InputString): Token = new Tokens.DoubleKeyword(verify(data))
   }
 
   object ElseKeyword extends KeywordTokenType {
     override def value = "else"
-    override def apply(data: String = ""): Token = new Tokens.ElseKeyword(verify(data))
+    override def apply(data: InputString): Token = new Tokens.ElseKeyword(verify(data))
   }
 
   object ExtendsKeyword extends KeywordTokenType {
     override def value = "extends"
-    override def apply(data: String = ""): Token = new Tokens.ExtendsKeyword(verify(data))
+    override def apply(data: InputString): Token = new Tokens.ExtendsKeyword(verify(data))
   }
 
   object FinalKeyword extends KeywordTokenType {
     override def value = "final"
-    override def apply(data: String = ""): Token = new Tokens.FinalKeyword(verify(data))
+    override def apply(data: InputString): Token = new Tokens.FinalKeyword(verify(data))
   }
 
   object FinallyKeyword extends KeywordTokenType {
     override def value = "finally"
-    override def apply(data: String = ""): Token = new Tokens.FinallyKeyword(verify(data))
+    override def apply(data: InputString): Token = new Tokens.FinallyKeyword(verify(data))
   }
 
   object FloatKeyword extends KeywordTokenType {
     override def value = "float"
-    override def apply(data: String = ""): Token = new Tokens.FloatKeyword(verify(data))
+    override def apply(data: InputString): Token = new Tokens.FloatKeyword(verify(data))
   }
 
   object ForKeyword extends KeywordTokenType {
     override def value = "for"
-    override def apply(data: String = ""): Token = new Tokens.ForKeyword(verify(data))
+    override def apply(data: InputString): Token = new Tokens.ForKeyword(verify(data))
   }
 
   object GotoKeyword extends KeywordTokenType {
     override def value = "goto"
-    override def apply(data: String = ""): Token = new Tokens.GotoKeyword(verify(data))
+    override def apply(data: InputString): Token = new Tokens.GotoKeyword(verify(data))
   }
 
   object IfKeyword extends KeywordTokenType {
     override def value = "if"
-    override def apply(data: String = ""): Token = new Tokens.IfKeyword(verify(data))
+    override def apply(data: InputString): Token = new Tokens.IfKeyword(verify(data))
   }
 
   object ImplementsKeyword extends KeywordTokenType {
     override def value = "implements"
-    override def apply(data: String = ""): Token = new Tokens.ImplementsKeyword(verify(data))
+    override def apply(data: InputString): Token = new Tokens.ImplementsKeyword(verify(data))
   }
 
   object ImportKeyword extends KeywordTokenType {
     override def value = "import"
-    override def apply(data: String = ""): Token = new Tokens.ImportKeyword(verify(data))
+    override def apply(data: InputString): Token = new Tokens.ImportKeyword(verify(data))
   }
 
   object InstanceofKeyword extends KeywordTokenType {
     override def value = "instanceof"
-    override def apply(data: String = ""): Token = new Tokens.InstanceofKeyword(verify(data))
+    override def apply(data: InputString): Token = new Tokens.InstanceofKeyword(verify(data))
   }
 
   object IntKeyword extends KeywordTokenType {
     override def value = "int"
-    override def apply(data: String = ""): Token = new Tokens.IntKeyword(verify(data))
+    override def apply(data: InputString): Token = new Tokens.IntKeyword(verify(data))
   }
 
   object InterfaceKeyword extends KeywordTokenType {
     override def value = "interface"
-    override def apply(data: String = ""): Token = new Tokens.InterfaceKeyword(verify(data))
+    override def apply(data: InputString): Token = new Tokens.InterfaceKeyword(verify(data))
   }
 
   object LongKeyword extends KeywordTokenType {
     override def value = "long"
-    override def apply(data: String = ""): Token = new Tokens.LongKeyword(verify(data))
+    override def apply(data: InputString): Token = new Tokens.LongKeyword(verify(data))
   }
 
   object NativeKeyword extends KeywordTokenType {
     override def value = "native"
-    override def apply(data: String = ""): Token = new Tokens.NativeKeyword(verify(data))
+    override def apply(data: InputString): Token = new Tokens.NativeKeyword(verify(data))
   }
 
   object NewKeyword extends KeywordTokenType {
     override def value = "new"
-    override def apply(data: String = ""): Token = new Tokens.NewKeyword(verify(data))
+    override def apply(data: InputString): Token = new Tokens.NewKeyword(verify(data))
   }
 
   object PackageKeyword extends KeywordTokenType {
     override def value = "package"
-    override def apply(data: String = ""): Token = new Tokens.PackageKeyword(verify(data))
+    override def apply(data: InputString): Token = new Tokens.PackageKeyword(verify(data))
   }
 
   object PrivateKeyword extends KeywordTokenType {
     override def value = "private"
-    override def apply(data: String = ""): Token = new Tokens.PrivateKeyword(verify(data))
+    override def apply(data: InputString): Token = new Tokens.PrivateKeyword(verify(data))
   }
 
   object ProtectedKeyword extends KeywordTokenType {
     override def value = "protected"
-    override def apply(data: String = ""): Token = new Tokens.ProtectedKeyword(verify(data))
+    override def apply(data: InputString): Token = new Tokens.ProtectedKeyword(verify(data))
   }
 
   object PublicKeyword extends KeywordTokenType {
     override def value = "public"
-    override def apply(data: String = ""): Token = new Tokens.PublicKeyword(verify(data))
+    override def apply(data: InputString): Token = new Tokens.PublicKeyword(verify(data))
   }
 
   object ReturnKeyword extends KeywordTokenType {
     override def value = "return"
-    override def apply(data: String = ""): Token = new Tokens.ReturnKeyword(verify(data))
+    override def apply(data: InputString): Token = new Tokens.ReturnKeyword(verify(data))
   }
 
   object ShortKeyword extends KeywordTokenType {
     override def value = "short"
-    override def apply(data: String = ""): Token = new Tokens.ShortKeyword(verify(data))
+    override def apply(data: InputString): Token = new Tokens.ShortKeyword(verify(data))
   }
 
   object StaticKeyword extends KeywordTokenType {
     override def value = "static"
-    override def apply(data: String = ""): Token = new Tokens.StaticKeyword(verify(data))
+    override def apply(data: InputString): Token = new Tokens.StaticKeyword(verify(data))
   }
 
   object StrictfpKeyword extends KeywordTokenType {
     override def value = "strictfp"
-    override def apply(data: String = ""): Token = new Tokens.StrictfpKeyword(verify(data))
+    override def apply(data: InputString): Token = new Tokens.StrictfpKeyword(verify(data))
   }
 
   object SuperKeyword extends KeywordTokenType {
     override def value = "super"
-    override def apply(data: String = ""): Token = new Tokens.SuperKeyword(verify(data))
+    override def apply(data: InputString): Token = new Tokens.SuperKeyword(verify(data))
   }
 
   object SwitchKeyword extends KeywordTokenType {
     override def value = "switch"
-    override def apply(data: String = ""): Token = new Tokens.SwitchKeyword(verify(data))
+    override def apply(data: InputString): Token = new Tokens.SwitchKeyword(verify(data))
   }
 
   object SynchronizedKeyword extends KeywordTokenType {
     override def value = "synchronized"
-    override def apply(data: String = ""): Token = new Tokens.SynchronizedKeyword(verify(data))
+    override def apply(data: InputString): Token = new Tokens.SynchronizedKeyword(verify(data))
   }
 
   object ThisKeyword extends KeywordTokenType {
     override def value = "this"
-    override def apply(data: String = ""): Token = new Tokens.ThisKeyword(verify(data))
+    override def apply(data: InputString): Token = new Tokens.ThisKeyword(verify(data))
   }
 
   object ThrowKeyword extends KeywordTokenType {
     override def value = "throw"
-    override def apply(data: String = ""): Token = new Tokens.ThrowKeyword(verify(data))
+    override def apply(data: InputString): Token = new Tokens.ThrowKeyword(verify(data))
   }
 
   object ThrowsKeyword extends KeywordTokenType {
     override def value = "throws"
-    override def apply(data: String = ""): Token = new Tokens.ThrowsKeyword(verify(data))
+    override def apply(data: InputString): Token = new Tokens.ThrowsKeyword(verify(data))
   }
 
   object TransientKeyword extends KeywordTokenType {
     override def value = "transient"
-    override def apply(data: String = ""): Token = new Tokens.TransientKeyword(verify(data))
+    override def apply(data: InputString): Token = new Tokens.TransientKeyword(verify(data))
   }
 
   object TryKeyword extends KeywordTokenType {
     override def value = "try"
-    override def apply(data: String = ""): Token = new Tokens.TryKeyword(verify(data))
+    override def apply(data: InputString): Token = new Tokens.TryKeyword(verify(data))
   }
 
   object VoidKeyword extends KeywordTokenType {
     override def value = "void"
-    override def apply(data: String = ""): Token = new Tokens.VoidKeyword(verify(data))
+    override def apply(data: InputString): Token = new Tokens.VoidKeyword(verify(data))
   }
 
   object VolatileKeyword extends KeywordTokenType {
     override def value = "volatile"
-    override def apply(data: String = ""): Token = new Tokens.VolatileKeyword(verify(data))
+    override def apply(data: InputString): Token = new Tokens.VolatileKeyword(verify(data))
   }
 
   object WhileKeyword extends KeywordTokenType {
     override def value = "while"
-    override def apply(data: String = ""): Token = new Tokens.WhileKeyword(verify(data))
+    override def apply(data: InputString): Token = new Tokens.WhileKeyword(verify(data))
   }
 
   object TrueLiteral extends KeywordTokenType {
     override def value = "true"
-    override def apply(data: String = ""): Token = new Tokens.TrueLiteral(verify(data))
+    override def apply(data: InputString): Token = new Tokens.TrueLiteral(verify(data))
   }
 
   object FalseLiteral extends KeywordTokenType {
     override def value = "false"
-    override def apply(data: String = ""): Token = new Tokens.FalseLiteral(verify(data))
+    override def apply(data: InputString): Token = new Tokens.FalseLiteral(verify(data))
   }
 
   object NullLiteral extends KeywordTokenType {
     override def value = "null"
-    override def apply(data: String = ""): Token = new Tokens.NullLiteral(verify(data))
+    override def apply(data: InputString): Token = new Tokens.NullLiteral(verify(data))
   }
 
   val Keywords = Map(
@@ -708,435 +708,435 @@ object TokenTypes {
 object Tokens {
   //  Classes of token objects themselves - these are instantiated.
 
-  case class BOF(override val data: String) extends FixedToken(data) {
+  case class BOF(override val data: InputString) extends FixedToken(data) {
     override def tokenType: TokenType = TokenTypes.BOF
   }
 
-  case class EOF(override val data: String) extends FixedToken(data) {
+  case class EOF(override val data: InputString) extends FixedToken(data) {
     override def tokenType: TokenType = TokenTypes.EOF
   }
 
-  case class S(override val data: String) extends FixedToken(data) {
+  case class S(override val data: InputString) extends FixedToken(data) {
     override def tokenType: TokenType = TokenTypes.S
   }
 
-  case class Question(override val data: String) extends FixedToken(data) {
+  case class Question(override val data: InputString) extends FixedToken(data) {
     override def tokenType: TokenType = TokenTypes.Question
   }
 
-  case class LeftParen(override val data: String) extends FixedToken(data) {
+  case class LeftParen(override val data: InputString) extends FixedToken(data) {
     override def tokenType: TokenType = TokenTypes.LeftParen
   }
 
-  case class RightParen(override val data: String) extends FixedToken(data) {
+  case class RightParen(override val data: InputString) extends FixedToken(data) {
     override def tokenType: TokenType = TokenTypes.RightParen
   }
 
-  case class LeftBracket(override val data: String) extends FixedToken(data) {
+  case class LeftBracket(override val data: InputString) extends FixedToken(data) {
     override def tokenType: TokenType = TokenTypes.LeftBracket
   }
 
-  case class RightBracket(override val data: String) extends FixedToken(data) {
+  case class RightBracket(override val data: InputString) extends FixedToken(data) {
     override def tokenType: TokenType = TokenTypes.RightBracket
   }
 
-  case class LeftCurly(override val data: String) extends FixedToken(data) {
+  case class LeftCurly(override val data: InputString) extends FixedToken(data) {
     override def tokenType: TokenType = TokenTypes.LeftCurly
   }
 
-  case class RightCurly(override val data: String) extends FixedToken(data) {
+  case class RightCurly(override val data: InputString) extends FixedToken(data) {
     override def tokenType: TokenType = TokenTypes.RightCurly
   }
 
-  case class Colon(override val data: String) extends FixedToken(data) {
+  case class Colon(override val data: InputString) extends FixedToken(data) {
     override def tokenType: TokenType = TokenTypes.Colon
   }
 
-  case class Comma(override val data: String) extends FixedToken(data) {
+  case class Comma(override val data: InputString) extends FixedToken(data) {
     override def tokenType: TokenType = TokenTypes.Comma
   }
 
-  case class Dot(override val data: String) extends FixedToken(data) {
+  case class Dot(override val data: InputString) extends FixedToken(data) {
     override def tokenType: TokenType = TokenTypes.Dot
   }
 
-  case class Assign(override val data: String) extends FixedToken(data) {
+  case class Assign(override val data: InputString) extends FixedToken(data) {
     override def tokenType: TokenType = TokenTypes.Assign
   }
 
-  case class Equal(override val data: String) extends FixedToken(data) {
+  case class Equal(override val data: InputString) extends FixedToken(data) {
     override def tokenType: TokenType = TokenTypes.Equal
   }
 
-  case class LogicalNot(override val data: String) extends FixedToken(data) {
+  case class LogicalNot(override val data: InputString) extends FixedToken(data) {
     override def tokenType: TokenType = TokenTypes.LogicalNot
   }
 
-  case class BinaryNot(override val data: String) extends FixedToken(data) {
+  case class BinaryNot(override val data: InputString) extends FixedToken(data) {
     override def tokenType: TokenType = TokenTypes.BinaryNot
   }
 
-  case class NotEqual(override val data: String) extends FixedToken(data) {
+  case class NotEqual(override val data: InputString) extends FixedToken(data) {
     override def tokenType: TokenType = TokenTypes.NotEqual
   }
 
-  case class Divide(override val data: String) extends FixedToken(data) {
+  case class Divide(override val data: InputString) extends FixedToken(data) {
     override def tokenType: TokenType = TokenTypes.Divide
   }
 
-  case class DivideAssign(override val data: String) extends FixedToken(data) {
+  case class DivideAssign(override val data: InputString) extends FixedToken(data) {
     override def tokenType: TokenType = TokenTypes.DivideAssign
   }
 
-  case class Plus(override val data: String) extends FixedToken(data) {
+  case class Plus(override val data: InputString) extends FixedToken(data) {
     override def tokenType: TokenType = TokenTypes.Plus
   }
 
-  case class PlusAssign(override val data: String) extends FixedToken(data) {
+  case class PlusAssign(override val data: InputString) extends FixedToken(data) {
     override def tokenType: TokenType = TokenTypes.PlusAssign
   }
 
-  case class Increment(override val data: String) extends FixedToken(data) {
+  case class Increment(override val data: InputString) extends FixedToken(data) {
     override def tokenType: TokenType = TokenTypes.Increment
   }
 
-  case class Minus(override val data: String) extends FixedToken(data) {
+  case class Minus(override val data: InputString) extends FixedToken(data) {
     override def tokenType: TokenType = TokenTypes.Minus
   }
 
-  case class MinusAssign(override val data: String) extends FixedToken(data) {
+  case class MinusAssign(override val data: InputString) extends FixedToken(data) {
     override def tokenType: TokenType = TokenTypes.MinusAssign
   }
 
-  case class Decrement(override val data: String) extends FixedToken(data) {
+  case class Decrement(override val data: InputString) extends FixedToken(data) {
     override def tokenType: TokenType = TokenTypes.Decrement
   }
 
-  case class Star(override val data: String) extends FixedToken(data) {
+  case class Star(override val data: InputString) extends FixedToken(data) {
     override def tokenType: TokenType = TokenTypes.Star
   }
 
-  case class StarAssign(override val data: String) extends FixedToken(data) {
+  case class StarAssign(override val data: InputString) extends FixedToken(data) {
     override def tokenType: TokenType = TokenTypes.StarAssign
   }
 
-  case class Modulo(override val data: String) extends FixedToken(data) {
+  case class Modulo(override val data: InputString) extends FixedToken(data) {
     override def tokenType: TokenType = TokenTypes.Modulo
   }
 
-  case class ModuloAssign(override val data: String) extends FixedToken(data) {
+  case class ModuloAssign(override val data: InputString) extends FixedToken(data) {
     override def tokenType: TokenType = TokenTypes.ModuloAssign
   }
 
-  case class GreaterThan(override val data: String) extends FixedToken(data) {
+  case class GreaterThan(override val data: InputString) extends FixedToken(data) {
     override def tokenType: TokenType = TokenTypes.GreaterThan
   }
 
-  case class GreaterEqual(override val data: String) extends FixedToken(data) {
+  case class GreaterEqual(override val data: InputString) extends FixedToken(data) {
     override def tokenType: TokenType = TokenTypes.GreaterEqual
   }
 
-  case class ShiftRight(override val data: String) extends FixedToken(data) {
+  case class ShiftRight(override val data: InputString) extends FixedToken(data) {
     override def tokenType: TokenType = TokenTypes.ShiftRight
   }
 
-  case class ShiftRightAssign(override val data: String) extends FixedToken(data) {
+  case class ShiftRightAssign(override val data: InputString) extends FixedToken(data) {
     override def tokenType: TokenType = TokenTypes.ShiftRightAssign
   }
 
-  case class BinaryShiftRight(override val data: String) extends FixedToken(data) {
+  case class BinaryShiftRight(override val data: InputString) extends FixedToken(data) {
     override def tokenType: TokenType = TokenTypes.BinaryShiftRight
   }
 
-  case class BinaryShiftRightAssign(override val data: String) extends FixedToken(data) {
+  case class BinaryShiftRightAssign(override val data: InputString) extends FixedToken(data) {
     override def tokenType: TokenType = TokenTypes.BinaryShiftRightAssign
   }
 
-  case class LessThan(override val data: String) extends FixedToken(data) {
+  case class LessThan(override val data: InputString) extends FixedToken(data) {
     override def tokenType: TokenType = TokenTypes.LessThan
   }
 
-  case class LessEqual(override val data: String) extends FixedToken(data) {
+  case class LessEqual(override val data: InputString) extends FixedToken(data) {
     override def tokenType: TokenType = TokenTypes.LessEqual
   }
 
-  case class ShiftLeft(override val data: String) extends FixedToken(data) {
+  case class ShiftLeft(override val data: InputString) extends FixedToken(data) {
     override def tokenType: TokenType = TokenTypes.ShiftLeft
   }
 
-  case class ShiftLeftAssign(override val data: String) extends FixedToken(data) {
+  case class ShiftLeftAssign(override val data: InputString) extends FixedToken(data) {
     override def tokenType: TokenType = TokenTypes.ShiftLeftAssign
   }
 
-  case class BinaryXor(override val data: String) extends FixedToken(data) {
+  case class BinaryXor(override val data: InputString) extends FixedToken(data) {
     override def tokenType: TokenType = TokenTypes.BinaryXor
   }
 
-  case class BinaryXorAssign(override val data: String) extends FixedToken(data) {
+  case class BinaryXorAssign(override val data: InputString) extends FixedToken(data) {
     override def tokenType: TokenType = TokenTypes.BinaryXorAssign
   }
 
-  case class BinaryOr(override val data: String) extends FixedToken(data) {
+  case class BinaryOr(override val data: InputString) extends FixedToken(data) {
     override def tokenType: TokenType = TokenTypes.BinaryOr
   }
 
-  case class BinaryOrAssign(override val data: String) extends FixedToken(data) {
+  case class BinaryOrAssign(override val data: InputString) extends FixedToken(data) {
     override def tokenType: TokenType = TokenTypes.BinaryOrAssign
   }
 
-  case class LogicalOr(override val data: String) extends FixedToken(data) {
+  case class LogicalOr(override val data: InputString) extends FixedToken(data) {
     override def tokenType: TokenType = TokenTypes.LogicalOr
   }
 
-  case class BinaryAnd(override val data: String) extends FixedToken(data) {
+  case class BinaryAnd(override val data: InputString) extends FixedToken(data) {
     override def tokenType: TokenType = TokenTypes.BinaryAnd
   }
 
-  case class BinaryAndAssign(override val data: String) extends FixedToken(data) {
+  case class BinaryAndAssign(override val data: InputString) extends FixedToken(data) {
     override def tokenType: TokenType = TokenTypes.BinaryAndAssign
   }
 
-  case class LogicalAnd(override val data: String) extends FixedToken(data) {
+  case class LogicalAnd(override val data: InputString) extends FixedToken(data) {
     override def tokenType: TokenType = TokenTypes.LogicalAnd
   }
 
-  case class Semicolon(override val data: String) extends FixedToken(data) {
+  case class Semicolon(override val data: InputString) extends FixedToken(data) {
     override def tokenType: TokenType = TokenTypes.Semicolon
   }
 
-  case class Whitespace(override val data: String) extends VariableToken(data) {
+  case class Whitespace(override val data: InputString) extends VariableToken(data) {
     override def tokenType: TokenType = TokenTypes.Whitespace
   }
 
-  case class SingleLineComment(override val data: String) extends VariableToken(data) {
+  case class SingleLineComment(override val data: InputString) extends VariableToken(data) {
     override def tokenType: TokenType = TokenTypes.SingleLineComment
   }
 
-  case class MultiLineComment(override val data: String) extends VariableToken(data) {
+  case class MultiLineComment(override val data: InputString) extends VariableToken(data) {
     override def tokenType: TokenType = TokenTypes.MultiLineComment
   }
 
-  case class JavaDocComment(override val data: String) extends VariableToken(data) {
+  case class JavaDocComment(override val data: InputString) extends VariableToken(data) {
     override def tokenType: TokenType = TokenTypes.JavaDocComment
   }
 
-  case class Num(override val data: String) extends VariableToken(data) {
+  case class Num(override val data: InputString) extends VariableToken(data) {
     override def tokenType: TokenType = TokenTypes.Num
   }
 
-  case class CharLiteral(override val data: String) extends VariableToken(data) {
+  case class CharLiteral(override val data: InputString) extends VariableToken(data) {
     override def tokenType: TokenType = TokenTypes.CharLiteral
   }
 
-  case class StringLiteral(override val data: String) extends VariableToken(data) {
+  case class StringLiteral(override val data: InputString) extends VariableToken(data) {
     override def tokenType: TokenType = TokenTypes.StringLiteral
   }
 
-  case class Identifier(override val data: String) extends VariableToken(data) {
+  case class Identifier(override val data: InputString) extends VariableToken(data) {
     override def tokenType: TokenType = TokenTypes.Identifier
   }
 
-  case class AbstractKeyword(override val data: String) extends KeywordToken(data) {
+  case class AbstractKeyword(override val data: InputString) extends KeywordToken(data) {
     override def tokenType: TokenType = TokenTypes.AbstractKeyword
   }
 
-  case class BooleanKeyword(override val data: String) extends KeywordToken(data) {
+  case class BooleanKeyword(override val data: InputString) extends KeywordToken(data) {
     override def tokenType: TokenType = TokenTypes.BooleanKeyword
   }
 
-  case class BreakKeyword(override val data: String) extends KeywordToken(data) {
+  case class BreakKeyword(override val data: InputString) extends KeywordToken(data) {
     override def tokenType: TokenType = TokenTypes.BreakKeyword
   }
 
-  case class ByteKeyword(override val data: String) extends KeywordToken(data) {
+  case class ByteKeyword(override val data: InputString) extends KeywordToken(data) {
     override def tokenType: TokenType = TokenTypes.ByteKeyword
   }
 
-  case class CaseKeyword(override val data: String) extends KeywordToken(data) {
+  case class CaseKeyword(override val data: InputString) extends KeywordToken(data) {
     override def tokenType: TokenType = TokenTypes.CaseKeyword
   }
 
-  case class CatchKeyword(override val data: String) extends KeywordToken(data) {
+  case class CatchKeyword(override val data: InputString) extends KeywordToken(data) {
     override def tokenType: TokenType = TokenTypes.CatchKeyword
   }
 
-  case class CharKeyword(override val data: String) extends KeywordToken(data) {
+  case class CharKeyword(override val data: InputString) extends KeywordToken(data) {
     override def tokenType: TokenType = TokenTypes.CharKeyword
   }
 
-  case class ClassKeyword(override val data: String) extends KeywordToken(data) {
+  case class ClassKeyword(override val data: InputString) extends KeywordToken(data) {
     override def tokenType: TokenType = TokenTypes.ClassKeyword
   }
 
-  case class ConstKeyword(override val data: String) extends KeywordToken(data) {
+  case class ConstKeyword(override val data: InputString) extends KeywordToken(data) {
     override def tokenType: TokenType = TokenTypes.ConstKeyword
   }
 
-  case class ContinueKeyword(override val data: String) extends KeywordToken(data) {
+  case class ContinueKeyword(override val data: InputString) extends KeywordToken(data) {
     override def tokenType: TokenType = TokenTypes.ContinueKeyword
   }
 
-  case class DefaultKeyword(override val data: String) extends KeywordToken(data) {
+  case class DefaultKeyword(override val data: InputString) extends KeywordToken(data) {
     override def tokenType: TokenType = TokenTypes.DefaultKeyword
   }
 
-  case class DoKeyword(override val data: String) extends KeywordToken(data) {
+  case class DoKeyword(override val data: InputString) extends KeywordToken(data) {
     override def tokenType: TokenType = TokenTypes.DoKeyword
   }
 
-  case class DoubleKeyword(override val data: String) extends KeywordToken(data) {
+  case class DoubleKeyword(override val data: InputString) extends KeywordToken(data) {
     override def tokenType: TokenType = TokenTypes.DoubleKeyword
   }
 
-  case class ElseKeyword(override val data: String) extends KeywordToken(data) {
+  case class ElseKeyword(override val data: InputString) extends KeywordToken(data) {
     override def tokenType: TokenType = TokenTypes.ElseKeyword
   }
 
-  case class ExtendsKeyword(override val data: String) extends KeywordToken(data) {
+  case class ExtendsKeyword(override val data: InputString) extends KeywordToken(data) {
     override def tokenType: TokenType = TokenTypes.ExtendsKeyword
   }
 
-  case class FinalKeyword(override val data: String) extends KeywordToken(data) {
+  case class FinalKeyword(override val data: InputString) extends KeywordToken(data) {
     override def tokenType: TokenType = TokenTypes.FinalKeyword
   }
 
-  case class FinallyKeyword(override val data: String) extends KeywordToken(data) {
+  case class FinallyKeyword(override val data: InputString) extends KeywordToken(data) {
     override def tokenType: TokenType = TokenTypes.FinallyKeyword
   }
 
-  case class FloatKeyword(override val data: String) extends KeywordToken(data) {
+  case class FloatKeyword(override val data: InputString) extends KeywordToken(data) {
     override def tokenType: TokenType = TokenTypes.FloatKeyword
   }
 
-  case class ForKeyword(override val data: String) extends KeywordToken(data) {
+  case class ForKeyword(override val data: InputString) extends KeywordToken(data) {
     override def tokenType: TokenType = TokenTypes.ForKeyword
   }
 
-  case class GotoKeyword(override val data: String) extends KeywordToken(data) {
+  case class GotoKeyword(override val data: InputString) extends KeywordToken(data) {
     override def tokenType: TokenType = TokenTypes.GotoKeyword
   }
 
-  case class IfKeyword(override val data: String) extends KeywordToken(data) {
+  case class IfKeyword(override val data: InputString) extends KeywordToken(data) {
     override def tokenType: TokenType = TokenTypes.IfKeyword
   }
 
-  case class ImplementsKeyword(override val data: String) extends KeywordToken(data) {
+  case class ImplementsKeyword(override val data: InputString) extends KeywordToken(data) {
     override def tokenType: TokenType = TokenTypes.ImplementsKeyword
   }
 
-  case class ImportKeyword(override val data: String) extends KeywordToken(data) {
+  case class ImportKeyword(override val data: InputString) extends KeywordToken(data) {
     override def tokenType: TokenType = TokenTypes.ImportKeyword
   }
 
-  case class InstanceofKeyword(override val data: String) extends KeywordToken(data) {
+  case class InstanceofKeyword(override val data: InputString) extends KeywordToken(data) {
     override def tokenType: TokenType = TokenTypes.InstanceofKeyword
   }
 
-  case class IntKeyword(override val data: String) extends KeywordToken(data) {
+  case class IntKeyword(override val data: InputString) extends KeywordToken(data) {
     override def tokenType: TokenType = TokenTypes.IntKeyword
   }
 
-  case class InterfaceKeyword(override val data: String) extends KeywordToken(data) {
+  case class InterfaceKeyword(override val data: InputString) extends KeywordToken(data) {
     override def tokenType: TokenType = TokenTypes.InterfaceKeyword
   }
 
-  case class LongKeyword(override val data: String) extends KeywordToken(data) {
+  case class LongKeyword(override val data: InputString) extends KeywordToken(data) {
     override def tokenType: TokenType = TokenTypes.LongKeyword
   }
 
-  case class NativeKeyword(override val data: String) extends KeywordToken(data) {
+  case class NativeKeyword(override val data: InputString) extends KeywordToken(data) {
     override def tokenType: TokenType = TokenTypes.NativeKeyword
   }
 
-  case class NewKeyword(override val data: String) extends KeywordToken(data) {
+  case class NewKeyword(override val data: InputString) extends KeywordToken(data) {
     override def tokenType: TokenType = TokenTypes.NewKeyword
   }
 
-  case class PackageKeyword(override val data: String) extends KeywordToken(data) {
+  case class PackageKeyword(override val data: InputString) extends KeywordToken(data) {
     override def tokenType: TokenType = TokenTypes.PackageKeyword
   }
 
-  case class PrivateKeyword(override val data: String) extends KeywordToken(data) {
+  case class PrivateKeyword(override val data: InputString) extends KeywordToken(data) {
     override def tokenType: TokenType = TokenTypes.PrivateKeyword
   }
 
-  case class ProtectedKeyword(override val data: String) extends KeywordToken(data) {
+  case class ProtectedKeyword(override val data: InputString) extends KeywordToken(data) {
     override def tokenType: TokenType = TokenTypes.ProtectedKeyword
   }
 
-  case class PublicKeyword(override val data: String) extends KeywordToken(data) {
+  case class PublicKeyword(override val data: InputString) extends KeywordToken(data) {
     override def tokenType: TokenType = TokenTypes.PublicKeyword
   }
 
-  case class ReturnKeyword(override val data: String) extends KeywordToken(data) {
+  case class ReturnKeyword(override val data: InputString) extends KeywordToken(data) {
     override def tokenType: TokenType = TokenTypes.ReturnKeyword
   }
 
-  case class ShortKeyword(override val data: String) extends KeywordToken(data) {
+  case class ShortKeyword(override val data: InputString) extends KeywordToken(data) {
     override def tokenType: TokenType = TokenTypes.ShortKeyword
   }
 
-  case class StaticKeyword(override val data: String) extends KeywordToken(data) {
+  case class StaticKeyword(override val data: InputString) extends KeywordToken(data) {
     override def tokenType: TokenType = TokenTypes.StaticKeyword
   }
 
-  case class StrictfpKeyword(override val data: String) extends KeywordToken(data) {
+  case class StrictfpKeyword(override val data: InputString) extends KeywordToken(data) {
     override def tokenType: TokenType = TokenTypes.StrictfpKeyword
   }
 
-  case class SuperKeyword(override val data: String) extends KeywordToken(data) {
+  case class SuperKeyword(override val data: InputString) extends KeywordToken(data) {
     override def tokenType: TokenType = TokenTypes.SuperKeyword
   }
 
-  case class SwitchKeyword(override val data: String) extends KeywordToken(data) {
+  case class SwitchKeyword(override val data: InputString) extends KeywordToken(data) {
     override def tokenType: TokenType = TokenTypes.SwitchKeyword
   }
 
-  case class SynchronizedKeyword(override val data: String) extends KeywordToken(data) {
+  case class SynchronizedKeyword(override val data: InputString) extends KeywordToken(data) {
     override def tokenType: TokenType = TokenTypes.SynchronizedKeyword
   }
 
-  case class ThisKeyword(override val data: String) extends KeywordToken(data) {
+  case class ThisKeyword(override val data: InputString) extends KeywordToken(data) {
     override def tokenType: TokenType = TokenTypes.ThisKeyword
   }
 
-  case class ThrowKeyword(override val data: String) extends KeywordToken(data) {
+  case class ThrowKeyword(override val data: InputString) extends KeywordToken(data) {
     override def tokenType: TokenType = TokenTypes.ThrowKeyword
   }
 
-  case class ThrowsKeyword(override val data: String) extends KeywordToken(data) {
+  case class ThrowsKeyword(override val data: InputString) extends KeywordToken(data) {
     override def tokenType: TokenType = TokenTypes.ThrowsKeyword
   }
 
-  case class TransientKeyword(override val data: String) extends KeywordToken(data) {
+  case class TransientKeyword(override val data: InputString) extends KeywordToken(data) {
     override def tokenType: TokenType = TokenTypes.TransientKeyword
   }
 
-  case class TryKeyword(override val data: String) extends KeywordToken(data) {
+  case class TryKeyword(override val data: InputString) extends KeywordToken(data) {
     override def tokenType: TokenType = TokenTypes.TryKeyword
   }
 
-  case class VoidKeyword(override val data: String) extends KeywordToken(data) {
+  case class VoidKeyword(override val data: InputString) extends KeywordToken(data) {
     override def tokenType: TokenType = TokenTypes.VoidKeyword
   }
 
-  case class VolatileKeyword(override val data: String) extends KeywordToken(data) {
+  case class VolatileKeyword(override val data: InputString) extends KeywordToken(data) {
     override def tokenType: TokenType = TokenTypes.VolatileKeyword
   }
 
-  case class WhileKeyword(override val data: String) extends KeywordToken(data) {
+  case class WhileKeyword(override val data: InputString) extends KeywordToken(data) {
     override def tokenType: TokenType = TokenTypes.WhileKeyword
   }
 
-  case class TrueLiteral(override val data: String) extends KeywordToken(data) {
+  case class TrueLiteral(override val data: InputString) extends KeywordToken(data) {
     override def tokenType: TokenType = TokenTypes.TrueLiteral
   }
 
-  case class FalseLiteral(override val data: String) extends KeywordToken(data) {
+  case class FalseLiteral(override val data: InputString) extends KeywordToken(data) {
     override def tokenType: TokenType = TokenTypes.FalseLiteral
   }
 
-  case class NullLiteral(override val data: String) extends KeywordToken(data) {
+  case class NullLiteral(override val data: InputString) extends KeywordToken(data) {
     override def tokenType: TokenType = TokenTypes.NullLiteral
   }
 

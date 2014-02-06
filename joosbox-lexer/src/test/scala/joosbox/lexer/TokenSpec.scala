@@ -3,6 +3,7 @@ package joosbox.lexer.test
 import org.specs2.mutable._
 
 import joosbox.lexer._
+import InputStringImplicits._
 
 class TokenSpec extends Specification {
   "Token" should {
@@ -827,7 +828,7 @@ class TokenSpec extends Specification {
 
         mergedTestDFA.matchString("=") must beEqualTo(Some(List(Tokens.Assign("="))))
         mergedTestDFA.matchString("==") must beEqualTo(Some(List(Tokens.Equal("=="))))
-        mergedTestDFA.matchString("===") must beEqualTo(Some(List(Tokens.Equal("=="), Tokens.Assign("="))))
+        mergedTestDFA.matchString("===") must beEqualTo(Some(List(Tokens.Equal("=="), Tokens.Assign(("=", 2)))))
         mergedTestDFA.matchString("+") must beEqualTo(None)
       }
 
@@ -1855,55 +1856,57 @@ class TokenSpec extends Specification {
       "variable inequality" in {
         theDFA.matchString("a != b") must beEqualTo(Some(List(
           Tokens.Identifier("a"),
-          Tokens.Whitespace(" "),
-          Tokens.NotEqual("!="),
-          Tokens.Whitespace(" "),
-          Tokens.Identifier("b")
+          Tokens.Whitespace((" ", 1)),
+          Tokens.NotEqual(("!=", 2)),
+          Tokens.Whitespace((" ", 4)),
+          Tokens.Identifier(("b", 5))
         )))
       }
 
       "variable equality and assignment" in {
         theDFA.matchString("boolean areEqual = (a == b);") must beEqualTo(Some(List(
           Tokens.BooleanKeyword("boolean"),
-          Tokens.Whitespace(" "),
-          Tokens.Identifier("areEqual"),
-          Tokens.Whitespace(" "),
-          Tokens.Assign("="),
-          Tokens.Whitespace(" "),
-          Tokens.LeftParen("("),
-          Tokens.Identifier("a"),
-          Tokens.Whitespace(" "),
-          Tokens.Equal("=="),
-          Tokens.Whitespace(" "),
-          Tokens.Identifier("b"),
-          Tokens.RightParen(")"),
-          Tokens.Semicolon(";")
+          Tokens.Whitespace((" ", 7)),
+          Tokens.Identifier(("areEqual", 8)),
+          Tokens.Whitespace((" ", 16)),
+          Tokens.Assign(("=", 17)),
+          Tokens.Whitespace((" ", 18)),
+          Tokens.LeftParen(("(", 19)),
+          Tokens.Identifier(("a", 20)),
+          Tokens.Whitespace((" ", 21)),
+          Tokens.Equal(("==", 22)),
+          Tokens.Whitespace((" ", 24)),
+          Tokens.Identifier(("b", 25)),
+          Tokens.RightParen((")", 26)),
+          Tokens.Semicolon((";", 27))
         )))
       }
 
       "class declaration" in {
-        theDFA.matchString("public static Bicycle(int startGear) { gear = startGear; }") must beEqualTo(Some(List(
+        theDFA.matchString("""public static Bicycle(int startGear) {
+  gear = startGear;
+}""") must beEqualTo(Some(List(
           Tokens.PublicKeyword("public"),
-          Tokens.Whitespace(" "),
-          Tokens.StaticKeyword("static"),
-          Tokens.Whitespace(" "),
-          Tokens.Identifier("Bicycle"),
-          Tokens.LeftParen("("),
-          Tokens.IntKeyword("int"),
-          Tokens.Whitespace(" "),
-          Tokens.Identifier("startGear"),
-          Tokens.RightParen(")"),
-          Tokens.Whitespace(" "),
-          Tokens.LeftCurly("{"),
-          Tokens.Whitespace(" "),
-          Tokens.Identifier("gear"),
-          Tokens.Whitespace(" "),
-          Tokens.Assign("="),
-          Tokens.Whitespace(" "),
-          Tokens.Identifier("startGear"),
-          Tokens.Semicolon(";"),
-          Tokens.Whitespace(" "),
-          Tokens.RightCurly("}")
+          Tokens.Whitespace((" ", 6)),
+          Tokens.StaticKeyword(("static", 7)),
+          Tokens.Whitespace((" ", 13)),
+          Tokens.Identifier(("Bicycle", 14)),
+          Tokens.LeftParen(("(", 21)),
+          Tokens.IntKeyword(("int", 22)),
+          Tokens.Whitespace((" ", 25)),
+          Tokens.Identifier(("startGear", 26)),
+          Tokens.RightParen((")", 35)),
+          Tokens.Whitespace((" ", 36)),
+          Tokens.LeftCurly(("{", 37)),
+          Tokens.Whitespace(("\n  ", 38)),
+          Tokens.Identifier(("gear", 2, 2)),
+          Tokens.Whitespace((" ", 2, 6)),
+          Tokens.Assign(("=", 2, 7)),
+          Tokens.Whitespace((" ", 2, 8)),
+          Tokens.Identifier(("startGear", 2, 9)),
+          Tokens.Semicolon((";", 2, 18)),
+          Tokens.Whitespace(("\n", 2, 19)),
+          Tokens.RightCurly(("}", 3, 0))
         )))
       }
     }

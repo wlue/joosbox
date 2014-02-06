@@ -12,11 +12,11 @@ def token_exists(a):
 
 c_args = (
     "override val children: List[ParseNode] = List.empty[ParseNode], "
-    "override val value: Option[String] = None"
+    "override val value: Option[InputString] = None"
 )
 a_args = (
     "children: List[ParseNode] = List.empty[ParseNode], "
-    "value: Option[String] = None"
+    "value: Option[InputString] = None"
 )
 
 type_template = """
@@ -32,6 +32,7 @@ caseclass_template = """  case class %s(%s) extends ParseNode {
     def tokenType: Option[TokenType] = %s
   }"""
 
+
 def consumerule(f):
     line = f.readline().strip()
     tokens = line.split(" ")
@@ -45,8 +46,10 @@ with open(sys.argv[1]) as f:
 
 
 print "package joosbox.parser"
+print "import joosbox.lexer.Token"
 print "import joosbox.lexer.TokenType"
 print "import joosbox.lexer.TokenTypes"
+print "import joosbox.lexer.InputString"
 print
 print "object ParseNodeTypes {"
 for token in terminals + nonterminals:
@@ -71,7 +74,7 @@ print "  }"
 print "}"
 print
 print "object ParseNodes {"
-print "  def fromToken(input: Token) : ParseNode = ParseNodeTypes.fromTokenType(input.tokenType)(List.empty[ParseNode], if (input.data == "") None else Some(input.data))"
+print "  def fromToken(input: Token) : ParseNode = ParseNodeTypes.fromTokenType(input.tokenType)(List.empty[ParseNode], if (input.data.value == \"\") None else Some(input.data))"
 for token in terminals + nonterminals:
     if token_exists(token):
         token_type = "Some(TokenTypes.%s)" % token

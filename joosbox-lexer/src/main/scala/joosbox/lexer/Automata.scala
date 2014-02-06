@@ -176,16 +176,20 @@ class DFA(
     }
   }
 
-  def matchString(inputString: String): Option[List[Token]] = {
+  def matchString(inputString: String, filename: String = "", line: Int = 1, idx: Int = 0): Option[List[Token]] = {
     consume(inputString, startState).flatMap[List[Token]] {
       case (state: State, remainingString: String) => {
         if (remainingString.length == 0) {
-          Some(List[Token](stateSourceMap(state)(inputString)))
+          Some(List[Token](stateSourceMap(state)(InputString(inputString, filename, line, idx))))
         } else {
-          matchString(remainingString) match {
+          val consumedInput: String = inputString.slice(0, inputString.size - remainingString.size)
+          
+          val newLine: Int = consumedInput.foldLeft(line) {(x: Int, c: Char) => if (c == '\n') x + 1 else x}
+          val newIdx: Int = consumedInput.foldLeft(idx) {(x: Int, c: Char) => if (c == '\n') 0 else x + 1}
+
+          matchString(remainingString, filename, newLine, newIdx) match {
             case Some(remainingTokens) => {
-              val consumedInput: String = inputString.slice(0, inputString.size - remainingString.size)
-              Some(List[Token](stateSourceMap(state)(consumedInput)) ++ remainingTokens)
+              Some(List[Token](stateSourceMap(state)(InputString(consumedInput, filename, line, idx))) ++ remainingTokens)
             }
             case None => None
           }

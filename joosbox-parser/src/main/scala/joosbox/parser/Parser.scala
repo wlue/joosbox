@@ -6,6 +6,7 @@ import joosbox.lexer.TokenType
 import joosbox.lexer.Tokens
 import joosbox.lexer.Token
 import joosbox.lexer.TokenNFA
+import joosbox.lexer.InputString
 
 class SyntaxError(msg: String) extends RuntimeException(msg)
 
@@ -117,8 +118,8 @@ class Parser(
 ) {
   lazy val lexer = TokenNFA.nfa.toDFA
 
-  def parseFilename(filename: String): ParseNode = parseString(scala.io.Source.fromFile(filename).mkString)
-  def parseString(str: String): ParseNode = parse(lexer.matchString(str).get)
+  def parseFilename(filename: String): ParseNode = parseString(scala.io.Source.fromFile(filename).mkString, filename)
+  def parseString(str: String, filename: String = "<input>"): ParseNode = parse(lexer.matchString(str, filename).get)
 
   def parse(_symbols: List[joosbox.lexer.Token]): ParseNode = {
     //  Remove whitespace. TODO: Should we be doing this here?
@@ -135,7 +136,7 @@ class Parser(
     nodeStack.push(ParseNodes.BOF())
     stateStack.push(transitionTable(0)(ParseNodeTypes.BOF) match { case ShiftTransition(x) => x })
 
-    (symbols ++ List[joosbox.lexer.Token](joosbox.lexer.TokenTypes.EOF())).foreach {
+    (symbols ++ List[joosbox.lexer.Token](joosbox.lexer.TokenTypes.EOF(InputString("")))).foreach {
       (a: Token) => {
         var reducing = true
         while (reducing) {
@@ -164,7 +165,7 @@ class Parser(
         newPossibleStates.get(ParseNodeTypes.fromTokenType(a.tokenType)) match {
           case Some(ShiftTransition(newState)) => stateStack.push(newState)
           case None => {
-            throw new SyntaxError("Got '" + a + "', expected one of: " + newPossibleStates.keys.map(_.getClass.getSimpleName).mkString(", "))
+            throw new SyntaxError("Got " + a.data + ", expected one of: " + newPossibleStates.keys.map(_.getClass.getSimpleName).mkString(", "))
           }
         }
       }

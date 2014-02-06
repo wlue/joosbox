@@ -3,6 +3,7 @@ package joosbox.lexer.test
 import org.specs2.mutable._
 
 import joosbox.lexer._
+import InputStringImplicits._
 
 class NFASpec extends Specification {
   "NFA" should {
@@ -350,18 +351,18 @@ class NFASpec extends Specification {
       "simple case" in {
 
         object AType extends VariableTokenType {
-          override def apply(data: String = ""): Token = new A(verify(data))
+          override def apply(data: InputString): Token = new A(verify(data))
           override def name: String = "A"
         }
-        case class A(override val data: String) extends VariableToken(data) {
+        case class A(override val data: InputString) extends VariableToken(data) {
           override def tokenType: TokenType = AType
         }
 
         object BType extends VariableTokenType {
-          override def apply(data: String = ""): Token = new B(verify(data))
+          override def apply(data: InputString): Token = new B(verify(data))
           override def name: String = "B"
         }
-        case class B(override val data: String) extends VariableToken(data) {
+        case class B(override val data: InputString) extends VariableToken(data) {
           override def tokenType: TokenType = BType
         }
 
@@ -401,7 +402,7 @@ class NFASpec extends Specification {
         val dfa = nfa.toDFA
         dfa.matchString("ab") must beNone
         dfa.matchString("abc") must beEqualTo(Some(List(Tokens.Identifier("abc"))))
-        dfa.matchString("abcabc") must beEqualTo(Some(List(Tokens.Identifier("abc"), Tokens.Identifier("abc"))))
+        dfa.matchString("abcabc") must beEqualTo(Some(List(Tokens.Identifier("abc"), Tokens.Identifier(("abc", 3)))))
       }
 
       "public" in {
@@ -409,7 +410,7 @@ class NFASpec extends Specification {
         val dfa = nfa.toDFA
         dfa.matchString("static") must beNone
         dfa.matchString("public") must beEqualTo(Some(List(Tokens.Identifier("public"))))
-        dfa.matchString("publicpublic") must beEqualTo(Some(List(Tokens.Identifier("public"), Tokens.Identifier("public"))))
+        dfa.matchString("publicpublic") must beEqualTo(Some(List(Tokens.Identifier("public"), Tokens.Identifier(("public", 6)))))
       }
 
       "finally" in {
@@ -418,7 +419,7 @@ class NFASpec extends Specification {
 
         dfa.matchString("static") must beNone
         dfa.matchString("finally") must beEqualTo(Some(List(Tokens.Identifier("finally"))))
-        dfa.matchString("finallyfinally") must beEqualTo(Some(List(Tokens.Identifier("finally"), Tokens.Identifier("finally"))))
+        dfa.matchString("finallyfinally") must beEqualTo(Some(List(Tokens.Identifier("finally"), Tokens.Identifier(("finally", 7)))))
       }
     }
   }

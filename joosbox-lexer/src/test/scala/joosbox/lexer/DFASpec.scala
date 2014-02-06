@@ -3,6 +3,7 @@ package joosbox.lexer.test
 import org.specs2.mutable._
 
 import joosbox.lexer._
+import InputStringImplicits._
 
 class DFASpec extends Specification {
   "DFA" should {
@@ -259,10 +260,10 @@ class DFASpec extends Specification {
           )
         ).toDFA
 
-        dfa.matchString("abc") must beEqualTo(Some(List(Tokens.Identifier("abc"))))
+        dfa.matchString("abc") must beEqualTo(Some(List(Tokens.Identifier(InputString("abc")))))
         dfa.matchString("abcdef") must beEqualTo(None)
         dfa.matchString("abcdefghi") must beEqualTo(None)
-        dfa.matchString("abcxyz") must beEqualTo(Some(List(Tokens.Identifier("abc"), Tokens.Identifier("xyz"))))
+        dfa.matchString("abcxyz") must beEqualTo(Some(List(Tokens.Identifier(InputString("abc")), Tokens.Identifier(("xyz", 3)))))
 
         dfa.consume("abc") must beEqualTo(Some(State("c"), ""))
         dfa.consume("abcdef") must beEqualTo(Some(State("c"), "def"))
@@ -308,7 +309,7 @@ class DFASpec extends Specification {
         dfa.matchString("abc") must beEqualTo(Some(List(Tokens.Identifier("abc"))))
         dfa.matchString("ayz") must beEqualTo(Some(List(Tokens.Identifier("ayz"))))
         dfa.matchString("ay") must beEqualTo(Some(List(Tokens.Identifier("ay"))))
-        dfa.matchString("abcxyz") must beEqualTo(Some(List(Tokens.Identifier("abc"), Tokens.Identifier("xyz"))))
+        dfa.matchString("abcxyz") must beEqualTo(Some(List(Tokens.Identifier("abc"), Tokens.Identifier(("xyz", 3)))))
       }
     }
   }
