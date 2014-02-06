@@ -17,6 +17,7 @@ object Symbol {
 
   lazy val epsilon = Epsilon
   lazy val digits: Set[Symbol] = (0 to 9).map { num => InputSymbol(num.toString) }.toSet
+  lazy val nonZeroDigits: Set[Symbol] = (1 to 9).map { num => InputSymbol(num.toString) }.toSet
   lazy val octalDigits: Set[Symbol] = (0 to 7).map { num => InputSymbol(num.toString) }.toSet
   lazy val quadDigits: Set[Symbol] = (0 to 3).map { num => InputSymbol(num.toString) }.toSet
   lazy val letters: Set[Symbol] = (('a' to 'z') ++ ('A' to 'Z')).map { letter => InputSymbol(letter.toString) }.toSet

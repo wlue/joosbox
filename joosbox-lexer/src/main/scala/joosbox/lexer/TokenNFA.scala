@@ -510,13 +510,14 @@ object TokenNFA {
     ),
 
     TokenTypes.Num -> NFA(
-      Set(State("i"), State("digit")),
+      Set(State("i"), State("zero"), State("digit")),
       Set(Symbol.epsilon) ++ Symbol.digits,
-      Relation(Map(State("i") -> Symbol.transitionsFromGroup(Symbol.digits, Set(State("digit"))),
+      Relation(Map(State("i") -> (Map (Symbol("0") -> Set(State("zero"))) ++ (
+                   Symbol.transitionsFromGroup(Symbol.nonZeroDigits, Set(State("digit"))))),
                    State("digit") -> Symbol.transitionsFromGroup(Symbol.digits, Set(State("digit")))
                )),
       State("i"),
-      Set(State("digit"))
+      Set(State("digit"), State("zero"))
     ),
 
     TokenTypes.Identifier -> NFA(

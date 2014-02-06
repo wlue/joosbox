@@ -650,7 +650,7 @@ class TokenSpec extends Specification {
 
     "match number" in {
       "success" in {
-        TokenNFA.nfas(TokenTypes.Num).toDFA.consume("0") must beEqualTo(Some(State("digit"), ""))
+        TokenNFA.nfas(TokenTypes.Num).toDFA.consume("0") must beEqualTo(Some(State("zero"), ""))
       }
       "success" in {
         TokenNFA.nfas(TokenTypes.Num).toDFA.consume("1") must beEqualTo(Some(State("digit"), ""))
@@ -660,6 +660,9 @@ class TokenSpec extends Specification {
       }
       "success" in {
         TokenNFA.nfas(TokenTypes.Num).toDFA.consume("1234567890") must beEqualTo(Some(State("digit"), ""))
+      }
+      "no leading zeros" in {
+        TokenNFA.nfas(TokenTypes.Num).toDFA.consume("0345") must beEqualTo(Some(State("zero"), "345"))
       }
       "failed as expected" in {
         TokenNFA.nfas(TokenTypes.Num).toDFA.consume("") must beEqualTo(None)
