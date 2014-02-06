@@ -811,8 +811,20 @@ class TokenSpec extends Specification {
       "success" in {
         TokenNFA.nfas(TokenTypes.StringLiteral).toDFA.consume("\"123\\45678\"") must beEqualTo(Some(State("string"), ""))
       }
+      "success" in {
+        TokenNFA.nfas(TokenTypes.StringLiteral).toDFA.consume("\"Joos\' World\"") must beEqualTo(Some(State("string"), ""))
+      }
       "failed as expected" in {
         TokenNFA.nfas(TokenTypes.StringLiteral).toDFA.consume("\"\\80\"") must beEqualTo(None)
+      }
+      "failed as expected" in {
+        TokenNFA.nfas(TokenTypes.StringLiteral).toDFA.consume("\"\\9\"") must beEqualTo(None)
+      }
+      "failed as expected" in {
+        TokenNFA.nfas(TokenTypes.StringLiteral).toDFA.consume("\"\\u1234\"") must beEqualTo(None)
+      }
+      "failed as expected" in {
+        TokenNFA.nfas(TokenTypes.StringLiteral).toDFA.consume("\"\\z\"") must beEqualTo(None)
       }
       "failed as expected" in {
         TokenNFA.nfas(TokenTypes.StringLiteral).toDFA.consume("\"\n\"") must beEqualTo(None)

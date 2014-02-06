@@ -540,13 +540,13 @@ object TokenNFA {
           State("oct"), State("oct2"),
           State("part-oct"), State("part-oct2"), State("part-oct3")),
       Set(Symbol("\\"), Symbol("n"), Symbol("r"), Symbol("t"), Symbol("b"),
-          Symbol("f"), Symbol("\""), Symbol("\'"), NegatedSymbols("\\", "\n", "\r")) ++ (
+          Symbol("f"), Symbol("\""), Symbol("\'"), NegatedSymbols("\'", "\\", "\n", "\r")) ++ (
             Symbol.octalDigits ++ Symbol.quadDigits
           ),
       Relation(Map(State("i")     -> Map( Symbol("\'") -> Set(State("\'"))),
                    State("\'")    -> Map( Symbol("\\") -> Set(State("\'\\")),
                                           Symbol("\'") -> Set(State("char")),
-                                          NegatedSymbols("\\", "\n", "\r") -> Set(State("char-part"))),
+                                          NegatedSymbols("\'", "\\", "\n", "\r") -> Set(State("char-part"))),
                    State("\'\\")  -> (Map( Symbol("n") -> Set(State("char-part")),
                                           Symbol("r") -> Set(State("char-part")),
                                           Symbol("t") -> Set(State("char-part")),
@@ -576,7 +576,9 @@ object TokenNFA {
       Set(State("i"), State("\""), State("\"\\"), State("string"),
           State("oct"), State("oct2"),
           State("part-oct"), State("part-oct2"), State("part-oct3")),
-      Set(Symbol("\""), Symbol("\\"), NegatedSymbols("\"", "\\", "\n", "\r"),
+      Set(Symbol("\""), Symbol("\\"), Symbol("\'"), Symbol("n"), Symbol("r"),
+          Symbol("t"), Symbol("b"), Symbol("f"),
+          NegatedSymbols("\"", "\\", "\n", "\r"),
           NegatedSymbols((Array("\"", "\\", "\n", "\r") ++ digitStrs):_*), 
           NegatedSymbols((Array("\"", "\\", "\n", "\r") ++ octalStrs):_*)) ++ (
             Symbol.octalDigits ++ Symbol.quadDigits
@@ -585,9 +587,14 @@ object TokenNFA {
                    State("\"")    -> Map( Symbol("\"") -> Set(State("string")),
                                           Symbol("\\") -> Set(State("\"\\")),
                                           NegatedSymbols("\"", "\\", "\n", "\r") -> Set(State("\""))),
-                   State("\"\\")  -> (Map(  NegatedSymbols((Array("\"", "\\", "\n", "\r") ++ digitStrs):_*) -> Set(State("\"")),
+                   State("\"\\")  -> (Map(  Symbol("n") -> Set(State("\"")),
+                                            Symbol("r") -> Set(State("\"")),
+                                            Symbol("t") -> Set(State("\"")),
+                                            Symbol("b") -> Set(State("\"")),
+                                            Symbol("f") -> Set(State("\"")),
                                             Symbol("\"") -> Set(State("\"")),
-                                            Symbol("\\") -> Set(State("\""))) ++ (
+                                            Symbol("\\") -> Set(State("\"")),
+                                            Symbol("\'") -> Set(State("\""))) ++ (
                                             Symbol.transitionsFromGroup(Symbol.octalDigits, Set(State("oct"))) ++
                                             Symbol.transitionsFromGroup(Symbol.quadDigits, Set(State("part-oct")))
                                       )),
