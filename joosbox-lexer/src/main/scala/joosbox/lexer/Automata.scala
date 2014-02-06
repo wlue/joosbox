@@ -191,7 +191,7 @@ class DFA(
             case Some(remainingTokens) => {
               Some(List[Token](stateSourceMap(state)(InputString(consumedInput, filename, line, idx))) ++ remainingTokens)
             }
-            case None => None
+            case None => throw new IllegalArgumentException("Input invalid at " + filename + ":" + line + ":" + idx)
           }
         }
       }
