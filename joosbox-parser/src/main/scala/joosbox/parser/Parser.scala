@@ -120,11 +120,11 @@ class Parser(
 ) {
   lazy val lexer = TokenNFA.nfa.toDFA
 
-  def parseFilename(filename: String): ParseNode =
+  def parseFilename(filename: String): AbstractSyntaxNode =
     parseString(scala.io.Source.fromFile(filename).mkString, filename)
 
-  def parseString(str: String, filename: String = "<input>"): ParseNode =
-    parse(lexer.matchString(str, filename).get)
+  def parseString(str: String, filename: String = "<input>"): AbstractSyntaxNode =
+    AbstractSyntaxNode.fromParseNode(parse(lexer.matchString(str, filename).get)).head
 
   def parse(symbols: List[Token]): ParseNode = {
 

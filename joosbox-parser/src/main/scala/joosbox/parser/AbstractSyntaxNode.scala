@@ -1,6 +1,7 @@
 package joosbox.parser
 
 import joosbox.lexer.InputString
+import joosbox.lexer.SyntaxError
 
 sealed trait AbstractSyntaxNode {
   def children: List[AbstractSyntaxNode] = List.empty[AbstractSyntaxNode]
@@ -65,25 +66,25 @@ object AbstractSyntaxNode {
 
   abstract class TypeDeclaration(
     val name: InputString,
-    val modifiers: Seq[Modifier] = Seq.empty[Modifier],
-    val interfaces: Seq[InterfaceType] = Seq.empty[InterfaceType]
+    val modifiers: Set[Modifier] = Set.empty[Modifier],
+    val interfaces: Set[InterfaceType] = Set.empty[InterfaceType]
   ) extends AbstractSyntaxNode
 
   case class ClassDeclaration(
     override val name: InputString,
     val body: ClassBody,
 
-    override val modifiers: Seq[Modifier] = Seq.empty[Modifier],
+    override val modifiers: Set[Modifier] = Set.empty[Modifier],
     val superclass: Option[ClassType] = None,
-    override val interfaces: Seq[InterfaceType] = Seq.empty[InterfaceType]
+    override val interfaces: Set[InterfaceType] = Set.empty[InterfaceType]
   ) extends TypeDeclaration(name, modifiers, interfaces)
 
   case class InterfaceDeclaration(
     override val name: InputString,
     val body: InterfaceBody,
 
-    override val modifiers: Seq[Modifier] = Seq.empty[Modifier],
-    override val interfaces: Seq[InterfaceType] = Seq.empty[InterfaceType]
+    override val modifiers: Set[Modifier] = Set.empty[Modifier],
+    override val interfaces: Set[InterfaceType] = Set.empty[InterfaceType]
   ) extends TypeDeclaration(name, modifiers, interfaces)
 
   /*
@@ -508,27 +509,35 @@ object AbstractSyntaxNode {
 
     case c: ParseNodes.ClassDeclaration => {
       val children:Seq[AbstractSyntaxNode] = c.children.flatMap(fromParseNode(_))
-      val name:Identifier = children.head.asInstanceOf[Identifier]
+      val name:Identifier = children.collectFirst { case x: Identifier => x }.get
 
-      val modifiers:Seq[Modifier] = children.flatMap {
+      val modifiers:Set[Modifier] = children.flatMap {
         case x:Modifier => Some(x)
         case _ => None
-      }
+      }.toSet
 
       val superclass:Option[ClassType] = children.flatMap {
         case x:ClassType => Some(x)
         case _ => None
       }.headOption
 
-      val interfaces:Seq[InterfaceType] = children.flatMap {
+      val interfaces:Set[InterfaceType] = children.flatMap {
         case x:InterfaceType => Some(x)
         case _ => None
-      }
+      }.toSet
 
       val body:ClassBody = children.flatMap {
         case x:ClassBody => Some(x)
         case _ => None
       }.head
+
+      //  Enforce "A class cannot be both abstract and final."
+      if (modifiers.toSeq.collect({
+        case AbstractKeyword => true
+        case FinalKeyword => true
+      }).size > 1) {
+        throw new SyntaxError("Class " + name.value + " cannot be both abstract and final.")
+      }
 
       Seq(ClassDeclaration(name.value, body, modifiers, superclass, interfaces))
     }
@@ -536,16 +545,16 @@ object AbstractSyntaxNode {
     case c: ParseNodes.InterfaceDeclaration => {
       val children:Seq[AbstractSyntaxNode] = c.children.flatMap(fromParseNode(_))
 
-      val name:Identifier = children.head.asInstanceOf[Identifier]
-      val modifiers:Seq[Modifier] = children.flatMap {
+      val name:Identifier = children.collectFirst { case x: Identifier => x }.get
+      val modifiers:Set[Modifier] = children.flatMap {
         case x:Modifier => Some(x)
         case _ => None
-      }
+      }.toSet
 
-      val interfaces:Seq[InterfaceType] = children.flatMap {
+      val interfaces:Set[InterfaceType] = children.flatMap {
         case x:InterfaceType => Some(x)
         case _ => None
-      }
+      }.toSet
 
       val body:InterfaceBody = children.flatMap {
         case x:InterfaceBody => Some(x)
