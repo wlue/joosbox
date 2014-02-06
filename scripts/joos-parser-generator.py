@@ -27,7 +27,7 @@ type_template = """
   }"""
 
 str_match_template = """    case "%s" => %s"""
-match_template = """    case %s => %s"""
+match_template = """    case %s => Some(%s)"""
 caseclass_template = """  case class %s(%s) extends ParseNode {
     def tokenType: Option[TokenType] = %s
   }"""
@@ -64,17 +64,17 @@ for token in terminals + nonterminals:
     print str_match_template % (token, token)
 print "  }"
 print
-print "  def fromTokenType(input: TokenType) : ParseNodeType = input match {"
+print "  def fromTokenType(input: TokenType) : Option[ParseNodeType] = input match {"
 for token in terminals + nonterminals:
     if token_exists(token):
         token_type = "TokenTypes.%s" % token
         print match_template % (token_type, token)
-
+print "  case _ => None"
 print "  }"
 print "}"
 print
 print "object ParseNodes {"
-print "  def fromToken(input: Token) : ParseNode = ParseNodeTypes.fromTokenType(input.tokenType)(List.empty[ParseNode], if (input.data.value == \"\") None else Some(input.data))"
+print "  def fromToken(input: Token) : ParseNode = ParseNodeTypes.fromTokenType(input.tokenType).get()(List.empty[ParseNode], if (input.data.value == \"\") None else Some(input.data))"
 for token in terminals + nonterminals:
     if token_exists(token):
         token_type = "Some(TokenTypes.%s)" % token

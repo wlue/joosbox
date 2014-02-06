@@ -288,12 +288,6 @@ object ParseNodeTypes {
     override def tokenType: Option[TokenType] = Some(TokenTypes.Minus)
   }
 
-  object BinaryNot extends ParseNodeType {
-    override def apply(children: List[ParseNode] = List.empty[ParseNode], value: Option[InputString] = None): ParseNode =
-      new ParseNodes.BinaryNot(children, value)
-    override def tokenType: Option[TokenType] = Some(TokenTypes.BinaryNot)
-  }
-
   object LogicalNot extends ParseNodeType {
     override def apply(children: List[ParseNode] = List.empty[ParseNode], value: Option[InputString] = None): ParseNode =
       new ParseNodes.LogicalNot(children, value)
@@ -1061,7 +1055,6 @@ object ParseNodeTypes {
     case "NewKeyword" => NewKeyword
     case "Plus" => Plus
     case "Minus" => Minus
-    case "BinaryNot" => BinaryNot
     case "LogicalNot" => LogicalNot
     case "Divide" => Divide
     case "Modulo" => Modulo
@@ -1184,76 +1177,76 @@ object ParseNodeTypes {
     case "Expression" => Expression
   }
 
-  def fromTokenType(input: TokenType) : ParseNodeType = input match {
-    case TokenTypes.BOF => BOF
-    case TokenTypes.EOF => EOF
-    case TokenTypes.CharLiteral => CharLiteral
-    case TokenTypes.StringLiteral => StringLiteral
-    case TokenTypes.NullLiteral => NullLiteral
-    case TokenTypes.Num => Num
-    case TokenTypes.TrueLiteral => TrueLiteral
-    case TokenTypes.FalseLiteral => FalseLiteral
-    case TokenTypes.BooleanKeyword => BooleanKeyword
-    case TokenTypes.ByteKeyword => ByteKeyword
-    case TokenTypes.ShortKeyword => ShortKeyword
-    case TokenTypes.IntKeyword => IntKeyword
-    case TokenTypes.CharKeyword => CharKeyword
-    case TokenTypes.Identifier => Identifier
-    case TokenTypes.Dot => Dot
-    case TokenTypes.PackageKeyword => PackageKeyword
-    case TokenTypes.Semicolon => Semicolon
-    case TokenTypes.ImportKeyword => ImportKeyword
-    case TokenTypes.Star => Star
-    case TokenTypes.StaticKeyword => StaticKeyword
-    case TokenTypes.PublicKeyword => PublicKeyword
-    case TokenTypes.ProtectedKeyword => ProtectedKeyword
-    case TokenTypes.AbstractKeyword => AbstractKeyword
-    case TokenTypes.FinalKeyword => FinalKeyword
-    case TokenTypes.NativeKeyword => NativeKeyword
-    case TokenTypes.ClassKeyword => ClassKeyword
-    case TokenTypes.ExtendsKeyword => ExtendsKeyword
-    case TokenTypes.ImplementsKeyword => ImplementsKeyword
-    case TokenTypes.Comma => Comma
-    case TokenTypes.LeftCurly => LeftCurly
-    case TokenTypes.RightCurly => RightCurly
-    case TokenTypes.Assign => Assign
-    case TokenTypes.LeftBracket => LeftBracket
-    case TokenTypes.RightBracket => RightBracket
-    case TokenTypes.VoidKeyword => VoidKeyword
-    case TokenTypes.LeftParen => LeftParen
-    case TokenTypes.RightParen => RightParen
-    case TokenTypes.InterfaceKeyword => InterfaceKeyword
-    case TokenTypes.IfKeyword => IfKeyword
-    case TokenTypes.ElseKeyword => ElseKeyword
-    case TokenTypes.WhileKeyword => WhileKeyword
-    case TokenTypes.ForKeyword => ForKeyword
-    case TokenTypes.ReturnKeyword => ReturnKeyword
-    case TokenTypes.ThisKeyword => ThisKeyword
-    case TokenTypes.NewKeyword => NewKeyword
-    case TokenTypes.Plus => Plus
-    case TokenTypes.Minus => Minus
-    case TokenTypes.BinaryNot => BinaryNot
-    case TokenTypes.LogicalNot => LogicalNot
-    case TokenTypes.Divide => Divide
-    case TokenTypes.Modulo => Modulo
-    case TokenTypes.LessThan => LessThan
-    case TokenTypes.GreaterThan => GreaterThan
-    case TokenTypes.LessEqual => LessEqual
-    case TokenTypes.GreaterEqual => GreaterEqual
-    case TokenTypes.InstanceofKeyword => InstanceofKeyword
-    case TokenTypes.Equal => Equal
-    case TokenTypes.NotEqual => NotEqual
-    case TokenTypes.BinaryAnd => BinaryAnd
-    case TokenTypes.BinaryXor => BinaryXor
-    case TokenTypes.BinaryOr => BinaryOr
-    case TokenTypes.LogicalAnd => LogicalAnd
-    case TokenTypes.LogicalOr => LogicalOr
-    case TokenTypes.S => S
+  def fromTokenType(input: TokenType) : Option[ParseNodeType] = input match {
+    case TokenTypes.BOF => Some(BOF)
+    case TokenTypes.EOF => Some(EOF)
+    case TokenTypes.CharLiteral => Some(CharLiteral)
+    case TokenTypes.StringLiteral => Some(StringLiteral)
+    case TokenTypes.NullLiteral => Some(NullLiteral)
+    case TokenTypes.Num => Some(Num)
+    case TokenTypes.TrueLiteral => Some(TrueLiteral)
+    case TokenTypes.FalseLiteral => Some(FalseLiteral)
+    case TokenTypes.BooleanKeyword => Some(BooleanKeyword)
+    case TokenTypes.ByteKeyword => Some(ByteKeyword)
+    case TokenTypes.ShortKeyword => Some(ShortKeyword)
+    case TokenTypes.IntKeyword => Some(IntKeyword)
+    case TokenTypes.CharKeyword => Some(CharKeyword)
+    case TokenTypes.Identifier => Some(Identifier)
+    case TokenTypes.Dot => Some(Dot)
+    case TokenTypes.PackageKeyword => Some(PackageKeyword)
+    case TokenTypes.Semicolon => Some(Semicolon)
+    case TokenTypes.ImportKeyword => Some(ImportKeyword)
+    case TokenTypes.Star => Some(Star)
+    case TokenTypes.StaticKeyword => Some(StaticKeyword)
+    case TokenTypes.PublicKeyword => Some(PublicKeyword)
+    case TokenTypes.ProtectedKeyword => Some(ProtectedKeyword)
+    case TokenTypes.AbstractKeyword => Some(AbstractKeyword)
+    case TokenTypes.FinalKeyword => Some(FinalKeyword)
+    case TokenTypes.NativeKeyword => Some(NativeKeyword)
+    case TokenTypes.ClassKeyword => Some(ClassKeyword)
+    case TokenTypes.ExtendsKeyword => Some(ExtendsKeyword)
+    case TokenTypes.ImplementsKeyword => Some(ImplementsKeyword)
+    case TokenTypes.Comma => Some(Comma)
+    case TokenTypes.LeftCurly => Some(LeftCurly)
+    case TokenTypes.RightCurly => Some(RightCurly)
+    case TokenTypes.Assign => Some(Assign)
+    case TokenTypes.LeftBracket => Some(LeftBracket)
+    case TokenTypes.RightBracket => Some(RightBracket)
+    case TokenTypes.VoidKeyword => Some(VoidKeyword)
+    case TokenTypes.LeftParen => Some(LeftParen)
+    case TokenTypes.RightParen => Some(RightParen)
+    case TokenTypes.InterfaceKeyword => Some(InterfaceKeyword)
+    case TokenTypes.IfKeyword => Some(IfKeyword)
+    case TokenTypes.ElseKeyword => Some(ElseKeyword)
+    case TokenTypes.WhileKeyword => Some(WhileKeyword)
+    case TokenTypes.ForKeyword => Some(ForKeyword)
+    case TokenTypes.ReturnKeyword => Some(ReturnKeyword)
+    case TokenTypes.ThisKeyword => Some(ThisKeyword)
+    case TokenTypes.NewKeyword => Some(NewKeyword)
+    case TokenTypes.Plus => Some(Plus)
+    case TokenTypes.Minus => Some(Minus)
+    case TokenTypes.LogicalNot => Some(LogicalNot)
+    case TokenTypes.Divide => Some(Divide)
+    case TokenTypes.Modulo => Some(Modulo)
+    case TokenTypes.LessThan => Some(LessThan)
+    case TokenTypes.GreaterThan => Some(GreaterThan)
+    case TokenTypes.LessEqual => Some(LessEqual)
+    case TokenTypes.GreaterEqual => Some(GreaterEqual)
+    case TokenTypes.InstanceofKeyword => Some(InstanceofKeyword)
+    case TokenTypes.Equal => Some(Equal)
+    case TokenTypes.NotEqual => Some(NotEqual)
+    case TokenTypes.BinaryAnd => Some(BinaryAnd)
+    case TokenTypes.BinaryXor => Some(BinaryXor)
+    case TokenTypes.BinaryOr => Some(BinaryOr)
+    case TokenTypes.LogicalAnd => Some(LogicalAnd)
+    case TokenTypes.LogicalOr => Some(LogicalOr)
+    case TokenTypes.S => Some(S)
+  case _ => None
   }
 }
 
 object ParseNodes {
-  def fromToken(input: Token) : ParseNode = ParseNodeTypes.fromTokenType(input.tokenType)(List.empty[ParseNode], if (input.data.value == "") None else Some(input.data))
+  def fromToken(input: Token) : ParseNode = (ParseNodeTypes.fromTokenType(input.tokenType).get)(List.empty[ParseNode], if (input.data.value == "") None else Some(input.data))
   case class BOF(override val children: List[ParseNode] = List.empty[ParseNode], override val value: Option[InputString] = None) extends ParseNode {
     def tokenType: Option[TokenType] = Some(TokenTypes.BOF)
   }
@@ -1394,9 +1387,6 @@ object ParseNodes {
   }
   case class Minus(override val children: List[ParseNode] = List.empty[ParseNode], override val value: Option[InputString] = None) extends ParseNode {
     def tokenType: Option[TokenType] = Some(TokenTypes.Minus)
-  }
-  case class BinaryNot(override val children: List[ParseNode] = List.empty[ParseNode], override val value: Option[InputString] = None) extends ParseNode {
-    def tokenType: Option[TokenType] = Some(TokenTypes.BinaryNot)
   }
   case class LogicalNot(override val children: List[ParseNode] = List.empty[ParseNode], override val value: Option[InputString] = None) extends ParseNode {
     def tokenType: Option[TokenType] = Some(TokenTypes.LogicalNot)

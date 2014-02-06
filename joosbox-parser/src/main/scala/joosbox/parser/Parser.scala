@@ -122,13 +122,9 @@ class Parser(
   def parseString(str: String, filename: String = "<input>"): ParseNode = parse(lexer.matchString(str, filename).get)
 
   def parse(_symbols: List[joosbox.lexer.Token]): ParseNode = {
-    //  Remove whitespace. TODO: Should we be doing this here?
-    val symbols: List[joosbox.lexer.Token] =
-      _symbols.filter((s: joosbox.lexer.Token) => (
-        s.tokenType != TokenTypes.Whitespace &&
-        s.tokenType != TokenTypes.SingleLineComment &&
-        s.tokenType != TokenTypes.MultiLineComment &&
-        s.tokenType != TokenTypes.JavaDocComment))
+
+    //  Remove all tokens that are not possible parse nodes.
+    val symbols: List[joosbox.lexer.Token] = _symbols.filter((s: joosbox.lexer.Token) => ParseNodeTypes.fromTokenType(s.tokenType) != None)
 
     var nodeStack : scala.collection.mutable.Stack[ParseNode] = scala.collection.mutable.Stack[ParseNode]()
     var stateStack : scala.collection.mutable.Stack[Int] = scala.collection.mutable.Stack[Int]()
@@ -140,7 +136,7 @@ class Parser(
       (a: Token) => {
         var reducing = true
         while (reducing) {
-          transitionTable(stateStack.top).get(ParseNodeTypes.fromTokenType(a.tokenType)) match {
+          transitionTable(stateStack.top).get(ParseNodeTypes.fromTokenType(a.tokenType).get) match {
             case Some(ReduceTransition(rule: ProductionRule)) => {
               val temp : scala.collection.mutable.Stack[ParseNode] = scala.collection.mutable.Stack[ParseNode]()
               (1 to rule.dropCount) foreach (_ => temp.push(nodeStack.pop()))
@@ -162,7 +158,7 @@ class Parser(
         
         //  reject if Trans[stateStack.top; a] = ERROR
         val newPossibleStates: Map[ParseNodeType, Transition] = transitionTable(stateStack.top)
-        newPossibleStates.get(ParseNodeTypes.fromTokenType(a.tokenType)) match {
+        newPossibleStates.get(ParseNodeTypes.fromTokenType(a.tokenType).get) match {
           case Some(ShiftTransition(newState)) => stateStack.push(newState)
           case None => {
             throw new SyntaxError("Got " + a.data + ", expected one of: " + newPossibleStates.keys.map(_.name).mkString(", "))
