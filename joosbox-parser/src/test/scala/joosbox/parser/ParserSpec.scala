@@ -64,7 +64,7 @@ class Test {
     }
 }
       """
-      Parser.Joos.parseString(test) must not(throwA[SyntaxError])
+      Parser.Joos.parseString(test) must not(throwA[Exception])
     }
 
     "scan and parse a valid Joos program on the LR1 grammar" in {
@@ -75,7 +75,7 @@ class Test {
     }
 }
       """
-      Parser.Joos.parseString(test) must not(throwA[SyntaxError])
+      Parser.Joos.parseString(test) must not(throwA[Exception])
     }
 
     "scan and parse a valid Joos program on the LR1 grammar" in {
@@ -90,7 +90,7 @@ class Test {
 }
       """
 
-      Parser.Joos.parseString(test) must not(throwA[SyntaxError])
+      Parser.Joos.parseString(test) must not(throwA[Exception])
     }
 
     "flatten a parse tree" in {
@@ -160,388 +160,388 @@ class Test {
     "marmoset tests for assignment 1" in {
       val parser: Parser = Parser.Joos
       "J1_01" in {
-        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_01.java") must not(throwA[SyntaxError])
+        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_01.java") must not(throwA[Exception])
       }
       "J1_1_AmbiguousName_AccessResultFromMethod" in {
-        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_1_AmbiguousName_AccessResultFromMethod.java") must not(throwA[SyntaxError])
+        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_1_AmbiguousName_AccessResultFromMethod.java") must not(throwA[Exception])
       }
       "J1_1_Cast_Complement" in {
-        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_1_Cast_Complement.java") must not(throwA[SyntaxError])
+        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_1_Cast_Complement.java") must not(throwA[Exception])
       }
       "J1_1_Cast_MultipleCastOfSameValue_1" in {
-        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_1_Cast_MultipleCastOfSameValue_1.java") must not(throwA[SyntaxError])
+        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_1_Cast_MultipleCastOfSameValue_1.java") must not(throwA[Exception])
       }
       "J1_1_Cast_MultipleCastOfSameValue_2" in {
-        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_1_Cast_MultipleCastOfSameValue_2.java") must not(throwA[SyntaxError])
+        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_1_Cast_MultipleCastOfSameValue_2.java") must not(throwA[Exception])
       }
       "J1_1_Cast_MultipleCastOfSameValue_3" in {
-        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_1_Cast_MultipleCastOfSameValue_3.java") must not(throwA[SyntaxError])
+        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_1_Cast_MultipleCastOfSameValue_3.java") must not(throwA[Exception])
       }
       "J1_1_Cast_MultipleReferenceArray" in {
-        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_1_Cast_MultipleReferenceArray.java") must not(throwA[SyntaxError])
+        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_1_Cast_MultipleReferenceArray.java") must not(throwA[Exception])
       }
       "J1_1_Escapes_3DigitOctalAndDigit" in {
-        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_1_Escapes_3DigitOctalAndDigit.java") must not(throwA[SyntaxError])
+        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_1_Escapes_3DigitOctalAndDigit.java") must not(throwA[Exception])
       }
       "J1_1_Instanceof_InLazyExp" in {
-        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_1_Instanceof_InLazyExp.java") must not(throwA[SyntaxError])
+        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_1_Instanceof_InLazyExp.java") must not(throwA[Exception])
       }
       "J1_1_Instanceof_OfAdditiveExpression" in {
-        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_1_Instanceof_OfAdditiveExpression.java") must not(throwA[SyntaxError])
+        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_1_Instanceof_OfAdditiveExpression.java") must not(throwA[Exception])
       }
       "J1_1_Instanceof_OfCastExpression" in {
-        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_1_Instanceof_OfCastExpression.java") must not(throwA[SyntaxError])
+        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_1_Instanceof_OfCastExpression.java") must not(throwA[Exception])
       }
       "J1_1_IntRange_NegativeInt" in {
-        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_1_IntRange_NegativeInt.java") must not(throwA[SyntaxError])
+        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_1_IntRange_NegativeInt.java") must not(throwA[Exception])
       }
       "J1_abstractclass" in {
-        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_abstractclass.java") must not(throwA[SyntaxError])
+        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_abstractclass.java") must not(throwA[Exception])
       }
       "J1_abstractmethodwithoutbody" in {
-        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_abstractmethodwithoutbody.java") must not(throwA[SyntaxError])
+        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_abstractmethodwithoutbody.java") must not(throwA[Exception])
       }
       "J1_arbitrarylocaldeclaration" in {
-        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_arbitrarylocaldeclaration.java") must not(throwA[SyntaxError])
+        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_arbitrarylocaldeclaration.java") must not(throwA[Exception])
       }
       "J1_arithmeticoperations" in {
-        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_arithmeticoperations.java") must not(throwA[SyntaxError])
+        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_arithmeticoperations.java") must not(throwA[Exception])
       }
       "J1_ArrayCreateAndIndex" in {
-        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_ArrayCreateAndIndex.java") must not(throwA[SyntaxError])
+        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_ArrayCreateAndIndex.java") must not(throwA[Exception])
       }
       "J1_assignment" in {
-        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_assignment.java") must not(throwA[SyntaxError])
+        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_assignment.java") must not(throwA[Exception])
       }
       "J1_assignmentExp" in {
-        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_assignmentExp.java") must not(throwA[SyntaxError])
+        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_assignmentExp.java") must not(throwA[Exception])
       }
       "J1_barminusfoo" in {
-        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_barminusfoo.java") must not(throwA[SyntaxError])
+        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_barminusfoo.java") must not(throwA[Exception])
       }
       "J1_BigInt" in {
-        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_BigInt.java") must not(throwA[SyntaxError])
+        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_BigInt.java") must not(throwA[Exception])
       }
       "J1_char" in {
-        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_char.java") must not(throwA[SyntaxError])
+        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_char.java") must not(throwA[Exception])
       }
       "J1_char_escape" in {
-        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_char_escape.java") must not(throwA[SyntaxError])
+        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_char_escape.java") must not(throwA[Exception])
       }
       "J1_char_escape2" in {
-        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_char_escape2.java") must not(throwA[SyntaxError])
+        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_char_escape2.java") must not(throwA[Exception])
       }
       "J1_char_escape3" in {
-        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_char_escape3.java") must not(throwA[SyntaxError])
+        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_char_escape3.java") must not(throwA[Exception])
       }
       "J1_charadd" in {
-        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_charadd.java") must not(throwA[SyntaxError])
+        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_charadd.java") must not(throwA[Exception])
       }
       "J1_CharCast" in {
-        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_CharCast.java") must not(throwA[SyntaxError])
+        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_CharCast.java") must not(throwA[Exception])
       }
       "J1_CharCharInit1" in {
-        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_CharCharInit1.java") must not(throwA[SyntaxError])
+        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_CharCharInit1.java") must not(throwA[Exception])
       }
       "J1_CharCharInit2" in {
-        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_CharCharInit2.java") must not(throwA[SyntaxError])
+        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_CharCharInit2.java") must not(throwA[Exception])
       }
       "J1_charliterals" in {
-        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_charliterals.java") must not(throwA[SyntaxError])
+        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_charliterals.java") must not(throwA[Exception])
       }
       "J1_classinstance" in {
-        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_classinstance.java") must not(throwA[SyntaxError])
+        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_classinstance.java") must not(throwA[Exception])
       }
       "J1_commentsInExp1" in {
-        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_commentsInExp1.java") must not(throwA[SyntaxError])
+        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_commentsInExp1.java") must not(throwA[Exception])
       }
       "J1_commentsInExp2" in {
-        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_commentsInExp2.java") must not(throwA[SyntaxError])
+        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_commentsInExp2.java") must not(throwA[Exception])
       }
       "J1_commentsInExp3" in {
-        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_commentsInExp3.java") must not(throwA[SyntaxError])
+        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_commentsInExp3.java") must not(throwA[Exception])
       }
       "J1_commentsInExp4" in {
-        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_commentsInExp4.java") must not(throwA[SyntaxError])
+        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_commentsInExp4.java") must not(throwA[Exception])
       }
       "J1_commentsInExp5" in {
-        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_commentsInExp5.java") must not(throwA[SyntaxError])
+        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_commentsInExp5.java") must not(throwA[Exception])
       }
       "J1_commentsInExp6" in {
-        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_commentsInExp6.java") must not(throwA[SyntaxError])
+        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_commentsInExp6.java") must not(throwA[Exception])
       }
       "J1_commentsInExp7" in {
-        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_commentsInExp7.java") must not(throwA[SyntaxError])
+        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_commentsInExp7.java") must not(throwA[Exception])
       }
       "J1_commentsInExp8" in {
-        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_commentsInExp8.java") must not(throwA[SyntaxError])
+        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_commentsInExp8.java") must not(throwA[Exception])
       }
       "J1_commentsInExp9" in {
-        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_commentsInExp9.java") must not(throwA[SyntaxError])
+        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_commentsInExp9.java") must not(throwA[Exception])
       }
       "J1_comparisonoperations" in {
-        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_comparisonoperations.java") must not(throwA[SyntaxError])
+        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_comparisonoperations.java") must not(throwA[Exception])
       }
       "J1_concat_in_binop" in {
-        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_concat_in_binop.java") must not(throwA[SyntaxError])
+        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_concat_in_binop.java") must not(throwA[Exception])
       }
       "J1_constructorbodycast" in {
-        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_constructorbodycast.java") must not(throwA[SyntaxError])
+        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_constructorbodycast.java") must not(throwA[Exception])
       }
       "J1_constructorparameter" in {
-        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_constructorparameter.java") must not(throwA[SyntaxError])
+        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_constructorparameter.java") must not(throwA[Exception])
       }
       "J1_constructorWithSameNameAsMethod" in {
-        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_constructorWithSameNameAsMethod.java") must not(throwA[SyntaxError])
+        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_constructorWithSameNameAsMethod.java") must not(throwA[Exception])
       }
       "J1_eagerbooleanoperations" in {
-        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_eagerbooleanoperations.java") must not(throwA[SyntaxError])
+        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_eagerbooleanoperations.java") must not(throwA[Exception])
       }
       "J1_EscapeEscape" in {
-        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_EscapeEscape.java") must not(throwA[SyntaxError])
+        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_EscapeEscape.java") must not(throwA[Exception])
       }
       "J1_evalMethodInvocationFromParExp" in {
-        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_evalMethodInvocationFromParExp.java") must not(throwA[SyntaxError])
+        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_evalMethodInvocationFromParExp.java") must not(throwA[Exception])
       }
       "J1_exp" in {
-        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_exp.java") must not(throwA[SyntaxError])
+        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_exp.java") must not(throwA[Exception])
       }
       "J1_extends" in {
-        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_extends.java") must not(throwA[SyntaxError])
+        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_extends.java") must not(throwA[Exception])
       }
       "J1_externalcall" in {
-        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_externalcall.java") must not(throwA[SyntaxError])
+        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_externalcall.java") must not(throwA[Exception])
       }
       "J1_finalclass" in {
-        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_finalclass.java") must not(throwA[SyntaxError])
+        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_finalclass.java") must not(throwA[Exception])
       }
       "J1_finalclass2" in {
-        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_finalclass2.java") must not(throwA[SyntaxError])
+        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_finalclass2.java") must not(throwA[Exception])
       }
       "J1_for_no_short_if" in {
-        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_for_no_short_if.java") must not(throwA[SyntaxError])
+        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_for_no_short_if.java") must not(throwA[Exception])
       }
       "J1_forAllwaysInit" in {
-        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_forAllwaysInit.java") must not(throwA[SyntaxError])
+        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_forAllwaysInit.java") must not(throwA[Exception])
       }
       "J1_forAlwaysInitAsWhile" in {
-        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_forAlwaysInitAsWhile.java") must not(throwA[SyntaxError])
+        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_forAlwaysInitAsWhile.java") must not(throwA[Exception])
       }
       "J1_forbodycast" in {
-        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_forbodycast.java") must not(throwA[SyntaxError])
+        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_forbodycast.java") must not(throwA[Exception])
       }
       "J1_forifstatements1" in {
-        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_forifstatements1.java") must not(throwA[SyntaxError])
+        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_forifstatements1.java") must not(throwA[Exception])
       }
       "J1_forifstatements2" in {
-        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_forifstatements2.java") must not(throwA[SyntaxError])
+        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_forifstatements2.java") must not(throwA[Exception])
       }
       "J1_forifstatements3" in {
-        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_forifstatements3.java") must not(throwA[SyntaxError])
+        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_forifstatements3.java") must not(throwA[Exception])
       }
       "J1_forinfor" in {
-        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_forinfor.java") must not(throwA[SyntaxError])
+        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_forinfor.java") must not(throwA[Exception])
       }
       "J1_forinitcast" in {
-        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_forinitcast.java") must not(throwA[SyntaxError])
+        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_forinitcast.java") must not(throwA[Exception])
       }
       "J1_forMethodInit" in {
-        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_forMethodInit.java") must not(throwA[SyntaxError])
+        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_forMethodInit.java") must not(throwA[Exception])
       }
       "J1_forMethodUpdate" in {
-        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_forMethodUpdate.java") must not(throwA[SyntaxError])
+        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_forMethodUpdate.java") must not(throwA[Exception])
       }
       "J1_forMethodUpdate2" in {
-        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_forMethodUpdate2.java") must not(throwA[SyntaxError])
+        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_forMethodUpdate2.java") must not(throwA[Exception])
       }
       "J1_ForUpdate_ClassCreation" in {
-        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_ForUpdate_ClassCreation.java") must not(throwA[SyntaxError])
+        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_ForUpdate_ClassCreation.java") must not(throwA[Exception])
       }
       "J1_forupdatecast" in {
-        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_forupdatecast.java") must not(throwA[SyntaxError])
+        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_forupdatecast.java") must not(throwA[Exception])
       }
       "J1_forWithoutExp" in {
-        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_forWithoutExp.java") must not(throwA[SyntaxError])
+        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_forWithoutExp.java") must not(throwA[Exception])
       }
       "J1_forWithoutInit" in {
-        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_forWithoutInit.java") must not(throwA[SyntaxError])
+        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_forWithoutInit.java") must not(throwA[Exception])
       }
       "J1_forWithoutUpdate" in {
-        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_forWithoutUpdate.java") must not(throwA[SyntaxError])
+        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_forWithoutUpdate.java") must not(throwA[Exception])
       }
       "J1_hello_comment" in {
-        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_hello_comment.java") must not(throwA[SyntaxError])
+        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_hello_comment.java") must not(throwA[Exception])
       }
       "J1_if" in {
-        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_if.java") must not(throwA[SyntaxError])
+        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_if.java") must not(throwA[Exception])
       }
       "J1_if_then" in {
-        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_if_then.java") must not(throwA[SyntaxError])
+        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_if_then.java") must not(throwA[Exception])
       }
       "J1_if_then_for" in {
-        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_if_then_for.java") must not(throwA[SyntaxError])
+        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_if_then_for.java") must not(throwA[Exception])
       }
       "J1_ifThenElse" in {
-        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_ifThenElse.java") must not(throwA[SyntaxError])
+        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_ifThenElse.java") must not(throwA[Exception])
       }
       "J1_implements" in {
-        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_implements.java") must not(throwA[SyntaxError])
+        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_implements.java") must not(throwA[Exception])
       }
       "J1_IntArrayDecl1" in {
-        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_IntArrayDecl1.java") must not(throwA[SyntaxError])
+        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_IntArrayDecl1.java") must not(throwA[Exception])
       }
       "J1_IntArrayDecl2" in {
-        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_IntArrayDecl2.java") must not(throwA[SyntaxError])
+        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_IntArrayDecl2.java") must not(throwA[Exception])
       }
       "J1_IntCast" in {
-        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_IntCast.java") must not(throwA[SyntaxError])
+        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_IntCast.java") must not(throwA[Exception])
       }
       "J1_IntCharInit" in {
-        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_IntCharInit.java") must not(throwA[SyntaxError])
+        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_IntCharInit.java") must not(throwA[Exception])
       }
       "J1_integerFun" in {
-        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_integerFun.java") must not(throwA[SyntaxError])
+        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_integerFun.java") must not(throwA[Exception])
       }
       "J1_integerFun1" in {
-        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_integerFun1.java") must not(throwA[SyntaxError])
+        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_integerFun1.java") must not(throwA[Exception])
       }
       "J1_integerFun3" in {
-        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_integerFun3.java") must not(throwA[SyntaxError])
+        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_integerFun3.java") must not(throwA[Exception])
       }
       "J1_IntInit" in {
-        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_IntInit.java") must not(throwA[SyntaxError])
+        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_IntInit.java") must not(throwA[Exception])
       }
       "J1_intliterals" in {
-        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_intliterals.java") must not(throwA[SyntaxError])
+        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_intliterals.java") must not(throwA[Exception])
       }
       "J1_intminusfoo" in {
-        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_intminusfoo.java") must not(throwA[SyntaxError])
+        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_intminusfoo.java") must not(throwA[Exception])
       }
       "J1_IntRange_MinNegativeInt" in {
-        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_IntRange_MinNegativeInt.java") must not(throwA[SyntaxError])
+        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_IntRange_MinNegativeInt.java") must not(throwA[Exception])
       }
       "J1_IsThisACast" in {
-        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_IsThisACast.java") must not(throwA[SyntaxError])
+        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_IsThisACast.java") must not(throwA[Exception])
       }
       "J1_lazybooleanoperations" in {
-        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_lazybooleanoperations.java") must not(throwA[SyntaxError])
+        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_lazybooleanoperations.java") must not(throwA[Exception])
       }
       "J1_maxint_comment" in {
-        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_maxint_comment.java") must not(throwA[SyntaxError])
+        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_maxint_comment.java") must not(throwA[Exception])
       }
       "J1_minuschar" in {
-        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_minuschar.java") must not(throwA[SyntaxError])
+        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_minuschar.java") must not(throwA[Exception])
       }
       "J1_minusminusminus" in {
-        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_minusminusminus.java") must not(throwA[SyntaxError])
+        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_minusminusminus.java") must not(throwA[Exception])
       }
       "J1_NamedTypeArray" in {
-        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_NamedTypeArray.java") must not(throwA[SyntaxError])
+        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_NamedTypeArray.java") must not(throwA[Exception])
       }
       "J1_NegativeByteCast" in {
-        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_NegativeByteCast.java") must not(throwA[SyntaxError])
+        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_NegativeByteCast.java") must not(throwA[Exception])
       }
       "J1_NegativeCharCast" in {
-        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_NegativeCharCast.java") must not(throwA[SyntaxError])
+        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_NegativeCharCast.java") must not(throwA[Exception])
       }
       "J1_NegativeIntCast1" in {
-        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_NegativeIntCast1.java") must not(throwA[SyntaxError])
+        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_NegativeIntCast1.java") must not(throwA[Exception])
       }
       "J1_NegativeIntCast2" in {
-        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_NegativeIntCast2.java") must not(throwA[SyntaxError])
+        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_NegativeIntCast2.java") must not(throwA[Exception])
       }
       "J1_negativeintcast3" in {
-        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_negativeintcast3.java") must not(throwA[SyntaxError])
+        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_negativeintcast3.java") must not(throwA[Exception])
       }
       "J1_NegativeOneByteByteCast" in {
-        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_NegativeOneByteByteCast.java") must not(throwA[SyntaxError])
+        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_NegativeOneByteByteCast.java") must not(throwA[Exception])
       }
       "J1_NegativeOneByteCharCast" in {
-        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_NegativeOneByteCharCast.java") must not(throwA[SyntaxError])
+        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_NegativeOneByteCharCast.java") must not(throwA[Exception])
       }
       "J1_NegativeOneByteIntCast" in {
-        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_NegativeOneByteIntCast.java") must not(throwA[SyntaxError])
+        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_NegativeOneByteIntCast.java") must not(throwA[Exception])
       }
       "J1_NegativeOneByteShortCast" in {
-        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_NegativeOneByteShortCast.java") must not(throwA[SyntaxError])
+        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_NegativeOneByteShortCast.java") must not(throwA[Exception])
       }
       "J1_NegativeShortCast" in {
-        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_NegativeShortCast.java") must not(throwA[SyntaxError])
+        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_NegativeShortCast.java") must not(throwA[Exception])
       }
       "J1_newobject" in {
-        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_newobject.java") must not(throwA[SyntaxError])
+        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_newobject.java") must not(throwA[Exception])
       }
       "J1_nonemptyconstructor" in {
-        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_nonemptyconstructor.java") must not(throwA[SyntaxError])
+        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_nonemptyconstructor.java") must not(throwA[Exception])
       }
       "J1_nullinstanceof1" in {
-        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_nullinstanceof1.java") must not(throwA[SyntaxError])
+        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_nullinstanceof1.java") must not(throwA[Exception])
       }
       "J1_nullliteral" in {
-        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_nullliteral.java") must not(throwA[SyntaxError])
+        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_nullliteral.java") must not(throwA[Exception])
       }
       "J1_octal_escape" in {
-        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_octal_escape.java") must not(throwA[SyntaxError])
+        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_octal_escape.java") must not(throwA[Exception])
       }
       "J1_octal_escape2" in {
-        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_octal_escape2.java") must not(throwA[SyntaxError])
+        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_octal_escape2.java") must not(throwA[Exception])
       }
       "J1_octal_escape3" in {
-        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_octal_escape3.java") must not(throwA[SyntaxError])
+        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_octal_escape3.java") must not(throwA[Exception])
       }
       "J1_octal_escape4" in {
-        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_octal_escape4.java") must not(throwA[SyntaxError])
+        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_octal_escape4.java") must not(throwA[Exception])
       }
       "J1_octal_escape5" in {
-        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_octal_escape5.java") must not(throwA[SyntaxError])
+        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_octal_escape5.java") must not(throwA[Exception])
       }
       "J1_primitivecasts" in {
-        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_primitivecasts.java") must not(throwA[SyntaxError])
+        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_primitivecasts.java") must not(throwA[Exception])
       }
       "J1_protected" in {
-        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_protected.java") must not(throwA[SyntaxError])
+        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_protected.java") must not(throwA[Exception])
       }
       "J1_protectedfields" in {
-        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_protectedfields.java") must not(throwA[SyntaxError])
+        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_protectedfields.java") must not(throwA[Exception])
       }
       "J1_publicclasses" in {
-        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_publicclasses.java") must not(throwA[SyntaxError])
+        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_publicclasses.java") must not(throwA[Exception])
       }
       "J1_publicconstructors" in {
-        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_publicconstructors.java") must not(throwA[SyntaxError])
+        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_publicconstructors.java") must not(throwA[Exception])
       }
       "J1_publicfields" in {
-        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_publicfields.java") must not(throwA[SyntaxError])
+        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_publicfields.java") must not(throwA[Exception])
       }
       "J1_publicmethods" in {
-        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_publicmethods.java") must not(throwA[SyntaxError])
+        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_publicmethods.java") must not(throwA[Exception])
       }
       "J1_SimpleTypeArray" in {
-        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_SimpleTypeArray.java") must not(throwA[SyntaxError])
+        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_SimpleTypeArray.java") must not(throwA[Exception])
       }
       "J1_SmallInt" in {
-        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_SmallInt.java") must not(throwA[SyntaxError])
+        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_SmallInt.java") must not(throwA[Exception])
       }
       "J1_staticmethoddeclaration" in {
-        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_staticmethoddeclaration.java") must not(throwA[SyntaxError])
+        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_staticmethoddeclaration.java") must not(throwA[Exception])
       }
       "J1_stringliteralinvoke" in {
-        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_stringliteralinvoke.java") must not(throwA[SyntaxError])
+        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_stringliteralinvoke.java") must not(throwA[Exception])
       }
       "J1_stringliterals" in {
-        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_stringliterals.java") must not(throwA[SyntaxError])
+        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_stringliterals.java") must not(throwA[Exception])
       }
       "J1_weird_chars" in {
-        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_weird_chars.java") must not(throwA[SyntaxError])
+        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_weird_chars.java") must not(throwA[Exception])
       }
       "J1w_Interface" in {
-        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1w_Interface.java") must not(throwA[SyntaxError])
+        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1w_Interface.java") must not(throwA[Exception])
       }
       "J1w_RestrictedNative" in {
-        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1w_RestrictedNative.java") must not(throwA[SyntaxError])
+        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1w_RestrictedNative.java") must not(throwA[Exception])
       }
       "J1w_StaticField" in {
-        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1w_StaticField.java") must not(throwA[SyntaxError])
+        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1w_StaticField.java") must not(throwA[Exception])
       }
       "J2_staticFieldDecl" in {
         parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J2_staticFieldDecl.java") must throwA[SyntaxError]
@@ -700,13 +700,13 @@ class Test {
         parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/Je_1_CastToArrayLvalue.java") must throwA[SyntaxError]
       }
       "Je_1_ClassDeclaration_WrongFileName" in {
-        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/Je_1_ClassDeclaration_WrongFileName.java") must not(throwA[SyntaxError])
+        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/Je_1_ClassDeclaration_WrongFileName.java") must not(throwA[Exception])
       }
       "Je_1_ClassDeclaration_WrongFileName_Dot.foo" in {
-        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/Je_1_ClassDeclaration_WrongFileName_Dot.foo.java") must not(throwA[SyntaxError])
+        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/Je_1_ClassDeclaration_WrongFileName_Dot.foo.java") must not(throwA[Exception])
       }
       "Je_1_ClassDeclaration_WrongFileName_Suffix" in {
-        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/Je_1_ClassDeclaration_WrongFileName_Suffix.java") must not(throwA[SyntaxError])
+        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/Je_1_ClassDeclaration_WrongFileName_Suffix.java") must not(throwA[Exception])
       }
       "Je_1_ClassInstantiation_InstantiateSimpleType" in {
         parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/Je_1_ClassInstantiation_InstantiateSimpleType.java") must throwA[SyntaxError]
@@ -859,19 +859,19 @@ class Test {
         parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/Je_1_Interface_WrongFileName.java") must throwA[SyntaxError]
       }
       "Je_1_IntRange_MinusTooBigInt" in {
-        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/Je_1_IntRange_MinusTooBigInt.java") must not(throwA[SyntaxError])
+        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/Je_1_IntRange_MinusTooBigInt.java") must not(throwA[Exception])
       }
       "Je_1_IntRange_PlusTooBigInt" in {
-        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/Je_1_IntRange_PlusTooBigInt.java") must not(throwA[SyntaxError])
+        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/Je_1_IntRange_PlusTooBigInt.java") must not(throwA[Exception])
       }
       "Je_1_IntRange_TooBigInt" in {
-        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/Je_1_IntRange_TooBigInt.java") must not(throwA[SyntaxError])
+        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/Je_1_IntRange_TooBigInt.java") must not(throwA[Exception])
       }
       "Je_1_IntRange_TooBigInt_InInitializer" in {
-        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/Je_1_IntRange_TooBigInt_InInitializer.java") must not(throwA[SyntaxError])
+        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/Je_1_IntRange_TooBigInt_InInitializer.java") must not(throwA[Exception])
       }
       "Je_1_IntRange_TooBigIntNegated" in {
-        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/Je_1_IntRange_TooBigIntNegated.java") must not(throwA[SyntaxError])
+        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/Je_1_IntRange_TooBigIntNegated.java") must not(throwA[Exception])
       }
       "Je_1_JoosTypes_Double" in {
         parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/Je_1_JoosTypes_Double.java") must throwA[SyntaxError]
@@ -934,7 +934,7 @@ class Test {
         parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/Je_1_MultiArrayTypes_Dimensions.java") must throwA[SyntaxError]
       }
       "Je_1_NegIntTooLow" in {
-        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/Je_1_NegIntTooLow.java") must not(throwA[SyntaxError])
+        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/Je_1_NegIntTooLow.java") must not(throwA[Exception])
       }
       "Je_1_NonJoosConstructs_AssignmentOperations_BitwiseAnd" in {
         parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/Je_1_NonJoosConstructs_AssignmentOperations_BitwiseAnd.java") must throwA[SyntaxError]
