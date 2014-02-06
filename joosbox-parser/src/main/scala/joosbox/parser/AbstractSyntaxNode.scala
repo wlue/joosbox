@@ -495,8 +495,8 @@ object AbstractSyntaxNode {
       // The grammar guarantees we should only get one PackageDeclaration,
       // so there's no need to check for multiple here.
       val packageDeclaration: Option[PackageDeclaration] = children.collectFirst { case x: PackageDeclaration => x }
-      val importDeclarations: Seq[ImportDeclaration] = children.collect { case x: ImportDecleration => x }
-      val typeDeclarations: Seq[TypeDeclaration] = children.collect { case x: TypeDecleration => x }
+      val importDeclarations: Seq[ImportDeclaration] = children.collect { case x: ImportDeclaration => x }
+      val typeDeclarations: Seq[TypeDeclaration] = children.collect { case x: TypeDeclaration => x }
 
       Seq(CompilationUnit(packageDeclaration, importDeclarations, typeDeclarations))
     }
