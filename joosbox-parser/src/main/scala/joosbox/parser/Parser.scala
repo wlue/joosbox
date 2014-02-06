@@ -143,7 +143,7 @@ class Parser(
         transitionTable(stateStack.top).get(ParseNodeTypes.fromTokenType(a.tokenType).get) match {
           case Some(ReduceTransition(rule: ProductionRule)) => {
             val temp: MutableStack[ParseNode] = MutableStack[ParseNode]()
-            (1 to rule.dropCount).foreach { temp.push(nodeStack.pop()) }
+            (1 to rule.dropCount).foreach { _ => temp.push(nodeStack.pop()) }
 
             stateStack = stateStack.drop(rule.dropCount)
 
