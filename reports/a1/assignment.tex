@@ -1,0 +1,66 @@
+\documentclass[letterpaper]{article}
+\usepackage{inconsolata}
+\usepackage[T1]{fontenc}
+\usepackage[margin=1in]{geometry}
+\usepackage[utf8]{inputenc}
+\usepackage{hyperref}
+\usepackage{soul}
+\usepackage{fancyhdr, lastpage}
+\usepackage{graphicx}
+\pagestyle{fancy}
+\fancyhf{}
+\usepackage{minted}
+\usemintedstyle{pastie}
+
+\newcommand{\spacer}{\vspace{5mm}\hrule\vspace{5mm}}
+
+\makeatletter
+\renewcommand{\@maketitle}{
+  \begin{center}%
+    {\LARGE \@title \par}%
+  \end{center}%
+  \vspace*{40pt}
+  \noindent \Large \@date \par %
+  \vspace*{20pt}
+  \noindent \Large \@author \par %
+  \vfill
+  \par
+}
+\makeatother
+
+% New commands
+\newcommand{\assignmentnumber}{1}
+\newcommand{\course}{CS 444: Compiler Construction}
+\newcommand{\term}{Winter 2013}
+\newcommand{\project}{Lab \assignmentnumber: Scanning, Parsing, Weeding, AST Building}
+\newcommand{\name}{wlue, cktaylor, psobot}
+\newcommand{\wenhao}{wlue(??????) - Lue, Wen-Hao (wlue@uwaterloo.ca)}
+\newcommand{\chris}{cktaylor(20338058) - Taylor, Chris (cktaylor@uwaterloo.ca)}
+\newcommand{\peter}{psobot(20334978) - Sobot, Peter (psobot@uwaterloo.ca)}
+
+% Values for template
+\title{\course \\ \term \\ \project}
+\date{\ul{\textbf{Date of Submission}}: \today}
+\author{\ul{\textbf{Submitted by}}: \\ \indent \wenhao \\ \indent \chris \\ \indent \peter}
+
+\rhead{\name{}}
+\lhead{\course{} Lab \assignmentnumber}
+\cfoot{Page \thepage{} of \protect\pageref{LastPage}}
+
+% Content
+\begin{document}
+
+  \maketitle
+  \thispagestyle{empty}
+  \clearpage
+
+  \tableofcontents
+  \thispagestyle{empty}
+  \clearpage
+
+  \setcounter{page}{1}
+
+  \clearpage
+  \section{Introduction}
+
+\end{document}
