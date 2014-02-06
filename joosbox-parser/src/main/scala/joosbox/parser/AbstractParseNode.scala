@@ -5,6 +5,7 @@ import joosbox.lexer.InputString
 
 abstract class ParseNodeType {
   def apply(children: List[ParseNode] = List.empty[ParseNode], value: Option[InputString] = None): ParseNode
+  def name: String = this.getClass.getSimpleName.replace("$", "")
   def tokenType: Option[TokenType]
 }
 

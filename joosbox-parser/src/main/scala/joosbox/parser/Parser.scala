@@ -165,7 +165,7 @@ class Parser(
         newPossibleStates.get(ParseNodeTypes.fromTokenType(a.tokenType)) match {
           case Some(ShiftTransition(newState)) => stateStack.push(newState)
           case None => {
-            throw new SyntaxError("Got " + a.data + ", expected one of: " + newPossibleStates.keys.map(_.getClass.getSimpleName).mkString(", "))
+            throw new SyntaxError("Got " + a.data + ", expected one of: " + newPossibleStates.keys.map(_.name).mkString(", "))
           }
         }
       }
