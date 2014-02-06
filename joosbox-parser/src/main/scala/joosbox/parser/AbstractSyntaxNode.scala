@@ -7,42 +7,40 @@ sealed trait AbstractSyntaxNode {
 }
 
 object AbstractSyntaxNode {
-  case class CharLiteral(val value: InputString) extends AbstractSyntaxNode
-  case class StringLiteral(val value: InputString) extends AbstractSyntaxNode
-  case class NullLiteral() extends AbstractSyntaxNode
-  case class Num(val value: InputString) extends AbstractSyntaxNode {
+  case class CharLiteral(value: InputString) extends AbstractSyntaxNode
+  case class StringLiteral(value: InputString) extends AbstractSyntaxNode
+  case object NullLiteral extends AbstractSyntaxNode
+  case class Num(value: InputString) extends AbstractSyntaxNode
 
-  }
+  case object TrueLiteral extends AbstractSyntaxNode
+  case object FalseLiteral extends AbstractSyntaxNode
 
-  case class TrueLiteral() extends AbstractSyntaxNode
-  case class FalseLiteral() extends AbstractSyntaxNode
-
-  case class BooleanKeyword() extends AbstractSyntaxNode
-  case class ByteKeyword() extends AbstractSyntaxNode
-  case class ShortKeyword() extends AbstractSyntaxNode
-  case class IntKeyword() extends AbstractSyntaxNode
-  case class CharKeyword() extends AbstractSyntaxNode
+  case object BooleanKeyword extends AbstractSyntaxNode
+  case object ByteKeyword extends AbstractSyntaxNode
+  case object ShortKeyword extends AbstractSyntaxNode
+  case object IntKeyword extends AbstractSyntaxNode
+  case object CharKeyword extends AbstractSyntaxNode
 
   case class CompilationUnit(
     val packageDeclaration: Option[PackageDeclaration] = None,
     val importDeclarations: Seq[ImportDeclaration] = Seq.empty[ImportDeclaration],
     val typeDeclarations: Seq[TypeDeclaration] = Seq.empty[TypeDeclaration]
-  ) extends AbstractSyntaxNode {
+  ) extends AbstractSyntaxNode
 
+  case class PackageDeclaration(name: InputString) extends AbstractSyntaxNode
+
+  sealed trait ImportDeclaration extends AbstractSyntaxNode {
+    def name: InputString
   }
 
-  case class PackageDeclaration(val name: InputString) extends AbstractSyntaxNode
+  case class SingleTypeImportDeclaration(name: InputString) extends ImportDeclaration
+  case class TypeImportOnDemandDeclaration(name: InputString) extends ImportDeclaration
 
-  abstract class ImportDeclaration(val name: InputString) extends AbstractSyntaxNode
-  case class SingleTypeImportDeclaration(override val name: InputString) extends ImportDeclaration(name)
-  case class TypeImportOnDemandDeclaration(override val name: InputString) extends ImportDeclaration(name)
+  sealed trait TypeDeclaration extends AbstractSyntaxNode
+  case object ClassDeclaration extends TypeDeclaration
+  case object InterfaceDeclaration extends TypeDeclaration
 
-  abstract class TypeDeclaration() extends AbstractSyntaxNode
-
-  case class ClassDeclaration() extends TypeDeclaration()
-  case class InterfaceDeclaration() extends TypeDeclaration()
-
-  case class Identifier(val value: InputString) extends AbstractSyntaxNode
+  case class Identifier(value: InputString) extends AbstractSyntaxNode
   /*
   case class Star(override val children: List[ParseNode] = List.empty[ParseNode], override val value: Option[InputString] = None) extends ParseNode {
     def tokenType: Option[TokenType] = Some(TokenTypes.Star)
@@ -477,21 +475,21 @@ object AbstractSyntaxNode {
     case c: ParseNodes.CompilationUnit => {
       //  Sort our children into ImportDeclarations, TypeDeclarations and PackageDeclaration
 
-      val children:Seq[AbstractSyntaxNode] = c.children.flatMap(fromParseNode(_))
+      val children: Seq[AbstractSyntaxNode] = c.children.flatMap(fromParseNode(_))
 
       //  The grammar guarantees we should only get one PackageDeclaration,
       //  so there's no need to check for multiple here.
-      val packageDeclaration:Option[PackageDeclaration] = children.flatMap {
+      val packageDeclaration: Option[PackageDeclaration] = children.flatMap {
         case x: PackageDeclaration => Some(x)
         case _ => None
       }.headOption
 
-      val importDeclarations:Seq[ImportDeclaration] = children.flatMap {
+      val importDeclarations: Seq[ImportDeclaration] = children.flatMap {
         case x: ImportDeclaration => Some(x)
         case _ => None
       }
 
-      val typeDeclarations:Seq[TypeDeclaration] = children.flatMap {
+      val typeDeclarations: Seq[TypeDeclaration] = children.flatMap {
         case x: TypeDeclaration => Some(x)
         case _ => None
       }
@@ -505,8 +503,8 @@ object AbstractSyntaxNode {
     case i: ParseNodes.TypeImportOnDemandDeclaration => Seq(TypeImportOnDemandDeclaration(i.children(1).value.get))
 
     //  TODO
-    case t: ParseNodes.ClassDeclaration     => Seq(ClassDeclaration())
-    case t: ParseNodes.InterfaceDeclaration => Seq(InterfaceDeclaration())
+    case t: ParseNodes.ClassDeclaration     => Seq(ClassDeclaration)
+    case t: ParseNodes.InterfaceDeclaration => Seq(InterfaceDeclaration)
 
 
     //  If the parse node does not map nicely to an ASN, just hand us its children.
