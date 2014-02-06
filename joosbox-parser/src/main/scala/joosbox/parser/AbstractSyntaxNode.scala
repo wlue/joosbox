@@ -22,9 +22,9 @@ object AbstractSyntaxNode {
   case object CharKeyword extends AbstractSyntaxNode
 
   case class CompilationUnit(
-    val packageDeclaration: Option[PackageDeclaration] = None,
-    val importDeclarations: Seq[ImportDeclaration] = Seq.empty[ImportDeclaration],
-    val typeDeclarations: Seq[TypeDeclaration] = Seq.empty[TypeDeclaration]
+    packageDeclaration: Option[PackageDeclaration] = None,
+    importDeclarations: Seq[ImportDeclaration] = Seq.empty[ImportDeclaration],
+    typeDeclarations: Seq[TypeDeclaration] = Seq.empty[TypeDeclaration]
   ) extends AbstractSyntaxNode
 
   case class PackageDeclaration(name: InputString) extends AbstractSyntaxNode
@@ -489,26 +489,14 @@ object AbstractSyntaxNode {
     case p: ParseNodes.EOF  => Seq.empty[AbstractSyntaxNode]
 
     case c: ParseNodes.CompilationUnit => {
-      //  Sort our children into ImportDeclarations, TypeDeclarations and PackageDeclaration
-
+      // Sort our children into ImportDeclarations, TypeDeclarations and PackageDeclaration
       val children: Seq[AbstractSyntaxNode] = c.children.flatMap(fromParseNode(_))
 
-      //  The grammar guarantees we should only get one PackageDeclaration,
-      //  so there's no need to check for multiple here.
-      val packageDeclaration: Option[PackageDeclaration] = children.flatMap {
-        case x: PackageDeclaration => Some(x)
-        case _ => None
-      }.headOption
-
-      val importDeclarations: Seq[ImportDeclaration] = children.flatMap {
-        case x: ImportDeclaration => Some(x)
-        case _ => None
-      }
-
-      val typeDeclarations: Seq[TypeDeclaration] = children.flatMap {
-        case x: TypeDeclaration => Some(x)
-        case _ => None
-      }
+      // The grammar guarantees we should only get one PackageDeclaration,
+      // so there's no need to check for multiple here.
+      val packageDeclaration: Option[PackageDeclaration] = children.collectFirst { case x: PackageDeclaration => x }
+      val importDeclarations: Seq[ImportDeclaration] = children.collect { case x: ImportDecleration => x }
+      val typeDeclarations: Seq[TypeDeclaration] = children.collect { case x: TypeDecleration => x }
 
       Seq(CompilationUnit(packageDeclaration, importDeclarations, typeDeclarations))
     }
