@@ -508,11 +508,7 @@ object AbstractSyntaxNode {
 
     case c: ParseNodes.ClassDeclaration => {
       val children:Seq[AbstractSyntaxNode] = c.children.flatMap(fromParseNode(_))
-      
-      val name:Identifier = children.flatMap {
-        case x:Identifier => Some(x)
-        case _ => None
-      }.head
+      val name:Identifier = children.head.asInstanceOf[Identifier]
 
       val modifiers:Seq[Modifier] = children.flatMap {
         case x:Modifier => Some(x)
@@ -540,11 +536,7 @@ object AbstractSyntaxNode {
     case c: ParseNodes.InterfaceDeclaration => {
       val children:Seq[AbstractSyntaxNode] = c.children.flatMap(fromParseNode(_))
 
-      val name:Identifier = children.flatMap {
-        case x:Identifier => Some(x)
-        case _ => None
-      }.head
-
+      val name:Identifier = children.head.asInstanceOf[Identifier]
       val modifiers:Seq[Modifier] = children.flatMap {
         case x:Modifier => Some(x)
         case _ => None
