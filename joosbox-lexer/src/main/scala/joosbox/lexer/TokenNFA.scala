@@ -549,6 +549,7 @@ object TokenNFA {
                                           Symbol("b") -> Set(State("char-part")),
                                           Symbol("f") -> Set(State("char-part")),
                                           Symbol("\"") -> Set(State("char-part")),
+                                          Symbol("\\") -> Set(State("char-part")),
                                           Symbol("\'") -> Set(State("char-part"))) ++ (
                                             Symbol.transitionsFromGroup(Symbol.octalDigits, Set(State("oct"))) ++
                                             Symbol.transitionsFromGroup(Symbol.quadDigits, Set(State("part-oct")))
