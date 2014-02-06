@@ -1114,10 +1114,10 @@ class Test {
         parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/Je_6_InstanceOf_Primitive_2.java") must throwA[SyntaxError]
       }
       "Je_Native" in {
-        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/Je_Native.java") must not(throwA[SyntaxError])
+        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/Je_Native.java") must throwA[SyntaxError]
       }
       "Je_Throws" in {
-        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/Je_Throws.java") must not(throwA[SyntaxError])
+        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/Je_Throws.java") must throwA[SyntaxError]
       }
     }
   }
