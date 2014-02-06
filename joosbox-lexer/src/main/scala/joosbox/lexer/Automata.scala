@@ -176,7 +176,7 @@ class DFA(
     }
   }
 
-  def matchString(inputString: String, filename: String = "", line: Int = 1, idx: Int = 0): Option[List[Token]] = {
+  def matchString(inputString: String, filename: String = "<input>", line: Int = 1, idx: Int = 0): Option[List[Token]] = {
     consume(inputString, startState).flatMap[List[Token]] {
       case (state: State, remainingString: String) => {
         if (remainingString.length == 0) {
