@@ -9,6 +9,9 @@ import joosbox.lexer.TokenNFA
 import joosbox.lexer.InputString
 
 class SyntaxError(msg: String) extends RuntimeException(msg)
+object SyntaxError {
+  def apply(token: Token, message: String = ""): SyntaxError = new SyntaxError("Invalid token " + token.data + ". " + message)
+}
 
 class ProductionRule(val nonTerminal: ParseNodeType, val others: List[ParseNodeType]) {
   override def toString: String = nonTerminal.getClass.getSimpleName + " " + others.map(_.getClass.getSimpleName).mkString(" ")
@@ -124,7 +127,7 @@ class Parser(
   def parse(_symbols: List[joosbox.lexer.Token]): ParseNode = {
 
     //  Remove all tokens that are not possible parse nodes.
-    val symbols: List[joosbox.lexer.Token] = _symbols.filter((s: joosbox.lexer.Token) => ParseNodeTypes.fromTokenType(s.tokenType) != None)
+    val symbols: List[joosbox.lexer.Token] = _symbols.flatMap(PreParseWeeder.verify(_))
 
     var nodeStack : scala.collection.mutable.Stack[ParseNode] = scala.collection.mutable.Stack[ParseNode]()
     var stateStack : scala.collection.mutable.Stack[Int] = scala.collection.mutable.Stack[Int]()
@@ -161,7 +164,7 @@ class Parser(
         newPossibleStates.get(ParseNodeTypes.fromTokenType(a.tokenType).get) match {
           case Some(ShiftTransition(newState)) => stateStack.push(newState)
           case None => {
-            throw new SyntaxError("Got " + a.data + ", expected one of: " + newPossibleStates.keys.map(_.name).mkString(", "))
+            throw SyntaxError(a, "Expected one of: " + newPossibleStates.keys.map(_.name).mkString(", "))
           }
         }
       }
