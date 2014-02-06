@@ -16,6 +16,7 @@ class ParserSpec extends Specification {
       val p: Parser = Parser.Joos
 
       val result: ParseNode = p.parse(List(
+        Tokens.PublicKeyword("public"),
         Tokens.ClassKeyword("class"),
         Tokens.Identifier("identifier"),
         Tokens.LeftCurly("{"),
@@ -27,6 +28,13 @@ class ParserSpec extends Specification {
           ParseNodes.TypeDeclarations(List[ParseNode](
             ParseNodes.TypeDeclaration(List[ParseNode](
               ParseNodes.ClassDeclaration(List[ParseNode](
+                ParseNodes.Modifiers(List[ParseNode](
+                  ParseNodes.Modifier(List[ParseNode](
+                    ParseNodes.AccessModifier(List[ParseNode](
+                      ParseNodes.PublicKeyword(List.empty[ParseNode], Some("public"))
+                    ))
+                  ))
+                )),
                 ParseNodes.ClassKeyword(List.empty[ParseNode], Some("class")),
                 ParseNodes.Identifier(List.empty[ParseNode], Some("identifier")),
                 ParseNodes.ClassBody(List[ParseNode](
@@ -58,7 +66,7 @@ class ParserSpec extends Specification {
 
     "scan and parse a valid Joos program on the LR1 grammar" in {
       val test : String = """
-class Test {
+public class Test {
     public static void main(String args[]) {
         System.out.println("Hello world!");
     }
@@ -69,7 +77,7 @@ class Test {
 
     "scan and parse a valid Joos program on the LR1 grammar" in {
       val test : String = """
-class Test {
+public class Test {
     public static void main(String[] args) {
         System.out.println("Hello world!");
     }
@@ -80,7 +88,7 @@ class Test {
 
     "scan and parse a valid Joos program on the LR1 grammar" in {
       val test : String = """
-class Test {
+public class Test {
     public static void main(String args) {
         System.out.println("Hello world!");
         System.out.println("Hello world!");
@@ -95,7 +103,7 @@ class Test {
 
     "flatten a parse tree" in {
       val test : String = """
-class Test {
+public class Test {
     public static void main(String args[]) {
         System.out.println("Hello world!");
     }
@@ -104,10 +112,11 @@ class Test {
       Parser.Joos.parseString(test).flatten must beEqualTo(Some(
         ParseNodes.S(List[ParseNode](
           ParseNodes.ClassDeclaration(List[ParseNode](
-            ParseNodes.ClassKeyword(List[ParseNode](), Some(("class", 2, 0))),
-            ParseNodes.Identifier(List[ParseNode](), Some(("Test", 2, 6))),
+            ParseNodes.PublicKeyword(List[ParseNode](), Some(("public", 2, 0))),
+            ParseNodes.ClassKeyword(List[ParseNode](), Some(("class", 2, 7))),
+            ParseNodes.Identifier(List[ParseNode](), Some(("Test", 2, 13))),
             ParseNodes.ClassBody(List[ParseNode](
-              ParseNodes.LeftCurly(List[ParseNode](), Some(("{", 2, 11))),
+              ParseNodes.LeftCurly(List[ParseNode](), Some(("{", 2, 18))),
               ParseNodes.MethodDeclaration(List[ParseNode](
                 ParseNodes.MethodHeader(List[ParseNode](
                   ParseNodes.Modifiers(List[ParseNode](
