@@ -544,10 +544,10 @@ class Test {
         parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1w_StaticField.java") must not(throwA[Exception])
       }
       "J2_staticFieldDecl" in {
-        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J2_staticFieldDecl.java") must throwA[SyntaxError]
+        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J2_staticFieldDecl.java") must not(throwA[SyntaxError])
       }
       "J2_staticfielddeclaration" in {
-        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J2_staticfielddeclaration.java") must throwA[SyntaxError]
+        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J2_staticfielddeclaration.java") must not(throwA[SyntaxError])
       }
       "Je_16_Circularity_1" in {
         parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/Je_16_Circularity_1.java") must throwA[SyntaxError]
