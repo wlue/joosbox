@@ -16,6 +16,6 @@ clean:
 	rm -f joosc
 	sbt clean
 
-psobot-cktaylor-wlue.zip: joosbox-compiler joosbox-core joosbox-lexer joosbox-parser project Makefile README.md joos1w.lr1
+psobot-cktaylor-wlue.zip: clean joosbox-compiler joosbox-core joosbox-lexer joosbox-parser project Makefile README.md joos1w.lr1
 	rm -f $@
-	zip -x "joosbox-compiler/src/test/resources/marmoset-tests/*" -x clean -x "*.DS_Store" -x "project/project/*" -x "project/target/*" -r $@ $^
+	zip -x "joosbox-compiler/src/test/resources/marmoset-tests/*" -x clean -x "*.class" -x "*.DS_Store" -x "project/project/*" -x "project/target/*" -r $@ $^
