@@ -109,6 +109,25 @@
   this, we designed our own NFA data structure in Scala and declared the NFAs
   inline in our code.
 
+  The NFA data structure consists of several data properties and attributes.
+  This includes a set of allowed states, a set of allowed symbols, a mapping
+  of states and transitions (where a transition is a symbol to state mapping),
+  a start state, anbd a set of accepting states. This is the same sort of tuple
+  of data that traditionally specify an NFA. For debugging purposes, each NFA
+  also contained a name that corresponding to the type of input it matched. The
+  initializer for the NFA also checked the validity of the specified input
+  through a series of assertions.
+
+  Before converting these NFAs into a usable DFA, we passed the collection of
+  NFAs into a NFA-union algorithm that we implemented. This algorithm
+  concatenated the NFAs by creating a new initial state with
+  $\epsilon$-transitions to each of the initial states and constructing this
+  new NFA that specifies al of the Joos1W grammar. From this we were able to
+  construct a DFA using the process of computing $\epsilon$-closures for each
+  state. This allows us to reduce sets of states in the NFA to single states in
+  the DFA. In our implementation, DFAs can also be directly specified using
+  traditional tuple information.
+
   \subsection{Parser}
 
   Joosbox uses an LALR(1) grammar to parse Joos 1W. This grammar is based on a
@@ -131,7 +150,7 @@
   Java constructs that are reserved keywords, but not supported, like {\tt
   throw}) will cause a {\tt SyntaxError} to be raised.
 
-  Once the input tokens are pre-weeded, the LALR(1) algorithm with tree building
+  Once the input tokens are pre-weeded, the LR(1) algorithm with tree building
   (from CS 241) is used to construct a basic parse tree. The resulting parse
   tree output is built out of {\tt ParseTreeNode}s, arbitrary expressions that
   can contain zero or more child nodes and an optional value.
