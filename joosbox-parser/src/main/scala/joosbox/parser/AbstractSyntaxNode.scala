@@ -520,31 +520,13 @@ object AbstractSyntaxNode {
       val children:Seq[AbstractSyntaxNode] = c.children.flatMap(fromParseNode(_))
       val name:Identifier = children.collectFirst { case x: Identifier => x }.get
 
-      val modifiers:Set[Modifier] = children.flatMap {
-        case x:Modifier => Some(x)
-        case _ => None
-      }.toSet
-
-      val superclass:Option[ClassType] = children.flatMap {
-        case x:ClassType => Some(x)
-        case _ => None
-      }.headOption
-
-      val interfaces:Set[InterfaceType] = children.flatMap {
-        case x:InterfaceType => Some(x)
-        case _ => None
-      }.toSet
-
-      val body:ClassBody = children.flatMap {
-        case x:ClassBody => Some(x)
-        case _ => None
-      }.head
+      val modifiers:Set[Modifier] = children.collect { case x: Mofidier => x }.toSet
+      val superclass:Option[ClassType] = children.collectFirst { case x: ClassType => x }
+      val interfaces:Set[InterfaceType] = children.collect { case x: InterfaceType => x }.toSet
+      val body:ClassBody = children.collect { case x: ClassBody => x }.get
 
       //  Enforce "A class cannot be both abstract and final."
-      if (modifiers.toSeq.collect({
-        case AbstractKeyword => true
-        case FinalKeyword => true
-      }).size > 1) {
+      if (modifiers.contains(AbstractKeyword) and modifiers.contains(FinalKeyword)) {
         throw new SyntaxError("Class " + name.value + " cannot be both abstract and final.")
       }
 
@@ -555,20 +537,9 @@ object AbstractSyntaxNode {
       val children:Seq[AbstractSyntaxNode] = c.children.flatMap(fromParseNode(_))
 
       val name:Identifier = children.collectFirst { case x: Identifier => x }.get
-      val modifiers:Set[Modifier] = children.flatMap {
-        case x:Modifier => Some(x)
-        case _ => None
-      }.toSet
-
-      val interfaces:Set[InterfaceType] = children.flatMap {
-        case x:InterfaceType => Some(x)
-        case _ => None
-      }.toSet
-
-      val body:InterfaceBody = children.flatMap {
-        case x:InterfaceBody => Some(x)
-        case _ => None
-      }.head
+      val modifiers:Set[Modifier] = children.collect { case x: Mofidier => x }.toSet
+      val interfaces:Set[InterfaceType] = children.collect { case x: InterfaceType => x }.toSet
+      val body:InterfaceBody = children.collect { case x: InterfaceBody => x }.get
 
       Seq(InterfaceDeclaration(name.value, body, modifiers, interfaces))
     }
