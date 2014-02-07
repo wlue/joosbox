@@ -32,6 +32,13 @@ class AbstractSyntaxTreeSpec extends Specification {
           ParseNodes.TypeDeclarations(List[ParseNode](
             ParseNodes.TypeDeclaration(List[ParseNode](
               ParseNodes.ClassDeclaration(List[ParseNode](
+                ParseNodes.Modifiers(List[ParseNode](
+                  ParseNodes.Modifier(List[ParseNode](
+                    ParseNodes.AccessModifier(List[ParseNode](
+                      ParseNodes.PublicKeyword(List.empty[ParseNode], Some("public"))
+                    ))
+                  ))
+                )),
                 ParseNodes.ClassKeyword(List.empty[ParseNode], Some("class")),
                 ParseNodes.Identifier(List.empty[ParseNode], Some("identifier")),
                 ParseNodes.ClassBody(List[ParseNode](
@@ -52,7 +59,8 @@ class AbstractSyntaxTreeSpec extends Specification {
           List(AbstractSyntaxNode.SingleTypeImportDeclaration("myimport")),
           List(AbstractSyntaxNode.ClassDeclaration(
             "identifier",
-            AbstractSyntaxNode.ClassBody()
+            AbstractSyntaxNode.ClassBody(),
+            Set(AbstractSyntaxNode.PublicKeyword)
           ))
         )
       )
@@ -91,6 +99,13 @@ class AbstractSyntaxTreeSpec extends Specification {
           ParseNodes.TypeDeclarations(List[ParseNode](
             ParseNodes.TypeDeclaration(List[ParseNode](
               ParseNodes.ClassDeclaration(List[ParseNode](
+                ParseNodes.Modifiers(List[ParseNode](
+                  ParseNodes.Modifier(List[ParseNode](
+                    ParseNodes.AccessModifier(List[ParseNode](
+                      ParseNodes.PublicKeyword(List.empty[ParseNode], Some("public"))
+                    ))
+                  ))
+                )),
                 ParseNodes.ClassKeyword(List.empty[ParseNode], Some("class")),
                 ParseNodes.Identifier(List.empty[ParseNode], Some("classname")),
                 ParseNodes.ClassBody(List[ParseNode](
@@ -114,7 +129,8 @@ class AbstractSyntaxTreeSpec extends Specification {
           ),
           List(AbstractSyntaxNode.ClassDeclaration(
             "classname",
-            AbstractSyntaxNode.ClassBody()
+            AbstractSyntaxNode.ClassBody(),
+            Set(AbstractSyntaxNode.PublicKeyword)
           ))
         )
       )
@@ -149,6 +165,11 @@ class AbstractSyntaxTreeSpec extends Specification {
                     ParseNodes.AccessModifier(List[ParseNode](
                       ParseNodes.StaticKeyword(List.empty[ParseNode], Some("static"))
                     ))
+                  )),
+                  ParseNodes.Modifier(List[ParseNode](
+                    ParseNodes.AccessModifier(List[ParseNode](
+                      ParseNodes.PublicKeyword(List.empty[ParseNode], Some("public"))
+                    ))
                   ))
                 )),
                 ParseNodes.ClassKeyword(List.empty[ParseNode], Some("class")),
@@ -172,7 +193,7 @@ class AbstractSyntaxTreeSpec extends Specification {
           List(AbstractSyntaxNode.ClassDeclaration(
             "identifier",
             AbstractSyntaxNode.ClassBody(),
-            Set(AbstractSyntaxNode.StaticKeyword)
+            Set(AbstractSyntaxNode.StaticKeyword, AbstractSyntaxNode.PublicKeyword)
           ))
         )
       )
@@ -213,6 +234,11 @@ class AbstractSyntaxTreeSpec extends Specification {
                   ParseNodes.Modifier(List[ParseNode](
                     ParseNodes.AccessModifier(List[ParseNode](
                       ParseNodes.FinalKeyword(List.empty[ParseNode], Some("final"))
+                    ))
+                  )),
+                  ParseNodes.Modifier(List[ParseNode](
+                    ParseNodes.AccessModifier(List[ParseNode](
+                      ParseNodes.PublicKeyword(List.empty[ParseNode], Some("public"))
                     ))
                   ))
                 )),

@@ -544,6 +544,10 @@ object AbstractSyntaxNode {
       if (modifiers.contains(AbstractKeyword) && modifiers.contains(FinalKeyword)) {
         throw new SyntaxError("Class " + name.value + " cannot be both abstract and final.")
       }
+      // Enforce: No package private classes
+      if (!modifiers.contains(PublicKeyword) && !modifiers.contains(ProtectedKeyword)) {
+        throw new SyntaxError("Class " + name.value + " cannot be package private.")
+      }
 
       Seq(ClassDeclaration(name.value, body, modifiers, superclass, interfaces))
     }
@@ -556,6 +560,11 @@ object AbstractSyntaxNode {
       val interfaces:Set[InterfaceType] = children.collect { case x: InterfaceType => x }.toSet
       val body:InterfaceBody = children.collectFirst { case x: InterfaceBody => x }.get
 
+      // Enforce: No package private interface
+      if (!modifiers.contains(PublicKeyword) && !modifiers.contains(ProtectedKeyword)) {
+        throw new SyntaxError("Interface " + name.value + " cannot be package private.")
+      }
+
       Seq(InterfaceDeclaration(name.value, body, modifiers, interfaces))
     }
 
@@ -567,6 +576,12 @@ object AbstractSyntaxNode {
       val memberType:Type = children.collectFirst { case x:Type => x }.get
       val parameters: Set[FormalParameter] = children.collect { case x:FormalParameter => x }.toSet
       val body:MethodBody = children.collectFirst { case x:MethodBody => x }.get
+
+      // Enforce: No package private methods
+      if (!modifiers.contains(PublicKeyword) && !modifiers.contains(ProtectedKeyword)) {
+        throw new SyntaxError("Method " + name.value + " cannot be package private.")
+      }
+
 
       Seq(MethodDeclaration(name.value, modifiers, memberType, parameters, body))
     }
