@@ -1,6 +1,6 @@
 JAR=joosbox-compiler/target/scala-2.10/joosbox-compiler-assembly-0.1-SNAPSHOT.jar
 
-.PHONY: clean prepare_upload
+.PHONY: clean zip
 
 all: joosc
 
@@ -15,6 +15,8 @@ java -jar $(JAR) \$$@" > joosc
 clean:
 	rm -f joosc
 	sbt clean
+
+zip: psobot-cktaylor-wlue.zip
 
 psobot-cktaylor-wlue.zip: clean joosbox-compiler joosbox-core joosbox-lexer joosbox-parser project Makefile README.md joos1w.lr1
 	rm -f $@

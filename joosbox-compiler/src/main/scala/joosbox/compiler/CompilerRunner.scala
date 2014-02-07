@@ -9,18 +9,15 @@ object CompilerRunner {
       try {
         Parser.Joos.parseFilename(args.head)
       } catch {
-        case se: SyntaxError => {
+        case se: SyntaxError =>
           println(se)
           System.exit(42)
-        }
-        case matche: MatchError => {
+        case matche: MatchError =>
           println("Got unexpected MatchError (probably improperly implemented syntax): " + matche)
           System.exit(42)
-        }
-        case noel: java.util.NoSuchElementException => {
+        case noel: java.util.NoSuchElementException =>
           println("Got unexpected NoSuchElementException (probably improperly implemented syntax): " + noel)
           System.exit(42)
-        }
       }
     } else {
       println("Usage: joosc <file.joos>")

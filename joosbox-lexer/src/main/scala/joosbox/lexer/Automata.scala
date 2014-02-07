@@ -228,7 +228,7 @@ object NFA {
     val symbols: Set[Symbol] = inputString.toSet[Char].map(_.toString).map(InputSymbol(_))
     val table: Map[State, Map[Symbol, Set[State]]] = 
       inputString.zipWithIndex.drop(1).foldLeft(Map.empty[State, Map[Symbol, Set[State]]]) {
-        case (table, pair) => {
+        case (table, pair) =>
           val (c: Char, index: Int) = pair
           val fromState: State = State(inputString.slice(0, index))
           val toState: State = State(inputString.slice(0, index + 1))
@@ -238,7 +238,6 @@ object NFA {
           val newMap: Map[Symbol, Set[State]] = map + (symbol -> Set(toState))
 
           table + (fromState -> newMap)
-        }
       } + (
         State("start") -> Map(Symbol(inputString.head.toString) -> Set(State(inputString.head.toString)))
       )
@@ -296,11 +295,9 @@ class NFA(
    */
   def withToken(newKind: TokenType) = {
     val renamedStateSourceMap = stateSourceMap.map {
-      case (state: State, data: TokenType) => {
-        data match {
-          case (_: TokenType)  => state -> newKind
-          case _                => state -> data
-        }
+      case (state: State, data: TokenType) => data match {
+        case _: TokenType => state -> newKind
+        case _ => state -> data
       }
     }
     NFA(states, symbols, relation, startState, acceptingStates, Some(newKind), renamedStateSourceMap)
@@ -392,7 +389,7 @@ class NFA(
 
   def toPrefixedForm: NFA = token match {
     case None => this
-    case Some(name) => {
+    case Some(name) =>
       val newStates: Set[State] = states.map(State.prefixed(name, _))
       val newAcceptingStates: Set[State] = acceptingStates.map(State.prefixed(name, _))
 
@@ -419,7 +416,6 @@ class NFA(
         Some(name),
         newStateSourceMap
       )
-    }
   }
 
   def union(that: NFA): NFA = NFA.union(Set(this, that))
