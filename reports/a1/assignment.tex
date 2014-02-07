@@ -81,11 +81,18 @@
 
   \subsection{Parser}
 
-  Joosbox uses an LR(1) grammar to parse Joos 1W. This grammar is based on the
-  grammar for Java 1 itself, with numerous tokens removed and altered to match
-  Joos 1W. The provided {\tt jlalr1.java} program for constructing a parse
-  table was used to create the {\tt joos1w.lr1} file, used at runtime by
-  Joosbox to parse the language.
+  Joosbox uses an LALR(1) grammar to parse Joos 1W. This grammar is based on a
+  LALR(1) grammar for Java 1 itself, with numerous tokens removed and altered to
+  match the language features we were supporting as specified by Joos 1W. The
+  LALR(1) grammar for Java 1 that we derived our grammer from was found in
+  Chapter 19 of {\em The Java Language Specification}. From this collection of
+  production rules for a Java 1 LALR(1) grammar, we were able to construct our
+  grammar in the form of {\tt joos1w.cfg}.
+
+  The provided {\tt jlalr1.java} program for constructing a parse table from a
+  {\tt .cfg} file. With this program we were able to contstruct a LALR(1) parse
+  table for our grammar in the form of {\tt joos1w.lr1}. This file was used at
+  runtime by Joosbox to parse the Joos1W language.
 
   To parse the sequence of tokens output by the lexer, Joosbox first discards
   tokens that do not have corresponding semantic value in the grammar (i.e.:
@@ -94,7 +101,7 @@
   (including Java constructs that are reserved keywords, but not supported,
   like {\tt throw}) will cause a {\tt SyntaxError} to be raised.
 
-  Once the input tokens are pre-weeded, the LR(1) algorithm with tree building
+  Once the input tokens are pre-weeded, the LALR(1) algorithm with tree building
   (from CS 241) is used to construct a basic parse tree. The resulting parse 
   tree output is built out of {\tt ParseTreeNode}s, arbitrary expressions
   that can contain zero or more child nodes and an optional value.
