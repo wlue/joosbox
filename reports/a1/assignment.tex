@@ -178,7 +178,22 @@
   \section{Challenges}
 
   %TODO: Talk about bundling together the Scala code into one single jar
-  %TODO: Talk about code generation from Python to Scala
+
+  An additional challenge when writing both the lexer and the parser for
+  Joosbox was finding a way to use Scala's type system to guarantee type
+  safety for our program. Each type of token in the lexer and each type of
+  symbol in the parser was implemented as a separate case class in Scala,
+  enabling us to perform pattern matching and extraction on tokens and parse
+  tree nodes. To enable these features without writing hundreds of repetitive
+  classes by hand, two small Scala code generators were written in Python.
+  {\tt lexer-type-generator.py} and {\tt parser-type-generator.py} both
+  consume input files describing the types of the lexer tokens and parser
+  tokens, and use these files to generate valid Scala code that implements
+  this type hierarchy. These generators were tricky to write, as most code
+  generators are, and required a lot of trial and error to result in correct
+  Scala code output. Additionally, the huge number of Scala classes defined by
+  the resulting generated code has resulted in longer compile times and larger
+  binaries --- but enabled cleaner and safer code to be written.
 
   \section{Testing}
 
