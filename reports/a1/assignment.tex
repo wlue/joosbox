@@ -144,6 +144,19 @@
   instance to find important debugging information and inform the user of the
   exact location of the issue in their source program.
 
+  Finally, both our DFA and NFA classes implement a {\tt toGraphViz} method to
+  allow simple debugging. This method outputs a string in human-readable GraphViz {\tt dot}
+  format, which can then be rendered into an image or vector to visualize the
+  DFA and its transitions. An example DFA visualization is provided below, although
+  this is the pathological case --- the entire Joos1W grammar, as used in Joosbox, rendered
+  into one highly unreadable DFA.
+
+  \begin{figure}[h!]
+    \caption{The entire Joos1W grammar DFA, vizualized with GraphViz.}
+    \centering
+      \includegraphics[width=1\textwidth]{thejoosdfa.png}
+  \end{figure}
+
   \subsection{Parser}
 
   Joosbox uses an LALR(1) grammar to parse Joos 1W. This grammar is based on a
