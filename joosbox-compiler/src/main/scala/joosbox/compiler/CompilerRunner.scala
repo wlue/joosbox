@@ -10,13 +10,13 @@ object CompilerRunner {
         Parser.Joos.parseFilename(args.head)
       } catch {
         case se: SyntaxError =>
-          println(se)
+          System.err.println(se)
           System.exit(42)
         case matche: MatchError =>
-          println("Got unexpected MatchError (probably improperly implemented syntax): " + matche)
+          System.err.println("Got unexpected MatchError (probably improperly implemented syntax): " + matche)
           System.exit(42)
         case noel: java.util.NoSuchElementException =>
-          println("Got unexpected NoSuchElementException (probably improperly implemented syntax): " + noel)
+          System.err.println("Got unexpected NoSuchElementException (probably improperly implemented syntax): " + noel)
           System.exit(42)
       }
     } else {
