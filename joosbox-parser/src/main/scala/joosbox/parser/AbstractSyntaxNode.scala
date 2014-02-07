@@ -60,7 +60,14 @@ object AbstractSyntaxNode {
   }
 
   //  TODO; implement me properly, not just stubbed out
-  case class InterfaceMemberDeclaration() extends AbstractSyntaxNode
+  case class InterfaceMemberDeclaration(
+    val name: InputString,
+    val modifiers: Set[Modifier] = Set.empty[Modifier],
+    val memberType: Type,
+
+    val parameters: Set[FormalParameter] = Set.empty[FormalParameter],
+    val body: Option[Block] = None
+  ) extends AbstractSyntaxNode
 
   case class ClassBody(
     declarations: Seq[ClassBodyDeclaration] = Seq.empty[ClassBodyDeclaration]
@@ -727,6 +734,26 @@ object AbstractSyntaxNode {
       Seq(FieldDeclaration(name.value, modifiers, memberType, expression))
     }
 
+    case c: ParseNodes.InterfaceMemberDeclaration => {
+      val children:Seq[AbstractSyntaxNode] = c.children.flatMap(fromParseNode(_))
+
+      val name:Identifier = children.collectFirst { case x: Identifier => x }.get
+      val modifiers:Set[Modifier] = children.collect { case x: Modifier => x }.toSet
+      val memberType:Type = children.collectFirst { case x:Type => x }.get
+      val parameters: Set[FormalParameter] = children.collect { case x:FormalParameter => x }.toSet
+      val body:Option[Block] = children.collectFirst { case x:Block => x }
+
+      // Enforce: No static interface members.
+      if (modifiers.contains(StaticKeyword)) {
+        throw new SyntaxError("Interface method " + name.value + " cannot be static.")
+      }
+
+      Seq(InterfaceMemberDeclaration(name.value, modifiers, memberType, parameters, body))
+    }
+
+
+    case i: ParseNodes.Identifier => Seq(Identifier(i.value.get))
+
     case c: ParseNodes.ClassBody => {
       val children: Seq[AbstractSyntaxNode] = c.children.flatMap(recursive(_))
       Seq(ClassBody(children.collect { case x: ClassBodyDeclaration => x }))
@@ -735,11 +762,6 @@ object AbstractSyntaxNode {
     case c: ParseNodes.InterfaceBody => {
       val children: Seq[AbstractSyntaxNode] = c.children.flatMap(recursive(_))
       Seq(InterfaceBody(children.collect { case x: InterfaceMemberDeclaration => x }))
-    }
-
-    //  TODO: IMPLEMENT ME
-    case c: ParseNodes.InterfaceMemberDeclaration => {
-      Seq(InterfaceMemberDeclaration())
     }
 
     case m: ParseNodes.StaticKeyword => Seq(StaticKeyword)
