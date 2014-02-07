@@ -735,7 +735,7 @@ object AbstractSyntaxNode {
     }
 
     case c: ParseNodes.InterfaceMemberDeclaration => {
-      val children:Seq[AbstractSyntaxNode] = c.children.flatMap(fromParseNode(_))
+      val children:Seq[AbstractSyntaxNode] = c.children.flatMap(recursive(_))
 
       val name:Identifier = children.collectFirst { case x: Identifier => x }.get
       val modifiers:Set[Modifier] = children.collect { case x: Modifier => x }.toSet
