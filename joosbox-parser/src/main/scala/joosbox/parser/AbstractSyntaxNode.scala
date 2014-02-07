@@ -365,7 +365,7 @@ object AbstractSyntaxNode {
 
       // Enforce: A constructor has to have a body.
       if (body == None) {
-        throw new SyntaxError("Method " + name.value + " cannot have a body.")
+        throw new SyntaxError("Constructor " + name.value + " has to have a body.")
       }
 
       Seq(ConstructorDeclaration(name.value, modifiers, parameters, body))
