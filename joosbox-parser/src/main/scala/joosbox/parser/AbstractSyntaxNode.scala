@@ -770,6 +770,13 @@ object AbstractSyntaxNode {
       val memberType: Type = children.collectFirst { case x: Type => x }.get
       val expression: Option[Expression] = children.collectFirst { case x: Expression => x }
 
+      // Enforce: A final field must have an initializer.
+      if (modifiers.contains(FinalKeyword)) {
+        if (expression.isEmpty) {
+          throw new SyntaxError("Field " + name.value + " is final so it must have an initializer.")
+        }
+      }
+
       Seq(FieldDeclaration(name.value, modifiers, memberType, expression))
     }
 
@@ -782,9 +789,9 @@ object AbstractSyntaxNode {
       val parameters: Set[FormalParameter] = children.collect { case x: FormalParameter => x }.toSet
       val body: Option[Block] = children.collectFirst { case x: Block => x }
 
-      // Enforce: No static interface members.
-      if (modifiers.contains(StaticKeyword)) {
-        throw new SyntaxError("Interface method " + name.value + " cannot be static.")
+      //Enforce: An interface method cannot be static or final.
+      if (modifiers.contains(StaticKeyword) || modifiers.contains(FinalKeyword)) {
+        throw new SyntaxError("Interface method " + name.value + " cannot be static or final.")
       }
 
       Seq(InterfaceMemberDeclaration(name.value, modifiers, memberType, parameters, body))
