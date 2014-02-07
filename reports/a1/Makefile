@@ -8,5 +8,8 @@ assignment.pdf: assignment.tex
 open: assignment.pdf
 	open assignment.pdf
 
+run: assignment.pdf
+	open assignment.pdf
+
 clean:
 	latexmk -C

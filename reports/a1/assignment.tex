@@ -34,7 +34,7 @@
 \newcommand{\term}{Winter 2013}
 \newcommand{\project}{Lab \assignmentnumber: Scanning, Parsing, Weeding, AST Building}
 \newcommand{\name}{wlue, cktaylor, psobot}
-\newcommand{\wenhao}{wlue(??????) - Lue, Wen-Hao (wlue@uwaterloo.ca)}
+\newcommand{\wenhao}{wlue(20349659) - Lue, Wen-Hao (wlue@uwaterloo.ca)}
 \newcommand{\chris}{cktaylor(20338058) - Taylor, Chris (cktaylor@uwaterloo.ca)}
 \newcommand{\peter}{psobot(20334978) - Sobot, Peter (psobot@uwaterloo.ca)}
 
@@ -123,7 +123,7 @@
   grammar in the form of {\tt joos1w.cfg}.
 
   The provided {\tt jlalr1.java} program for constructing a parse table from a
-  {\tt .cfg} file. With this program we were able to contstruct a LALR(1) parse
+  {\tt.cfg} file. With this program we were able to contstruct a LALR(1) parse
   table for our grammar in the form of {\tt joos1w.lr1}. This file was used at
   runtime by Joosbox to parse the Joos1W language.
 
@@ -195,10 +195,28 @@
   the resulting generated code has resulted in longer compile times and larger
   binaries --- but enabled cleaner and safer code to be written.
 
+  %TODO: Talk about code generation from Python to Scala
+
   \section{Testing}
 
-  %TODO: Talk about marmoset tests being imported into our SBT local test suite
-  %TODO: Talk about the TDD approach
-  %TODO: Talk about how every intermediate data representation was heavily tested
+  For testing, we used $specs2$, a Scala specifications and testing library. We
+  ran our tests using $sbt$.
+
+  Joosbox has unit tests for small units of functionality. We
+  individually tested each piece of functionality, and small portions of the
+  lexer, parser, and AST generator. Our project is separated into separate
+  subprojects that deal exclusively with lexing, parsing, and code generation,
+  and for each subproject, we have a separate set of specific tests.
+
+  We used TDD (test-driven development) to develop our compiler. For each
+  portion of work we started, we wrote passing and failing tests to verify the
+  validity of the portion of the program we were working on.
+
+  We imported the Marmoset tests into our local test suite, parsed each test to
+  determine if they were passing or failing tests, and generated a unit test for
+  each marmoset test. This substantially increased our development speed, as
+  this integrated our regular unit testing strategy with the Marmoset tests, and
+  also avoided needing to upload a zip file to Marmoset after every code
+  iteration.
 
 \end{document}
