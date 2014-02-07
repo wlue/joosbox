@@ -65,17 +65,6 @@ class ParserSpec extends Specification {
 
     "scan and parse a valid Joos program on the LR1 grammar" in {
       val test : String = """
-public class Test {
-    public static void main(String[] args) {
-        System.out.println("Hello world!");
-    }
-}
-      """
-      Parser.Joos.parseString(test) must not(throwA[Exception])
-    }
-
-    "scan and parse a valid Joos program on the LR1 grammar" in {
-      val test : String = """
 public interface Foo {}
       """
       Parser.Joos.parseString(test) must not(throwA[Exception])
@@ -83,14 +72,8 @@ public interface Foo {}
 
     "scan and parse a valid Joos program on the LR1 grammar" in {
       val test : String = """
-public class Bar {}
-      """
-      Parser.Joos.parseString(test) must not(throwA[Exception])
-    }
-
-    "scan and parse a valid Joos program on the LR1 grammar" in {
-      val test : String = """
 public class Test {
+    public Test() {}
     public static void main(String[] args) {
         System.out.println("Hello world!");
     }
@@ -102,6 +85,7 @@ public class Test {
     "scan and parse a valid Joos program on the LR1 grammar" in {
       val test : String = """
 public class Test {
+    public Test() {}
     public static void main(String args) {
         System.out.println("Hello world!");
         System.out.println("Hello world!");

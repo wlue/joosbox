@@ -44,6 +44,34 @@ class AbstractSyntaxTreeSpec extends Specification {
                 ParseNodes.Identifier(List.empty[ParseNode], Some("identifier")),
                 ParseNodes.ClassBody(List[ParseNode](
                   ParseNodes.LeftCurly(List.empty[ParseNode], Some("{")),
+
+                  ParseNodes.ClassBodyDeclarations(List[ParseNode](
+                    ParseNodes.ClassBodyDeclaration(List[ParseNode](
+
+                      ParseNodes.ConstructorDeclaration(List[ParseNode](
+                        ParseNodes.Modifiers(List[ParseNode](
+                          ParseNodes.Modifier(List[ParseNode](
+                            ParseNodes.AccessModifier(List[ParseNode](
+                              ParseNodes.PublicKeyword(List.empty[ParseNode], Some("public"))
+                            ))
+                          ))
+                        )),
+                        ParseNodes.ConstructorDeclarator(List[ParseNode](
+                          ParseNodes.SimpleName(List[ParseNode](
+                            ParseNodes.Identifier(List.empty[ParseNode], Some("identifier"))
+                          )),
+                          ParseNodes.LeftParen(List[ParseNode](), Some("(")),
+                          ParseNodes.RightParen(List[ParseNode](), Some("}"))
+                        )),
+                        ParseNodes.ConstructorBody(List[ParseNode](
+                          ParseNodes.LeftCurly(List.empty[ParseNode], Some("{")),
+                          ParseNodes.RightCurly(List.empty[ParseNode], Some("}"))
+                        ))
+                      ))
+
+                    ))
+                  )),
+
                   ParseNodes.RightCurly(List.empty[ParseNode], Some("}"))
                 ))
               ))
@@ -60,7 +88,16 @@ class AbstractSyntaxTreeSpec extends Specification {
           List(AbstractSyntaxNode.SingleTypeImportDeclaration("myimport")),
           List(AbstractSyntaxNode.ClassDeclaration(
             "identifier",
-            AbstractSyntaxNode.ClassBody(),
+            AbstractSyntaxNode.ClassBody(
+              List(
+                AbstractSyntaxNode.ConstructorDeclaration(
+                  "identifier",
+                  Set(AbstractSyntaxNode.PublicKeyword),
+                  Set(),
+                  Some(AbstractSyntaxNode.Block())
+                )
+              )
+            ),
             Set(AbstractSyntaxNode.PublicKeyword)
           ))
         )
@@ -111,6 +148,34 @@ class AbstractSyntaxTreeSpec extends Specification {
                 ParseNodes.Identifier(List.empty[ParseNode], Some("classname")),
                 ParseNodes.ClassBody(List[ParseNode](
                   ParseNodes.LeftCurly(List.empty[ParseNode], Some("{")),
+
+                  ParseNodes.ClassBodyDeclarations(List[ParseNode](
+                    ParseNodes.ClassBodyDeclaration(List[ParseNode](
+
+                      ParseNodes.ConstructorDeclaration(List[ParseNode](
+                        ParseNodes.Modifiers(List[ParseNode](
+                          ParseNodes.Modifier(List[ParseNode](
+                            ParseNodes.AccessModifier(List[ParseNode](
+                              ParseNodes.PublicKeyword(List.empty[ParseNode], Some("public"))
+                            ))
+                          ))
+                        )),
+                        ParseNodes.ConstructorDeclarator(List[ParseNode](
+                          ParseNodes.SimpleName(List[ParseNode](
+                            ParseNodes.Identifier(List.empty[ParseNode], Some("identifier"))
+                          )),
+                          ParseNodes.LeftParen(List[ParseNode](), Some("(")),
+                          ParseNodes.RightParen(List[ParseNode](), Some("}"))
+                        )),
+                        ParseNodes.ConstructorBody(List[ParseNode](
+                          ParseNodes.LeftCurly(List.empty[ParseNode], Some("{")),
+                          ParseNodes.RightCurly(List.empty[ParseNode], Some("}"))
+                        ))
+                      ))
+
+                    ))
+                  )),
+
                   ParseNodes.RightCurly(List.empty[ParseNode], Some("}"))
                 ))
               ))
@@ -130,7 +195,16 @@ class AbstractSyntaxTreeSpec extends Specification {
           ),
           List(AbstractSyntaxNode.ClassDeclaration(
             "classname",
-            AbstractSyntaxNode.ClassBody(),
+            AbstractSyntaxNode.ClassBody(
+              List(
+                AbstractSyntaxNode.ConstructorDeclaration(
+                  "identifier",
+                  Set(AbstractSyntaxNode.PublicKeyword),
+                  Set(),
+                  Some(AbstractSyntaxNode.Block())
+                )
+              )
+            ),
             Set(AbstractSyntaxNode.PublicKeyword)
           ))
         )
@@ -138,6 +212,106 @@ class AbstractSyntaxTreeSpec extends Specification {
     }
 
     "be created from a parse tree with modifiers on a class" in {
+      val parseTree:ParseNode = ParseNodes.S(List[ParseNode](
+        ParseNodes.BOF(),
+        ParseNodes.CompilationUnit(List[ParseNode](
+
+          ParseNodes.PackageDeclaration(List[ParseNode](
+            ParseNodes.PackageKeyword(List.empty[ParseNode], Some("package")),
+            ParseNodes.Name(List.empty[ParseNode], Some("mypackage")),
+            ParseNodes.Semicolon(List.empty[ParseNode], Some(";"))
+          )),
+
+          ParseNodes.ImportDeclarations(List[ParseNode](
+            ParseNodes.ImportDeclaration(List[ParseNode](
+              ParseNodes.SingleTypeImportDeclaration(List[ParseNode](
+                ParseNodes.ImportKeyword(List.empty[ParseNode], Some("import")),
+                ParseNodes.Name(List.empty[ParseNode], Some("myimport")),
+                ParseNodes.Semicolon(List.empty[ParseNode], Some(";"))
+              ))
+            ))
+          )),
+
+          ParseNodes.TypeDeclarations(List[ParseNode](
+            ParseNodes.TypeDeclaration(List[ParseNode](
+              ParseNodes.ClassDeclaration(List[ParseNode](
+                ParseNodes.Modifiers(List[ParseNode](
+                  ParseNodes.Modifier(List[ParseNode](
+                    ParseNodes.AccessModifier(List[ParseNode](
+                      ParseNodes.StaticKeyword(List.empty[ParseNode], Some("static"))
+                    ))
+                  )),
+                  ParseNodes.Modifier(List[ParseNode](
+                    ParseNodes.AccessModifier(List[ParseNode](
+                      ParseNodes.PublicKeyword(List.empty[ParseNode], Some("public"))
+                    ))
+                  ))
+                )),
+                ParseNodes.ClassKeyword(List.empty[ParseNode], Some("class")),
+                ParseNodes.Identifier(List.empty[ParseNode], Some("identifier")),
+                ParseNodes.ClassBody(List[ParseNode](
+                  ParseNodes.LeftCurly(List.empty[ParseNode], Some("{")),
+
+                  ParseNodes.ClassBodyDeclarations(List[ParseNode](
+                    ParseNodes.ClassBodyDeclaration(List[ParseNode](
+
+                      ParseNodes.ConstructorDeclaration(List[ParseNode](
+                        ParseNodes.Modifiers(List[ParseNode](
+                          ParseNodes.Modifier(List[ParseNode](
+                            ParseNodes.AccessModifier(List[ParseNode](
+                              ParseNodes.PublicKeyword(List.empty[ParseNode], Some("public"))
+                            ))
+                          ))
+                        )),
+                        ParseNodes.ConstructorDeclarator(List[ParseNode](
+                          ParseNodes.SimpleName(List[ParseNode](
+                            ParseNodes.Identifier(List.empty[ParseNode], Some("identifier"))
+                          )),
+                          ParseNodes.LeftParen(List[ParseNode](), Some("(")),
+                          ParseNodes.RightParen(List[ParseNode](), Some("}"))
+                        )),
+                        ParseNodes.ConstructorBody(List[ParseNode](
+                          ParseNodes.LeftCurly(List.empty[ParseNode], Some("{")),
+                          ParseNodes.RightCurly(List.empty[ParseNode], Some("}"))
+                        ))
+                      ))
+
+                    ))
+                  )),
+
+                  ParseNodes.RightCurly(List.empty[ParseNode], Some("}"))
+                ))
+              ))
+            ))
+          ))
+
+        )),
+        ParseNodes.EOF()
+      ))
+
+      AbstractSyntaxNode.parse(parseTree).head must beEqualTo(
+        AbstractSyntaxNode.CompilationUnit(
+          Some(AbstractSyntaxNode.PackageDeclaration("mypackage")),
+          List(AbstractSyntaxNode.SingleTypeImportDeclaration("myimport")),
+          List(AbstractSyntaxNode.ClassDeclaration(
+            "identifier",
+            AbstractSyntaxNode.ClassBody(
+              List(
+                AbstractSyntaxNode.ConstructorDeclaration(
+                  "identifier",
+                  Set(AbstractSyntaxNode.PublicKeyword),
+                  Set(),
+                  Some(AbstractSyntaxNode.Block())
+                )
+              )
+            ),
+            Set(AbstractSyntaxNode.StaticKeyword, AbstractSyntaxNode.PublicKeyword)
+          ))
+        )
+      )
+    }
+
+    "fail to be created from a parse tree with no class constructor" in {
       val parseTree:ParseNode = ParseNodes.S(List[ParseNode](
         ParseNodes.BOF(),
         ParseNodes.CompilationUnit(List[ParseNode](
@@ -187,17 +361,7 @@ class AbstractSyntaxTreeSpec extends Specification {
         ParseNodes.EOF()
       ))
 
-      AbstractSyntaxNode.parse(parseTree).head must beEqualTo(
-        AbstractSyntaxNode.CompilationUnit(
-          Some(AbstractSyntaxNode.PackageDeclaration("mypackage")),
-          List(AbstractSyntaxNode.SingleTypeImportDeclaration("myimport")),
-          List(AbstractSyntaxNode.ClassDeclaration(
-            "identifier",
-            AbstractSyntaxNode.ClassBody(),
-            Set(AbstractSyntaxNode.StaticKeyword, AbstractSyntaxNode.PublicKeyword)
-          ))
-        )
-      )
+      AbstractSyntaxNode.parse(parseTree).head must throwA[SyntaxError]
     }
 
     "fail to be created from a parse tree with invalid modifiers on a class" in {
@@ -247,6 +411,34 @@ class AbstractSyntaxTreeSpec extends Specification {
                 ParseNodes.Identifier(List.empty[ParseNode], Some("identifier")),
                 ParseNodes.ClassBody(List[ParseNode](
                   ParseNodes.LeftCurly(List.empty[ParseNode], Some("{")),
+
+                  ParseNodes.ClassBodyDeclarations(List[ParseNode](
+                    ParseNodes.ClassBodyDeclaration(List[ParseNode](
+
+                      ParseNodes.ConstructorDeclaration(List[ParseNode](
+                        ParseNodes.Modifiers(List[ParseNode](
+                          ParseNodes.Modifier(List[ParseNode](
+                            ParseNodes.AccessModifier(List[ParseNode](
+                              ParseNodes.PublicKeyword(List.empty[ParseNode], Some("public"))
+                            ))
+                          ))
+                        )),
+                        ParseNodes.ConstructorDeclarator(List[ParseNode](
+                          ParseNodes.SimpleName(List[ParseNode](
+                            ParseNodes.Identifier(List.empty[ParseNode], Some("identifier"))
+                          )),
+                          ParseNodes.LeftParen(List[ParseNode](), Some("(")),
+                          ParseNodes.RightParen(List[ParseNode](), Some("}"))
+                        )),
+                        ParseNodes.ConstructorBody(List[ParseNode](
+                          ParseNodes.LeftCurly(List.empty[ParseNode], Some("{")),
+                          ParseNodes.RightCurly(List.empty[ParseNode], Some("}"))
+                        ))
+                      ))
+
+                    ))
+                  )),
+
                   ParseNodes.RightCurly(List.empty[ParseNode], Some("}"))
                 ))
               ))
@@ -289,12 +481,19 @@ class AbstractSyntaxTreeSpec extends Specification {
                       ParseNodes.ClassBodyDeclaration(List[ParseNode](
 
                         ParseNodes.ConstructorDeclaration(List[ParseNode](
+                          ParseNodes.Modifiers(List[ParseNode](
+                            ParseNodes.Modifier(List[ParseNode](
+                              ParseNodes.AccessModifier(List[ParseNode](
+                                ParseNodes.PublicKeyword(List.empty[ParseNode], Some("public"))
+                              ))
+                            ))
+                          )),
                           ParseNodes.ConstructorDeclarator(List[ParseNode](
                             ParseNodes.SimpleName(List[ParseNode](
                               ParseNodes.Identifier(List.empty[ParseNode], Some("identifier"))
                             )),
                             ParseNodes.LeftParen(List[ParseNode](), Some("(")),
-                            ParseNodes.RightParen(List[ParseNode](), Some("}")),
+                            ParseNodes.RightParen(List[ParseNode](), Some("}"))
                           )),
                           ParseNodes.ConstructorBody(List[ParseNode](
                             ParseNodes.LeftCurly(List.empty[ParseNode], Some("{")),
@@ -363,6 +562,12 @@ class AbstractSyntaxTreeSpec extends Specification {
             "identifier",
             AbstractSyntaxNode.ClassBody(
               Seq(
+                AbstractSyntaxNode.ConstructorDeclaration(
+                  "identifier",
+                  Set(AbstractSyntaxNode.PublicKeyword),
+                  Set(),
+                  Some(AbstractSyntaxNode.Block())
+                ),
                 AbstractSyntaxNode.FieldDeclaration(
                   "myVariable",
                   Set(AbstractSyntaxNode.PublicKeyword),

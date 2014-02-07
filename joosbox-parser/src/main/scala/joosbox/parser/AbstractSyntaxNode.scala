@@ -225,7 +225,7 @@ object AbstractSyntaxNode {
     override def children: List[AbstractSyntaxNode] = nodes.toList
   }
 
-  case class Block(statements: Seq[BlockStatement]) extends AbstractSyntaxNode {
+  case class Block(statements: Seq[BlockStatement] = Seq.empty[BlockStatement]) extends AbstractSyntaxNode {
     override def children: List[AbstractSyntaxNode] = statements.toList
   }
 
