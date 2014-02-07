@@ -106,7 +106,7 @@ object AbstractSyntaxNode {
     override val memberType: Type,
 
     val parameters: Set[FormalParameter] = Set.empty[FormalParameter],
-    val body: MethodBody
+    val body: Option[MethodBody] = None
   ) extends ClassMemberDeclaration(name, modifiers, memberType)
 
 
@@ -575,13 +575,40 @@ object AbstractSyntaxNode {
       val modifiers:Set[Modifier] = children.collect { case x: Modifier => x }.toSet
       val memberType:Type = children.collectFirst { case x:Type => x }.get
       val parameters: Set[FormalParameter] = children.collect { case x:FormalParameter => x }.toSet
-      val body:MethodBody = children.collectFirst { case x:MethodBody => x }.get
+      val body:Option[MethodBody] = children.collectFirst { case x:MethodBody => x }
 
       // Enforce: No package private methods
       if (!modifiers.contains(PublicKeyword) && !modifiers.contains(ProtectedKeyword)) {
         throw new SyntaxError("Method " + name.value + " cannot be package private.")
       }
 
+      // Enforce: A static method cannot be final.
+      if (modifiers.contains(StaticKeyword) && modifiers.contains(FinalKeyword)) {
+        throw new SyntaxError("Method " + name.value + " cannot be both static and final.")
+      }
+
+      // Enforce: A native method must be static.
+      if (modifiers.contains(NativeKeyword) && !modifiers.contains(StaticKeyword)) {
+        throw new SyntaxError("Method " + name.value + " is native so it must be static.")
+      }
+
+      //Enforce: An abstract method cannot be static or final.
+      if (modifiers.contains(AbstractKeyword)) {
+        if (modifiers.contains(StaticKeyword) || modifiers.contains(FinalKeyword)) {
+          throw new SyntaxError("Method " + name.value + " is abstract so it cant be static or final.")
+        }
+      }
+
+      // Enforce: A method has a body if and only if it is neither abstract nor native.
+      if (modifiers.contains(NativeKeyword) || modifiers.contains(AbstractKeyword)) {
+        if (!body.isEmpty) {
+          throw new SyntaxError("Method " + name.value + " cannot have a body.")
+        }
+      } else {
+        if (body.isEmpty) {
+          throw new SyntaxError("Method " + name.value + " must have a body.")
+        }
+      }
 
       Seq(MethodDeclaration(name.value, modifiers, memberType, parameters, body))
     }
@@ -592,6 +619,7 @@ object AbstractSyntaxNode {
 
     //  TODO: Temp
     case i: ParseNodes.ClassBody => Seq(ClassBody())
+    case m: ParseNodes.MethodBody => Seq(MethodBody())
 
     case m: ParseNodes.StaticKeyword => Seq(StaticKeyword)
     case m: ParseNodes.PublicKeyword => Seq(PublicKeyword)
