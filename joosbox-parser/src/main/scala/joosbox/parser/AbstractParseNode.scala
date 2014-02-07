@@ -31,6 +31,14 @@ abstract class ParseNode(
     }
   }
 
+  def simpleString(indent: Int = 2): String = {
+    var name = (" " * indent) + this.getClass.getSimpleName
+    if (value != None) {
+      name = name + " (" + value + ")"
+    }
+    name + "\n" + children.map(_.simpleString(indent + 2)).mkString("")
+  }
+
   override def equals(obj: Any) = obj match {
     case node: ParseNode => node.value.equals(value) && node.children.equals(children)
     case _ => false

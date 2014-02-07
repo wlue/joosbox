@@ -124,7 +124,10 @@ class Parser(
     parseString(scala.io.Source.fromFile(filename).mkString, filename)
 
   def parseString(str: String, filename: String = "<input>"): AbstractSyntaxNode =
-    AbstractSyntaxNode.fromParseNode(parse(lexer.matchString(str, filename).get)).head
+    AbstractSyntaxNode.parse(parse(lexer.matchString(str, filename).get)).head
+
+  def parseString2(str: String, filename: String = "<input>") =
+    parse(lexer.matchString(str, filename).get)
 
   def parse(symbols: List[Token]): ParseNode = {
 

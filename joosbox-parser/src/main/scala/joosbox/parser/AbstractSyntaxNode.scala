@@ -5,19 +5,40 @@ import joosbox.lexer.SyntaxError
 
 sealed trait AbstractSyntaxNode {
   def children: List[AbstractSyntaxNode] = List.empty[AbstractSyntaxNode]
+
+  def simpleString(indent: Int = 0): String = {
+    (" " * indent) + this.getClass.getSimpleName + "\n" + children.map(_.simpleString(indent + 2)).mkString("")
+  }
 }
 
 object AbstractSyntaxNode {
   case class CharLiteral(value: InputString) extends AbstractSyntaxNode
   case class StringLiteral(value: InputString) extends AbstractSyntaxNode
   case object NullLiteral extends AbstractSyntaxNode
-  case class Num(value: InputString) extends AbstractSyntaxNode
+
+  case class Num(value: String, input: InputString) extends AbstractSyntaxNode {
+    def negated: Num = value.headOption match {
+      case Some('-') => Num(value.tail, input)
+      case _ => Num("-" + value, input)
+    }
+    def valid: Boolean = {
+      try {
+        value.toInt
+        true
+      } catch {
+        case e: Exception => false
+      }
+    }
+  }
 
   case class CompilationUnit(
     packageDeclaration: Option[PackageDeclaration] = None,
     importDeclarations: Seq[ImportDeclaration] = Seq.empty[ImportDeclaration],
     typeDeclarations: Seq[TypeDeclaration] = Seq.empty[TypeDeclaration]
-  ) extends AbstractSyntaxNode
+  ) extends AbstractSyntaxNode {
+    override def children: List[AbstractSyntaxNode] =
+      packageDeclaration.toList ++ importDeclarations.toList ++ typeDeclarations.toList
+  }
 
   case class PackageDeclaration(name: InputString) extends AbstractSyntaxNode
 
@@ -34,21 +55,32 @@ object AbstractSyntaxNode {
     val name: InputString,
     val modifiers: Set[Modifier] = Set.empty[Modifier],
     val memberType: Type
-  ) extends AbstractSyntaxNode
+  ) extends AbstractSyntaxNode {
+    override def children: List[AbstractSyntaxNode] = modifiers.toList
+  }
 
   //  TODO; implement me properly, not just stubbed out
   case class InterfaceMemberDeclaration() extends AbstractSyntaxNode
 
-  case class ClassBody(val declarations: Seq[ClassBodyDeclaration] = Seq.empty[ClassBodyDeclaration]) extends AbstractSyntaxNode
-  case class InterfaceBody(val declarations: Seq[InterfaceMemberDeclaration] = Seq.empty[InterfaceMemberDeclaration]) extends AbstractSyntaxNode
+  case class ClassBody(
+    declarations: Seq[ClassBodyDeclaration] = Seq.empty[ClassBodyDeclaration]
+  ) extends AbstractSyntaxNode {
+    override def children: List[AbstractSyntaxNode] = declarations.toList
+  }
+
+  case class InterfaceBody(
+    declarations: Seq[InterfaceMemberDeclaration] = Seq.empty[InterfaceMemberDeclaration]
+  ) extends AbstractSyntaxNode {
+    override def children: List[AbstractSyntaxNode] = declarations.toList
+  }
 
   abstract class Expression() extends AbstractSyntaxNode
 
   sealed trait Type extends AbstractSyntaxNode
 
   sealed trait Name extends Type
-  case class SimpleName(val value: InputString) extends Name
-  case class QualifiedName(val value: Seq[InputString]) extends Name
+  case class SimpleName(value: InputString) extends Name
+  case class QualifiedName(value: Seq[InputString]) extends Name
 
   sealed trait PrimitiveType extends Type
   sealed trait ReferenceType extends Type
@@ -66,13 +98,13 @@ object AbstractSyntaxNode {
   case object IntKeyword extends NumericType
   case object CharKeyword extends NumericType
 
-  case class ArrayType(val subtype: Type) extends ReferenceType
-
-  case class ClassOrInterfaceType(val name: Name) extends ReferenceType 
-  case class ClassType(val name: Name) extends ReferenceType
-  case class InterfaceType(val name: Name) extends ReferenceType
-
   abstract class FormalParameter(val name: InputString, val varType: Type) extends AbstractSyntaxNode
+
+  case class ArrayType(subtype: Type) extends ReferenceType
+
+  case class ClassOrInterfaceType(name: Name) extends ReferenceType
+  case class ClassType(name: Name) extends ReferenceType
+  case class InterfaceType(name: Name) extends ReferenceType
 
   sealed trait Modifier extends AbstractSyntaxNode
 
@@ -95,16 +127,16 @@ object AbstractSyntaxNode {
 
   case class ClassDeclaration(
     override val name: InputString,
-    val body: ClassBody,
+    body: ClassBody,
 
     override val modifiers: Set[Modifier] = Set.empty[Modifier],
-    val superclass: Option[ClassType] = None,
+    superclass: Option[ClassType] = None,
     override val interfaces: Set[InterfaceType] = Set.empty[InterfaceType]
   ) extends TypeDeclaration(name, modifiers, interfaces)
 
   case class InterfaceDeclaration(
     override val name: InputString,
-    val body: InterfaceBody,
+    body: InterfaceBody,
 
     override val modifiers: Set[Modifier] = Set.empty[Modifier],
     override val interfaces: Set[InterfaceType] = Set.empty[InterfaceType]
@@ -121,8 +153,8 @@ object AbstractSyntaxNode {
     override val modifiers: Set[Modifier] = Set.empty[Modifier],
     override val memberType: Type,
 
-    val parameters: Set[FormalParameter] = Set.empty[FormalParameter],
-    val body: Option[Block] = None
+    parameters: Set[FormalParameter] = Set.empty[FormalParameter],
+    body: Option[Block] = None
   ) extends ClassMemberDeclaration(name, modifiers, memberType)
 
   case class FieldDeclaration(
@@ -130,21 +162,21 @@ object AbstractSyntaxNode {
     override val modifiers: Set[Modifier] = Set.empty[Modifier],
     override val memberType: Type,
 
-    val expression: Option[Expression] = None
+    expression: Option[Expression] = None
   ) extends ClassMemberDeclaration(name, modifiers, memberType)
 
   sealed trait BlockStatement extends AbstractSyntaxNode
 
   case class LocalVariableDeclaration(
-    val name: InputString,
-    val memberType: Type,
-    val expression: Option[Expression] = None
+    name: InputString,
+    memberType: Type,
+    expression: Option[Expression] = None
   ) extends BlockStatement
 
   //  TODO: Implement me
   case class Statement() extends BlockStatement
 
-  case class Block(val statements: Seq[BlockStatement]) extends AbstractSyntaxNode
+  case class Block(statements: Seq[BlockStatement]) extends AbstractSyntaxNode
 
   /*
   case class Star(override val children: List[ParseNode] = List.empty[ParseNode], override val value: Option[InputString] = None) extends ParseNode {
@@ -543,14 +575,34 @@ object AbstractSyntaxNode {
     def tokenType: Option[TokenType] = None
   }*/
 
-  def fromParseNode(node: ParseNode): Seq[AbstractSyntaxNode] = node match {
-    case s: ParseNodes.S    => fromParseNode(s.children(1))    //  Grab the compilation unit.
+  def parse(node: ParseNode): Seq[AbstractSyntaxNode] = {
+    val result = fromParseNode(Nil)(node)
+    result.foreach { overflowCheck(_) }
+    result
+  }
+
+  def overflowCheck(node: AbstractSyntaxNode) {
+    node match {
+      case num: Num =>
+        if (!num.valid) {
+          throw new SyntaxError("Overflow/underflow integer: " + num)
+        }
+      case _ => Unit
+    }
+
+    node.children.foreach { node => overflowCheck(node) }
+  }
+
+  def fromParseNode(previousNodes: List[ParseNode] = Nil)(node: ParseNode): Seq[AbstractSyntaxNode] = {
+  val recursive = fromParseNode(node +: previousNodes) _
+  node match {
+    case s: ParseNodes.S    => recursive(s.children(1))    //  Grab the compilation unit.
     case p: ParseNodes.BOF  => Seq.empty[AbstractSyntaxNode]
     case p: ParseNodes.EOF  => Seq.empty[AbstractSyntaxNode]
 
     case c: ParseNodes.CompilationUnit => {
       // Sort our children into ImportDeclarations, TypeDeclarations and PackageDeclaration
-      val children: Seq[AbstractSyntaxNode] = c.children.flatMap(fromParseNode(_))
+      val children: Seq[AbstractSyntaxNode] = c.children.flatMap(recursive(_))
 
       // The grammar guarantees we should only get one PackageDeclaration,
       // so there's no need to check for multiple here.
@@ -567,7 +619,7 @@ object AbstractSyntaxNode {
     case i: ParseNodes.TypeImportOnDemandDeclaration => Seq(TypeImportOnDemandDeclaration(i.children(1).value.get))
 
     case c: ParseNodes.ClassDeclaration => {
-      val children:Seq[AbstractSyntaxNode] = c.children.flatMap(fromParseNode(_))
+      val children:Seq[AbstractSyntaxNode] = c.children.flatMap(recursive(_))
       val name:Identifier = children.collectFirst { case x: Identifier => x }.get
 
       val modifiers:Set[Modifier] = children.collect { case x: Modifier => x }.toSet
@@ -596,7 +648,7 @@ object AbstractSyntaxNode {
     }
 
     case c: ParseNodes.InterfaceDeclaration => {
-      val children:Seq[AbstractSyntaxNode] = c.children.flatMap(fromParseNode(_))
+      val children:Seq[AbstractSyntaxNode] = c.children.flatMap(recursive(_))
 
       val name:Identifier = children.collectFirst { case x: Identifier => x }.get
       val modifiers:Set[Modifier] = children.collect { case x: Modifier => x }.toSet
@@ -620,7 +672,7 @@ object AbstractSyntaxNode {
     }
 
     case c: ParseNodes.MethodDeclaration => {
-      val children:Seq[AbstractSyntaxNode] = c.children.flatMap(fromParseNode(_))
+      val children:Seq[AbstractSyntaxNode] = c.children.flatMap(recursive(_))
 
       val name:Identifier = children.collectFirst { case x: Identifier => x }.get
       val modifiers:Set[Modifier] = children.collect { case x: Modifier => x }.toSet
@@ -665,7 +717,7 @@ object AbstractSyntaxNode {
     }
 
     case c: ParseNodes.FieldDeclaration => {
-      val children:Seq[AbstractSyntaxNode] = c.children.flatMap(fromParseNode(_))
+      val children:Seq[AbstractSyntaxNode] = c.children.flatMap(recursive(_))
 
       val name:Identifier = children.collectFirst { case x: Identifier => x }.get
       val modifiers:Set[Modifier] = children.collect { case x: Modifier => x }.toSet
@@ -675,15 +727,13 @@ object AbstractSyntaxNode {
       Seq(FieldDeclaration(name.value, modifiers, memberType, expression))
     }
 
-    case i: ParseNodes.Identifier => Seq(Identifier(i.value.get))
-
     case c: ParseNodes.ClassBody => {
-      val children: Seq[AbstractSyntaxNode] = c.children.flatMap(fromParseNode(_))
+      val children: Seq[AbstractSyntaxNode] = c.children.flatMap(recursive(_))
       Seq(ClassBody(children.collect { case x: ClassBodyDeclaration => x }))
     }
 
     case c: ParseNodes.InterfaceBody => {
-      val children: Seq[AbstractSyntaxNode] = c.children.flatMap(fromParseNode(_))
+      val children: Seq[AbstractSyntaxNode] = c.children.flatMap(recursive(_))
       Seq(InterfaceBody(children.collect { case x: InterfaceMemberDeclaration => x }))
     }
 
@@ -700,12 +750,29 @@ object AbstractSyntaxNode {
     case m: ParseNodes.NativeKeyword => Seq(NativeKeyword)
 
     case t: ParseNodes.ClassType => {
-      val children:Seq[AbstractSyntaxNode] = t.children.flatMap(fromParseNode(_))
-      Seq(ClassType(fromParseNode(t.children.head).head.asInstanceOf[Name]))
+      val children:Seq[AbstractSyntaxNode] = t.children.flatMap(recursive(_))
+      Seq(ClassType(recursive(t.children.head).head.asInstanceOf[Name]))
     }
     case t: ParseNodes.InterfaceType => {
-      val children:Seq[AbstractSyntaxNode] = t.children.flatMap(fromParseNode(_))
-      Seq(ClassOrInterfaceType(fromParseNode(t.children.head).head.asInstanceOf[Name]))
+      val children:Seq[AbstractSyntaxNode] = t.children.flatMap(recursive(_))
+      Seq(ClassOrInterfaceType(recursive(t.children.head).head.asInstanceOf[Name]))
+    }
+
+    case i: ParseNodes.Identifier => Seq(Identifier(i.value.get))
+
+    case i: ParseNodes.Num =>
+      val input: InputString = i.value.get
+      val num = Num(input.value, input)
+      Seq(num)
+
+    case u: ParseNodes.UnaryExpression => u.children match {
+      case Seq(minus: ParseNodes.Minus, expr: ParseNodes.UnaryExpression) =>
+        val parsed: Seq[AbstractSyntaxNode] = recursive(expr)
+        parsed match {
+          case Seq(num: Num) => Seq(num.negated)
+          case _ => parsed
+        }
+      case _ => u.children.flatMap(recursive(_))
     }
 
     case t: ParseNodes.TrueLiteral => Seq(TrueLiteral)
@@ -718,7 +785,7 @@ object AbstractSyntaxNode {
     case v: ParseNodes.VoidKeyword => Seq(VoidKeyword)
     case b: ParseNodes.BooleanKeyword => Seq(BooleanKeyword)
     case a: ParseNodes.ArrayType => {
-      val children:Seq[AbstractSyntaxNode] = a.children.flatMap(fromParseNode(_))
+      val children:Seq[AbstractSyntaxNode] = a.children.flatMap(recursive(_))
       children.headOption match {
         case Some(x: Type) => Seq(ArrayType(x))
         case _ => throw new SyntaxError("Array type contains non-type node.")
@@ -726,8 +793,8 @@ object AbstractSyntaxNode {
     }
 
     case s: ParseNodes.SimpleName => Seq(SimpleName(s.children(0).value.get))
-    case s: ParseNodes.QualifiedName => 
-      Seq(QualifiedName(s.children.flatMap(fromParseNode(_)).flatMap {
+    case s: ParseNodes.QualifiedName =>
+      Seq(QualifiedName(s.children.flatMap(recursive(_)).flatMap {
         case n: SimpleName => Some(n.value)
         case n: Identifier => Some(n.value)
         case n: QualifiedName => n.value
@@ -736,7 +803,7 @@ object AbstractSyntaxNode {
 
     //  TODO: Imeplement
     case b: ParseNodes.Block => {
-      val children:Seq[AbstractSyntaxNode] = b.children.flatMap(fromParseNode(_))
+      val children:Seq[AbstractSyntaxNode] = b.children.flatMap(recursive(_))
       Seq(Block(children.collect { case x: BlockStatement => x }))
     }
 
@@ -748,12 +815,12 @@ object AbstractSyntaxNode {
     }
 
     case l: ParseNodes.LocalVariableDeclaration => {
-      val children:Seq[AbstractSyntaxNode] = l.children.flatMap(fromParseNode(_))
+      val children:Seq[AbstractSyntaxNode] = l.children.flatMap(recursive(_))
 
       val name:Identifier = children.collectFirst { case x: Identifier => x }.get
       val memberType:Type = children.collectFirst { case x: Type => x }.get
       val expression:Option[Expression] = children.collectFirst { case x:Expression => x }
-    
+
       Seq(LocalVariableDeclaration(name.value, memberType, expression))
     }
 
@@ -761,6 +828,7 @@ object AbstractSyntaxNode {
     case s: ParseNodes.Statement => Seq(Statement())
 
     //  If the parse node does not map nicely to an ASN, just hand us its children.
-    case p: ParseNode => p.children.flatMap(fromParseNode(_))
+    case p: ParseNode => p.children.flatMap(recursive(_))
+  }
   }
 }

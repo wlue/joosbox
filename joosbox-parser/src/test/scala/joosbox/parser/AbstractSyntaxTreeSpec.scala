@@ -10,7 +10,7 @@ class AbstractSyntaxTreeSpec extends Specification {
   "Abstract Syntax Tree" should {
     
     "be created from a parse tree with package and import" in {
-      val parseTree:ParseNode = ParseNodes.S(List[ParseNode](
+      val parseTree: ParseNode = ParseNodes.S(List[ParseNode](
         ParseNodes.BOF(),
         ParseNodes.CompilationUnit(List[ParseNode](
 
@@ -54,7 +54,7 @@ class AbstractSyntaxTreeSpec extends Specification {
         ParseNodes.EOF()
       ))
 
-      AbstractSyntaxNode.fromParseNode(parseTree).head must beEqualTo(
+      AbstractSyntaxNode.parse(parseTree).head must beEqualTo(
         AbstractSyntaxNode.CompilationUnit(
           Some(AbstractSyntaxNode.PackageDeclaration("mypackage")),
           List(AbstractSyntaxNode.SingleTypeImportDeclaration("myimport")),
@@ -121,7 +121,7 @@ class AbstractSyntaxTreeSpec extends Specification {
         ParseNodes.EOF()
       ))
 
-      AbstractSyntaxNode.fromParseNode(parseTree).head must beEqualTo(
+      AbstractSyntaxNode.parse(parseTree).head must beEqualTo(
         AbstractSyntaxNode.CompilationUnit(
           Some(AbstractSyntaxNode.PackageDeclaration("mypackage")),
           List(
@@ -187,7 +187,7 @@ class AbstractSyntaxTreeSpec extends Specification {
         ParseNodes.EOF()
       ))
 
-      AbstractSyntaxNode.fromParseNode(parseTree).head must beEqualTo(
+      AbstractSyntaxNode.parse(parseTree).head must beEqualTo(
         AbstractSyntaxNode.CompilationUnit(
           Some(AbstractSyntaxNode.PackageDeclaration("mypackage")),
           List(AbstractSyntaxNode.SingleTypeImportDeclaration("myimport")),
@@ -257,7 +257,7 @@ class AbstractSyntaxTreeSpec extends Specification {
         ParseNodes.EOF()
       ))
 
-      AbstractSyntaxNode.fromParseNode(parseTree).head must throwA[SyntaxError]
+      AbstractSyntaxNode.parse(parseTree).head must throwA[SyntaxError]
     }
 
     "be created from a class with fields and methods" in {
@@ -336,7 +336,7 @@ class AbstractSyntaxTreeSpec extends Specification {
         ParseNodes.EOF()
       ))
 
-      AbstractSyntaxNode.fromParseNode(parseTree).head must beEqualTo(
+      AbstractSyntaxNode.parse(parseTree).head must beEqualTo(
         AbstractSyntaxNode.CompilationUnit(
           None,
           List.empty[AbstractSyntaxNode.ImportDeclaration],
@@ -355,6 +355,142 @@ class AbstractSyntaxTreeSpec extends Specification {
           ))
         )
       )
+    }
+
+    "literals" in {
+      "Num" in {
+        "valid" in {
+          val parseTree: ParseNode =
+            ParseNodes.Literal(List(
+              ParseNodes.IntegerLiteral(List(
+                ParseNodes.Num(Nil, Some("1337"))
+              ))
+            ))
+
+          AbstractSyntaxNode.parse(parseTree).head must beEqualTo(
+            AbstractSyntaxNode.Num("1337", "1337")
+          )
+        }
+
+        "underflow" in {
+          "don't throw exception for positive overflow with a negative" in {
+            val parseTree: ParseNode =
+              ParseNodes.UnaryExpression(List(
+                ParseNodes.Minus(Nil),
+                ParseNodes.UnaryExpression(List(
+                  ParseNodes.UnaryExpressionNotPlusMinus(List(
+                    ParseNodes.PostfixExpression(List(
+                      ParseNodes.Primary(List(
+                        ParseNodes.PrimaryNoNewArray(List(
+                          ParseNodes.Literal(List(
+                            ParseNodes.IntegerLiteral(List(
+                              ParseNodes.Num(Nil, Some("2147483648"))
+                            ))
+                          ))
+                        ))
+                      ))
+                    ))
+                  ))
+                ))
+              ))
+
+            AbstractSyntaxNode.parse(parseTree).head must not(throwA[Exception])
+
+            val result = AbstractSyntaxNode.parse(parseTree).head
+            result must beEqualTo(AbstractSyntaxNode.Num("-2147483648", "2147483648"))
+          }
+
+          "throw exception for negative underflow" in {
+            val parseTree: ParseNode =
+              ParseNodes.UnaryExpression(List(
+                ParseNodes.Minus(Nil),
+                ParseNodes.UnaryExpression(List(
+                  ParseNodes.UnaryExpressionNotPlusMinus(List(
+                    ParseNodes.PostfixExpression(List(
+                      ParseNodes.Primary(List(
+                        ParseNodes.PrimaryNoNewArray(List(
+                          ParseNodes.Literal(List(
+                            ParseNodes.IntegerLiteral(List(
+                              ParseNodes.Num(Nil, Some("2147483649"))
+                            ))
+                          ))
+                        ))
+                      ))
+                    ))
+                  ))
+                ))
+              ))
+
+            AbstractSyntaxNode.parse(parseTree).head must throwA[Exception]
+          }
+        }
+
+        "overflow" in {
+          val parseTree: ParseNode =
+            ParseNodes.Literal(List(
+              ParseNodes.IntegerLiteral(List(
+                ParseNodes.Num(Nil, Some("2147483648"))
+              ))
+            ))
+
+          AbstractSyntaxNode.parse(parseTree).head must throwA[Exception]
+        }
+
+        "-10" in {
+          val parseTree: ParseNode =
+            ParseNodes.UnaryExpression(List(
+              ParseNodes.Minus(Nil),
+              ParseNodes.UnaryExpression(List(
+                ParseNodes.UnaryExpressionNotPlusMinus(List(
+                  ParseNodes.PostfixExpression(List(
+                    ParseNodes.Primary(List(
+                      ParseNodes.PrimaryNoNewArray(List(
+                        ParseNodes.Literal(List(
+                          ParseNodes.IntegerLiteral(List(
+                            ParseNodes.Num(Nil, Some("10"))
+                          ))
+                        ))
+                      ))
+                    ))
+                  ))
+                ))
+              ))
+            ))
+
+          AbstractSyntaxNode.parse(parseTree).head must beEqualTo(
+            AbstractSyntaxNode.Num("-10", "10")
+          )
+        }
+
+        "- -10" in {
+          val parseTree: ParseNode =
+            ParseNodes.UnaryExpression(List(
+              ParseNodes.Minus(Nil),
+              ParseNodes.UnaryExpression(List(
+                ParseNodes.Minus(Nil),
+                ParseNodes.UnaryExpression(List(
+                  ParseNodes.UnaryExpressionNotPlusMinus(List(
+                    ParseNodes.PostfixExpression(List(
+                      ParseNodes.Primary(List(
+                        ParseNodes.PrimaryNoNewArray(List(
+                          ParseNodes.Literal(List(
+                            ParseNodes.IntegerLiteral(List(
+                              ParseNodes.Num(Nil, Some("10"))
+                            ))
+                          ))
+                        ))
+                      ))
+                    ))
+                  ))
+                ))
+              ))
+            ))
+
+          AbstractSyntaxNode.parse(parseTree).head must beEqualTo(
+            AbstractSyntaxNode.Num("10", "10")
+          )
+        }
+      }
     }
   }
 
