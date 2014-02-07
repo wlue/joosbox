@@ -178,7 +178,14 @@
 
   \section{Challenges}
 
-  %TODO: Talk about bundling together the Scala code into one single jar
+  One challenge was to get our compiler to build on the Marmoset server. We used
+  {\em sbt} to build, run, and test our compiler locally, but the jar files that
+  were generated had third-party dependencies that would not run on the CS
+  environment. We introduced the third-party library {\em sbt-assembly} to
+  create a fat jar that contains our compiler and all of our third party
+  dependencies, and we invoke the assembly script in our makefile to create the
+  jar, and to create the runnable {\tt joosc} script to invoke the jar with the
+  command line arguments.
 
   An additional challenge when writing both the lexer and the parser for
   Joosbox was finding a way to use Scala's type system to guarantee type
@@ -196,18 +203,16 @@
   the resulting generated code has resulted in longer compile times and larger
   binaries --- but enabled cleaner and safer code to be written.
 
-  %TODO: Talk about code generation from Python to Scala
-
   \section{Testing}
 
-  For testing, we used $specs2$, a Scala specifications and testing library. We
-  ran our tests using $sbt$.
+  For testing, we used {\em specs2}, a Scala specifications and testing library.
+  We ran our tests using {\em sbt}.
 
-  Joosbox has unit tests for small units of functionality. We
-  individually tested each piece of functionality, and small portions of the
-  lexer, parser, and AST generator. Our project is separated into separate
-  subprojects that deal exclusively with lexing, parsing, and code generation,
-  and for each subproject, we have a separate set of specific tests.
+  Joosbox has unit tests for small units of functionality. We individually
+  tested each piece of functionality, and small portions of the lexer, parser,
+  and AST generator. Our project is separated into separate subprojects that
+  deal exclusively with lexing, parsing, and code generation, and for each
+  subproject, we have a separate set of specific tests.
 
   We used TDD (test-driven development) to develop our compiler. For each
   portion of work we started, we wrote passing and failing tests to verify the
