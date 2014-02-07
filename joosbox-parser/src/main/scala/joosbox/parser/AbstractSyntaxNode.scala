@@ -41,11 +41,9 @@ object AbstractSyntaxNode {
 
   case class ClassBody(val declarations: Seq[ClassBodyDeclaration] = Seq.empty[ClassBodyDeclaration]) extends AbstractSyntaxNode
   case class InterfaceBody(val declarations: Seq[InterfaceMemberDeclaration] = Seq.empty[InterfaceMemberDeclaration]) extends AbstractSyntaxNode
-  case class MethodBody() extends AbstractSyntaxNode
 
   abstract class Expression() extends AbstractSyntaxNode
 
-  //  TODO: There should be a type that wraps Type and inherits from it for ArrayOf
   sealed trait Type extends AbstractSyntaxNode
 
   sealed trait Name extends Type
@@ -56,10 +54,10 @@ object AbstractSyntaxNode {
   sealed trait ReferenceType extends Type
   case object VoidKeyword extends Type
 
-  sealed trait BooleanKeyword extends PrimitiveType
+  case object BooleanKeyword extends PrimitiveType
 
-  case object TrueLiteral extends BooleanKeyword
-  case object FalseLiteral extends BooleanKeyword
+  case object TrueLiteral extends AbstractSyntaxNode
+  case object FalseLiteral extends AbstractSyntaxNode
 
   sealed trait NumericType extends PrimitiveType
 
@@ -124,7 +122,7 @@ object AbstractSyntaxNode {
     override val memberType: Type,
 
     val parameters: Set[FormalParameter] = Set.empty[FormalParameter],
-    val body: Option[MethodBody] = None
+    val body: Option[Block] = None
   ) extends ClassMemberDeclaration(name, modifiers, memberType)
 
   case class FieldDeclaration(
@@ -135,8 +133,18 @@ object AbstractSyntaxNode {
     val expression: Option[Expression] = None
   ) extends ClassMemberDeclaration(name, modifiers, memberType)
 
+  sealed trait BlockStatement extends AbstractSyntaxNode
+
+  case class LocalVariableDeclaration(
+    val name: InputString,
+    val memberType: Type,
+    val expression: Option[Expression] = None
+  ) extends BlockStatement
+
   //  TODO: Implement me
-  case class Block() extends AbstractSyntaxNode
+  case class Statement() extends BlockStatement
+
+  case class Block(val statements: Seq[BlockStatement]) extends AbstractSyntaxNode
 
   /*
   case class Star(override val children: List[ParseNode] = List.empty[ParseNode], override val value: Option[InputString] = None) extends ParseNode {
@@ -618,7 +626,7 @@ object AbstractSyntaxNode {
       val modifiers:Set[Modifier] = children.collect { case x: Modifier => x }.toSet
       val memberType:Type = children.collectFirst { case x:Type => x }.get
       val parameters: Set[FormalParameter] = children.collect { case x:FormalParameter => x }.toSet
-      val body:Option[MethodBody] = children.collectFirst { case x:MethodBody => x }
+      val body:Option[Block] = children.collectFirst { case x:Block => x }
 
       // Enforce: No package private methods
       if (!modifiers.contains(PublicKeyword) && !modifiers.contains(ProtectedKeyword)) {
@@ -708,6 +716,14 @@ object AbstractSyntaxNode {
     case t: ParseNodes.IntKeyword => Seq(IntKeyword)
     case t: ParseNodes.CharKeyword => Seq(CharKeyword)
     case v: ParseNodes.VoidKeyword => Seq(VoidKeyword)
+    case b: ParseNodes.BooleanKeyword => Seq(BooleanKeyword)
+    case a: ParseNodes.ArrayType => {
+      val children:Seq[AbstractSyntaxNode] = a.children.flatMap(fromParseNode(_))
+      children.headOption match {
+        case Some(x: Type) => Seq(ArrayType(x))
+        case _ => throw new SyntaxError("Array type contains non-type node.")
+      }
+    }
 
     case s: ParseNodes.SimpleName => Seq(SimpleName(s.children(0).value.get))
     case s: ParseNodes.QualifiedName => 
@@ -718,17 +734,31 @@ object AbstractSyntaxNode {
         case n: AbstractSyntaxNode => throw new SyntaxError("Qualified name contains non-identifiers.")
       }))
 
-    case m: ParseNodes.MethodBody => {
-      val children:Seq[AbstractSyntaxNode] = m.children.flatMap(fromParseNode(_))
-      children.headOption match {
-        case None => Seq.empty[AbstractSyntaxNode]
-        //case Some(x) => Seq(MethodBody(x))
-        case Some(_) => Seq(MethodBody())
-      }
+    //  TODO: Imeplement
+    case b: ParseNodes.Block => {
+      val children:Seq[AbstractSyntaxNode] = b.children.flatMap(fromParseNode(_))
+      Seq(Block(children.collect { case x: BlockStatement => x }))
     }
 
-    //  TODO: Imeplement
-    case x: ParseNodes.Block => Seq(Block())
+    case ParseNodes.VariableDeclaratorId(List(id: ParseNodes.Identifier,
+                                              lb: ParseNodes.LeftBracket,
+                                              rb: ParseNodes.RightBracket), _) => {
+      // Enforce: Array brackets ('[]') are not allowed to occur in the name of a variable being declared.
+      throw new SyntaxError("Variable declaration cannot contain array syntax: " + id.value)
+    }
+
+    case l: ParseNodes.LocalVariableDeclaration => {
+      val children:Seq[AbstractSyntaxNode] = l.children.flatMap(fromParseNode(_))
+
+      val name:Identifier = children.collectFirst { case x: Identifier => x }.get
+      val memberType:Type = children.collectFirst { case x: Type => x }.get
+      val expression:Option[Expression] = children.collectFirst { case x:Expression => x }
+    
+      Seq(LocalVariableDeclaration(name.value, memberType, expression))
+    }
+
+    //  TODO: Implement
+    case s: ParseNodes.Statement => Seq(Statement())
 
     //  If the parse node does not map nicely to an ASN, just hand us its children.
     case p: ParseNode => p.children.flatMap(fromParseNode(_))

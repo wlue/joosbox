@@ -67,7 +67,7 @@ class ParserSpec extends Specification {
     "scan and parse a valid Joos program on the LR1 grammar" in {
       val test : String = """
 public class Test {
-    public static void main(String args[]) {
+    public static void main(String[] args) {
         System.out.println("Hello world!");
     }
 }
