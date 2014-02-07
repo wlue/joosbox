@@ -51,6 +51,9 @@ object AbstractSyntaxNode {
   case class ClassType(override val value: InputString) extends ClassOrInterfaceType(value)
   case class InterfaceType(override val value: InputString) extends ClassOrInterfaceType(value)
 
+
+  abstract class Type()
+
   sealed trait Modifier extends AbstractSyntaxNode
 
   sealed trait AccessModifier extends Modifier
@@ -86,6 +89,12 @@ object AbstractSyntaxNode {
     override val modifiers: Set[Modifier] = Set.empty[Modifier],
     override val interfaces: Set[InterfaceType] = Set.empty[InterfaceType]
   ) extends TypeDeclaration(name, modifiers, interfaces)
+
+   abstract class ClassMemberDeclaration(
+    val name: InputString,
+    val modifiers: Set[Modifier] = Set.empty[Modifier],
+    val memberType: Type
+  ) extends AbstractSyntaxNode
 
   /*
   case class Star(override val children: List[ParseNode] = List.empty[ParseNode], override val value: Option[InputString] = None) extends ParseNode {
