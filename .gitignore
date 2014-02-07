@@ -24,3 +24,11 @@ project/plugins/project/
 # joosbox
 joosc
 *.zip
+
+# reports
+*.aux
+*.fdb_latexmk
+*.fls
+*.out
+*.pdf
+*.toc
