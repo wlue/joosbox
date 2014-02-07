@@ -128,6 +128,22 @@
   the DFA. In our implementation, DFAs can also be directly specified using
   traditional tuple information.
 
+  Our DFA class implements a recursive maximal munch algorithm on input
+  strings, allowing our lexer to pass in an input string and start state and
+  receive either a pair of (accepting state, remaining string input) or None.
+  By recursively calling this {\tt consume} method on our input, we produce
+  a list of accepting states from the DFA, which area simply converted into
+  {\tt Token} instances each containing an {\tt InputString} instance.
+
+  To enable the tracing of errors back to their source in an input program,
+  Joosbox's maximal munch algorithm does not output raw {\tt String}s, but
+  rather, {\tt InputString} instances --- custom classes that wrap {\tt
+  java.lang.String} and add additional information like source file, line
+  number, and character offset. If a {\tt SyntaxError} is later thrown due to
+  invalid input, the throwing method can inspect the {\tt InputString}
+  instance to find important debugging information and inform the user of the
+  exact location of the issue in their source program.
+
   \subsection{Parser}
 
   Joosbox uses an LALR(1) grammar to parse Joos 1W. This grammar is based on a
