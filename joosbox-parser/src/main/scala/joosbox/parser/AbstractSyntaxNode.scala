@@ -42,6 +42,7 @@ object AbstractSyntaxNode {
   //TODO
   case class ClassBody() extends AbstractSyntaxNode
   case class InterfaceBody() extends AbstractSyntaxNode
+  case class MethodBody() extends AbstractSyntaxNode
 
   abstract class Name(val value: InputString) extends AbstractSyntaxNode 
   case class SimpleName(override val value: InputString) extends Name(value)
@@ -53,6 +54,9 @@ object AbstractSyntaxNode {
 
 
   abstract class Type()
+  abstract class FormalParameter(val name: InputString, val varType: Type) extends AbstractSyntaxNode
+
+  sealed trait VoidKeyword extends Type
 
   sealed trait Modifier extends AbstractSyntaxNode
 
@@ -95,6 +99,17 @@ object AbstractSyntaxNode {
     val modifiers: Set[Modifier] = Set.empty[Modifier],
     val memberType: Type
   ) extends AbstractSyntaxNode
+
+  case class MethodDeclaration(
+    override val name: InputString,
+    override val modifiers: Set[Modifier] = Set.empty[Modifier],
+    override val memberType: Type,
+
+    val parameters: Set[FormalParameter] = Set.empty[FormalParameter],
+    val body: MethodBody
+  ) extends ClassMemberDeclaration(name, modifiers, memberType)
+
+
 
   /*
   case class Star(override val children: List[ParseNode] = List.empty[ParseNode], override val value: Option[InputString] = None) extends ParseNode {
@@ -520,13 +535,13 @@ object AbstractSyntaxNode {
       val children:Seq[AbstractSyntaxNode] = c.children.flatMap(fromParseNode(_))
       val name:Identifier = children.collectFirst { case x: Identifier => x }.get
 
-      val modifiers:Set[Modifier] = children.collect { case x: Mofidier => x }.toSet
+      val modifiers:Set[Modifier] = children.collect { case x: Modifier => x }.toSet
       val superclass:Option[ClassType] = children.collectFirst { case x: ClassType => x }
       val interfaces:Set[InterfaceType] = children.collect { case x: InterfaceType => x }.toSet
-      val body:ClassBody = children.collect { case x: ClassBody => x }.get
+      val body:ClassBody = children.collectFirst { case x: ClassBody => x }.get
 
       //  Enforce "A class cannot be both abstract and final."
-      if (modifiers.contains(AbstractKeyword) and modifiers.contains(FinalKeyword)) {
+      if (modifiers.contains(AbstractKeyword) && modifiers.contains(FinalKeyword)) {
         throw new SyntaxError("Class " + name.value + " cannot be both abstract and final.")
       }
 
@@ -537,12 +552,26 @@ object AbstractSyntaxNode {
       val children:Seq[AbstractSyntaxNode] = c.children.flatMap(fromParseNode(_))
 
       val name:Identifier = children.collectFirst { case x: Identifier => x }.get
-      val modifiers:Set[Modifier] = children.collect { case x: Mofidier => x }.toSet
+      val modifiers:Set[Modifier] = children.collect { case x: Modifier => x }.toSet
       val interfaces:Set[InterfaceType] = children.collect { case x: InterfaceType => x }.toSet
-      val body:InterfaceBody = children.collect { case x: InterfaceBody => x }.get
+      val body:InterfaceBody = children.collectFirst { case x: InterfaceBody => x }.get
 
       Seq(InterfaceDeclaration(name.value, body, modifiers, interfaces))
     }
+
+    case c: ParseNodes.MethodDeclaration => {
+      val children:Seq[AbstractSyntaxNode] = c.children.flatMap(fromParseNode(_))
+
+      val name:Identifier = children.collectFirst { case x: Identifier => x }.get
+      val modifiers:Set[Modifier] = children.collect { case x: Modifier => x }.toSet
+      val memberType:Type = children.collectFirst { case x:Type => x }.get
+      val parameters: Set[FormalParameter] = children.collect { case x:FormalParameter => x }.toSet
+      val body:MethodBody = children.collectFirst { case x:MethodBody => x }.get
+
+      Seq(MethodDeclaration(name.value, modifiers, memberType, parameters, body))
+    }
+
+
 
     case i: ParseNodes.Identifier => Seq(Identifier(i.value.get))
 
