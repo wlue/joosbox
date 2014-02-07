@@ -780,8 +780,6 @@ object AbstractSyntaxNode {
       Seq(ClassOrInterfaceType(recursive(t.children.head).head.asInstanceOf[Name]))
     }
 
-    case i: ParseNodes.Identifier => Seq(Identifier(i.value.get))
-
     case i: ParseNodes.Num =>
       val input: InputString = i.value.get
       val num = Num(input.value, input)

@@ -492,11 +492,15 @@ class AbstractSyntaxTreeSpec extends Specification {
         }
       }
     }
-  }
+  }/*
+>>>>>>> Stashed changes
 
   "marmoset tests" should {
     "not fail" in {
-      Parser.Joos.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1w_Interface.java") must not(throwA[Exception])
+      val node = Parser.Joos.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/Je_1_Interface_StaticMethod.java")
+      println(node)
+      // must not(throwA[Exception])
+      false
     }
-  }
+  }*/
 }
