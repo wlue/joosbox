@@ -60,9 +60,9 @@
   \section{Introduction}
 
   Our CS444 compiler, named {\em Joosbox}, currently scans, parses and validates
-  files, outputting a return code of {\tt 0} if the file is a valid Joos 1W source
-  file, and outputting a return code of 42 otherwise. Upon parsing an invalid
-  Joos 1W program, Joosbox will output diagnostic information (including line
+  files, outputting a return code of {\tt 0} if the file is a valid Joos1W source
+  file, and outputting a return code of {\tt 42} otherwise. Upon parsing an invalid
+  Joos1W program, Joosbox will output diagnostic information (including line
   number and character index of invalid tokens) to standard error. Joosbox is
   implemented in Scala, and has a wonderful ASCII-art logo:
 
@@ -132,7 +132,7 @@
   strings, allowing our lexer to pass in an input string and start state and
   receive either a pair of (accepting state, remaining string input) or None.
   By recursively calling this {\tt consume} method on our input, we produce
-  a list of accepting states from the DFA, which area simply converted into
+  a list of accepting states from the DFA, which are simply converted into
   {\tt Token} instances each containing an {\tt InputString} instance.
 
   To enable the tracing of errors back to their source in an input program,
@@ -159,18 +159,19 @@
 
   \subsection{Parser}
 
-  Joosbox uses an LALR(1) grammar to parse Joos 1W. This grammar is based on a
+  Joosbox uses an LALR(1) grammar to parse Joos1W. This grammar is based on a
   LALR(1) grammar for Java 1 itself, with numerous tokens removed and altered to
-  match the language features we were supporting as specified by Joos 1W. The
+  match the language features we were supporting as specified by Joos1W. The
   LALR(1) grammar for Java 1 that we derived our grammar from was found in
   Chapter 19 of {\em The Java Language Specification}. From this collection of
   production rules for a Java 1 LALR(1) grammar, we were able to construct our
   grammar in the form of {\tt joos1w.cfg}.
 
-  The provided {\tt jlalr1.java} program for constructing a parse table from a
-  {\tt.cfg} file. With this program we were able to construct a LALR(1) parse
-  table for our grammar in the form of {\tt joos1w.lr1}. This file was used at
-  runtime by Joosbox to parse the Joos1W language.
+  Joosbox also made use of the provided {\tt jlalr1.java} program for
+  constructing a parse table from a {\tt.cfg} file. With this program we were
+  able to construct a LALR(1) parse table for our grammar in the form of
+  {\tt joos1w.lr1}. This file was used at runtime by Joosbox to parse the Joos1W
+  language.
 
   To parse the sequence of tokens output by the lexer, Joosbox first discards
   tokens that do not have corresponding semantic value in the grammar (i.e.
@@ -227,7 +228,7 @@
   environment. We introduced the third-party library {\em sbt-assembly} to
   create a fat jar that contains our compiler and all of our third party
   dependencies, and we invoke the assembly script in our makefile to create the
-  jar, and to create the runnable {\tt joosc} script to invoke the jar with the
+  jar, and to create the executable {\tt joosc} script to invoke the jar with the
   command line arguments.
 
   An additional challenge when writing both the lexer and the parser for Joosbox
