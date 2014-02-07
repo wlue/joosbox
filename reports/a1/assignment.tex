@@ -63,15 +63,56 @@
   \clearpage
   \section{Introduction}
 
+  Our CS444 compiler, named {\em Joosbox}, currently scans, parses and
+  validates files, outputing a return code of {tt 0} if the file is a valid
+  Joos 1W source file, and outputing a return code of 42 otherwise. Upon
+  parsing an invalid Joos 1W program, Joosbox will output diagnostic
+  information (including line number and character index of invalid tokens) to
+  standard error. Joosbox is implemented in Scala.
+
   \section{Design}
+
+  Joosbox is split into three primary components: the lexer, the parser, and
+  the abstract syntax tree builder.
+
   \subsection{Lexer}
-  \subsection{Grammar and Parse Table}
+
+  Joosbox's lexer is based on a grammar
+
   \subsection{Parser}
-  \subsection{Weeder}
-  \subsection{AST}
+
+  Joosbox uses an LR(1) grammar to parse Joos 1W. This grammar is based on the
+  grammar for Java 1 itself, with numerous tokens removed and altered to match
+  Joos 1W. The provided {\tt jlalr1.java} program for constructing a parse
+  table was used to create the {\tt joos1w.lr1} file, used at runtime by
+  Joosbox to parse the language.
+
+  To parse the sequence of tokens output by the lexer, Joosbox first discards
+  tokens that do not have corresponding semantic value in the grammar (i.e.:
+  whitespace, comments, etc) in a ``pre-parse weeding'' step. At this step,
+  any tokens that are lexically valid but not semantically valid in Joos
+  (including Java constructs that are reserved keywords, but not supported,
+  like {\tt throw}) will cause a {\tt SyntaxError} to be raised.
+
+  Once the input tokens are pre-weeded, the LR(1) algorithm with tree building
+  (from CS 241) is used to construct a basic parse tree. The resulting parse 
+  tree output is built out of {\tt ParseTreeNode}s, arbitrary expressions
+  that can contain zero or more child nodes and an optional value.
+
+  \subsection{Abstract Syntax Tree}
+
+  Joosbox accomplishes weeding, or post-parsing validation of semantic input,
+  as a validation step during the construction of the Abstract Syntax Tree.
 
   \section{Challenges}
 
+  %TODO: Talk about bundling together the Scala code into one single jar
+  %TODO: Talk about code generation from Python to Scala
+
   \section{Testing}
+
+  %TODO: Talk about marmoset tests being imported into our SBT local test suite
+  %TODO: Talk about the TDD approach
+  %TODO: Talk about how every intermediate data representation was heavily tested
 
 \end{document}
