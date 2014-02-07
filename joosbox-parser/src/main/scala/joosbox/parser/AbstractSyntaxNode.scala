@@ -635,6 +635,7 @@ object AbstractSyntaxNode {
 
     //  TODO: Temp
     case i: ParseNodes.ClassBody => Seq(ClassBody())
+    case i: ParseNodes.InterfaceBody => Seq(InterfaceBody())
     case m: ParseNodes.MethodBody => Seq(MethodBody())
 
     case m: ParseNodes.StaticKeyword => Seq(StaticKeyword)
