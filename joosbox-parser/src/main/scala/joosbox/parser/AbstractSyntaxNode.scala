@@ -549,6 +549,14 @@ object AbstractSyntaxNode {
         throw new SyntaxError("Class " + name.value + " cannot be package private.")
       }
 
+      // Enforce: Class must match filename
+      val filename = name.value.filename.split("/").last
+      if (filename != name.value.value + ".java") {
+        if (!filename.contains("<input>")) {
+          throw new SyntaxError("Class " + name.value + " must be in a file with the same name.")
+        }
+      }
+
       Seq(ClassDeclaration(name.value, body, modifiers, superclass, interfaces))
     }
 
@@ -563,6 +571,14 @@ object AbstractSyntaxNode {
       // Enforce: No package private interface
       if (!modifiers.contains(PublicKeyword) && !modifiers.contains(ProtectedKeyword)) {
         throw new SyntaxError("Interface " + name.value + " cannot be package private.")
+      }
+
+      // Enforce: Interface must match filename
+      val filename = name.value.filename.split("/").last
+      if (filename != name.value.value + ".java") {
+        if (!filename.contains("<input>")) {
+          throw new SyntaxError("Interface " + name.value + " must be in a file with the same name.")
+        }
       }
 
       Seq(InterfaceDeclaration(name.value, body, modifiers, interfaces))
