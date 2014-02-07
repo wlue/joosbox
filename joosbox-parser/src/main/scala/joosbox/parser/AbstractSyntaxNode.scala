@@ -135,6 +135,9 @@ object AbstractSyntaxNode {
     val expression: Option[Expression] = None
   ) extends ClassMemberDeclaration(name, modifiers, memberType)
 
+  //  TODO: Implement me
+  case class Block() extends AbstractSyntaxNode
+
   /*
   case class Star(override val children: List[ParseNode] = List.empty[ParseNode], override val value: Option[InputString] = None) extends ParseNode {
     def tokenType: Option[TokenType] = Some(TokenTypes.Star)
@@ -697,7 +700,6 @@ object AbstractSyntaxNode {
       Seq(ClassOrInterfaceType(fromParseNode(t.children.head).head.asInstanceOf[Name]))
     }
 
-    //  TODO: Implement
     case t: ParseNodes.TrueLiteral => Seq(TrueLiteral)
     case t: ParseNodes.FalseLiteral => Seq(FalseLiteral)
 
@@ -716,7 +718,17 @@ object AbstractSyntaxNode {
         case n: AbstractSyntaxNode => throw new SyntaxError("Qualified name contains non-identifiers.")
       }))
 
-    case m: ParseNodes.MethodBody => Seq(MethodBody())  //  TODO: Implement
+    case m: ParseNodes.MethodBody => {
+      val children:Seq[AbstractSyntaxNode] = m.children.flatMap(fromParseNode(_))
+      children.headOption match {
+        case None => Seq.empty[AbstractSyntaxNode]
+        //case Some(x) => Seq(MethodBody(x))
+        case Some(_) => Seq(MethodBody())
+      }
+    }
+
+    //  TODO: Imeplement
+    case x: ParseNodes.Block => Seq(Block())
 
     //  If the parse node does not map nicely to an ASN, just hand us its children.
     case p: ParseNode => p.children.flatMap(fromParseNode(_))
