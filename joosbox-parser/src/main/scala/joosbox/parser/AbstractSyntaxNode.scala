@@ -222,6 +222,8 @@ object AbstractSyntaxNode {
     override def children: List[AbstractSyntaxNode] = statements.toList
   }
 
+  case class CastExpression() extends AbstractSyntaxNode
+
   /*
   case class Star(override val children: List[ParseNode] = List.empty[ParseNode], override val value: Option[InputString] = None) extends ParseNode {
     def tokenType: Option[TokenType] = Some(TokenTypes.Star)
@@ -806,6 +808,27 @@ object AbstractSyntaxNode {
     case m: ParseNodes.AbstractKeyword => Seq(AbstractKeyword)
     case m: ParseNodes.FinalKeyword => Seq(FinalKeyword)
     case m: ParseNodes.NativeKeyword => Seq(NativeKeyword)
+
+    // TODO: Fix this hackery 
+    case c: ParseNodes.CastExpression => {
+      val children:Seq[AbstractSyntaxNode] = c.children.flatMap(recursive(_))
+
+      children.headOption match {
+        case Some(x: PrimitiveType) => Seq(CastExpression())
+        case Some(x: Expression) => x.children.headOption match {
+          case Some(y: SimpleName) => {
+            if (x.children.size == 1) {
+              Seq(CastExpression())
+            } else {
+              throw new SyntaxError("Casting with expressions is not supported")
+            }
+          }
+          case _ => throw new SyntaxError("Casting with expressions is not supported")
+        }
+        case Some(x: SimpleName) => Seq(CastExpression())
+        case _ => throw new SyntaxError("Casting requires a valid cast type")
+      }
+    }
 
     case t: ParseNodes.ClassType => {
       val children: Seq[AbstractSyntaxNode] = t.children.flatMap(recursive(_))
