@@ -77,7 +77,11 @@
 
   \subsection{Lexer}
 
-  Joosbox's lexer is based on a grammar
+  Joosbox's lexer is based on a grammar Joos1W, a subset of th Java 1.3. Using
+  the feature chart of Joos1W we were able to construct a series regexes that
+  would match a given valid token type. From each regex, we then constructed a
+  corresponding NFA by hand. To accomodate this, we designed our own NFA data
+  structure.
 
   \subsection{Parser}
 
