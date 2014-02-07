@@ -7,7 +7,6 @@ import InputStringImplicits._
 
 class ParserSpec extends Specification {
   "Parser" should {
-    
     "read in full LR1 grammar" in {
       Parser.fromLR1File("joos1w.lr1") must not(throwA[Exception])
     }

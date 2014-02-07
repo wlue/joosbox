@@ -53,8 +53,7 @@ object AbstractSyntaxNode {
 
   abstract class ClassBodyDeclaration(
     name: InputString,
-    modifiers: Set[Modifier] = Set.empty[Modifier],
-    memberType: Type
+    modifiers: Set[Modifier] = Set.empty[Modifier]
   ) extends AbstractSyntaxNode {
     override def children: List[AbstractSyntaxNode] = modifiers.toList
   }
@@ -172,19 +171,28 @@ object AbstractSyntaxNode {
   }
 
   abstract class ClassMemberDeclaration(
-    val name: InputString,
-    val modifiers: Set[Modifier] = Set.empty[Modifier],
-    val memberType: Type
-  ) extends ClassBodyDeclaration(name, modifiers, memberType) {
+    name: InputString,
+    modifiers: Set[Modifier] = Set.empty[Modifier],
+    memberType: Type
+  ) extends ClassBodyDeclaration(name, modifiers) {
     override def children: List[AbstractSyntaxNode] =
       modifiers.toList ++ List(memberType)
   }
 
-  case class MethodDeclaration(
-    override val name: InputString,
-    override val modifiers: Set[Modifier] = Set.empty[Modifier],
-    override val memberType: Type,
+  case class ConstructorDeclaration(
+    name: InputString,
+    modifiers: Set[Modifier] = Set.empty[Modifier],
+    parameters: Set[FormalParameter] = Set.empty[FormalParameter],
+    body: Option[Block] = None
+  ) extends ClassBodyDeclaration(name, modifiers) {
+    override def children: List[AbstractSyntaxNode] =
+      modifiers.toList ++ parameters.toList ++ body.toList
+  }
 
+  case class MethodDeclaration(
+    name: InputString,
+    modifiers: Set[Modifier] = Set.empty[Modifier],
+    memberType: Type,
     parameters: Set[FormalParameter] = Set.empty[FormalParameter],
     body: Option[Block] = None
   ) extends ClassMemberDeclaration(name, modifiers, memberType) {
@@ -193,10 +201,9 @@ object AbstractSyntaxNode {
   }
 
   case class FieldDeclaration(
-    override val name: InputString,
-    override val modifiers: Set[Modifier] = Set.empty[Modifier],
-    override val memberType: Type,
-
+    name: InputString,
+    modifiers: Set[Modifier] = Set.empty[Modifier],
+    memberType: Type,
     expression: Option[Expression] = None
   ) extends ClassMemberDeclaration(name, modifiers, memberType) {
     override def children: List[AbstractSyntaxNode] =
@@ -210,12 +217,12 @@ object AbstractSyntaxNode {
     memberType: Type,
     expression: Option[Expression] = None
   ) extends BlockStatement {
-    override val children: List[AbstractSyntaxNode] = expression.toList
+    override def children: List[AbstractSyntaxNode] = expression.toList
   }
 
   // TODO: Implement me
   case class Statement(nodes: Seq[AbstractSyntaxNode]) extends BlockStatement {
-    override val children: List[AbstractSyntaxNode] = nodes.toList
+    override def children: List[AbstractSyntaxNode] = nodes.toList
   }
 
   case class Block(statements: Seq[BlockStatement]) extends AbstractSyntaxNode {
@@ -272,13 +279,13 @@ object AbstractSyntaxNode {
     case i: ParseNodes.TypeImportOnDemandDeclaration => Seq(TypeImportOnDemandDeclaration(i.children(1).value.get))
 
     case c: ParseNodes.ClassDeclaration => {
-      val children:Seq[AbstractSyntaxNode] = c.children.flatMap(recursive(_))
-      val name:Identifier = children.collectFirst { case x: Identifier => x }.get
+      val children: Seq[AbstractSyntaxNode] = c.children.flatMap(recursive(_))
+      val name: Identifier = children.collectFirst { case x: Identifier => x }.get
 
-      val modifiers:Set[Modifier] = children.collect { case x: Modifier => x }.toSet
-      val superclass:Option[ClassType] = children.collectFirst { case x: ClassType => x }
-      val interfaces:Set[InterfaceType] = children.collect { case x: InterfaceType => x }.toSet
-      val body:ClassBody = children.collectFirst { case x: ClassBody => x }.get
+      val modifiers: Set[Modifier] = children.collect { case x: Modifier => x }.toSet
+      val superclass: Option[ClassType] = children.collectFirst { case x: ClassType => x }
+      val interfaces: Set[InterfaceType] = children.collect { case x: InterfaceType => x }.toSet
+      val body: ClassBody = children.collectFirst { case x: ClassBody => x }.get
 
       //  Enforce "A class cannot be both abstract and final."
       if (modifiers.contains(AbstractKeyword) && modifiers.contains(FinalKeyword)) {
@@ -324,14 +331,55 @@ object AbstractSyntaxNode {
       Seq(InterfaceDeclaration(name.value, body, modifiers, interfaces))
     }
 
-    case c: ParseNodes.MethodDeclaration => {
-      val children:Seq[AbstractSyntaxNode] = c.children.flatMap(recursive(_))
+    case c: ParseNodes.ConstructorDeclaration => {
+      val children: Seq[AbstractSyntaxNode] = c.children.flatMap(recursive(_))
 
-      val name:Identifier = children.collectFirst { case x: Identifier => x }.get
-      val modifiers:Set[Modifier] = children.collect { case x: Modifier => x }.toSet
-      val memberType:Type = children.collectFirst { case x:Type => x }.get
+      val name: SimpleName = children.collectFirst { case x: SimpleName => x }.get
+      val modifiers: Set[Modifier] = children.collect { case x: Modifier => x }.toSet
+      val parameters: Set[FormalParameter] = children.collect { case x: FormalParameter => x }.toSet
+      val body: Option[Block] = children.collectFirst { case x: Block => x }
+
+      // TODO: Check if identifier is the same as class name. This doesn't work.
+      // val containingClass: ClassDeclaration = previousNodes.collectFirst { case x: ClassDeclaration => x }.get
+      // if (!containingClass.name.value.equals(name.value)) {
+      //   throw new SyntaxError("Constructor must be the same name as class name: " + containingClass.name.value)
+      // }
+
+      // Enforce: No package private methods
+      if (!modifiers.contains(PublicKeyword) && !modifiers.contains(ProtectedKeyword)) {
+        throw new SyntaxError("Constructor " + name.value + " cannot be package private.")
+      }
+
+      // Enforce: A constructor can't be abstract, static, nor final.
+      if (modifiers.contains(AbstractKeyword)) {
+        throw new SyntaxError("Constructor " + name.value + " cannot be abstract.")
+      }
+
+      if (modifiers.contains(StaticKeyword)) {
+        throw new SyntaxError("Constructor " + name.value + " cannot be static.")
+      }
+
+      if (modifiers.contains(FinalKeyword)) {
+        throw new SyntaxError("Constructor " + name.value + " cannot be final.")
+      }
+
+      // Enforce: A constructor has to have a body.
+      if (body == None) {
+        throw new SyntaxError("Method " + name.value + " cannot have a body.")
+      }
+
+      Seq(ConstructorDeclaration(name.value, modifiers, parameters, body))
+    }
+
+
+    case c: ParseNodes.MethodDeclaration => {
+      val children: Seq[AbstractSyntaxNode] = c.children.flatMap(recursive(_))
+
+      val name: Identifier = children.collectFirst { case x: Identifier => x }.get
+      val modifiers: Set[Modifier] = children.collect { case x: Modifier => x }.toSet
+      val memberType: Type = children.collectFirst { case x:Type => x }.get
       val parameters: Set[FormalParameter] = children.collect { case x:FormalParameter => x }.toSet
-      val body:Option[Block] = children.collectFirst { case x:Block => x }
+      val body: Option[Block] = children.collectFirst { case x:Block => x }
 
       // Enforce: No package private methods
       if (!modifiers.contains(PublicKeyword) && !modifiers.contains(ProtectedKeyword)) {
@@ -388,15 +436,14 @@ object AbstractSyntaxNode {
     }
 
     case c: ParseNodes.InterfaceMemberDeclaration => {
-      val children:Seq[AbstractSyntaxNode] = c.children.flatMap(recursive(_))
-
+      val children: Seq[AbstractSyntaxNode] = c.children.flatMap(recursive(_))
       val name: Identifier = children.collectFirst { case x: Identifier => x }.get
       val modifiers: Set[Modifier] = children.collect { case x: Modifier => x }.toSet
       val memberType: Type = children.collectFirst { case x: Type => x }.get
       val parameters: Set[FormalParameter] = children.collect { case x: FormalParameter => x }.toSet
       val body: Option[Block] = children.collectFirst { case x: Block => x }
 
-      //Enforce: An interface method cannot be static or final.
+      // Enforce: An interface method cannot be static or final.
       if (modifiers.contains(StaticKeyword) || modifiers.contains(FinalKeyword)) {
         throw new SyntaxError("Interface method " + name.value + " cannot be static or final.")
       }
@@ -408,7 +455,14 @@ object AbstractSyntaxNode {
 
     case c: ParseNodes.ClassBody => {
       val children: Seq[AbstractSyntaxNode] = c.children.flatMap(recursive(_))
-      Seq(ClassBody(children.collect { case x: ClassBodyDeclaration => x }))
+      val classBodyDeclarations: Seq[ClassBodyDeclaration] = children.collect { case x: ClassBodyDeclaration => x }
+
+      val constructor: Option[ConstructorDeclaration] = classBodyDeclarations.collectFirst { case x: ConstructorDeclaration => x }
+      if (constructor == None) {
+        throw new SyntaxError("Constructor is required in class body.");
+      }
+
+      Seq(ClassBody(classBodyDeclarations))
     }
 
     case c: ParseNodes.InterfaceBody => {
@@ -494,8 +548,14 @@ object AbstractSyntaxNode {
         case n: AbstractSyntaxNode => throw new SyntaxError("Qualified name contains non-identifiers.")
       }))
 
-    //  TODO: Imeplement
+    // TODO: Implement
     case b: ParseNodes.Block => {
+      val children: Seq[AbstractSyntaxNode] = b.children.flatMap(recursive(_))
+      val blockStatements: Seq[BlockStatement] = children.collect { case x: BlockStatement => x }
+      Seq(Block(blockStatements))
+    }
+
+    case b: ParseNodes.ConstructorBody => {
       val children: Seq[AbstractSyntaxNode] = b.children.flatMap(recursive(_))
       val blockStatements: Seq[BlockStatement] = children.collect { case x: BlockStatement => x }
       Seq(Block(blockStatements))
