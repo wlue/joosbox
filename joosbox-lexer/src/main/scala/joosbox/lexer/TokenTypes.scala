@@ -8,534 +8,534 @@ object TokenTypes {
 
   object BOF extends FixedTokenType {
     override def value = ""
-    override def apply(data: InputString): Token = new Tokens.BOF(verify(data))
+    override def create(data: InputString): Token = new Tokens.BOF(verify(data))
   }
 
   object EOF extends FixedTokenType {
     override def value = ""
-    override def apply(data: InputString): Token = new Tokens.EOF(verify(data))
+    override def create(data: InputString): Token = new Tokens.EOF(verify(data))
   }
 
   object S extends FixedTokenType {
     override def value = ""
-    override def apply(data: InputString): Token = new Tokens.S(verify(data))
+    override def create(data: InputString): Token = new Tokens.S(verify(data))
   }
 
   object Question extends FixedTokenType {
     override def value = "?"
-    override def apply(data: InputString): Token = new Tokens.Question(verify(data))
+    override def create(data: InputString): Token = new Tokens.Question(verify(data))
   }
 
   object LeftParen extends FixedTokenType {
     override def value = "("
-    override def apply(data: InputString): Token = new Tokens.LeftParen(verify(data))
+    override def create(data: InputString): Token = new Tokens.LeftParen(verify(data))
   }
 
   object RightParen extends FixedTokenType {
     override def value = ")"
-    override def apply(data: InputString): Token = new Tokens.RightParen(verify(data))
+    override def create(data: InputString): Token = new Tokens.RightParen(verify(data))
   }
 
   object LeftBracket extends FixedTokenType {
     override def value = "["
-    override def apply(data: InputString): Token = new Tokens.LeftBracket(verify(data))
+    override def create(data: InputString): Token = new Tokens.LeftBracket(verify(data))
   }
 
   object RightBracket extends FixedTokenType {
     override def value = "]"
-    override def apply(data: InputString): Token = new Tokens.RightBracket(verify(data))
+    override def create(data: InputString): Token = new Tokens.RightBracket(verify(data))
   }
 
   object LeftCurly extends FixedTokenType {
     override def value = "{"
-    override def apply(data: InputString): Token = new Tokens.LeftCurly(verify(data))
+    override def create(data: InputString): Token = new Tokens.LeftCurly(verify(data))
   }
 
   object RightCurly extends FixedTokenType {
     override def value = "}"
-    override def apply(data: InputString): Token = new Tokens.RightCurly(verify(data))
+    override def create(data: InputString): Token = new Tokens.RightCurly(verify(data))
   }
 
   object Colon extends FixedTokenType {
     override def value = ":"
-    override def apply(data: InputString): Token = new Tokens.Colon(verify(data))
+    override def create(data: InputString): Token = new Tokens.Colon(verify(data))
   }
 
   object Comma extends FixedTokenType {
     override def value = ","
-    override def apply(data: InputString): Token = new Tokens.Comma(verify(data))
+    override def create(data: InputString): Token = new Tokens.Comma(verify(data))
   }
 
   object Dot extends FixedTokenType {
     override def value = "."
-    override def apply(data: InputString): Token = new Tokens.Dot(verify(data))
+    override def create(data: InputString): Token = new Tokens.Dot(verify(data))
   }
 
   object Assign extends FixedTokenType {
     override def value = "="
-    override def apply(data: InputString): Token = new Tokens.Assign(verify(data))
+    override def create(data: InputString): Token = new Tokens.Assign(verify(data))
   }
 
   object Equal extends FixedTokenType {
     override def value = "=="
-    override def apply(data: InputString): Token = new Tokens.Equal(verify(data))
+    override def create(data: InputString): Token = new Tokens.Equal(verify(data))
   }
 
   object LogicalNot extends FixedTokenType {
     override def value = "!"
-    override def apply(data: InputString): Token = new Tokens.LogicalNot(verify(data))
+    override def create(data: InputString): Token = new Tokens.LogicalNot(verify(data))
   }
 
   object BinaryNot extends FixedTokenType {
     override def value = "~"
-    override def apply(data: InputString): Token = new Tokens.BinaryNot(verify(data))
+    override def create(data: InputString): Token = new Tokens.BinaryNot(verify(data))
   }
 
   object NotEqual extends FixedTokenType {
     override def value = "!="
-    override def apply(data: InputString): Token = new Tokens.NotEqual(verify(data))
+    override def create(data: InputString): Token = new Tokens.NotEqual(verify(data))
   }
 
   object Divide extends FixedTokenType {
     override def value = "/"
-    override def apply(data: InputString): Token = new Tokens.Divide(verify(data))
+    override def create(data: InputString): Token = new Tokens.Divide(verify(data))
   }
 
   object DivideAssign extends FixedTokenType {
     override def value = "/="
-    override def apply(data: InputString): Token = new Tokens.DivideAssign(verify(data))
+    override def create(data: InputString): Token = new Tokens.DivideAssign(verify(data))
   }
 
   object Plus extends FixedTokenType {
     override def value = "+"
-    override def apply(data: InputString): Token = new Tokens.Plus(verify(data))
+    override def create(data: InputString): Token = new Tokens.Plus(verify(data))
   }
 
   object PlusAssign extends FixedTokenType {
     override def value = "+="
-    override def apply(data: InputString): Token = new Tokens.PlusAssign(verify(data))
+    override def create(data: InputString): Token = new Tokens.PlusAssign(verify(data))
   }
 
   object Increment extends FixedTokenType {
     override def value = "++"
-    override def apply(data: InputString): Token = new Tokens.Increment(verify(data))
+    override def create(data: InputString): Token = new Tokens.Increment(verify(data))
   }
 
   object Minus extends FixedTokenType {
     override def value = "-"
-    override def apply(data: InputString): Token = new Tokens.Minus(verify(data))
+    override def create(data: InputString): Token = new Tokens.Minus(verify(data))
   }
 
   object MinusAssign extends FixedTokenType {
     override def value = "-="
-    override def apply(data: InputString): Token = new Tokens.MinusAssign(verify(data))
+    override def create(data: InputString): Token = new Tokens.MinusAssign(verify(data))
   }
 
   object Decrement extends FixedTokenType {
     override def value = "--"
-    override def apply(data: InputString): Token = new Tokens.Decrement(verify(data))
+    override def create(data: InputString): Token = new Tokens.Decrement(verify(data))
   }
 
   object Star extends FixedTokenType {
     override def value = "*"
-    override def apply(data: InputString): Token = new Tokens.Star(verify(data))
+    override def create(data: InputString): Token = new Tokens.Star(verify(data))
   }
 
   object StarAssign extends FixedTokenType {
     override def value = "*="
-    override def apply(data: InputString): Token = new Tokens.StarAssign(verify(data))
+    override def create(data: InputString): Token = new Tokens.StarAssign(verify(data))
   }
 
   object Modulo extends FixedTokenType {
     override def value = "%"
-    override def apply(data: InputString): Token = new Tokens.Modulo(verify(data))
+    override def create(data: InputString): Token = new Tokens.Modulo(verify(data))
   }
 
   object ModuloAssign extends FixedTokenType {
     override def value = "%="
-    override def apply(data: InputString): Token = new Tokens.ModuloAssign(verify(data))
+    override def create(data: InputString): Token = new Tokens.ModuloAssign(verify(data))
   }
 
   object GreaterThan extends FixedTokenType {
     override def value = ">"
-    override def apply(data: InputString): Token = new Tokens.GreaterThan(verify(data))
+    override def create(data: InputString): Token = new Tokens.GreaterThan(verify(data))
   }
 
   object GreaterEqual extends FixedTokenType {
     override def value = ">="
-    override def apply(data: InputString): Token = new Tokens.GreaterEqual(verify(data))
+    override def create(data: InputString): Token = new Tokens.GreaterEqual(verify(data))
   }
 
   object ShiftRight extends FixedTokenType {
     override def value = ">>"
-    override def apply(data: InputString): Token = new Tokens.ShiftRight(verify(data))
+    override def create(data: InputString): Token = new Tokens.ShiftRight(verify(data))
   }
 
   object ShiftRightAssign extends FixedTokenType {
     override def value = ">>="
-    override def apply(data: InputString): Token = new Tokens.ShiftRightAssign(verify(data))
+    override def create(data: InputString): Token = new Tokens.ShiftRightAssign(verify(data))
   }
 
   object BinaryShiftRight extends FixedTokenType {
     override def value = ">>>"
-    override def apply(data: InputString): Token = new Tokens.BinaryShiftRight(verify(data))
+    override def create(data: InputString): Token = new Tokens.BinaryShiftRight(verify(data))
   }
 
   object BinaryShiftRightAssign extends FixedTokenType {
     override def value = ">>>="
-    override def apply(data: InputString): Token = new Tokens.BinaryShiftRightAssign(verify(data))
+    override def create(data: InputString): Token = new Tokens.BinaryShiftRightAssign(verify(data))
   }
 
   object LessThan extends FixedTokenType {
     override def value = "<"
-    override def apply(data: InputString): Token = new Tokens.LessThan(verify(data))
+    override def create(data: InputString): Token = new Tokens.LessThan(verify(data))
   }
 
   object LessEqual extends FixedTokenType {
     override def value = "<="
-    override def apply(data: InputString): Token = new Tokens.LessEqual(verify(data))
+    override def create(data: InputString): Token = new Tokens.LessEqual(verify(data))
   }
 
   object ShiftLeft extends FixedTokenType {
     override def value = "<<"
-    override def apply(data: InputString): Token = new Tokens.ShiftLeft(verify(data))
+    override def create(data: InputString): Token = new Tokens.ShiftLeft(verify(data))
   }
 
   object ShiftLeftAssign extends FixedTokenType {
     override def value = "<<="
-    override def apply(data: InputString): Token = new Tokens.ShiftLeftAssign(verify(data))
+    override def create(data: InputString): Token = new Tokens.ShiftLeftAssign(verify(data))
   }
 
   object BinaryXor extends FixedTokenType {
     override def value = "^"
-    override def apply(data: InputString): Token = new Tokens.BinaryXor(verify(data))
+    override def create(data: InputString): Token = new Tokens.BinaryXor(verify(data))
   }
 
   object BinaryXorAssign extends FixedTokenType {
     override def value = "^="
-    override def apply(data: InputString): Token = new Tokens.BinaryXorAssign(verify(data))
+    override def create(data: InputString): Token = new Tokens.BinaryXorAssign(verify(data))
   }
 
   object BinaryOr extends FixedTokenType {
     override def value = "|"
-    override def apply(data: InputString): Token = new Tokens.BinaryOr(verify(data))
+    override def create(data: InputString): Token = new Tokens.BinaryOr(verify(data))
   }
 
   object BinaryOrAssign extends FixedTokenType {
     override def value = "|="
-    override def apply(data: InputString): Token = new Tokens.BinaryOrAssign(verify(data))
+    override def create(data: InputString): Token = new Tokens.BinaryOrAssign(verify(data))
   }
 
   object LogicalOr extends FixedTokenType {
     override def value = "||"
-    override def apply(data: InputString): Token = new Tokens.LogicalOr(verify(data))
+    override def create(data: InputString): Token = new Tokens.LogicalOr(verify(data))
   }
 
   object BinaryAnd extends FixedTokenType {
     override def value = "&"
-    override def apply(data: InputString): Token = new Tokens.BinaryAnd(verify(data))
+    override def create(data: InputString): Token = new Tokens.BinaryAnd(verify(data))
   }
 
   object BinaryAndAssign extends FixedTokenType {
     override def value = "&="
-    override def apply(data: InputString): Token = new Tokens.BinaryAndAssign(verify(data))
+    override def create(data: InputString): Token = new Tokens.BinaryAndAssign(verify(data))
   }
 
   object LogicalAnd extends FixedTokenType {
     override def value = "&&"
-    override def apply(data: InputString): Token = new Tokens.LogicalAnd(verify(data))
+    override def create(data: InputString): Token = new Tokens.LogicalAnd(verify(data))
   }
 
   object Semicolon extends FixedTokenType {
     override def value = ";"
-    override def apply(data: InputString): Token = new Tokens.Semicolon(verify(data))
+    override def create(data: InputString): Token = new Tokens.Semicolon(verify(data))
   }
 
   object Whitespace extends VariableTokenType {
-    override def apply(data: InputString): Token = new Tokens.Whitespace(verify(data))
+    override def create(data: InputString): Token = new Tokens.Whitespace(verify(data))
   }
 
   object SingleLineComment extends VariableTokenType {
-    override def apply(data: InputString): Token = new Tokens.SingleLineComment(verify(data))
+    override def create(data: InputString): Token = new Tokens.SingleLineComment(verify(data))
   }
 
   object MultiLineComment extends VariableTokenType {
-    override def apply(data: InputString): Token = new Tokens.MultiLineComment(verify(data))
+    override def create(data: InputString): Token = new Tokens.MultiLineComment(verify(data))
   }
 
   object JavaDocComment extends VariableTokenType {
-    override def apply(data: InputString): Token = new Tokens.JavaDocComment(verify(data))
+    override def create(data: InputString): Token = new Tokens.JavaDocComment(verify(data))
   }
 
   object Num extends VariableTokenType {
-    override def apply(data: InputString): Token = new Tokens.Num(verify(data))
+    override def create(data: InputString): Token = new Tokens.Num(verify(data))
   }
 
   object CharLiteral extends VariableTokenType {
-    override def apply(data: InputString): Token = new Tokens.CharLiteral(verify(data))
+    override def create(data: InputString): Token = new Tokens.CharLiteral(verify(data))
   }
 
   object StringLiteral extends VariableTokenType {
-    override def apply(data: InputString): Token = new Tokens.StringLiteral(verify(data))
+    override def create(data: InputString): Token = new Tokens.StringLiteral(verify(data))
   }
 
   object Identifier extends VariableTokenType {
-    override def apply(data: InputString): Token = new Tokens.Identifier(verify(data))
+    override def create(data: InputString): Token = new Tokens.Identifier(verify(data))
   }
 
   object AbstractKeyword extends KeywordTokenType {
     override def value = "abstract"
-    override def apply(data: InputString): Token = new Tokens.AbstractKeyword(verify(data))
+    override def create(data: InputString): Token = new Tokens.AbstractKeyword(verify(data))
   }
 
   object BooleanKeyword extends KeywordTokenType {
     override def value = "boolean"
-    override def apply(data: InputString): Token = new Tokens.BooleanKeyword(verify(data))
+    override def create(data: InputString): Token = new Tokens.BooleanKeyword(verify(data))
   }
 
   object BreakKeyword extends KeywordTokenType {
     override def value = "break"
-    override def apply(data: InputString): Token = new Tokens.BreakKeyword(verify(data))
+    override def create(data: InputString): Token = new Tokens.BreakKeyword(verify(data))
   }
 
   object ByteKeyword extends KeywordTokenType {
     override def value = "byte"
-    override def apply(data: InputString): Token = new Tokens.ByteKeyword(verify(data))
+    override def create(data: InputString): Token = new Tokens.ByteKeyword(verify(data))
   }
 
   object CaseKeyword extends KeywordTokenType {
     override def value = "case"
-    override def apply(data: InputString): Token = new Tokens.CaseKeyword(verify(data))
+    override def create(data: InputString): Token = new Tokens.CaseKeyword(verify(data))
   }
 
   object CatchKeyword extends KeywordTokenType {
     override def value = "catch"
-    override def apply(data: InputString): Token = new Tokens.CatchKeyword(verify(data))
+    override def create(data: InputString): Token = new Tokens.CatchKeyword(verify(data))
   }
 
   object CharKeyword extends KeywordTokenType {
     override def value = "char"
-    override def apply(data: InputString): Token = new Tokens.CharKeyword(verify(data))
+    override def create(data: InputString): Token = new Tokens.CharKeyword(verify(data))
   }
 
   object ClassKeyword extends KeywordTokenType {
     override def value = "class"
-    override def apply(data: InputString): Token = new Tokens.ClassKeyword(verify(data))
+    override def create(data: InputString): Token = new Tokens.ClassKeyword(verify(data))
   }
 
   object ConstKeyword extends KeywordTokenType {
     override def value = "const"
-    override def apply(data: InputString): Token = new Tokens.ConstKeyword(verify(data))
+    override def create(data: InputString): Token = new Tokens.ConstKeyword(verify(data))
   }
 
   object ContinueKeyword extends KeywordTokenType {
     override def value = "continue"
-    override def apply(data: InputString): Token = new Tokens.ContinueKeyword(verify(data))
+    override def create(data: InputString): Token = new Tokens.ContinueKeyword(verify(data))
   }
 
   object DefaultKeyword extends KeywordTokenType {
     override def value = "default"
-    override def apply(data: InputString): Token = new Tokens.DefaultKeyword(verify(data))
+    override def create(data: InputString): Token = new Tokens.DefaultKeyword(verify(data))
   }
 
   object DoKeyword extends KeywordTokenType {
     override def value = "do"
-    override def apply(data: InputString): Token = new Tokens.DoKeyword(verify(data))
+    override def create(data: InputString): Token = new Tokens.DoKeyword(verify(data))
   }
 
   object DoubleKeyword extends KeywordTokenType {
     override def value = "double"
-    override def apply(data: InputString): Token = new Tokens.DoubleKeyword(verify(data))
+    override def create(data: InputString): Token = new Tokens.DoubleKeyword(verify(data))
   }
 
   object ElseKeyword extends KeywordTokenType {
     override def value = "else"
-    override def apply(data: InputString): Token = new Tokens.ElseKeyword(verify(data))
+    override def create(data: InputString): Token = new Tokens.ElseKeyword(verify(data))
   }
 
   object ExtendsKeyword extends KeywordTokenType {
     override def value = "extends"
-    override def apply(data: InputString): Token = new Tokens.ExtendsKeyword(verify(data))
+    override def create(data: InputString): Token = new Tokens.ExtendsKeyword(verify(data))
   }
 
   object FinalKeyword extends KeywordTokenType {
     override def value = "final"
-    override def apply(data: InputString): Token = new Tokens.FinalKeyword(verify(data))
+    override def create(data: InputString): Token = new Tokens.FinalKeyword(verify(data))
   }
 
   object FinallyKeyword extends KeywordTokenType {
     override def value = "finally"
-    override def apply(data: InputString): Token = new Tokens.FinallyKeyword(verify(data))
+    override def create(data: InputString): Token = new Tokens.FinallyKeyword(verify(data))
   }
 
   object FloatKeyword extends KeywordTokenType {
     override def value = "float"
-    override def apply(data: InputString): Token = new Tokens.FloatKeyword(verify(data))
+    override def create(data: InputString): Token = new Tokens.FloatKeyword(verify(data))
   }
 
   object ForKeyword extends KeywordTokenType {
     override def value = "for"
-    override def apply(data: InputString): Token = new Tokens.ForKeyword(verify(data))
+    override def create(data: InputString): Token = new Tokens.ForKeyword(verify(data))
   }
 
   object GotoKeyword extends KeywordTokenType {
     override def value = "goto"
-    override def apply(data: InputString): Token = new Tokens.GotoKeyword(verify(data))
+    override def create(data: InputString): Token = new Tokens.GotoKeyword(verify(data))
   }
 
   object IfKeyword extends KeywordTokenType {
     override def value = "if"
-    override def apply(data: InputString): Token = new Tokens.IfKeyword(verify(data))
+    override def create(data: InputString): Token = new Tokens.IfKeyword(verify(data))
   }
 
   object ImplementsKeyword extends KeywordTokenType {
     override def value = "implements"
-    override def apply(data: InputString): Token = new Tokens.ImplementsKeyword(verify(data))
+    override def create(data: InputString): Token = new Tokens.ImplementsKeyword(verify(data))
   }
 
   object ImportKeyword extends KeywordTokenType {
     override def value = "import"
-    override def apply(data: InputString): Token = new Tokens.ImportKeyword(verify(data))
+    override def create(data: InputString): Token = new Tokens.ImportKeyword(verify(data))
   }
 
   object InstanceofKeyword extends KeywordTokenType {
     override def value = "instanceof"
-    override def apply(data: InputString): Token = new Tokens.InstanceofKeyword(verify(data))
+    override def create(data: InputString): Token = new Tokens.InstanceofKeyword(verify(data))
   }
 
   object IntKeyword extends KeywordTokenType {
     override def value = "int"
-    override def apply(data: InputString): Token = new Tokens.IntKeyword(verify(data))
+    override def create(data: InputString): Token = new Tokens.IntKeyword(verify(data))
   }
 
   object InterfaceKeyword extends KeywordTokenType {
     override def value = "interface"
-    override def apply(data: InputString): Token = new Tokens.InterfaceKeyword(verify(data))
+    override def create(data: InputString): Token = new Tokens.InterfaceKeyword(verify(data))
   }
 
   object LongKeyword extends KeywordTokenType {
     override def value = "long"
-    override def apply(data: InputString): Token = new Tokens.LongKeyword(verify(data))
+    override def create(data: InputString): Token = new Tokens.LongKeyword(verify(data))
   }
 
   object NativeKeyword extends KeywordTokenType {
     override def value = "native"
-    override def apply(data: InputString): Token = new Tokens.NativeKeyword(verify(data))
+    override def create(data: InputString): Token = new Tokens.NativeKeyword(verify(data))
   }
 
   object NewKeyword extends KeywordTokenType {
     override def value = "new"
-    override def apply(data: InputString): Token = new Tokens.NewKeyword(verify(data))
+    override def create(data: InputString): Token = new Tokens.NewKeyword(verify(data))
   }
 
   object PackageKeyword extends KeywordTokenType {
     override def value = "package"
-    override def apply(data: InputString): Token = new Tokens.PackageKeyword(verify(data))
+    override def create(data: InputString): Token = new Tokens.PackageKeyword(verify(data))
   }
 
   object PrivateKeyword extends KeywordTokenType {
     override def value = "private"
-    override def apply(data: InputString): Token = new Tokens.PrivateKeyword(verify(data))
+    override def create(data: InputString): Token = new Tokens.PrivateKeyword(verify(data))
   }
 
   object ProtectedKeyword extends KeywordTokenType {
     override def value = "protected"
-    override def apply(data: InputString): Token = new Tokens.ProtectedKeyword(verify(data))
+    override def create(data: InputString): Token = new Tokens.ProtectedKeyword(verify(data))
   }
 
   object PublicKeyword extends KeywordTokenType {
     override def value = "public"
-    override def apply(data: InputString): Token = new Tokens.PublicKeyword(verify(data))
+    override def create(data: InputString): Token = new Tokens.PublicKeyword(verify(data))
   }
 
   object ReturnKeyword extends KeywordTokenType {
     override def value = "return"
-    override def apply(data: InputString): Token = new Tokens.ReturnKeyword(verify(data))
+    override def create(data: InputString): Token = new Tokens.ReturnKeyword(verify(data))
   }
 
   object ShortKeyword extends KeywordTokenType {
     override def value = "short"
-    override def apply(data: InputString): Token = new Tokens.ShortKeyword(verify(data))
+    override def create(data: InputString): Token = new Tokens.ShortKeyword(verify(data))
   }
 
   object StaticKeyword extends KeywordTokenType {
     override def value = "static"
-    override def apply(data: InputString): Token = new Tokens.StaticKeyword(verify(data))
+    override def create(data: InputString): Token = new Tokens.StaticKeyword(verify(data))
   }
 
   object StrictfpKeyword extends KeywordTokenType {
     override def value = "strictfp"
-    override def apply(data: InputString): Token = new Tokens.StrictfpKeyword(verify(data))
+    override def create(data: InputString): Token = new Tokens.StrictfpKeyword(verify(data))
   }
 
   object SuperKeyword extends KeywordTokenType {
     override def value = "super"
-    override def apply(data: InputString): Token = new Tokens.SuperKeyword(verify(data))
+    override def create(data: InputString): Token = new Tokens.SuperKeyword(verify(data))
   }
 
   object SwitchKeyword extends KeywordTokenType {
     override def value = "switch"
-    override def apply(data: InputString): Token = new Tokens.SwitchKeyword(verify(data))
+    override def create(data: InputString): Token = new Tokens.SwitchKeyword(verify(data))
   }
 
   object SynchronizedKeyword extends KeywordTokenType {
     override def value = "synchronized"
-    override def apply(data: InputString): Token = new Tokens.SynchronizedKeyword(verify(data))
+    override def create(data: InputString): Token = new Tokens.SynchronizedKeyword(verify(data))
   }
 
   object ThisKeyword extends KeywordTokenType {
     override def value = "this"
-    override def apply(data: InputString): Token = new Tokens.ThisKeyword(verify(data))
+    override def create(data: InputString): Token = new Tokens.ThisKeyword(verify(data))
   }
 
   object ThrowKeyword extends KeywordTokenType {
     override def value = "throw"
-    override def apply(data: InputString): Token = new Tokens.ThrowKeyword(verify(data))
+    override def create(data: InputString): Token = new Tokens.ThrowKeyword(verify(data))
   }
 
   object ThrowsKeyword extends KeywordTokenType {
     override def value = "throws"
-    override def apply(data: InputString): Token = new Tokens.ThrowsKeyword(verify(data))
+    override def create(data: InputString): Token = new Tokens.ThrowsKeyword(verify(data))
   }
 
   object TransientKeyword extends KeywordTokenType {
     override def value = "transient"
-    override def apply(data: InputString): Token = new Tokens.TransientKeyword(verify(data))
+    override def create(data: InputString): Token = new Tokens.TransientKeyword(verify(data))
   }
 
   object TryKeyword extends KeywordTokenType {
     override def value = "try"
-    override def apply(data: InputString): Token = new Tokens.TryKeyword(verify(data))
+    override def create(data: InputString): Token = new Tokens.TryKeyword(verify(data))
   }
 
   object VoidKeyword extends KeywordTokenType {
     override def value = "void"
-    override def apply(data: InputString): Token = new Tokens.VoidKeyword(verify(data))
+    override def create(data: InputString): Token = new Tokens.VoidKeyword(verify(data))
   }
 
   object VolatileKeyword extends KeywordTokenType {
     override def value = "volatile"
-    override def apply(data: InputString): Token = new Tokens.VolatileKeyword(verify(data))
+    override def create(data: InputString): Token = new Tokens.VolatileKeyword(verify(data))
   }
 
   object WhileKeyword extends KeywordTokenType {
     override def value = "while"
-    override def apply(data: InputString): Token = new Tokens.WhileKeyword(verify(data))
+    override def create(data: InputString): Token = new Tokens.WhileKeyword(verify(data))
   }
 
   object TrueLiteral extends KeywordTokenType {
     override def value = "true"
-    override def apply(data: InputString): Token = new Tokens.TrueLiteral(verify(data))
+    override def create(data: InputString): Token = new Tokens.TrueLiteral(verify(data))
   }
 
   object FalseLiteral extends KeywordTokenType {
     override def value = "false"
-    override def apply(data: InputString): Token = new Tokens.FalseLiteral(verify(data))
+    override def create(data: InputString): Token = new Tokens.FalseLiteral(verify(data))
   }
 
   object NullLiteral extends KeywordTokenType {
     override def value = "null"
-    override def apply(data: InputString): Token = new Tokens.NullLiteral(verify(data))
+    override def create(data: InputString): Token = new Tokens.NullLiteral(verify(data))
   }
 
   val Keywords = Map(

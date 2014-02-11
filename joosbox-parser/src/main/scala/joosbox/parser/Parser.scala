@@ -146,7 +146,7 @@ class Parser(
     nodeStack.push(ParseNodes.BOF())
     stateStack.push(transitionTable(0)(ParseNodeTypes.BOF) match { case ShiftTransition(x) => x })
 
-    (weededSymbols ++ List[Token](TokenTypes.EOF(InputString("")))).foreach { (a: Token) =>
+    (weededSymbols ++ List[Token](TokenTypes.EOF.create(InputString("")))).foreach { (a: Token) =>
       var reducing = true
       while (reducing) {
         transitionTable(stateStack.top).get(ParseNodeTypes.fromTokenType(a.tokenType).get) match {

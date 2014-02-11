@@ -872,7 +872,7 @@ class TokenSpec extends Specification {
 
         mergedTestDFA.matchString("=") must beEqualTo(Some(List(Tokens.Assign("="))))
         mergedTestDFA.matchString("==") must beEqualTo(Some(List(Tokens.Equal("=="))))
-        mergedTestDFA.matchString("!") must beEqualTo(Some(List(TokenTypes.LogicalNot("!"))))
+        mergedTestDFA.matchString("!") must beEqualTo(Some(List(TokenTypes.LogicalNot.create("!"))))
       }
 
       "simple assign/equal/not/notequal matching" in {
@@ -886,8 +886,8 @@ class TokenSpec extends Specification {
 
         mergedTestDFA.matchString("=") must beEqualTo(Some(List(Tokens.Assign("="))))
         mergedTestDFA.matchString("==") must beEqualTo(Some(List(Tokens.Equal("=="))))
-        mergedTestDFA.matchString("!") must beEqualTo(Some(List(TokenTypes.LogicalNot("!"))))
-        mergedTestDFA.matchString("!=") must beEqualTo(Some(List(TokenTypes.NotEqual("!="))))
+        mergedTestDFA.matchString("!") must beEqualTo(Some(List(TokenTypes.LogicalNot.create("!"))))
+        mergedTestDFA.matchString("!=") must beEqualTo(Some(List(TokenTypes.NotEqual.create("!="))))
       }
     }
 
@@ -1643,15 +1643,15 @@ class TokenSpec extends Specification {
 
 
       "true" in {
-        matchAgainst.matchString("true") must beEqualTo(Some(List(TokenTypes.TrueLiteral("true"))))
+        matchAgainst.matchString("true") must beEqualTo(Some(List(TokenTypes.TrueLiteral.create("true"))))
       }
 
       "false" in {
-        matchAgainst.matchString("false") must beEqualTo(Some(List(TokenTypes.FalseLiteral("false"))))
+        matchAgainst.matchString("false") must beEqualTo(Some(List(TokenTypes.FalseLiteral.create("false"))))
       }
 
       "null" in {
-        matchAgainst.matchString("null") must beEqualTo(Some(List(TokenTypes.NullLiteral("null"))))
+        matchAgainst.matchString("null") must beEqualTo(Some(List(TokenTypes.NullLiteral.create("null"))))
       }
     }
 

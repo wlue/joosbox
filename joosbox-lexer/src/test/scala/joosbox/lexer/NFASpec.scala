@@ -351,7 +351,7 @@ class NFASpec extends Specification {
       "simple case" in {
 
         object AType extends VariableTokenType {
-          override def apply(data: InputString): Token = new A(verify(data))
+          override def create(data: InputString): Token = new A(verify(data))
           override def name: String = "A"
         }
         case class A(override val data: InputString) extends VariableToken(data) {
@@ -359,7 +359,7 @@ class NFASpec extends Specification {
         }
 
         object BType extends VariableTokenType {
-          override def apply(data: InputString): Token = new B(verify(data))
+          override def create(data: InputString): Token = new B(verify(data))
           override def name: String = "B"
         }
         case class B(override val data: InputString) extends VariableToken(data) {

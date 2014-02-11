@@ -180,7 +180,9 @@ class DFA(
     consume(inputString, startState).flatMap[List[Token]] {
       case (state: State, remainingString: String) => {
         if (remainingString.length == 0) {
-          Some(List[Token](stateSourceMap(state)(InputString(inputString, filename, line, idx))))
+          val tokenType: TokenType = stateSourceMap(state)
+          val token: Token = tokenType.create(InputString(inputString, filename, line, idx))
+          Some(List(token))
         } else {
           val consumedInput: String = inputString.slice(0, inputString.size - remainingString.size)
 
@@ -194,7 +196,9 @@ class DFA(
 
           matchString(remainingString, filename, newLine, newIdx) match {
             case Some(remainingTokens) =>
-              Some(List[Token](stateSourceMap(state)(InputString(consumedInput, filename, line, idx))) ++ remainingTokens)
+              val tokenType: TokenType = stateSourceMap(state)
+              val token: Token = tokenType.create(InputString(consumedInput, filename, line, idx))
+              Some(List(token) ++ remainingTokens)
             case None => throw new SyntaxError("Input invalid at " + filename + ":" + line + ":" + idx)
           }
         }
