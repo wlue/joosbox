@@ -13,22 +13,28 @@ import joosbox.lexer.{
   SyntaxError
 }
 
-class ProductionRule(val nonTerminal: ParseNodeType, val others: List[ParseNodeType]) {
+
+class ProductionRule(
+  val nonTerminal: ParseNodeType,
+  val others: List[ParseNodeType]
+) {
   override def toString: String = nonTerminal.getClass.getSimpleName + " " + others.map(_.getClass.getSimpleName).mkString(" ")
   def dropCount: Int = others.size
 }
 
-abstract class Transition
 
-class ShiftTransition(val shiftToState: Int) extends Transition
+sealed trait Transition
+
 object ShiftTransition {
   def unapply(t: ShiftTransition): Option[Int] = Some(t.shiftToState)
 }
+class ShiftTransition(val shiftToState: Int) extends Transition
 
-class ReduceTransition(val rule: ProductionRule) extends Transition
 object ReduceTransition {
   def unapply(t: ReduceTransition): Option[ProductionRule] = Some(t.rule)
 }
+class ReduceTransition(val rule: ProductionRule) extends Transition
+
 
 object Parser {
   lazy val Joos: Parser = Parser.fromLR1File("joos1w.lr1")
@@ -78,7 +84,7 @@ object Parser {
     val transitionStrings: Array[String] =
       lines.slice(numTerminalSymbols + numNonTerminalSymbols + 5 + numProductionRules + 1, lines.size)
 
-    val transitionTable: Map[Int, Map[ParseNodeType, Transition]] = 
+    val transitionTable: Map[Int, Map[ParseNodeType, Transition]] =
       transitionStrings.foldLeft(Map.empty[Int, Map[ParseNodeType, Transition]]) {
         case (map: Map[Int, Map[ParseNodeType, Transition]], transitionString: String) => {
           val segments: Array[String] = transitionString.split(" ")
