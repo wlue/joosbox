@@ -83,8 +83,10 @@ object AbstractSyntaxNode {
     override def children: List[AbstractSyntaxNode] = declarations.toList
   }
 
-  // TODO: Don't do it like this.
-  case class Expression(nodes: Seq[AbstractSyntaxNode]) extends AbstractSyntaxNode {
+  sealed trait Expression extends AbstractSyntaxNode
+
+  // TODO: Don't do it like this. Implement me properly
+  case class Temp_Testing_Expression(nodes: Seq[AbstractSyntaxNode]) extends Expression {
     override def children: List[AbstractSyntaxNode] = nodes.toList
   }
 
@@ -100,8 +102,8 @@ object AbstractSyntaxNode {
 
   case object BooleanKeyword extends PrimitiveType
 
-  case object TrueLiteral extends AbstractSyntaxNode
-  case object FalseLiteral extends AbstractSyntaxNode
+  case object TrueLiteral extends Expression
+  case object FalseLiteral extends Expression
 
   sealed trait NumericType extends PrimitiveType
 
@@ -220,16 +222,39 @@ object AbstractSyntaxNode {
     override def children: List[AbstractSyntaxNode] = expression.toList
   }
 
-  // TODO: Implement me
-  case class Statement(nodes: Seq[AbstractSyntaxNode]) extends BlockStatement {
-    override def children: List[AbstractSyntaxNode] = nodes.toList
-  }
-
-  case class Block(statements: Seq[BlockStatement] = Seq.empty[BlockStatement]) extends AbstractSyntaxNode {
+  case class Block(statements: Seq[BlockStatement] = Seq.empty[BlockStatement]) extends Statement {
     override def children: List[AbstractSyntaxNode] = statements.toList
   }
 
   case class CastExpression() extends AbstractSyntaxNode
+
+  sealed trait Statement extends BlockStatement
+  case object EmptyStatement extends Statement
+
+  sealed trait ForInit extends AbstractSyntaxNode
+  sealed trait StatementExpression extends Statement with ForInit
+
+  //  TODO: Properly implement me.
+  case class AssignmentExpression(val statements: Seq[AbstractSyntaxNode]) extends StatementExpression
+  //  TODO: Properly implement me.
+  case class MethodInvocation(val statements: Seq[AbstractSyntaxNode]) extends StatementExpression
+  //  TODO: Properly implement me.
+  case class ClassInstanceCreationExpression(val statements: Seq[AbstractSyntaxNode]) extends StatementExpression
+
+  case class ReturnStatement(expression: Option[Expression] = None) extends Statement
+
+  case class IfStatement(clause: Expression, trueCase: Statement, elseCase: Option[Statement] = None) extends Statement
+  case class WhileStatement(clause: Expression, body: Statement) extends Statement
+
+  case class ForVariableDeclaration(typeDeclaration: Type,
+                                    variableName: InputString,
+                                    expression: Option[Expression] = None) extends ForInit
+  case class ForStatement(init: Option[ForInit],
+                          check: Option[Expression],
+                          update: Option[StatementExpression],
+                          statement: Statement) extends Statement {
+    override def children: List[AbstractSyntaxNode] = init.toList ++ check.toList ++ update.toList ++ List(statement)
+  }
 
   /*
     Parse!
@@ -578,11 +603,75 @@ object AbstractSyntaxNode {
       Seq(LocalVariableDeclaration(name.value, memberType, expression))
     }
 
-    // TODO: Implement
-    case s: ParseNodes.Statement => Seq(Statement(s.children.flatMap(recursive(_))))
+    case i: ParseNodes.IfThenStatement => {
+      val children:Seq[AbstractSyntaxNode] = i.children.flatMap(recursive(_))
+      Seq(IfStatement(children(0).asInstanceOf[Expression], children(1).asInstanceOf[Statement]))
+    }
+
+    case i: ParseNodes.IfThenElseStatement => {
+      val children:Seq[AbstractSyntaxNode] = i.children.flatMap(recursive(_))
+      val clauses:Seq[Statement] = children.collect { case x: Statement => x }
+      val ifClause:Statement = clauses.head
+      val elseClause:Option[Statement] = clauses.drop(1).headOption
+      Seq(IfStatement(children(0).asInstanceOf[Expression], ifClause, elseClause))
+    }
+
+    case i: ParseNodes.IfThenElseStatementNoShortIf => {
+      val children:Seq[AbstractSyntaxNode] = i.children.flatMap(recursive(_))
+      val clauses:Seq[Statement] = children.collect { case x: Statement => x }
+      val ifClause:Statement = clauses.head
+      val elseClause:Option[Statement] = clauses.drop(1).headOption
+      Seq(IfStatement(children(0).asInstanceOf[Expression], ifClause, elseClause))
+    }
+
+    case w: ParseNodes.WhileStatement => {
+      val children:Seq[AbstractSyntaxNode] = w.children.flatMap(recursive(_))
+      Seq(WhileStatement(children(0).asInstanceOf[Expression], children(1).asInstanceOf[Statement]))
+    }
+
+    case f: ParseNodes.ForStatement => {
+      val children:Seq[AbstractSyntaxNode] = f.children.flatMap(recursive(_))
+
+      val init: Option[ForInit] = children.collectFirst { case x: ForInit => x }
+      val check: Option[Expression] = children.collectFirst { case x: Expression => x }
+      val update: Option[StatementExpression] = children.collectFirst { case x: StatementExpression => x }
+      val statement: Statement = children.collectFirst { case x: Statement => x }.get
+      Seq(ForStatement(init, check, update, statement))
+    }
+
+
+    case f: ParseNodes.ForStatementNoShortIf => {
+      val children:Seq[AbstractSyntaxNode] = f.children.flatMap(recursive(_))
+      val init: Option[ForInit] = children.collectFirst { case x: ForInit => x }
+      val check: Option[Expression] = children.collectFirst { case x: Expression => x }
+      val update: Option[StatementExpression] = children.collectFirst { case x: StatementExpression => x }
+      val statement: Statement = children.collectFirst { case x: Statement => x }.get
+      Seq(ForStatement(init, check, update, statement))
+    }
+
+    case f: ParseNodes.ForInit => {
+      f.children match {
+        case Seq(t: ParseNodes.Type, v: ParseNodes.VariableDeclarator) => {
+          val vChildren = v.children.flatMap(recursive(_))
+
+          val memberType: Type = t.children.flatMap(recursive(_)).collectFirst { case x: Type => x }.get
+          val name: Identifier = vChildren.collectFirst { case x: Identifier => x }.get
+          val expression: Option[Expression] = vChildren.collectFirst { case x: Expression => x }
+
+          Seq(ForVariableDeclaration(memberType, name.value, expression))
+        }
+        case _ => f.children.flatMap(recursive(_))
+      }
+    }
+
+    case r: ParseNodes.ReturnStatement => {
+      val children:Seq[AbstractSyntaxNode] = r.children.flatMap(recursive(_))
+      val expression: Option[Expression] = children.collectFirst { case x: Expression => x }
+      Seq(ReturnStatement(expression))
+    }
 
     // TODO: Implement
-    case e: ParseNodes.Expression => Seq(Expression(e.children.flatMap(recursive(_))))
+    case e: ParseNodes.Expression => Seq(Temp_Testing_Expression(e.children.flatMap(recursive(_))))
 
     // If the parse node does not map nicely to an ASN, just hand us its children.
     case p: ParseNode => p.children.flatMap(recursive(_))

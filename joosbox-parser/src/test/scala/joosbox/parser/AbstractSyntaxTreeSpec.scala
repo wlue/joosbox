@@ -581,6 +581,104 @@ class AbstractSyntaxTreeSpec extends Specification {
       )
     }
 
+    "from strings" in {
+      val parser = Parser.Joos
+      "for statement" in {
+        val input = """
+public class Test {
+  public Test() {
+    int x = 0;
+    for (int i = 0; i < 10; i = 1 + 1) {
+      x = x + 1;
+    }
+  }
+}
+        """
+        parser.parseString(input, "Test.java") must beEqualTo(
+          AbstractSyntaxNode.CompilationUnit(
+            None,
+            List.empty[AbstractSyntaxNode.ImportDeclaration],
+            List(AbstractSyntaxNode.ClassDeclaration(
+              InputString("Test", "Test.java", 2, 13),
+              AbstractSyntaxNode.ClassBody(
+                Seq(
+                  AbstractSyntaxNode.ConstructorDeclaration(
+                    InputString("Test", "Test.java", 3, 9),
+                    Set(AbstractSyntaxNode.PublicKeyword),
+                    Set(),
+                    Some(AbstractSyntaxNode.Block(Seq(
+                      AbstractSyntaxNode.LocalVariableDeclaration(
+                        InputString("x", "Test.java", 4, 8),
+                        AbstractSyntaxNode.IntKeyword,
+                        Some(AbstractSyntaxNode.Temp_Testing_Expression(Seq(
+                          AbstractSyntaxNode.Num("0", InputString("0", "Test.java", 4, 12))
+                        )))
+                      ),
+                      AbstractSyntaxNode.ForStatement(
+                        Some(AbstractSyntaxNode.ForVariableDeclaration(
+                          AbstractSyntaxNode.IntKeyword,
+                          InputString("i", "Test.java", 5, 20)
+                        )),
+                        Some(AbstractSyntaxNode.Temp_Testing_Expression(Seq(
+
+                        ))),
+                        Some(AbstractSyntaxNode.AssignmentExpression(Seq(
+                          //  TODO: The contents of AssignmentExpression are not
+                          //  implemented yet.
+                        ))),
+                        AbstractSyntaxNode.Block(Seq(
+                          //  TODO: The contents of this block are not
+                          //  implemented yet.
+                        ))
+                      )
+                    )))
+                  )
+                )
+              ),
+              Set(AbstractSyntaxNode.PublicKeyword)
+            ))
+          )
+        )
+      }
+
+    "if statement" in {
+        val input = """
+public class Test {
+  public Test() {
+    if (true) {
+      
+    }
+  }
+}
+        """
+        parser.parseString(input, "Test.java") must beEqualTo(
+          AbstractSyntaxNode.CompilationUnit(
+            None,
+            List.empty[AbstractSyntaxNode.ImportDeclaration],
+            List(AbstractSyntaxNode.ClassDeclaration(
+              InputString("Test", "Test.java", 2, 13),
+              AbstractSyntaxNode.ClassBody(
+                Seq(
+                  AbstractSyntaxNode.ConstructorDeclaration(
+                    InputString("Test", "Test.java", 3, 9),
+                    Set(AbstractSyntaxNode.PublicKeyword),
+                    Set(),
+                    Some(AbstractSyntaxNode.Block(Seq(
+                      AbstractSyntaxNode.IfStatement(
+                        AbstractSyntaxNode.TrueLiteral,
+                        AbstractSyntaxNode.Block()
+                      )
+                    )))
+                  )
+                )
+              ),
+              Set(AbstractSyntaxNode.PublicKeyword)
+            ))
+          )
+        )
+      }
+    }
+
     "literals" in {
       "Num" in {
         "valid" in {
