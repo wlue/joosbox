@@ -571,7 +571,9 @@ class AbstractSyntaxTreeSpec extends Specification {
                 AbstractSyntaxNode.FieldDeclaration(
                   "myVariable",
                   Set(AbstractSyntaxNode.PublicKeyword),
-                  AbstractSyntaxNode.SimpleName("String")
+                  AbstractSyntaxNode.ClassOrInterfaceType(
+                    AbstractSyntaxNode.SimpleName("String")
+                  )
                 )
               )
             ),
@@ -588,8 +590,7 @@ class AbstractSyntaxTreeSpec extends Specification {
 public class Test {
   public Test() {
     int x = 0;
-    for (int i = 0; i < 10; i = 1 + 1) {
-      x = x + 1;
+    for (int i = 0; i < 10; i = i + 1) {
     }
   }
 }
@@ -611,24 +612,71 @@ public class Test {
                         InputString("x", "Test.java", 4, 8),
                         AbstractSyntaxNode.IntKeyword,
                         Some(AbstractSyntaxNode.Temp_Testing_Expression(Seq(
-                          AbstractSyntaxNode.Num("0", InputString("0", "Test.java", 4, 12))
+                          AbstractSyntaxNode.AssignmentExpression(Seq(
+                            AbstractSyntaxNode.Temp_Testing_Expression(Seq(
+                              AbstractSyntaxNode.Temp_Testing_Expression(Seq(
+                                AbstractSyntaxNode.PrimaryNoNewArray(Seq(
+                                  AbstractSyntaxNode.Num("0", InputString("0", "Test.java", 4, 12))
+                                ))
+                              ))
+                            ))
+                          ))
                         )))
                       ),
                       AbstractSyntaxNode.ForStatement(
                         Some(AbstractSyntaxNode.ForVariableDeclaration(
                           AbstractSyntaxNode.IntKeyword,
-                          InputString("i", "Test.java", 5, 20)
+                          InputString("i", "Test.java", 5, 13),
+                          Some(AbstractSyntaxNode.Temp_Testing_Expression(Seq(
+                            AbstractSyntaxNode.AssignmentExpression(Seq(
+                              AbstractSyntaxNode.Temp_Testing_Expression(Seq(
+                                AbstractSyntaxNode.Temp_Testing_Expression(Seq(
+                                  AbstractSyntaxNode.PrimaryNoNewArray(Seq(
+                                    AbstractSyntaxNode.Num("0", InputString("0", "Test.java", 5, 17))
+                                  ))
+                                ))
+                              ))
+                            ))
+                          )))
                         )),
                         Some(AbstractSyntaxNode.Temp_Testing_Expression(Seq(
-
+                          AbstractSyntaxNode.AssignmentExpression(Seq(
+                            AbstractSyntaxNode.LessThanExpression(
+                              AbstractSyntaxNode.Temp_Testing_Expression(Seq(
+                                AbstractSyntaxNode.Temp_Testing_Expression(Seq(
+                                  AbstractSyntaxNode.SimpleName(InputString("i", "Test.java", 5, 20))
+                                ))
+                              )),
+                              AbstractSyntaxNode.Temp_Testing_Expression(Seq(
+                                AbstractSyntaxNode.Temp_Testing_Expression(Seq(
+                                  AbstractSyntaxNode.PrimaryNoNewArray(Seq(
+                                    AbstractSyntaxNode.Num("10", InputString("10", "Test.java", 5, 24))
+                                  ))
+                                ))
+                              ))
+                            )
+                          ))
                         ))),
-                        Some(AbstractSyntaxNode.AssignmentExpression(Seq(
-                          //  TODO: The contents of AssignmentExpression are not
-                          //  implemented yet.
-                        ))),
+                        Some(AbstractSyntaxNode.Assignment(
+                          AbstractSyntaxNode.SimpleName(InputString("i", "Test.java", 5, 28)),
+                          AbstractSyntaxNode.AssignmentExpression(Seq(
+                            AbstractSyntaxNode.AddExpression(
+                              AbstractSyntaxNode.Temp_Testing_Expression(Seq(
+                                AbstractSyntaxNode.Temp_Testing_Expression(Seq(
+                                  AbstractSyntaxNode.SimpleName(InputString("i", "Test.java", 5, 32))
+                                ))
+                              )),
+                               AbstractSyntaxNode.Temp_Testing_Expression(Seq(
+                                AbstractSyntaxNode.Temp_Testing_Expression(Seq(
+                                  AbstractSyntaxNode.PrimaryNoNewArray(Seq(
+                                    AbstractSyntaxNode.Num("1", InputString("1", "Test.java", 5, 36))
+                                  ))
+                                ))
+                              ))
+                            )
+                          ))
+                        )),
                         AbstractSyntaxNode.Block(Seq(
-                          //  TODO: The contents of this block are not
-                          //  implemented yet.
                         ))
                       )
                     )))
@@ -665,7 +713,17 @@ public class Test {
                     Set(),
                     Some(AbstractSyntaxNode.Block(Seq(
                       AbstractSyntaxNode.IfStatement(
-                        AbstractSyntaxNode.TrueLiteral,
+                        AbstractSyntaxNode.Temp_Testing_Expression(Seq(
+                          AbstractSyntaxNode.AssignmentExpression(Seq(
+                            AbstractSyntaxNode.Temp_Testing_Expression(Seq(
+                              AbstractSyntaxNode.Temp_Testing_Expression(Seq(
+                                AbstractSyntaxNode.PrimaryNoNewArray(Seq(
+                                  AbstractSyntaxNode.TrueLiteral
+                                ))
+                              ))
+                            ))
+                          ))
+                        )),
                         AbstractSyntaxNode.Block()
                       )
                     )))
@@ -715,11 +773,13 @@ public class Test {
                   ))
                 ))
               ))
-
             AbstractSyntaxNode.parse(parseTree).head must not(throwA[Exception])
 
-            val result = AbstractSyntaxNode.parse(parseTree).head
-            result must beEqualTo(AbstractSyntaxNode.Num("-2147483648", "2147483648"))
+            AbstractSyntaxNode.parse(parseTree).head must beEqualTo(
+              AbstractSyntaxNode.Temp_Testing_Expression(Seq(
+                AbstractSyntaxNode.Num("-2147483648", "2147483648")
+              ))
+            )
           }
 
           "throw exception for negative underflow" in {
@@ -780,7 +840,9 @@ public class Test {
             ))
 
           AbstractSyntaxNode.parse(parseTree).head must beEqualTo(
-            AbstractSyntaxNode.Num("-10", "10")
+            AbstractSyntaxNode.Temp_Testing_Expression(Seq(
+              AbstractSyntaxNode.Num("-10", "10")
+            ))
           )
         }
 
@@ -809,7 +871,11 @@ public class Test {
             ))
 
           AbstractSyntaxNode.parse(parseTree).head must beEqualTo(
-            AbstractSyntaxNode.Num("10", "10")
+            AbstractSyntaxNode.Temp_Testing_Expression(Seq(
+              AbstractSyntaxNode.Temp_Testing_Expression(Seq(
+                AbstractSyntaxNode.Num("-10","10")
+              ))
+            ))
           )
         }
       }

@@ -12,11 +12,15 @@ sealed trait AbstractSyntaxNode {
 }
 
 object AbstractSyntaxNode {
-  case class CharLiteral(value: InputString) extends AbstractSyntaxNode
-  case class StringLiteral(value: InputString) extends AbstractSyntaxNode
-  case object NullLiteral extends AbstractSyntaxNode
 
-  case class Num(value: String, input: InputString) extends AbstractSyntaxNode {
+  sealed trait Literal extends AbstractSyntaxNode
+  case class CharLiteral(value: InputString) extends Literal
+  case class StringLiteral(value: InputString) extends Literal
+  case object NullLiteral extends Literal
+  case object TrueLiteral extends Literal
+  case object FalseLiteral extends Literal
+
+  case class Num(value: String, input: InputString) extends Literal {
     def negated: Num = value.headOption match {
       case Some('-') => Num(value.tail, input)
       case _ => Num("-" + value, input)
@@ -90,8 +94,101 @@ object AbstractSyntaxNode {
     override def children: List[AbstractSyntaxNode] = nodes.toList
   }
 
-  sealed trait Type extends AbstractSyntaxNode
+  case class Assignment(
+    leftHandSide: AbstractSyntaxNode,
+    rightHandSide: AssignmentExpression
+  ) extends StatementExpression
 
+  sealed trait ConditionalExpression extends Expression
+  case class OrExpression(e1: Expression, e2: Expression) extends ConditionalExpression {
+    override def children: List[AbstractSyntaxNode] = List(e1) ++ List(e2)
+  }
+  case class AndExpression(e1: Expression, e2: Expression)  extends ConditionalExpression {
+    override def children: List[AbstractSyntaxNode] = List(e1) ++ List(e2)
+  }
+  case class BinOrExpression(e1: Expression, e2: Expression)  extends ConditionalExpression {
+    override def children: List[AbstractSyntaxNode] = List(e1) ++ List(e2)
+  }
+  case class BinXorExpression(e1: Expression, e2: Expression)  extends ConditionalExpression {
+    override def children: List[AbstractSyntaxNode] = List(e1) ++ List(e2)
+  }
+  case class BinAndExpression(e1: Expression, e2: Expression)  extends ConditionalExpression {
+    override def children: List[AbstractSyntaxNode] = List(e1) ++ List(e2)
+  }
+
+  sealed trait RelationalExpression extends Expression
+  case class EqualExpression(e1: Expression, e2: Expression)  extends RelationalExpression {
+    override def children: List[AbstractSyntaxNode] = List(e1) ++ List(e2)
+  }
+  case class NotEqualExpression(e1: Expression, e2: Expression)  extends RelationalExpression {
+    override def children: List[AbstractSyntaxNode] = List(e1) ++ List(e2)
+  }
+  case class LessThanExpression(e1: Expression, e2: Expression)  extends RelationalExpression {
+    override def children: List[AbstractSyntaxNode] = List(e1) ++ List(e2)
+  }
+  case class LessEqualExpression(e1: Expression, e2: Expression)  extends RelationalExpression {
+    override def children: List[AbstractSyntaxNode] = List(e1) ++ List(e2)
+  }
+  case class GreaterThanExpression(e1: Expression, e2: Expression)  extends RelationalExpression {
+    override def children: List[AbstractSyntaxNode] = List(e1) ++ List(e2)
+  }
+  case class GreaterEqualExpression(e1: Expression, e2: Expression)  extends RelationalExpression {
+    override def children: List[AbstractSyntaxNode] = List(e1) ++ List(e2)
+  }
+  case class InstanceOfExpression(e: Expression, t: ReferenceType)  extends RelationalExpression {
+    override def children: List[AbstractSyntaxNode] = List(e) ++ List(t)
+  }
+
+  sealed trait ArithmeticExpression extends Expression
+  case class AddExpression(e1: Expression, e2: Expression) extends ArithmeticExpression {
+    override def children: List[AbstractSyntaxNode] = List(e1) ++ List(e2)
+  }
+  case class SubtractExpression(e1: Expression, e2: Expression) extends ArithmeticExpression {
+    override def children: List[AbstractSyntaxNode] = List(e1) ++ List(e2)
+  }
+  case class MultiplyExpression(e1: Expression, e2: Expression) extends ArithmeticExpression {
+    override def children: List[AbstractSyntaxNode] = List(e1) ++ List(e2)
+  }
+  case class DivideExpression(e1: Expression, e2: Expression) extends ArithmeticExpression {
+    override def children: List[AbstractSyntaxNode] = List(e1) ++ List(e2)
+  }
+  case class ModExpression(e1: Expression, e2: Expression) extends ArithmeticExpression {
+    override def children: List[AbstractSyntaxNode] = List(e1) ++ List(e2)
+  }
+
+  case class AssignmentExpression(nodes: Seq[AbstractSyntaxNode]) extends Expression {
+    override def children: List[AbstractSyntaxNode] = nodes.toList
+  }
+
+  case class FieldAccess(primary: Primary, name: InputString) extends AbstractSyntaxNode
+  case class SimpleArrayAccess(name: Name, expr: Expression) extends AbstractSyntaxNode
+  case class ComplexArrayAccess(primary: Primary, expr: Expression) extends AbstractSyntaxNode
+
+  sealed trait Primary extends AbstractSyntaxNode
+  case class PrimaryNoNewArray(nodes: Seq[AbstractSyntaxNode]) extends Primary {
+   override def children: List[AbstractSyntaxNode] = nodes.toList
+  }
+
+  case class ArrayCreationPrimary(varType: Type, dimExpr: Expression) extends Primary
+  case class ClassCreationPrimary(classType: ClassType, args: Seq[Expression]) extends Primary
+  case class ExpressionPrimary(expr: Expression) extends Primary
+  case class LiteralPrimary(literal: Literal) extends Primary
+  case class FieldAccessPrimary(field: FieldAccess) extends Primary
+  case class SimpleArrayAccessPrimary(array: SimpleArrayAccess) extends Primary
+  case class ComplexArrayAccessPrimary(array: ComplexArrayAccess) extends Primary
+
+  case class SimpleMethodInvocation(
+    name: Name,
+    args: Seq[Expression] = Seq.empty[Expression]
+  ) extends Primary
+
+  case class ComplexMethodInvocation(
+    primary: Primary,
+    name: InputString,
+    args: Seq[Expression] = Seq.empty[Expression]
+  ) extends Primary
+
+  sealed trait Type extends AbstractSyntaxNode
   sealed trait Name extends Type
   case class SimpleName(value: InputString) extends Name
   case class QualifiedName(value: Seq[InputString]) extends Name
@@ -102,9 +199,6 @@ object AbstractSyntaxNode {
 
   case object BooleanKeyword extends PrimitiveType
 
-  case object TrueLiteral extends Expression
-  case object FalseLiteral extends Expression
-
   sealed trait NumericType extends PrimitiveType
 
   case object ByteKeyword extends NumericType
@@ -112,17 +206,12 @@ object AbstractSyntaxNode {
   case object IntKeyword extends NumericType
   case object CharKeyword extends NumericType
 
-  abstract class FormalParameter(
+  case class FormalParameter(
     val name: InputString,
     val varType: Type
-  ) extends AbstractSyntaxNode {
-    override def children: List[AbstractSyntaxNode] = List(varType)
-  }
+  ) extends AbstractSyntaxNode
 
-  case class ArrayType(subtype: Type) extends ReferenceType {
-    override def children: List[AbstractSyntaxNode] = List(subtype)
-  }
-
+  case class ArrayType(subtype: Type) extends ReferenceType
   case class ClassOrInterfaceType(name: Name) extends ReferenceType
   case class ClassType(name: Name) extends ReferenceType
   case class InterfaceType(name: Name) extends ReferenceType
@@ -169,7 +258,7 @@ object AbstractSyntaxNode {
     override val interfaces: Set[InterfaceType] = Set.empty[InterfaceType]
   ) extends TypeDeclaration(name, modifiers, interfaces) {
     override def children: List[AbstractSyntaxNode] =
-      modifiers.toList ++ interfaces.toList
+      List(body) ++ modifiers.toList ++ interfaces.toList
   }
 
   abstract class ClassMemberDeclaration(
@@ -226,7 +315,7 @@ object AbstractSyntaxNode {
     override def children: List[AbstractSyntaxNode] = statements.toList
   }
 
-  case class CastExpression() extends AbstractSyntaxNode
+  case class CastExpression() extends Expression
 
   sealed trait Statement extends BlockStatement
   case object EmptyStatement extends Statement
@@ -234,21 +323,22 @@ object AbstractSyntaxNode {
   sealed trait ForInit extends AbstractSyntaxNode
   sealed trait StatementExpression extends Statement with ForInit
 
-  //  TODO: Properly implement me.
-  case class AssignmentExpression(val statements: Seq[AbstractSyntaxNode]) extends StatementExpression
-  //  TODO: Properly implement me.
-  case class MethodInvocation(val statements: Seq[AbstractSyntaxNode]) extends StatementExpression
-  //  TODO: Properly implement me.
-  case class ClassInstanceCreationExpression(val statements: Seq[AbstractSyntaxNode]) extends StatementExpression
+  case class ReturnStatement(expression: Option[Expression] = None) extends Statement {
+    override def children: List[AbstractSyntaxNode] = expression.toList
+  }
 
-  case class ReturnStatement(expression: Option[Expression] = None) extends Statement
-
-  case class IfStatement(clause: Expression, trueCase: Statement, elseCase: Option[Statement] = None) extends Statement
-  case class WhileStatement(clause: Expression, body: Statement) extends Statement
+  case class IfStatement(clause: Expression, trueCase: Statement, elseCase: Option[Statement] = None) extends Statement  {
+    override def children: List[AbstractSyntaxNode] = List(clause) ++ List(trueCase) ++ elseCase.toList
+  }
+  case class WhileStatement(clause: Expression, body: Statement) extends Statement {
+    override def children: List[AbstractSyntaxNode] = List(clause) ++ List(body)
+  }
 
   case class ForVariableDeclaration(typeDeclaration: Type,
                                     variableName: InputString,
-                                    expression: Option[Expression] = None) extends ForInit
+                                    expression: Option[Expression] = None) extends ForInit {
+    override def children: List[AbstractSyntaxNode] = List(typeDeclaration) ++ expression.toList
+  }
   case class ForStatement(init: Option[ForInit],
                           check: Option[Expression],
                           update: Option[StatementExpression],
@@ -274,8 +364,7 @@ object AbstractSyntaxNode {
         }
       case _ => Unit
     }
-
-    node.children.foreach { node => overflowCheck(node) }
+    node.children.foreach { x => overflowCheck(x) }
   }
 
   def fromParseNode(previousNodes: List[ParseNode] = Nil)(node: ParseNode): Seq[AbstractSyntaxNode] = {
@@ -502,34 +591,51 @@ object AbstractSyntaxNode {
     case m: ParseNodes.FinalKeyword => Seq(FinalKeyword)
     case m: ParseNodes.NativeKeyword => Seq(NativeKeyword)
 
-    // TODO: Fix this hackery 
     case c: ParseNodes.CastExpression => {
       val children:Seq[AbstractSyntaxNode] = c.children.flatMap(recursive(_))
 
-      children.headOption match {
-        case Some(x: PrimitiveType) => Seq(CastExpression())
-        case Some(x: Expression) => x.children.headOption match {
-          case Some(y: SimpleName) => {
-            if (x.children.size == 1) {
-              Seq(CastExpression())
+      val check_children = new ((AbstractSyntaxNode) => AbstractSyntaxNode){
+          def apply(x:AbstractSyntaxNode):AbstractSyntaxNode = {
+            if(x.children.size > 1) {
+              throw new SyntaxError("Casting with invalid cast type.")
+            }
+            if (x.children.isEmpty) {
+              x
             } else {
-              throw new SyntaxError("Casting with expressions is not supported")
+              x.children.head match {
+                case y: PrimaryNoNewArray => {
+                  val expr = y.children.collectFirst { case e: Expression => e }
+                  if (!expr.isEmpty) {
+                    throw new SyntaxError("Casting with nested expressions is invalid.")
+                  }
+                  apply(x.children.head)
+                }
+                case _ => apply(x.children.head)
+              }
             }
           }
-          case _ => throw new SyntaxError("Casting with expressions is not supported")
         }
-        case Some(x: SimpleName) => Seq(CastExpression())
-        case _ => throw new SyntaxError("Casting requires a valid cast type")
+
+      check_children(children.head) match {
+        case y: Name => Seq(CastExpression())
+        case y: PrimitiveType => Seq(CastExpression())
+        case _ => throw new SyntaxError("Casting with invalid cast type.")
       }
     }
 
+    case t: ParseNodes.ClassOrInterfaceType => {
+      val children: Seq[AbstractSyntaxNode] = t.children.flatMap(recursive(_))
+      Seq(ClassOrInterfaceType(children.head.asInstanceOf[Name]))
+    }
     case t: ParseNodes.ClassType => {
       val children: Seq[AbstractSyntaxNode] = t.children.flatMap(recursive(_))
-      Seq(ClassType(recursive(t.children.head).head.asInstanceOf[Name]))
+      val child = children.collectFirst { case x: ClassOrInterfaceType => x }.get
+      Seq(ClassType(child.name))
     }
     case t: ParseNodes.InterfaceType => {
       val children: Seq[AbstractSyntaxNode] = t.children.flatMap(recursive(_))
-      Seq(ClassOrInterfaceType(recursive(t.children.head).head.asInstanceOf[Name]))
+      val child = children.collectFirst { case x: ClassOrInterfaceType => x }.get
+      Seq(InterfaceType(child.name))
     }
 
     case i: ParseNodes.Num =>
@@ -537,14 +643,35 @@ object AbstractSyntaxNode {
       val num = Num(input.value, input)
       Seq(num)
 
-    case u: ParseNodes.UnaryExpression => u.children match {
-      case Seq(minus: ParseNodes.Minus, expr: ParseNodes.UnaryExpression) =>
-        val parsed: Seq[AbstractSyntaxNode] = recursive(expr)
-        parsed match {
-          case Seq(num: Num) => Seq(num.negated)
-          case _ => parsed
-        }
-      case _ => u.children.flatMap(recursive(_))
+    case u: ParseNodes.UnaryExpression => {
+      val children: Seq[AbstractSyntaxNode] = u.children.flatMap(recursive(_))
+      u.children match {
+        case Seq(minus: ParseNodes.Minus, expr: ParseNodes.UnaryExpression) =>
+          val parsed: Seq[AbstractSyntaxNode] = recursive(expr)
+
+          val check_children = new ((ParseNode) => ParseNode){
+            def apply(x:ParseNode):ParseNode = {
+              if (x.children.size == 1) {
+                x match {
+                  case y: ParseNodes.Num => y
+                  case _ => apply(x.children.head)
+                }
+              } else {
+                x
+              }
+            }
+          }
+          val child : Seq[AbstractSyntaxNode] = recursive(check_children(expr))
+          if (child.isEmpty) {
+            Seq(Temp_Testing_Expression(parsed))
+          } else {
+            child.head match {
+              case num: Num => Seq(Temp_Testing_Expression(Seq(num.negated)))
+              case _ => Seq(Temp_Testing_Expression(parsed))
+            }
+          }
+        case _ => Seq(Temp_Testing_Expression(children))
+      }
     }
 
     case t: ParseNodes.TrueLiteral => Seq(TrueLiteral)
@@ -562,6 +689,14 @@ object AbstractSyntaxNode {
         case Some(x: Type) => Seq(ArrayType(x))
         case _ => throw new SyntaxError("Array type contains non-type node.")
       }
+    }
+    case p: ParseNodes.FormalParameter => {
+      val children:Seq[AbstractSyntaxNode] = p.children.flatMap(recursive(_))
+
+      val name: Identifier = children.collectFirst { case x: Identifier => x }.get
+      val varType: Type = children.collectFirst { case x: Type => x }.get
+
+      Seq(FormalParameter(name.value, varType))
     }
 
     case s: ParseNodes.SimpleName => Seq(SimpleName(s.children(0).value.get))
@@ -634,11 +769,15 @@ object AbstractSyntaxNode {
 
       val init: Option[ForInit] = children.collectFirst { case x: ForInit => x }
       val check: Option[Expression] = children.collectFirst { case x: Expression => x }
-      val update: Option[StatementExpression] = children.collectFirst { case x: StatementExpression => x }
-      val statement: Statement = children.collectFirst { case x: Statement => x }.get
+
+      var statements: Seq[Statement] = children.collect { case x: Statement => x }
+      val update: Option[StatementExpression] = statements.collectFirst { case x: StatementExpression => x }
+      if (!update.isEmpty) {
+        statements = statements diff List(update.get)
+      }
+      val statement: Statement = statements.collectFirst { case x: Statement => x }.get
       Seq(ForStatement(init, check, update, statement))
     }
-
 
     case f: ParseNodes.ForStatementNoShortIf => {
       val children:Seq[AbstractSyntaxNode] = f.children.flatMap(recursive(_))
@@ -672,6 +811,264 @@ object AbstractSyntaxNode {
 
     // TODO: Implement
     case e: ParseNodes.Expression => Seq(Temp_Testing_Expression(e.children.flatMap(recursive(_))))
+    case e: ParseNodes.PostfixExpression => Seq(Temp_Testing_Expression(e.children.flatMap(recursive(_))))
+
+    case e: ParseNodes.ConditionalOrExpression => {
+      val children = e.children.flatMap(recursive(_))
+      e.children match {
+        case Seq(e1: ParseNodes.ConditionalOrExpression, s: ParseNodes.LogicalOr, e2: ParseNodes.ConditionalAndExpression) => {
+          children match {
+            case Seq(expr1: Expression, expr2: Expression) => Seq(OrExpression(expr1, expr2))
+            case _ => throw new SyntaxError("Invalid or expression")
+          }
+        }
+        case _ => children
+      }
+    }
+
+    case e: ParseNodes.ConditionalAndExpression => {
+      val children = e.children.flatMap(recursive(_))
+      e.children match {
+        case Seq(e1: ParseNodes.ConditionalAndExpression, s: ParseNodes.LogicalAnd, e2: ParseNodes.InclusiveOrExpression) => {
+          children match {
+            case Seq(expr1: Expression, expr2: Expression) => Seq(AndExpression(expr1, expr2))
+            case _ => throw new SyntaxError("Invalid and expression")
+          }
+        }
+        case _ => children
+      }
+    }
+
+    case e: ParseNodes.InclusiveOrExpression => {
+      val children = e.children.flatMap(recursive(_))
+      e.children match {
+        case Seq(e1: ParseNodes.InclusiveOrExpression, s: ParseNodes.BinaryOr, e2: ParseNodes.ExclusiveOrExpression) => {
+          children match {
+            case Seq(expr1: Expression, expr2: Expression) => Seq(BinOrExpression(expr1, expr2))
+            case _ => throw new SyntaxError("Invalid inclusive-or expression")
+          }
+        }
+        case _ => children
+      }
+    }
+
+    case e: ParseNodes.ExclusiveOrExpression => {
+      val children = e.children.flatMap(recursive(_))
+      e.children match {
+        case Seq(e1: ParseNodes.ExclusiveOrExpression, s: ParseNodes.BinaryXor, e2: ParseNodes.AndExpression) => {
+          children match {
+            case Seq(expr1: Expression, expr2: Expression) => Seq(BinXorExpression(expr1, expr2))
+            case _ => throw new SyntaxError("Invalid exclusive-or expression")
+          }
+        }
+        case _ => children
+      }
+    }
+
+    case e: ParseNodes.AndExpression => {
+      val children = e.children.flatMap(recursive(_))
+      e.children match {
+        case Seq(e1: ParseNodes.AndExpression, s: ParseNodes.BinaryAnd, e2: ParseNodes.EqualityExpression) => {
+          children match {
+            case Seq(expr1: Expression, expr2: Expression) => Seq(BinAndExpression(expr1, expr2))
+            case _ => throw new SyntaxError("Invalid binary-and expression")
+          }
+        }
+        case _ => children
+      }
+    }
+
+    case e: ParseNodes.EqualityExpression => {
+      val children = e.children.flatMap(recursive(_))
+      e.children match {
+        case Seq(e1: ParseNodes.EqualityExpression, s: ParseNodes.Equal, e2: ParseNodes.RelationalExpression) => {
+          children match {
+            case Seq(expr1: Expression, expr2: Expression) => Seq(EqualExpression(expr1, expr2))
+            case _ => throw new SyntaxError("Invalid equal expression")
+          }
+        }
+         case Seq(e1: ParseNodes.EqualityExpression, s: ParseNodes.NotEqual, e2: ParseNodes.RelationalExpression) => {
+          children match {
+            case Seq(expr1: Expression, expr2: Expression) => Seq(NotEqualExpression(expr1, expr2))
+            case _ => throw new SyntaxError("Invalid not-equal expression")
+          }
+        }
+        case _ => children
+      }
+    }
+
+    case e: ParseNodes.RelationalExpression => {
+      val children = e.children.flatMap(recursive(_))
+      e.children match {
+        case Seq(e1: ParseNodes.RelationalExpression, s: ParseNodes.LessThan, e2: ParseNodes.AdditiveExpression) => {
+          children match {
+            case Seq(expr1: Expression, expr2: Expression) => Seq(LessThanExpression(expr1, expr2))
+            case _ => throw new SyntaxError("Invalid relational expression")
+          }
+        }
+        case Seq(e1: ParseNodes.RelationalExpression, s: ParseNodes.LessEqual, e2: ParseNodes.AdditiveExpression) => {
+          children match {
+            case Seq(expr1: Expression, expr2: Expression) => Seq(LessEqualExpression(expr1, expr2))
+            case _ => throw new SyntaxError("Invalid relational expression")
+          }
+        }
+        case Seq(e1: ParseNodes.RelationalExpression, s: ParseNodes.GreaterThan, e2: ParseNodes.AdditiveExpression) => {
+          children match {
+            case Seq(expr1: Expression, expr2: Expression) => Seq(GreaterThanExpression(expr1, expr2))
+            case _ => throw new SyntaxError("Invalid relational expression")
+          }
+        }
+        case Seq(e1: ParseNodes.RelationalExpression, s: ParseNodes.GreaterEqual, e2: ParseNodes.AdditiveExpression) => {
+          children match {
+            case Seq(expr1: Expression, expr2: Expression) => Seq(GreaterEqualExpression(expr1, expr2))
+            case _ => throw new SyntaxError("Invalid relational expression")
+          }
+        }
+        case Seq(e1: ParseNodes.RelationalExpression, s: ParseNodes.InstanceofKeyword, r1: ParseNodes.ReferenceType) => {
+          children match {
+            case Seq(expr: Expression, ref: ReferenceType) => Seq(InstanceOfExpression(expr, ref))
+            case _ => throw new SyntaxError("Invalid relational expression")
+          }
+        }
+        case _ => children
+      }
+    }
+
+    case e: ParseNodes.AdditiveExpression => {
+      val children = e.children.flatMap(recursive(_))
+      e.children match {
+        case Seq(e1: ParseNodes.AdditiveExpression, s: ParseNodes.Plus, e2: ParseNodes.MultiplicativeExpression) => {
+          children match {
+            case Seq(expr1: Expression, expr2: Expression) => Seq(AddExpression(expr1, expr2))
+            case _ => throw new SyntaxError("Invalid add expression")
+          }
+        }
+        case Seq(e1: ParseNodes.AdditiveExpression, s: ParseNodes.Minus, e2: ParseNodes.MultiplicativeExpression) => {
+          children match {
+            case Seq(expr1: Expression, expr2: Expression) => Seq(SubtractExpression(expr1, expr2))
+            case _ => throw new SyntaxError("Invalid subtract expression")
+          }
+        }
+        case _ => children
+      }
+    }
+
+    case e: ParseNodes.MultiplicativeExpression => {
+      val children = e.children.flatMap(recursive(_))
+      e.children match {
+        case Seq(e1: ParseNodes.MultiplicativeExpression, s: ParseNodes.Star, e2: ParseNodes.UnaryExpression) => {
+          children match {
+            case Seq(expr1: Expression, expr2: Expression) => Seq(MultiplyExpression(expr1, expr2))
+            case _ => throw new SyntaxError("Invalid multiply expression")
+          }
+        }
+        case Seq(e1: ParseNodes.MultiplicativeExpression, s: ParseNodes.Divide, e2: ParseNodes.UnaryExpression) => {
+          children match {
+            case Seq(expr1: Expression, expr2: Expression) => Seq(DivideExpression(expr1, expr2))
+            case _ => throw new SyntaxError("Invalid divide expression")
+          }
+        }
+        case Seq(e1: ParseNodes.MultiplicativeExpression, s: ParseNodes.Modulo, e2: ParseNodes.UnaryExpression) => {
+          children match {
+            case Seq(expr1: Expression, expr2: Expression) => Seq(ModExpression(expr1, expr2))
+            case _ => throw new SyntaxError("Invalid modulo expression")
+          }
+        }
+        case _ => children
+      }
+    }
+
+    case e: ParseNodes.AssignmentExpression => Seq(AssignmentExpression(e.children.flatMap(recursive(_))))
+
+    case e: ParseNodes.Assignment => {
+      e.children match {
+        case Seq(l: ParseNodes.LeftHandSide, a: ParseNodes.Assign, r: ParseNodes.AssignmentExpression) => {
+          val right: AssignmentExpression = e.children.flatMap(recursive(_)).collectFirst { case x: AssignmentExpression => x }.get
+          l.children.flatMap(recursive(_)).headOption match {
+            case Some(left: Name) => Seq(Assignment(left, right))
+            case Some(left: FieldAccess) => Seq(Assignment(left, right))
+            case Some(left: SimpleArrayAccess) => Seq(Assignment(left, right))
+            case Some(left: ComplexArrayAccess) => Seq(Assignment(left, right))
+            case _ => {
+              throw new SyntaxError("Assignment has invalid left hand side.")
+            }
+          }
+        }
+        case _ => e.children.flatMap(recursive(_))
+      }
+    }
+
+    case a: ParseNodes.FieldAccess => {
+      val children:Seq[AbstractSyntaxNode] = a.children.flatMap(recursive(_))
+
+      val primary:Primary = children.collectFirst { case x: Primary => x }.get
+      val name:Identifier = children.collectFirst { case x: Identifier => x }.get
+
+      Seq(FieldAccess(primary, name.value))
+    }
+    case a: ParseNodes.ArrayAccess => {
+      val children = a.children.flatMap(recursive(_))
+      a.children match {
+        case Seq(n: ParseNodes.Name, l: ParseNodes.LeftBracket, e: ParseNodes.Expression, r: ParseNodes.RightBracket) => {
+          val name: Name = children.collectFirst { case x: Name => x }.get
+          val expr: Expression = children.collectFirst { case x: Expression => x }.get
+          Seq(SimpleArrayAccess(name, expr))
+        }
+        case Seq(p: ParseNodes.PrimaryNoNewArray, l: ParseNodes.LeftBracket, e: ParseNodes.Expression, r: ParseNodes.RightBracket) => {
+          val primary: Primary = children.collectFirst { case x: Primary => x }.get
+          val expr: Expression = children.collectFirst { case x: Expression => x }.get
+          Seq(ComplexArrayAccess(primary, expr))
+        }
+        case _ => a.children.flatMap(recursive(_))
+      }
+    }
+
+    case p: ParseNodes.PrimaryNoNewArray => Seq(PrimaryNoNewArray(p.children.flatMap(recursive(_))))
+
+    case p: ParseNodes.ArrayCreationExpression => {
+      val children:Seq[AbstractSyntaxNode] = p.children.flatMap(recursive(_))
+
+      val varType:Type = children.collectFirst { case x: Type => x }.get
+      val dimExpr:Expression = children.collectFirst { case x: Expression => x }.get
+
+      Seq(ArrayCreationPrimary(varType, dimExpr))
+    }
+    case p: ParseNodes.ClassInstanceCreationExpression => {
+      val children:Seq[AbstractSyntaxNode] = p.children.flatMap(recursive(_))
+
+      val classType:ClassType = children.collectFirst { case x: ClassType => x }.get
+      val args:Seq[Expression] = children.collect { case x: Expression => x }
+
+      Seq(ClassCreationPrimary(classType, args))
+    }
+
+    case m: ParseNodes.MethodInvocation => {
+      val children = m.children.flatMap(recursive(_))
+      m.children match {
+        case Seq(n: ParseNodes.Name, l: ParseNodes.LeftParen, a: ParseNodes.ArgumentList, r: ParseNodes.RightParen) => {
+          val name: Name = children.collectFirst { case x: Name => x }.get
+          val args: Seq[Expression] = children.collect { case x: Expression => x }
+          Seq(SimpleMethodInvocation(name, args))
+        }
+        case Seq(n: ParseNodes.Name, l: ParseNodes.LeftParen, r: ParseNodes.RightParen) => {
+          val name: Name = children.collectFirst { case x: Name => x }.get
+          Seq(SimpleMethodInvocation(name))
+        }
+
+        case Seq(p: ParseNodes.Primary, d: ParseNodes.Dot, i: ParseNodes.Identifier, l: ParseNodes.LeftParen, e: ParseNodes.ArgumentList, r: ParseNodes.RightParen) => {
+          val primary: Primary = children.collectFirst { case x: Primary => x }.get
+          val args: Seq[Expression] = children.collect { case x: Expression => x }
+          val name: Identifier = children.collectFirst { case x: Identifier => x }.get
+          Seq(ComplexMethodInvocation(primary, name.value, args))
+        }
+        case Seq(p: ParseNodes.Primary, d: ParseNodes.Dot, i: ParseNodes.Identifier, l: ParseNodes.LeftParen, r: ParseNodes.RightParen) => {
+          val primary: Primary = children.collectFirst { case x: Primary => x }.get
+          val name: Identifier = children.collectFirst { case x: Identifier => x }.get
+          Seq(ComplexMethodInvocation(primary, name.value))
+        }
+        case _ => m.children.flatMap(recursive(_))
+      }
+    }
 
     // If the parse node does not map nicely to an ASN, just hand us its children.
     case p: ParseNode => p.children.flatMap(recursive(_))
