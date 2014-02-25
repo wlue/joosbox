@@ -18,6 +18,9 @@ object CompilerRunner {
         case noel: java.util.NoSuchElementException =>
           System.err.println("Got unexpected NoSuchElementException (probably improperly implemented syntax): " + noel)
           System.exit(42)
+        case fnfe: java.io.FileNotFoundException =>
+          System.err.println(fnfe)
+          System.exit(42)
       }
     } else {
       println("Usage: joosc <file.joos>")
