@@ -5,9 +5,9 @@ import joosbox.lexer.SyntaxError
 
 object CompilerRunner {
   def main(args: Array[String]) {
-    if (args.size == 1) {
+    if (args.size >= 1) {
       try {
-        Parser.Joos.parseFilename(args.head)
+        args.foreach(arg => Parser.Joos.parseFilename(arg))
       } catch {
         case se: SyntaxError =>
           System.err.println(se)
