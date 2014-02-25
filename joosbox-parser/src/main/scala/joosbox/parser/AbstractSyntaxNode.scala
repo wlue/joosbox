@@ -679,6 +679,7 @@ object AbstractSyntaxNode {
 
     case t: ParseNodes.TrueLiteral => Seq(TrueLiteral)
     case t: ParseNodes.FalseLiteral => Seq(FalseLiteral)
+    case n: ParseNodes.NullLiteral => Seq(NullLiteral)
 
     case t: ParseNodes.ByteKeyword => Seq(ByteKeyword)
     case t: ParseNodes.ShortKeyword => Seq(ShortKeyword)
