@@ -87,6 +87,7 @@ object AbstractSyntaxNode {
     override def children: List[AbstractSyntaxNode] = declarations.toList
   }
 
+  sealed trait Primary extends AbstractSyntaxNode
   sealed trait Expression extends Primary
 
   case class Assignment(
@@ -157,26 +158,29 @@ object AbstractSyntaxNode {
     override def children: List[AbstractSyntaxNode] = List(expr)
   }
 
-  case class FieldAccess(primary: Primary, name: InputString) extends Primary
-  case class SimpleArrayAccess(name: Name, expr: Expression) extends Primary
-  case class ComplexArrayAccess(primary: Primary, expr: Expression) extends Primary
+  case class FieldAccess(primary: Primary, name: InputString) extends Expression
+  case class SimpleArrayAccess(name: Name, expr: Expression) extends Expression
+  case class ComplexArrayAccess(primary: Primary, expr: Expression) extends Expression
 
-  sealed trait Primary extends AbstractSyntaxNode
-  case object ThisKeyword extends Primary
+  case object ThisKeyword extends Expression
 
-  case class ArrayCreationPrimary(varType: Type, dimExpr: Expression) extends Primary
-  case class ClassCreationPrimary(classType: ClassType, args: Seq[Expression]) extends Primary
+  case class ArrayCreationPrimary(varType: Type, dimExpr: Expression) extends Expression
+  case class ClassCreationPrimary(classType: ClassType, args: Seq[Expression]) extends Expression
 
   case class SimpleMethodInvocation(
     name: Name,
     args: Seq[Expression] = Seq.empty[Expression]
-  ) extends Primary
+  ) extends Expression {
+    override def children: List[AbstractSyntaxNode] = List(name) ++ args.toList
+  }
 
   case class ComplexMethodInvocation(
     primary: Primary,
     name: InputString,
     args: Seq[Expression] = Seq.empty[Expression]
-  ) extends Primary
+  ) extends Expression {  
+    override def children: List[AbstractSyntaxNode] = List(primary) ++ args.toList
+  }
 
   sealed trait Type extends AbstractSyntaxNode
   sealed trait Name extends Type with PostfixExpression
@@ -311,7 +315,7 @@ object AbstractSyntaxNode {
   case object EmptyStatement extends Statement
 
   sealed trait ForInit extends AbstractSyntaxNode
-  sealed trait StatementExpression extends Statement with ForInit
+  sealed trait StatementExpression extends Statement with ForInit with Expression
 
   case class ReturnStatement(expression: Option[Expression] = None) extends Statement {
     override def children: List[AbstractSyntaxNode] = expression.toList
@@ -692,6 +696,9 @@ object AbstractSyntaxNode {
       Seq(FormalParameter(name.value, varType))
     }
 
+    case c: ParseNodes.CharLiteral => Seq(CharLiteral(c.value.get))
+    case s: ParseNodes.StringLiteral => Seq(StringLiteral(s.value.get))
+
     case s: ParseNodes.SimpleName => Seq(SimpleName(s.children(0).value.get))
     case s: ParseNodes.QualifiedName =>
       Seq(QualifiedName(s.children.flatMap(recursive(_)).flatMap {
@@ -926,6 +933,7 @@ object AbstractSyntaxNode {
 
     case e: ParseNodes.AdditiveExpression => {
       val children = e.children.flatMap(recursive(_))
+
       e.children match {
         case Seq(e1: ParseNodes.AdditiveExpression, s: ParseNodes.Plus, e2: ParseNodes.MultiplicativeExpression) => {
           children match {
@@ -1045,7 +1053,7 @@ object AbstractSyntaxNode {
       m.children match {
         case Seq(n: ParseNodes.Name, l: ParseNodes.LeftParen, a: ParseNodes.ArgumentList, r: ParseNodes.RightParen) => {
           val name: Name = children.collectFirst { case x: Name => x }.get
-          val args: Seq[Expression] = children.collect { case x: Expression => x }
+          val args: Seq[Expression] = children.drop(1).collect { case x: Expression => x }
           Seq(SimpleMethodInvocation(name, args))
         }
         case Seq(n: ParseNodes.Name, l: ParseNodes.LeftParen, r: ParseNodes.RightParen) => {
