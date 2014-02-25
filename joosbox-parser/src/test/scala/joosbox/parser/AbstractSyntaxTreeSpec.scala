@@ -875,8 +875,8 @@ public class Test {
 */
     "Buggy Test Cases" in {
       val parser: Parser = Parser.Joos
-      "J1_1_Escapes_3DigitOctalAndDigit" in {
-        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_1_Escapes_3DigitOctalAndDigit.java")// must not(throwA[Exception])
+      "J1_commentsInExp1" in {
+        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_commentsInExp1.java")// must not(throwA[Exception])
         true
       }
     }

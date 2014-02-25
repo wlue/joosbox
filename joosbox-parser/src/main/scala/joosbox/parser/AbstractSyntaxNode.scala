@@ -657,6 +657,7 @@ object AbstractSyntaxNode {
           }
 
           val child : Seq[AbstractSyntaxNode] = recursive(check_children(expr))
+
           if (child.isEmpty) {
             val expression = children.collectFirst { case x: Expression => x }.get
             Seq(NegatedExpression(expression))
@@ -664,7 +665,12 @@ object AbstractSyntaxNode {
             child.head match {
               case num: Num => Seq(num.negated)
               case expr: Expression => Seq(NegatedExpression(expr))
-              case _ => throw new SyntaxError("Negated unary expression does not contain Num or Expression.")
+
+              //  If we can't find a Num or Expression, back up and try to parse.
+              case _ => parsed match {
+                case Seq(expr: Expression) => Seq(NegatedExpression(expr))
+                case _ => throw new SyntaxError("Negated unary expression is malformed: " + parsed)
+              }
             }
           }
         case _ => children
