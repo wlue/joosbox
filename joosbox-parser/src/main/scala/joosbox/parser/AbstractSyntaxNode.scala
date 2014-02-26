@@ -89,7 +89,6 @@ object AbstractSyntaxNode {
 
   sealed trait Primary extends AbstractSyntaxNode
   sealed trait Expression extends Primary
-  
   case class ParenthesizedExpression(expr: Expression) extends Expression {
     override def children: List[AbstractSyntaxNode] = List(expr)
   }
@@ -597,6 +596,7 @@ object AbstractSyntaxNode {
             if(x.children.size > 1) {
               throw new SyntaxError("Casting with invalid cast type.")
             }
+
             if (x.children.isEmpty) {
               x
             } else {
@@ -614,10 +614,14 @@ object AbstractSyntaxNode {
           }
         }
 
+      children.head match {
+        case y: ParenthesizedExpression => throw new SyntaxError("Casts cannot be overly parenthesized.")
+        case _ => ;
+      }
+
       check_children(children.head) match {
         case y: Name => Seq(CastExpression())
         case y: PrimitiveType => Seq(CastExpression())
-        case y: ParenthesizedExpression => throw new SyntaxError("Casts can only be to Name or PrimitiveType instances.")
         case _ => throw new SyntaxError("Casting with invalid cast type.")
       }
     }
