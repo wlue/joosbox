@@ -616,6 +616,8 @@ object AbstractSyntaxNode {
 
       children.head match {
         case y: ParenthesizedExpression => throw new SyntaxError("Casts cannot be overly parenthesized.")
+        case y: SimpleMethodInvocation => throw new SyntaxError("Method invocations cannot be casted to.")
+        case y: ComplexMethodInvocation => throw new SyntaxError("Method invocations cannot be casted to.")
         case _ => ;
       }
 

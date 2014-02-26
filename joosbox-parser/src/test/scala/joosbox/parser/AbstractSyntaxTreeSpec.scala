@@ -875,8 +875,8 @@ public class Test {
 */
     "Buggy Test Cases" in {
       val parser: Parser = Parser.Joos
-      "Je_1_Cast_DoubleParenthese" in {
-        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/Je_1_Cast_DoubleParenthese.java") must throwA[SyntaxError]
+      "Je_1_Cast_ToMethodInvoke" in {
+        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/Je_1_Cast_ToMethodInvoke.java") must throwA[SyntaxError]
       }
     }
   //}
