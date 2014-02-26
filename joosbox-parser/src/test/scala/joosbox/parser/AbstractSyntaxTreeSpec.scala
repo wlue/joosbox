@@ -875,9 +875,8 @@ public class Test {
 */
     "Buggy Test Cases" in {
       val parser: Parser = Parser.Joos
-      "J1_concat_in_binop" in {
-        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/J1_concat_in_binop.java")// must not(throwA[Exception])
-        true
+      "Je_1_Cast_DoubleParenthese" in {
+        parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/Je_1_Cast_DoubleParenthese.java") must throwA[Exception]
       }
     }
   //}

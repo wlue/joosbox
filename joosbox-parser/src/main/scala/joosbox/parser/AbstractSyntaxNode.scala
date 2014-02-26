@@ -89,6 +89,10 @@ object AbstractSyntaxNode {
 
   sealed trait Primary extends AbstractSyntaxNode
   sealed trait Expression extends Primary
+  
+  case class ParenthesizedExpression(expr: Expression) extends Expression {
+    override def children: List[AbstractSyntaxNode] = List(expr)
+  }
 
   case class Assignment(
     leftHandSide: AbstractSyntaxNode,
@@ -613,6 +617,7 @@ object AbstractSyntaxNode {
       check_children(children.head) match {
         case y: Name => Seq(CastExpression())
         case y: PrimitiveType => Seq(CastExpression())
+        case y: ParenthesizedExpression => throw new SyntaxError("Casts can only be to Name or PrimitiveType instances.")
         case _ => throw new SyntaxError("Casting with invalid cast type.")
       }
     }
@@ -1028,13 +1033,8 @@ object AbstractSyntaxNode {
       }
     }
 
-    // TODO: Deconstruct into:
-    //  should implement Literal
-    //  should implement ClassInstanceCreationExpression
-    //  should implement FieldAccess
-    //  should implement MethodInvocation
-    //  should implement ArrayAccess
-    //case p: ParseNodes.PrimaryNoNewArray => Seq(PrimaryNoNewArray(p.children.flatMap(recursive(_))))
+    case ParseNodes.PrimaryNoNewArray(List(lp: ParseNodes.LeftParen, content: ParseNode, rp: ParseNodes.RightParen), _) => 
+      Seq(ParenthesizedExpression(content.children.flatMap(recursive(_)).collectFirst {case x: Expression => x}.get))
 
     case t: ParseNodes.ThisKeyword => Seq(ThisKeyword)
 
