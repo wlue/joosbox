@@ -7,7 +7,7 @@ object CompilerRunner {
   def main(args: Array[String]) {
     if (args.size >= 1) {
       try {
-        args.foreach(arg => Parser.Joos.parseFilename(arg))
+        run_testable(args)
       } catch {
         case se: SyntaxError =>
           System.err.println(se)
@@ -26,5 +26,9 @@ object CompilerRunner {
       println("Usage: joosc <file.joos>")
       System.exit(42)
     }
+  }
+
+  def run_testable(args: Array[String]) {
+    args.foreach(arg => Parser.Joos.parseFilename(arg))
   }
 }
