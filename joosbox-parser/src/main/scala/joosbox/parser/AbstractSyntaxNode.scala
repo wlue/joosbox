@@ -543,6 +543,23 @@ object AbstractSyntaxNode {
         }
       }
 
+      // Enfore: A field can not be package private
+      if (!modifiers.contains(PublicKeyword) && !modifiers.contains(ProtectedKeyword)) {
+        throw new SyntaxError("Field " + name.value + " cannot be package private.")
+      }
+
+      // Enforce: A field can not be abstract
+      if (modifiers.contains(AbstractKeyword)) {
+        throw new SyntaxError("Field " + name.value + " cannot be abstract.")
+      }
+
+      // Enforce: A field can not be native
+      if (modifiers.contains(NativeKeyword)) {
+        throw new SyntaxError("Field " + name.value + " cannot be native.")
+      }
+
+
+
       Seq(FieldDeclaration(name.value, modifiers, memberType, expression))
     }
 
