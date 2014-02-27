@@ -6,7 +6,7 @@ import joosbox.lexer._
 import InputStringImplicits._
 
 class AbstractSyntaxTreeSpec extends Specification {
-  /*
+  
   "Abstract Syntax Tree" should {
     
     "be created from a parse tree with package and import" in {
@@ -872,12 +872,12 @@ public class Test {
         )
       }
     }
-*/
+
     "Buggy Test Cases" in {
       val parser: Parser = Parser.Joos
       "Je_1_Cast_ToMethodInvoke" in {
         parser.parseFilename("joosbox-compiler/src/test/resources/marmoset-tests/a1/Je_1_Cast_ToMethodInvoke.java") must throwA[SyntaxError]
       }
     }
-  //}
+  }
 }
