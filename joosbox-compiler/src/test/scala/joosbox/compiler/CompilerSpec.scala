@@ -621,547 +621,547 @@ class CompilerSpec extends Specification {
 
       "Je_12_Fields_StaticNonStatic.java" in {
         val files = filesForTest("Je_12_Fields_StaticNonStatic.java") ++ stdlibFilePaths
-        CompilerRunner.run_testable(files.toArray) must not(throwA[Exception])
+        CompilerRunner.run_testable(files.toArray) must throwA[Exception]
       }
 
       "Je_13_Interface_SingleImport_ClashWithClass" in {
         val files = filesForTest("Je_13_Interface_SingleImport_ClashWithClass") ++ stdlibFilePaths
-        CompilerRunner.run_testable(files.toArray) must not(throwA[Exception])
+        CompilerRunner.run_testable(files.toArray) must throwA[Exception]
       }
 
       "Je_14_Interface_DeclaresToString_DifferentReturnType" in {
         val files = filesForTest("Je_14_Interface_DeclaresToString_DifferentReturnType") ++ stdlibFilePaths
-        CompilerRunner.run_testable(files.toArray) must not(throwA[Exception])
+        CompilerRunner.run_testable(files.toArray) must throwA[Exception]
       }
 
       "Je_14_Interface_DeclaresToString_ThrowsConflict" in {
         val files = filesForTest("Je_14_Interface_DeclaresToString_ThrowsConflict") ++ stdlibFilePaths
-        CompilerRunner.run_testable(files.toArray) must not(throwA[Exception])
+        CompilerRunner.run_testable(files.toArray) must throwA[Exception]
       }
 
       "Je_14_Interface_DuplicateMethodDeclare.java" in {
         val files = filesForTest("Je_14_Interface_DuplicateMethodDeclare.java") ++ stdlibFilePaths
-        CompilerRunner.run_testable(files.toArray) must not(throwA[Exception])
+        CompilerRunner.run_testable(files.toArray) must throwA[Exception]
       }
 
       "Je_14_Interface_ImplicitPublicMethod_ProtectedOverride" in {
         val files = filesForTest("Je_14_Interface_ImplicitPublicMethod_ProtectedOverride") ++ stdlibFilePaths
-        CompilerRunner.run_testable(files.toArray) must not(throwA[Exception])
+        CompilerRunner.run_testable(files.toArray) must throwA[Exception]
       }
 
       "Je_14_Interface_SelfDependency_CyclicExtend" in {
         val files = filesForTest("Je_14_Interface_SelfDependency_CyclicExtend") ++ stdlibFilePaths
-        CompilerRunner.run_testable(files.toArray) must not(throwA[Exception])
+        CompilerRunner.run_testable(files.toArray) must throwA[Exception]
       }
 
       "Je_14_Interface_SelfDependency_ExtendsItself.java" in {
         val files = filesForTest("Je_14_Interface_SelfDependency_ExtendsItself.java") ++ stdlibFilePaths
-        CompilerRunner.run_testable(files.toArray) must not(throwA[Exception])
+        CompilerRunner.run_testable(files.toArray) must throwA[Exception]
       }
 
       "Je_2_ConstructorParameter_Duplicate.java" in {
         val files = filesForTest("Je_2_ConstructorParameter_Duplicate.java") ++ stdlibFilePaths
-        CompilerRunner.run_testable(files.toArray) must not(throwA[Exception])
+        CompilerRunner.run_testable(files.toArray) must throwA[Exception]
       }
 
       "Je_2_ConstructorParameter_Overlapping.java" in {
         val files = filesForTest("Je_2_ConstructorParameter_Overlapping.java") ++ stdlibFilePaths
-        CompilerRunner.run_testable(files.toArray) must not(throwA[Exception])
+        CompilerRunner.run_testable(files.toArray) must throwA[Exception]
       }
 
       "Je_2_DuplicateType" in {
         val files = filesForTest("Je_2_DuplicateType") ++ stdlibFilePaths
-        CompilerRunner.run_testable(files.toArray) must not(throwA[Exception])
+        CompilerRunner.run_testable(files.toArray) must throwA[Exception]
       }
 
       "Je_2_Fields_DifferentAccess.java" in {
         val files = filesForTest("Je_2_Fields_DifferentAccess.java") ++ stdlibFilePaths
-        CompilerRunner.run_testable(files.toArray) must not(throwA[Exception])
+        CompilerRunner.run_testable(files.toArray) must throwA[Exception]
       }
 
       "Je_2_Fields_DifferentTypes.java" in {
         val files = filesForTest("Je_2_Fields_DifferentTypes.java") ++ stdlibFilePaths
-        CompilerRunner.run_testable(files.toArray) must not(throwA[Exception])
+        CompilerRunner.run_testable(files.toArray) must throwA[Exception]
       }
 
       "Je_2_Fields_MultipleFields.java" in {
         val files = filesForTest("Je_2_Fields_MultipleFields.java") ++ stdlibFilePaths
-        CompilerRunner.run_testable(files.toArray) must not(throwA[Exception])
+        CompilerRunner.run_testable(files.toArray) must throwA[Exception]
       }
 
       "Je_2_Locals_Overlapping_DeeplyNested.java" in {
         val files = filesForTest("Je_2_Locals_Overlapping_DeeplyNested.java") ++ stdlibFilePaths
-        CompilerRunner.run_testable(files.toArray) must not(throwA[Exception])
+        CompilerRunner.run_testable(files.toArray) must throwA[Exception]
       }
 
       "Je_2_Locals_Overlapping_ForInitializer.java" in {
         val files = filesForTest("Je_2_Locals_Overlapping_ForInitializer.java") ++ stdlibFilePaths
-        CompilerRunner.run_testable(files.toArray) must not(throwA[Exception])
+        CompilerRunner.run_testable(files.toArray) must throwA[Exception]
       }
 
       "Je_2_Locals_Overlapping_InConditionalElse.java" in {
         val files = filesForTest("Je_2_Locals_Overlapping_InConditionalElse.java") ++ stdlibFilePaths
-        CompilerRunner.run_testable(files.toArray) must not(throwA[Exception])
+        CompilerRunner.run_testable(files.toArray) must throwA[Exception]
       }
 
       "Je_2_Locals_Overlapping_InConditionalThen.java" in {
         val files = filesForTest("Je_2_Locals_Overlapping_InConditionalThen.java") ++ stdlibFilePaths
-        CompilerRunner.run_testable(files.toArray) must not(throwA[Exception])
+        CompilerRunner.run_testable(files.toArray) must throwA[Exception]
       }
 
       "Je_2_Locals_Overlapping_InsideDoubleBlock.java" in {
         val files = filesForTest("Je_2_Locals_Overlapping_InsideDoubleBlock.java") ++ stdlibFilePaths
-        CompilerRunner.run_testable(files.toArray) must not(throwA[Exception])
+        CompilerRunner.run_testable(files.toArray) must throwA[Exception]
       }
 
       "Je_2_Locals_Overlapping_InsideLoop.java" in {
         val files = filesForTest("Je_2_Locals_Overlapping_InsideLoop.java") ++ stdlibFilePaths
-        CompilerRunner.run_testable(files.toArray) must not(throwA[Exception])
+        CompilerRunner.run_testable(files.toArray) must throwA[Exception]
       }
 
       "Je_2_Locals_Overlapping_InsideNewBlock.java" in {
         val files = filesForTest("Je_2_Locals_Overlapping_InsideNewBlock.java") ++ stdlibFilePaths
-        CompilerRunner.run_testable(files.toArray) must not(throwA[Exception])
+        CompilerRunner.run_testable(files.toArray) must throwA[Exception]
       }
 
       "Je_2_Locals_Overlapping_SameLevel.java" in {
         val files = filesForTest("Je_2_Locals_Overlapping_SameLevel.java") ++ stdlibFilePaths
-        CompilerRunner.run_testable(files.toArray) must not(throwA[Exception])
+        CompilerRunner.run_testable(files.toArray) must throwA[Exception]
       }
 
       "Je_2_Locals_Overlapping_SameLine.java" in {
         val files = filesForTest("Je_2_Locals_Overlapping_SameLine.java") ++ stdlibFilePaths
-        CompilerRunner.run_testable(files.toArray) must not(throwA[Exception])
+        CompilerRunner.run_testable(files.toArray) must throwA[Exception]
       }
 
       "Je_2_Parameter_AbstractDeclaredTwice.java" in {
         val files = filesForTest("Je_2_Parameter_AbstractDeclaredTwice.java") ++ stdlibFilePaths
-        CompilerRunner.run_testable(files.toArray) must not(throwA[Exception])
+        CompilerRunner.run_testable(files.toArray) must throwA[Exception]
       }
 
       "Je_2_Parameter_OverlappingWithLocal.java" in {
         val files = filesForTest("Je_2_Parameter_OverlappingWithLocal.java") ++ stdlibFilePaths
-        CompilerRunner.run_testable(files.toArray) must not(throwA[Exception])
+        CompilerRunner.run_testable(files.toArray) must throwA[Exception]
       }
 
       "Je_2_Parameter_OverlappingWithLocalInConditional.java" in {
         val files = filesForTest("Je_2_Parameter_OverlappingWithLocalInConditional.java") ++ stdlibFilePaths
-        CompilerRunner.run_testable(files.toArray) must not(throwA[Exception])
+        CompilerRunner.run_testable(files.toArray) must throwA[Exception]
       }
 
       "Je_2_Parameter_OverlappingWithLocalInLoop.java" in {
         val files = filesForTest("Je_2_Parameter_OverlappingWithLocalInLoop.java") ++ stdlibFilePaths
-        CompilerRunner.run_testable(files.toArray) must not(throwA[Exception])
+        CompilerRunner.run_testable(files.toArray) must throwA[Exception]
       }
 
       "Je_2_Parameter_OverlappingWithLocalInsideNewBlock.java" in {
         val files = filesForTest("Je_2_Parameter_OverlappingWithLocalInsideNewBlock.java") ++ stdlibFilePaths
-        CompilerRunner.run_testable(files.toArray) must not(throwA[Exception])
+        CompilerRunner.run_testable(files.toArray) must throwA[Exception]
       }
 
       "Je_2_Parameter_OverlappingWithLocalNotFirst.java" in {
         val files = filesForTest("Je_2_Parameter_OverlappingWithLocalNotFirst.java") ++ stdlibFilePaths
-        CompilerRunner.run_testable(files.toArray) must not(throwA[Exception])
+        CompilerRunner.run_testable(files.toArray) must throwA[Exception]
       }
 
       "Je_2_Parameter_OverlappingWithParameter.java" in {
         val files = filesForTest("Je_2_Parameter_OverlappingWithParameter.java") ++ stdlibFilePaths
-        CompilerRunner.run_testable(files.toArray) must not(throwA[Exception])
+        CompilerRunner.run_testable(files.toArray) must throwA[Exception]
       }
 
       "Je_3_ImportOnDemand_ClashWithImplicitImport" in {
         val files = filesForTest("Je_3_ImportOnDemand_ClashWithImplicitImport") ++ stdlibFilePaths
-        CompilerRunner.run_testable(files.toArray) must not(throwA[Exception])
+        CompilerRunner.run_testable(files.toArray) must throwA[Exception]
       }
 
       "Je_3_ImportOnDemand_ClassInMultiplePackages" in {
         val files = filesForTest("Je_3_ImportOnDemand_ClassInMultiplePackages") ++ stdlibFilePaths
-        CompilerRunner.run_testable(files.toArray) must not(throwA[Exception])
+        CompilerRunner.run_testable(files.toArray) must throwA[Exception]
       }
 
       "Je_3_ImportOnDemand_ClassNameAsPackage" in {
         val files = filesForTest("Je_3_ImportOnDemand_ClassNameAsPackage") ++ stdlibFilePaths
-        CompilerRunner.run_testable(files.toArray) must not(throwA[Exception])
+        CompilerRunner.run_testable(files.toArray) must throwA[Exception]
       }
 
       "Je_3_ImportOnDemand_NonExisting.java" in {
         val files = filesForTest("Je_3_ImportOnDemand_NonExisting.java") ++ stdlibFilePaths
-        CompilerRunner.run_testable(files.toArray) must not(throwA[Exception])
+        CompilerRunner.run_testable(files.toArray) must throwA[Exception]
       }
 
       "Je_3_ImportOnDemand_NonExistingPackage_FromPreviousTestcase.java" in {
         val files = filesForTest("Je_3_ImportOnDemand_NonExistingPackage_FromPreviousTestcase.java") ++ stdlibFilePaths
-        CompilerRunner.run_testable(files.toArray) must not(throwA[Exception])
+        CompilerRunner.run_testable(files.toArray) must throwA[Exception]
       }
 
       "Je_3_ImportOnDemand_PackagePrefixExists" in {
         val files = filesForTest("Je_3_ImportOnDemand_PackagePrefixExists") ++ stdlibFilePaths
-        CompilerRunner.run_testable(files.toArray) must not(throwA[Exception])
+        CompilerRunner.run_testable(files.toArray) must throwA[Exception]
       }
 
       "Je_3_PackageClashWithType_Explicit" in {
         val files = filesForTest("Je_3_PackageClashWithType_Explicit") ++ stdlibFilePaths
-        CompilerRunner.run_testable(files.toArray) must not(throwA[Exception])
+        CompilerRunner.run_testable(files.toArray) must throwA[Exception]
       }
 
       "Je_3_PackageClashWithType_Linked" in {
         val files = filesForTest("Je_3_PackageClashWithType_Linked") ++ stdlibFilePaths
-        CompilerRunner.run_testable(files.toArray) must not(throwA[Exception])
+        CompilerRunner.run_testable(files.toArray) must throwA[Exception]
       }
 
       "Je_3_PackageClashWithType_SingleTypeImport" in {
         val files = filesForTest("Je_3_PackageClashWithType_SingleTypeImport") ++ stdlibFilePaths
-        CompilerRunner.run_testable(files.toArray) must not(throwA[Exception])
+        CompilerRunner.run_testable(files.toArray) must throwA[Exception]
       }
 
       "Je_3_PackageExists_AlmostPrefix_External" in {
         val files = filesForTest("Je_3_PackageExists_AlmostPrefix_External") ++ stdlibFilePaths
-        CompilerRunner.run_testable(files.toArray) must not(throwA[Exception])
+        CompilerRunner.run_testable(files.toArray) must throwA[Exception]
       }
 
       "Je_3_PackageExists_AlmostPrefix_Internal" in {
         val files = filesForTest("Je_3_PackageExists_AlmostPrefix_Internal") ++ stdlibFilePaths
-        CompilerRunner.run_testable(files.toArray) must not(throwA[Exception])
+        CompilerRunner.run_testable(files.toArray) must throwA[Exception]
       }
 
       "Je_3_PackageNameIsClassName" in {
         val files = filesForTest("Je_3_PackageNameIsClassName") ++ stdlibFilePaths
-        CompilerRunner.run_testable(files.toArray) must not(throwA[Exception])
+        CompilerRunner.run_testable(files.toArray) must throwA[Exception]
       }
 
       "Je_3_PackageNameIsClassName_External" in {
         val files = filesForTest("Je_3_PackageNameIsClassName_External") ++ stdlibFilePaths
-        CompilerRunner.run_testable(files.toArray) must not(throwA[Exception])
+        CompilerRunner.run_testable(files.toArray) must throwA[Exception]
       }
 
       "Je_3_PackageNameIsClassName_ExternalPrefix" in {
         val files = filesForTest("Je_3_PackageNameIsClassName_ExternalPrefix") ++ stdlibFilePaths
-        CompilerRunner.run_testable(files.toArray) must not(throwA[Exception])
+        CompilerRunner.run_testable(files.toArray) must throwA[Exception]
       }
 
       "Je_3_PackageNameIsClassName_Prefix" in {
         val files = filesForTest("Je_3_PackageNameIsClassName_Prefix") ++ stdlibFilePaths
-        CompilerRunner.run_testable(files.toArray) must not(throwA[Exception])
+        CompilerRunner.run_testable(files.toArray) must throwA[Exception]
       }
 
       "Je_3_Resolve_ImplicitJavaIO" in {
         val files = filesForTest("Je_3_Resolve_ImplicitJavaIO") ++ stdlibFilePaths
-        CompilerRunner.run_testable(files.toArray) must not(throwA[Exception])
+        CompilerRunner.run_testable(files.toArray) must throwA[Exception]
       }
 
       "Je_3_Resolve_ImportDifferentFromSamePackage" in {
         val files = filesForTest("Je_3_Resolve_ImportDifferentFromSamePackage") ++ stdlibFilePaths
-        CompilerRunner.run_testable(files.toArray) must not(throwA[Exception])
+        CompilerRunner.run_testable(files.toArray) must throwA[Exception]
       }
 
       "Je_3_Resolve_LinkToCorrectPackage" in {
         val files = filesForTest("Je_3_Resolve_LinkToCorrectPackage") ++ stdlibFilePaths
-        CompilerRunner.run_testable(files.toArray) must not(throwA[Exception])
+        CompilerRunner.run_testable(files.toArray) must throwA[Exception]
       }
 
       "Je_3_Resolve_MissingImport" in {
         val files = filesForTest("Je_3_Resolve_MissingImport") ++ stdlibFilePaths
-        CompilerRunner.run_testable(files.toArray) must not(throwA[Exception])
+        CompilerRunner.run_testable(files.toArray) must throwA[Exception]
       }
 
       "Je_3_Resolve_NonExistingSuperclass.java" in {
         val files = filesForTest("Je_3_Resolve_NonExistingSuperclass.java") ++ stdlibFilePaths
-        CompilerRunner.run_testable(files.toArray) must not(throwA[Exception])
+        CompilerRunner.run_testable(files.toArray) must throwA[Exception]
       }
 
       "Je_3_Resolve_SamePackageAndClassName.java" in {
         val files = filesForTest("Je_3_Resolve_SamePackageAndClassName.java") ++ stdlibFilePaths
-        CompilerRunner.run_testable(files.toArray) must not(throwA[Exception])
+        CompilerRunner.run_testable(files.toArray) must throwA[Exception]
       }
 
       "Je_3_SingleTypeImport_ClashWithClass" in {
         val files = filesForTest("Je_3_SingleTypeImport_ClashWithClass") ++ stdlibFilePaths
-        CompilerRunner.run_testable(files.toArray) must not(throwA[Exception])
+        CompilerRunner.run_testable(files.toArray) must throwA[Exception]
       }
 
       "Je_3_SingleTypeImport_ClashWithClass_InPackage" in {
         val files = filesForTest("Je_3_SingleTypeImport_ClashWithClass_InPackage") ++ stdlibFilePaths
-        CompilerRunner.run_testable(files.toArray) must not(throwA[Exception])
+        CompilerRunner.run_testable(files.toArray) must throwA[Exception]
       }
 
       "Je_3_SingleTypeImport_ClashWithEachOther" in {
         val files = filesForTest("Je_3_SingleTypeImport_ClashWithEachOther") ++ stdlibFilePaths
-        CompilerRunner.run_testable(files.toArray) must not(throwA[Exception])
+        CompilerRunner.run_testable(files.toArray) must throwA[Exception]
       }
 
       "Je_3_SingleTypeImport_ClashWithEachOther_MultipleImports" in {
         val files = filesForTest("Je_3_SingleTypeImport_ClashWithEachOther_MultipleImports") ++ stdlibFilePaths
-        CompilerRunner.run_testable(files.toArray) must not(throwA[Exception])
+        CompilerRunner.run_testable(files.toArray) must throwA[Exception]
       }
 
       "Je_3_SingleTypeImport_ClashWithInterface" in {
         val files = filesForTest("Je_3_SingleTypeImport_ClashWithInterface") ++ stdlibFilePaths
-        CompilerRunner.run_testable(files.toArray) must not(throwA[Exception])
+        CompilerRunner.run_testable(files.toArray) must throwA[Exception]
       }
 
       "Je_3_SingleTypeImport_NonExistingPackage" in {
         val files = filesForTest("Je_3_SingleTypeImport_NonExistingPackage") ++ stdlibFilePaths
-        CompilerRunner.run_testable(files.toArray) must not(throwA[Exception])
+        CompilerRunner.run_testable(files.toArray) must throwA[Exception]
       }
 
       "Je_3_SingleTypeImport_NonExistingType" in {
         val files = filesForTest("Je_3_SingleTypeImport_NonExistingType") ++ stdlibFilePaths
-        CompilerRunner.run_testable(files.toArray) must not(throwA[Exception])
+        CompilerRunner.run_testable(files.toArray) must throwA[Exception]
       }
 
       "Je_3_UndefinedType_DefaultPackageNotVisible" in {
         val files = filesForTest("Je_3_UndefinedType_DefaultPackageNotVisible") ++ stdlibFilePaths
-        CompilerRunner.run_testable(files.toArray) must not(throwA[Exception])
+        CompilerRunner.run_testable(files.toArray) must throwA[Exception]
       }
 
       "Je_4_AbstractMethod_AbstractObjectMethods" in {
         val files = filesForTest("Je_4_AbstractMethod_AbstractObjectMethods") ++ stdlibFilePaths
-        CompilerRunner.run_testable(files.toArray) must not(throwA[Exception])
+        CompilerRunner.run_testable(files.toArray) must throwA[Exception]
       }
 
       "Je_4_AbstractMethod_Declared.java" in {
         val files = filesForTest("Je_4_AbstractMethod_Declared.java") ++ stdlibFilePaths
-        CompilerRunner.run_testable(files.toArray) must not(throwA[Exception])
+        CompilerRunner.run_testable(files.toArray) must throwA[Exception]
       }
 
       "Je_4_AbstractMethod_InheritFromInterface_1" in {
         val files = filesForTest("Je_4_AbstractMethod_InheritFromInterface_1") ++ stdlibFilePaths
-        CompilerRunner.run_testable(files.toArray) must not(throwA[Exception])
+        CompilerRunner.run_testable(files.toArray) must throwA[Exception]
       }
 
       "Je_4_AbstractMethod_InheritFromInterface_2" in {
         val files = filesForTest("Je_4_AbstractMethod_InheritFromInterface_2") ++ stdlibFilePaths
-        CompilerRunner.run_testable(files.toArray) must not(throwA[Exception])
+        CompilerRunner.run_testable(files.toArray) must throwA[Exception]
       }
 
       "Je_4_AbstractMethod_InheritFromSuperclass" in {
         val files = filesForTest("Je_4_AbstractMethod_InheritFromSuperclass") ++ stdlibFilePaths
-        CompilerRunner.run_testable(files.toArray) must not(throwA[Exception])
+        CompilerRunner.run_testable(files.toArray) must throwA[Exception]
       }
 
       "Je_4_AbstractMethod_InheritFromSuperclassInterface" in {
         val files = filesForTest("Je_4_AbstractMethod_InheritFromSuperclassInterface") ++ stdlibFilePaths
-        CompilerRunner.run_testable(files.toArray) must not(throwA[Exception])
+        CompilerRunner.run_testable(files.toArray) must throwA[Exception]
       }
 
       "Je_4_AbstractMethod_InheritFromSuperInterface" in {
         val files = filesForTest("Je_4_AbstractMethod_InheritFromSuperInterface") ++ stdlibFilePaths
-        CompilerRunner.run_testable(files.toArray) must not(throwA[Exception])
+        CompilerRunner.run_testable(files.toArray) must throwA[Exception]
       }
 
       "Je_4_AbstractMethod_NotAllImplemented" in {
         val files = filesForTest("Je_4_AbstractMethod_NotAllImplemented") ++ stdlibFilePaths
-        CompilerRunner.run_testable(files.toArray) must not(throwA[Exception])
+        CompilerRunner.run_testable(files.toArray) must throwA[Exception]
       }
 
       "Je_4_ClassExtendsCyclicClass" in {
         val files = filesForTest("Je_4_ClassExtendsCyclicClass") ++ stdlibFilePaths
-        CompilerRunner.run_testable(files.toArray) must not(throwA[Exception])
+        CompilerRunner.run_testable(files.toArray) must throwA[Exception]
       }
 
       "Je_4_DuplicateConstructor_Args.java" in {
         val files = filesForTest("Je_4_DuplicateConstructor_Args.java") ++ stdlibFilePaths
-        CompilerRunner.run_testable(files.toArray) must not(throwA[Exception])
+        CompilerRunner.run_testable(files.toArray) must throwA[Exception]
       }
 
       "Je_4_DuplicateConstructor_ArrayArgs.java" in {
         val files = filesForTest("Je_4_DuplicateConstructor_ArrayArgs.java") ++ stdlibFilePaths
-        CompilerRunner.run_testable(files.toArray) must not(throwA[Exception])
+        CompilerRunner.run_testable(files.toArray) must throwA[Exception]
       }
 
       "Je_4_DuplicateConstructor_NoArgs.java" in {
         val files = filesForTest("Je_4_DuplicateConstructor_NoArgs.java") ++ stdlibFilePaths
-        CompilerRunner.run_testable(files.toArray) must not(throwA[Exception])
+        CompilerRunner.run_testable(files.toArray) must throwA[Exception]
       }
 
       "Je_4_DuplicateMethodDeclare_Args.java" in {
         val files = filesForTest("Je_4_DuplicateMethodDeclare_Args.java") ++ stdlibFilePaths
-        CompilerRunner.run_testable(files.toArray) must not(throwA[Exception])
+        CompilerRunner.run_testable(files.toArray) must throwA[Exception]
       }
 
       "Je_4_DuplicateMethodDeclare_ArrayArgs.java" in {
         val files = filesForTest("Je_4_DuplicateMethodDeclare_ArrayArgs.java") ++ stdlibFilePaths
-        CompilerRunner.run_testable(files.toArray) must not(throwA[Exception])
+        CompilerRunner.run_testable(files.toArray) must throwA[Exception]
       }
 
       "Je_4_DuplicateMethodDeclare_DifferentReturnTypes.java" in {
         val files = filesForTest("Je_4_DuplicateMethodDeclare_DifferentReturnTypes.java") ++ stdlibFilePaths
-        CompilerRunner.run_testable(files.toArray) must not(throwA[Exception])
+        CompilerRunner.run_testable(files.toArray) must throwA[Exception]
       }
 
       "Je_4_DuplicateMethodDeclare_NoArgs.java" in {
         val files = filesForTest("Je_4_DuplicateMethodDeclare_NoArgs.java") ++ stdlibFilePaths
-        CompilerRunner.run_testable(files.toArray) must not(throwA[Exception])
+        CompilerRunner.run_testable(files.toArray) must throwA[Exception]
       }
 
       "Je_4_ExtendFinal.java" in {
         val files = filesForTest("Je_4_ExtendFinal.java") ++ stdlibFilePaths
-        CompilerRunner.run_testable(files.toArray) must not(throwA[Exception])
+        CompilerRunner.run_testable(files.toArray) must throwA[Exception]
       }
 
       "Je_4_ExtendNonClass" in {
         val files = filesForTest("Je_4_ExtendNonClass") ++ stdlibFilePaths
-        CompilerRunner.run_testable(files.toArray) must not(throwA[Exception])
+        CompilerRunner.run_testable(files.toArray) must throwA[Exception]
       }
 
       "Je_4_FinalHide" in {
         val files = filesForTest("Je_4_FinalHide") ++ stdlibFilePaths
-        CompilerRunner.run_testable(files.toArray) must not(throwA[Exception])
+        CompilerRunner.run_testable(files.toArray) must throwA[Exception]
       }
 
       "Je_4_FinalOverride_DifferentReturnTypes.java" in {
         val files = filesForTest("Je_4_FinalOverride_DifferentReturnTypes.java") ++ stdlibFilePaths
-        CompilerRunner.run_testable(files.toArray) must not(throwA[Exception])
+        CompilerRunner.run_testable(files.toArray) must throwA[Exception]
       }
 
       "Je_4_FinalOverride_SameSignature.java" in {
         val files = filesForTest("Je_4_FinalOverride_SameSignature.java") ++ stdlibFilePaths
-        CompilerRunner.run_testable(files.toArray) must not(throwA[Exception])
+        CompilerRunner.run_testable(files.toArray) must throwA[Exception]
       }
 
       "Je_4_Hide_DifferentReturnTypes" in {
         val files = filesForTest("Je_4_Hide_DifferentReturnTypes") ++ stdlibFilePaths
-        CompilerRunner.run_testable(files.toArray) must not(throwA[Exception])
+        CompilerRunner.run_testable(files.toArray) must throwA[Exception]
       }
 
       "Je_4_ImplementNonInterface_Class.java" in {
         val files = filesForTest("Je_4_ImplementNonInterface_Class.java") ++ stdlibFilePaths
-        CompilerRunner.run_testable(files.toArray) must not(throwA[Exception])
+        CompilerRunner.run_testable(files.toArray) must throwA[Exception]
       }
 
       "Je_4_ImplementNonInterface_InterfaceAndClass" in {
         val files = filesForTest("Je_4_ImplementNonInterface_InterfaceAndClass") ++ stdlibFilePaths
-        CompilerRunner.run_testable(files.toArray) must not(throwA[Exception])
+        CompilerRunner.run_testable(files.toArray) must throwA[Exception]
       }
 
       "Je_4_ImplementTwice_QualifiedName" in {
         val files = filesForTest("Je_4_ImplementTwice_QualifiedName") ++ stdlibFilePaths
-        CompilerRunner.run_testable(files.toArray) must not(throwA[Exception])
+        CompilerRunner.run_testable(files.toArray) must throwA[Exception]
       }
 
       "Je_4_ImplementTwice_SimpleName" in {
         val files = filesForTest("Je_4_ImplementTwice_SimpleName") ++ stdlibFilePaths
-        CompilerRunner.run_testable(files.toArray) must not(throwA[Exception])
+        CompilerRunner.run_testable(files.toArray) must throwA[Exception]
       }
 
       "Je_4_InheritShadowsNonabstract" in {
         val files = filesForTest("Je_4_InheritShadowsNonabstract") ++ stdlibFilePaths
-        CompilerRunner.run_testable(files.toArray) must not(throwA[Exception])
+        CompilerRunner.run_testable(files.toArray) must throwA[Exception]
       }
 
       "Je_4_Interface_FinalMethodFromObject" in {
         val files = filesForTest("Je_4_Interface_FinalMethodFromObject") ++ stdlibFilePaths
-        CompilerRunner.run_testable(files.toArray) must not(throwA[Exception])
+        CompilerRunner.run_testable(files.toArray) must throwA[Exception]
       }
 
       "Je_4_InterfaceExtendsCyclicInterface" in {
         val files = filesForTest("Je_4_InterfaceExtendsCyclicInterface") ++ stdlibFilePaths
-        CompilerRunner.run_testable(files.toArray) must not(throwA[Exception])
+        CompilerRunner.run_testable(files.toArray) must throwA[Exception]
       }
 
       "Je_4_Override_DifferentReturnTypes_AbstractFromSuperclassAndInterface" in {
         val files = filesForTest("Je_4_Override_DifferentReturnTypes_AbstractFromSuperclassAndInterface") ++ stdlibFilePaths
-        CompilerRunner.run_testable(files.toArray) must not(throwA[Exception])
+        CompilerRunner.run_testable(files.toArray) must throwA[Exception]
       }
 
       "Je_4_Override_DifferentReturnTypes_FromSuperclassAndInterface" in {
         val files = filesForTest("Je_4_Override_DifferentReturnTypes_FromSuperclassAndInterface") ++ stdlibFilePaths
-        CompilerRunner.run_testable(files.toArray) must not(throwA[Exception])
+        CompilerRunner.run_testable(files.toArray) must throwA[Exception]
       }
 
       "Je_4_Override_DifferentReturnTypes_FromSuperclassAndInterface_NonVoid" in {
         val files = filesForTest("Je_4_Override_DifferentReturnTypes_FromSuperclassAndInterface_NonVoid") ++ stdlibFilePaths
-        CompilerRunner.run_testable(files.toArray) must not(throwA[Exception])
+        CompilerRunner.run_testable(files.toArray) must throwA[Exception]
       }
 
       "Je_4_Override_DifferentReturnTypes_TwoInterfaces" in {
         val files = filesForTest("Je_4_Override_DifferentReturnTypes_TwoInterfaces") ++ stdlibFilePaths
-        CompilerRunner.run_testable(files.toArray) must not(throwA[Exception])
+        CompilerRunner.run_testable(files.toArray) must throwA[Exception]
       }
 
       "Je_4_Override_DifferentReturnTypesFromInterface" in {
         val files = filesForTest("Je_4_Override_DifferentReturnTypesFromInterface") ++ stdlibFilePaths
-        CompilerRunner.run_testable(files.toArray) must not(throwA[Exception])
+        CompilerRunner.run_testable(files.toArray) must throwA[Exception]
       }
 
       "Je_4_ProtectedHide_FromSuperclass" in {
         val files = filesForTest("Je_4_ProtectedHide_FromSuperclass") ++ stdlibFilePaths
-        CompilerRunner.run_testable(files.toArray) must not(throwA[Exception])
+        CompilerRunner.run_testable(files.toArray) must throwA[Exception]
       }
 
       "Je_4_ProtectedOverride_Abstract" in {
         val files = filesForTest("Je_4_ProtectedOverride_Abstract") ++ stdlibFilePaths
-        CompilerRunner.run_testable(files.toArray) must not(throwA[Exception])
+        CompilerRunner.run_testable(files.toArray) must throwA[Exception]
       }
 
       "Je_4_ProtectedOverride_DifferentThrows" in {
         val files = filesForTest("Je_4_ProtectedOverride_DifferentThrows") ++ stdlibFilePaths
-        CompilerRunner.run_testable(files.toArray) must not(throwA[Exception])
+        CompilerRunner.run_testable(files.toArray) must throwA[Exception]
       }
 
       "Je_4_ProtectedOverride_Exception_Clone" in {
         val files = filesForTest("Je_4_ProtectedOverride_Exception_Clone") ++ stdlibFilePaths
-        CompilerRunner.run_testable(files.toArray) must not(throwA[Exception])
+        CompilerRunner.run_testable(files.toArray) must throwA[Exception]
       }
 
       "Je_4_ProtectedOverride_FromInterface" in {
         val files = filesForTest("Je_4_ProtectedOverride_FromInterface") ++ stdlibFilePaths
-        CompilerRunner.run_testable(files.toArray) must not(throwA[Exception])
+        CompilerRunner.run_testable(files.toArray) must throwA[Exception]
       }
 
       "Je_4_ProtectedOverride_FromSuperclass" in {
         val files = filesForTest("Je_4_ProtectedOverride_FromSuperclass") ++ stdlibFilePaths
-        CompilerRunner.run_testable(files.toArray) must not(throwA[Exception])
+        CompilerRunner.run_testable(files.toArray) must throwA[Exception]
       }
 
       "Je_4_ProtectedOverride_FromSuperclassAndInterface" in {
         val files = filesForTest("Je_4_ProtectedOverride_FromSuperclassAndInterface") ++ stdlibFilePaths
-        CompilerRunner.run_testable(files.toArray) must not(throwA[Exception])
+        CompilerRunner.run_testable(files.toArray) must throwA[Exception]
       }
 
       "Je_4_ProtectedOverride_TwoVersionsFromSuperclass" in {
         val files = filesForTest("Je_4_ProtectedOverride_TwoVersionsFromSuperclass") ++ stdlibFilePaths
-        CompilerRunner.run_testable(files.toArray) must not(throwA[Exception])
+        CompilerRunner.run_testable(files.toArray) must throwA[Exception]
       }
 
       "Je_4_ReplaceInstance_FromSuperclass.java" in {
         val files = filesForTest("Je_4_ReplaceInstance_FromSuperclass.java") ++ stdlibFilePaths
-        CompilerRunner.run_testable(files.toArray) must not(throwA[Exception])
+        CompilerRunner.run_testable(files.toArray) must throwA[Exception]
       }
 
       "Je_4_ReplaceStatic_FromSuperclass" in {
         val files = filesForTest("Je_4_ReplaceStatic_FromSuperclass") ++ stdlibFilePaths
-        CompilerRunner.run_testable(files.toArray) must not(throwA[Exception])
+        CompilerRunner.run_testable(files.toArray) must throwA[Exception]
       }
 
       "Je_4_ReplaceStatic_FromSuperclass_DifferentReturnTypes" in {
         val files = filesForTest("Je_4_ReplaceStatic_FromSuperclass_DifferentReturnTypes") ++ stdlibFilePaths
-        CompilerRunner.run_testable(files.toArray) must not(throwA[Exception])
+        CompilerRunner.run_testable(files.toArray) must throwA[Exception]
       }
 
       "Je_4_Resolve_DefaultPackage" in {
         val files = filesForTest("Je_4_Resolve_DefaultPackage") ++ stdlibFilePaths
-        CompilerRunner.run_testable(files.toArray) must not(throwA[Exception])
+        CompilerRunner.run_testable(files.toArray) must throwA[Exception]
       }
 
       "Je_4_SelfDependency_CircularExtends_1" in {
         val files = filesForTest("Je_4_SelfDependency_CircularExtends_1") ++ stdlibFilePaths
-        CompilerRunner.run_testable(files.toArray) must not(throwA[Exception])
+        CompilerRunner.run_testable(files.toArray) must throwA[Exception]
       }
 
       "Je_4_SelfDependency_CircularExtends_2" in {
         val files = filesForTest("Je_4_SelfDependency_CircularExtends_2") ++ stdlibFilePaths
-        CompilerRunner.run_testable(files.toArray) must not(throwA[Exception])
+        CompilerRunner.run_testable(files.toArray) must throwA[Exception]
       }
 
       "Je_4_SelfDependency_ExtendsItself.java" in {
         val files = filesForTest("Je_4_SelfDependency_ExtendsItself.java") ++ stdlibFilePaths
-        CompilerRunner.run_testable(files.toArray) must not(throwA[Exception])
+        CompilerRunner.run_testable(files.toArray) must throwA[Exception]
       }
 
       "Je_5_Interface_ImplicitReplace_DifferentReturnType.java" in {
         val files = filesForTest("Je_5_Interface_ImplicitReplace_DifferentReturnType.java") ++ stdlibFilePaths
-        CompilerRunner.run_testable(files.toArray) must not(throwA[Exception])
+        CompilerRunner.run_testable(files.toArray) must throwA[Exception]
       }
     }
   }
