@@ -44,14 +44,14 @@ object AbstractSyntaxNode {
       packageDeclaration.toList ++ importDeclarations.toList ++ typeDeclarations.toList
   }
 
-  case class PackageDeclaration(name: InputString) extends AbstractSyntaxNode
+  case class PackageDeclaration(name: Name) extends AbstractSyntaxNode
 
   sealed trait ImportDeclaration extends AbstractSyntaxNode {
-    def name: InputString
+    def name: Name
   }
 
-  case class SingleTypeImportDeclaration(name: InputString) extends ImportDeclaration
-  case class TypeImportOnDemandDeclaration(name: InputString) extends ImportDeclaration
+  case class SingleTypeImportDeclaration(name: Name) extends ImportDeclaration
+  case class TypeImportOnDemandDeclaration(name: Name) extends ImportDeclaration
 
   case class Identifier(value: InputString) extends AbstractSyntaxNode
 
@@ -384,10 +384,21 @@ object AbstractSyntaxNode {
       Seq(CompilationUnit(packageDeclaration, importDeclarations, typeDeclarations))
     }
 
-    case p: ParseNodes.PackageDeclaration => Seq(PackageDeclaration(p.children(1).value.get))
+    case p: ParseNodes.PackageDeclaration => {
+      val children: Seq[AbstractSyntaxNode] = p.children.flatMap(recursive(_))
+      Seq(PackageDeclaration(children.collectFirst { case x: Name => x }.get))
+    }
 
-    case i: ParseNodes.SingleTypeImportDeclaration   => Seq(SingleTypeImportDeclaration(i.children(1).value.get))
-    case i: ParseNodes.TypeImportOnDemandDeclaration => Seq(TypeImportOnDemandDeclaration(i.children(1).value.get))
+    case i: ParseNodes.SingleTypeImportDeclaration   => {
+      val children: Seq[AbstractSyntaxNode] = i.children.flatMap(recursive(_))
+      Seq(SingleTypeImportDeclaration(children.collectFirst { case x: Name => x }.get))
+    }
+
+    case i: ParseNodes.TypeImportOnDemandDeclaration => {
+      val children: Seq[AbstractSyntaxNode] = i.children.flatMap(recursive(_))
+      Seq(TypeImportOnDemandDeclaration(children.collectFirst { case x: Name => x }.get))
+    }
+
 
     case c: ParseNodes.ClassDeclaration => {
       val children: Seq[AbstractSyntaxNode] = c.children.flatMap(recursive(_))
