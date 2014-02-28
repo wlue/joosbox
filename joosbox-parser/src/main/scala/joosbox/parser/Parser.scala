@@ -177,7 +177,7 @@ class Parser(
         case Some(ShiftTransition(newState)) =>
           stateStack.push(newState)
         case None => {
-          throw SyntaxError(a, "Expected one of: " + newPossibleStates.keys.map(_.name).mkString(", ") + "\nStack: " + nodeStack.toList.reverse)
+          throw SyntaxError(a, "Expected one of: " + newPossibleStates.keys.map(_.name).mkString(", "))
         }
       }
     }

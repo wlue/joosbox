@@ -26,8 +26,7 @@ class CompilerSpec extends Specification {
     "pass marmoset tests for assignment 2" in {
       "J1_1_Cast_NamedTypeAsVariable.java" in {
         val files = filesForTest("J1_1_Cast_NamedTypeAsVariable.java") ++ stdlibFilePaths
-        CompilerRunner.runTestable(files.toArray)// must not(throwA[Exception])
-        true
+        CompilerRunner.runTestable(files.toArray) must not(throwA[Exception])
       }
 
       "J1_2_Fields_Case.java" in {
