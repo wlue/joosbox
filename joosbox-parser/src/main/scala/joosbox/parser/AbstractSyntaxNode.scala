@@ -13,6 +13,11 @@ sealed trait AbstractSyntaxNode {
 
 object AbstractSyntaxNode {
 
+  /**
+   * AST nodes that can be referenced as a name.
+   */
+  sealed trait Referenceable
+
   sealed trait Literal extends Expression
   case class CharLiteral(value: InputString) extends Literal
   case class StringLiteral(value: InputString) extends Literal
@@ -181,7 +186,7 @@ object AbstractSyntaxNode {
     primary: Primary,
     name: InputString,
     args: Seq[Expression] = Seq.empty[Expression]
-  ) extends Expression {  
+  ) extends Expression {
     override def children: List[AbstractSyntaxNode] = List(primary) ++ args.toList
   }
 
@@ -206,7 +211,7 @@ object AbstractSyntaxNode {
   case class FormalParameter(
     val name: InputString,
     val varType: Type
-  ) extends AbstractSyntaxNode
+  ) extends AbstractSyntaxNode with Referenceable
 
   case class ArrayType(subtype: Type) extends ReferenceType
   case class ClassOrInterfaceType(name: Name) extends ReferenceType
@@ -242,7 +247,7 @@ object AbstractSyntaxNode {
     override val modifiers: Set[Modifier] = Set.empty[Modifier],
     superclass: Option[ClassType] = None,
     override val interfaces: Set[InterfaceType] = Set.empty[InterfaceType]
-  ) extends TypeDeclaration(name, modifiers, interfaces) {
+  ) extends TypeDeclaration(name, modifiers, interfaces) with Referenceable {
     override def children: List[AbstractSyntaxNode] =
       List(body) ++ superclass.toList ++ modifiers.toList ++ interfaces.toList
   }
@@ -253,7 +258,7 @@ object AbstractSyntaxNode {
 
     override val modifiers: Set[Modifier] = Set.empty[Modifier],
     override val interfaces: Set[InterfaceType] = Set.empty[InterfaceType]
-  ) extends TypeDeclaration(name, modifiers, interfaces) {
+  ) extends TypeDeclaration(name, modifiers, interfaces) with Referenceable {
     override def children: List[AbstractSyntaxNode] =
       List(body) ++ modifiers.toList ++ interfaces.toList
   }
@@ -262,7 +267,7 @@ object AbstractSyntaxNode {
     name: InputString,
     modifiers: Set[Modifier] = Set.empty[Modifier],
     memberType: Type
-  ) extends ClassBodyDeclaration(name, modifiers) {
+  ) extends ClassBodyDeclaration(name, modifiers) with Referenceable {
     override def children: List[AbstractSyntaxNode] =
       modifiers.toList ++ List(memberType)
   }
@@ -283,7 +288,7 @@ object AbstractSyntaxNode {
     memberType: Type,
     parameters: Set[FormalParameter] = Set.empty[FormalParameter],
     body: Option[Block] = None
-  ) extends ClassMemberDeclaration(name, modifiers, memberType) {
+  ) extends ClassMemberDeclaration(name, modifiers, memberType) with Referenceable {
     override def children: List[AbstractSyntaxNode] =
       modifiers.toList ++ List(memberType) ++ parameters.toList ++ body.toList
   }
@@ -293,7 +298,7 @@ object AbstractSyntaxNode {
     modifiers: Set[Modifier] = Set.empty[Modifier],
     memberType: Type,
     expression: Option[Expression] = None
-  ) extends ClassMemberDeclaration(name, modifiers, memberType) {
+  ) extends ClassMemberDeclaration(name, modifiers, memberType) with Referenceable {
     override def children: List[AbstractSyntaxNode] =
       modifiers.toList ++ List(memberType) ++ expression.toList
   }
@@ -304,7 +309,7 @@ object AbstractSyntaxNode {
     name: InputString,
     memberType: Type,
     expression: Option[Expression] = None
-  ) extends BlockStatement {
+  ) extends BlockStatement with Referenceable {
     override def children: List[AbstractSyntaxNode] = expression.toList
   }
 

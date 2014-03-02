@@ -2,12 +2,13 @@ package joosbox.compiler
 
 import joosbox.parser.Parser
 import joosbox.lexer.SyntaxError
+import joosbox.parser.AbstractSyntaxNode
 
 object CompilerRunner {
   def main(args: Array[String]) {
     if (args.size >= 1) {
       try {
-        run_testable(args)
+        runTestable(args)
       } catch {
         case se: SyntaxError =>
           System.err.println(se)
@@ -28,7 +29,9 @@ object CompilerRunner {
     }
   }
 
-  def run_testable(args: Array[String]) {
-    args.foreach(arg => Parser.Joos.parseFilename(arg))
+  def runTestable(args: Array[String]) {
+    val nodes: Seq[AbstractSyntaxNode] = args.map { filename: String =>
+      Parser.Joos.parseFilename(filename)
+    }
   }
 }
