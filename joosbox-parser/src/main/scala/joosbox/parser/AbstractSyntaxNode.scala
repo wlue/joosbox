@@ -101,7 +101,9 @@ object AbstractSyntaxNode {
   case class Assignment(
     leftHandSide: AbstractSyntaxNode,
     rightHandSide: Expression
-  ) extends StatementExpression
+  ) extends StatementExpression {
+    override def children: List[AbstractSyntaxNode] = List(leftHandSide, rightHandSide)
+  }
 
   sealed trait PostfixExpression extends Expression
 
@@ -166,14 +168,24 @@ object AbstractSyntaxNode {
     override def children: List[AbstractSyntaxNode] = List(expr)
   }
 
-  case class FieldAccess(primary: Primary, name: InputString) extends Expression
-  case class SimpleArrayAccess(name: Name, expr: Expression) extends Expression
-  case class ComplexArrayAccess(primary: Primary, expr: Expression) extends Expression
+  case class FieldAccess(primary: Primary, name: InputString) extends Expression {
+    override def children: List[AbstractSyntaxNode] = List(primary)
+  }
+  case class SimpleArrayAccess(name: Name, expr: Expression) extends Expression {
+    override def children: List[AbstractSyntaxNode] = List(name, expr)
+  }
+  case class ComplexArrayAccess(primary: Primary, expr: Expression) extends Expression {
+    override def children: List[AbstractSyntaxNode] = List(primary, expr)
+  }
 
   case object ThisKeyword extends Expression
 
-  case class ArrayCreationPrimary(varType: Type, dimExpr: Expression) extends Expression
-  case class ClassCreationPrimary(classType: ClassType, args: Seq[Expression]) extends Expression
+  case class ArrayCreationPrimary(varType: Type, dimExpr: Expression) extends Expression {
+    override def children: List[AbstractSyntaxNode] = List(varType, dimExpr)
+  }
+  case class ClassCreationPrimary(classType: ClassType, args: Seq[Expression]) extends Expression {
+    override def children: List[AbstractSyntaxNode] = List(classType) ++ args.toList
+  }
 
   case class SimpleMethodInvocation(
     name: Name,
@@ -211,12 +223,22 @@ object AbstractSyntaxNode {
   case class FormalParameter(
     val name: InputString,
     val varType: Type
-  ) extends AbstractSyntaxNode with Referenceable
+  ) extends AbstractSyntaxNode with Referenceable {
+    override def children: List[AbstractSyntaxNode] = List(varType)
+  }
 
-  case class ArrayType(subtype: Type) extends ReferenceType
-  case class ClassOrInterfaceType(name: Name) extends ReferenceType
-  case class ClassType(name: Name) extends ReferenceType
-  case class InterfaceType(name: Name) extends ReferenceType
+  case class ArrayType(subtype: Type) extends ReferenceType {
+    override def children: List[AbstractSyntaxNode] = List(subtype)
+  }
+  case class ClassOrInterfaceType(name: Name) extends ReferenceType{
+    override def children: List[AbstractSyntaxNode] = List(name)
+  }
+  case class ClassType(name: Name) extends ReferenceType{
+    override def children: List[AbstractSyntaxNode] = List(name)
+  }
+  case class InterfaceType(name: Name) extends ReferenceType{
+    override def children: List[AbstractSyntaxNode] = List(name)
+  }
 
   sealed trait Modifier extends AbstractSyntaxNode
 
@@ -310,7 +332,7 @@ object AbstractSyntaxNode {
     memberType: Type,
     expression: Option[Expression] = None
   ) extends BlockStatement with Referenceable {
-    override def children: List[AbstractSyntaxNode] = expression.toList
+    override def children: List[AbstractSyntaxNode] = List(memberType) ++ expression.toList
   }
 
   case class Block(statements: Seq[BlockStatement] = Seq.empty[BlockStatement]) extends Statement {
