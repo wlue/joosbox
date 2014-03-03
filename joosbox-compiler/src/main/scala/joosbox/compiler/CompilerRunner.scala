@@ -4,6 +4,8 @@ import joosbox.parser.Parser
 import joosbox.lexer.SyntaxError
 import joosbox.parser.AbstractSyntaxNode
 
+import AbstractSyntaxNode.CompilationUnit
+
 object CompilerRunner {
   def main(args: Array[String]) {
     if (args.size >= 1) {
@@ -24,14 +26,17 @@ object CompilerRunner {
           System.exit(42)
       }
     } else {
-      println("Usage: joosc <file.joos>")
+      println("Usage: joosc <file.joos> <file2.joos> ...")
       System.exit(42)
     }
   }
 
   def runTestable(args: Array[String]) {
-    val nodes: Seq[AbstractSyntaxNode] = args.map { filename: String =>
+    val nodes: Seq[CompilationUnit] = args.map { filename: String =>
       Parser.Joos.parseFilename(filename)
     }
+
+    val mapping = EnvironmentBuilder.build(nodes)
+    TypeLinker.link(nodes, mapping)
   }
 }

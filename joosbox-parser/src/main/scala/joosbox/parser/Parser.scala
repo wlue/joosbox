@@ -124,10 +124,16 @@ class Parser(
   val productionRules: List[ProductionRule],
   val transitionTable: Map[Int, Map[ParseNodeType, Transition]]
 ) {
+  import AbstractSyntaxNode.CompilationUnit
+
   lazy val lexer = TokenNFA.nfa.toDFA
 
-  def parseFilename(filename: String): AbstractSyntaxNode =
-    parseString(scala.io.Source.fromFile(filename).mkString, filename)
+  def parseFilename(filename: String): CompilationUnit = {
+    parseString(scala.io.Source.fromFile(filename).mkString, filename) match {
+      case node: CompilationUnit => node
+      case _ => throw new Exception("Does not parse as a compilation unit.")
+    }
+  }
 
   def parseString(str: String, filename: String = "<input>"): AbstractSyntaxNode =
     AbstractSyntaxNode.parse(parse(lexer.matchString(str, filename).get)).head
