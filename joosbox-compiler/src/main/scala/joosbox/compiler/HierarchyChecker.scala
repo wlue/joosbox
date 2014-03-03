@@ -18,9 +18,9 @@ import AbstractSyntaxNode.Referenceable
 
   -* An interface must not extend a class.
 
-  - An interface must not be repeated in an implements clause of an interface.
+  -* An interface must not be repeated in an implements clause of an class.
 
-  - An interface must not be repeated in an extends clause of an interface.
+  -* An interface must not be repeated in an extends clause of an interface.
 
   - A class or interface must not declare two methods with the same signature.
 
@@ -84,6 +84,8 @@ object HierarchyChecker {
               throw new SyntaxError("ERROR: Should have been caught earlier.")
             }
         }
+
+        val implement_names = interfaces.groupBy(x => x.name).mapValues(_.size)
         interfaces.foreach {
           case i : InterfaceType =>
             val env = mapping.mapping.get(node)
@@ -97,12 +99,17 @@ object HierarchyChecker {
             } else {
               throw new SyntaxError("ERROR: Should have been caught earlier.")
             }
+            if (implement_names.get(i.name).get > 1) {
+              throw new SyntaxError("An interface must not be repeated in an extends clause of an interface.")
+            }
+
           case _ => Unit
         }
 
       case node: InterfaceDeclaration =>
         val interfaces: Set[InterfaceType] = node.interfaces
 
+        val extend_names = interfaces.groupBy(x => x.name).mapValues(_.size)
         interfaces.foreach {
           case i : InterfaceType =>
             val env = mapping.mapping.get(node)
@@ -115,6 +122,9 @@ object HierarchyChecker {
               }
             } else {
               throw new SyntaxError("ERROR: Should have been caught earlier.")
+            }
+            if (extend_names.get(i.name).get > 1) {
+              throw new SyntaxError("An interface must not be repeated in an extends clause of an interface.")
             }
           case _ => Unit
         }
