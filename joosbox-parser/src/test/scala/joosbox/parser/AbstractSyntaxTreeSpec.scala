@@ -114,7 +114,11 @@ class AbstractSyntaxTreeSpec extends Specification {
                 )
               )
             ),
-            Set(AbstractSyntaxNode.PublicKeyword)
+            Set(AbstractSyntaxNode.PublicKeyword),
+            Some(AbstractSyntaxNode.ClassType(
+              AbstractSyntaxNode.QualifiedName(List(
+                "java", "lang", "Object")))),
+            Set()
           ))
         )
       )
@@ -245,7 +249,10 @@ class AbstractSyntaxTreeSpec extends Specification {
                 )
               )
             ),
-            Set(AbstractSyntaxNode.PublicKeyword)
+            Set(AbstractSyntaxNode.PublicKeyword),
+            Some(AbstractSyntaxNode.ClassType(
+              AbstractSyntaxNode.QualifiedName(List(
+                "java", "lang", "Object"))))
           ))
         )
       )
@@ -361,7 +368,10 @@ class AbstractSyntaxTreeSpec extends Specification {
                 )
               )
             ),
-            Set(AbstractSyntaxNode.StaticKeyword, AbstractSyntaxNode.PublicKeyword)
+            Set(AbstractSyntaxNode.StaticKeyword, AbstractSyntaxNode.PublicKeyword),
+            Some(AbstractSyntaxNode.ClassType(
+              AbstractSyntaxNode.QualifiedName(List(
+                "java", "lang", "Object"))))
           ))
         )
       )
@@ -661,7 +671,10 @@ class AbstractSyntaxTreeSpec extends Specification {
                 )
               )
             ),
-            Set(AbstractSyntaxNode.StaticKeyword, AbstractSyntaxNode.PublicKeyword)
+            Set(AbstractSyntaxNode.StaticKeyword, AbstractSyntaxNode.PublicKeyword),
+            Some(AbstractSyntaxNode.ClassType(
+              AbstractSyntaxNode.QualifiedName(List(
+                "java", "lang", "Object"))))
           ))
         )
       )
@@ -723,7 +736,10 @@ public class Test {
                   )
                 )
               ),
-              Set(AbstractSyntaxNode.PublicKeyword)
+              Set(AbstractSyntaxNode.PublicKeyword),
+              Some(AbstractSyntaxNode.ClassType(
+                AbstractSyntaxNode.QualifiedName(List(
+                  "java", "lang", "Object"))))
             ))
           )
         )
@@ -760,7 +776,10 @@ public class Test {
                   )
                 )
               ),
-              Set(AbstractSyntaxNode.PublicKeyword)
+              Set(AbstractSyntaxNode.PublicKeyword),
+              Some(AbstractSyntaxNode.ClassType(
+                AbstractSyntaxNode.QualifiedName(List(
+                  "java", "lang", "Object"))))
             ))
           )
         )
