@@ -30,7 +30,10 @@ object EnvironmentBuilder {
   def environmentFromNode(node: AbstractSyntaxNode, parent: Environment): Option[Environment] = {
     node match {
       case n: AbstractSyntaxNode.CompilationUnit => {
-        val mapping: Map[EnvironmentLookup, Referenceable] = n.typeDeclarations.map(x => (NameLookup(x.name), x)).toMap
+        val mapping: Map[EnvironmentLookup, Referenceable] = (
+          n.interfaceDeclarations.map(x => (NameLookup(x.name), x)).toMap
+          ++ n.classDeclaration.map(x => (NameLookup(x.name), x)).toMap
+        )
         Some(new ScopeEnvironment(parent, mapping))
       }
 
