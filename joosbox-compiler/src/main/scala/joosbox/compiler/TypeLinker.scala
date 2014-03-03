@@ -1,6 +1,8 @@
 package joosbox.compiler
 
 import joosbox.parser.AbstractSyntaxNode
+import joosbox.lexer.InputString
+import joosbox.lexer.SyntaxError
 
 import AbstractSyntaxNode.CompilationUnit
 import AbstractSyntaxNode.Referenceable
@@ -42,8 +44,35 @@ object TypeLinker {
   }
 
   def check(node: AbstractSyntaxNode)(implicit mapping: EnvironmentMapping) {
+    import AbstractSyntaxNode.{
+      ImportDeclaration,
+      SingleTypeImportDeclaration,
+      TypeImportOnDemandDeclaration,
+      InterfaceDeclaration,
+      ClassDeclaration,
+      QualifiedName
+    }
+
     node match {
-      case node: CompilationUnit => Unit
+      case node: CompilationUnit =>
+        val imports: Seq[ImportDeclaration] = node.importDeclarations
+        val interfaces: Seq[InterfaceDeclaration] = node.interfaceDeclarations
+        val klass: Option[ClassDeclaration] = node.classDeclaration
+
+        klass match {
+          case Some(ClassDeclaration(className, _, _, _, _)) =>
+            imports.foreach {
+              case SingleTypeImportDeclaration(QualifiedName(nameSeq)) =>
+                val packageName: InputString = nameSeq.last
+                if (className.value == packageName.value) {
+                  throw new SyntaxError("Package import cannot be the same name as class name.");
+                }
+
+              case _ => Unit
+            }
+          case None => Unit
+        }
+
       case _ => Unit
     }
 

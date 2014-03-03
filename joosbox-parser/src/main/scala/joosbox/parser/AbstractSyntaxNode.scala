@@ -43,10 +43,12 @@ object AbstractSyntaxNode {
   case class CompilationUnit(
     packageDeclaration: Option[PackageDeclaration] = None,
     importDeclarations: Seq[ImportDeclaration] = Seq.empty[ImportDeclaration],
-    typeDeclarations: Seq[TypeDeclaration] = Seq.empty[TypeDeclaration]
+    interfaceDeclarations: Seq[InterfaceDeclaration] = Seq.empty,
+    classDeclaration: Option[ClassDeclaration] = None
   ) extends AbstractSyntaxNode {
     override def children: List[AbstractSyntaxNode] =
-      packageDeclaration.toList ++ importDeclarations.toList ++ typeDeclarations.toList
+      packageDeclaration.toList ++ importDeclarations.toList ++
+        interfaceDeclarations.toList ++ classDeclaration.toList
   }
 
   case class PackageDeclaration(name: Name) extends AbstractSyntaxNode
@@ -253,7 +255,7 @@ object AbstractSyntaxNode {
   case object FinalKeyword extends NonAccessModifier
   case object NativeKeyword extends NonAccessModifier
 
-  abstract class TypeDeclaration(
+  sealed abstract class TypeDeclaration(
     val name: InputString,
     val modifiers: Set[Modifier] = Set.empty[Modifier],
     val interfaces: Set[InterfaceType] = Set.empty[InterfaceType]
@@ -406,9 +408,22 @@ object AbstractSyntaxNode {
       // so there's no need to check for multiple here.
       val packageDeclaration: Option[PackageDeclaration] = children.collectFirst { case x: PackageDeclaration => x }
       val importDeclarations: Seq[ImportDeclaration] = children.collect { case x: ImportDeclaration => x }
-      val typeDeclarations: Seq[TypeDeclaration] = children.collect { case x: TypeDeclaration => x }
+      val interfaceDeclarations: Seq[InterfaceDeclaration] = children.collect { case x: InterfaceDeclaration => x }
 
-      Seq(CompilationUnit(packageDeclaration, importDeclarations, typeDeclarations))
+      // Grammar does not guarantee that we only have one class declaration, so make the check here.
+      val classDeclarations: Seq[ClassDeclaration] = children.collect { case x: ClassDeclaration => x }
+      if (classDeclarations.size > 1) {
+        throw new SyntaxError("Cannot define more than one class in a file.");
+      }
+
+      val classDeclaration: Option[ClassDeclaration] = children.collectFirst { case x: ClassDeclaration => x }
+
+      Seq(CompilationUnit(
+        packageDeclaration,
+        importDeclarations,
+        interfaceDeclarations,
+        classDeclaration
+      ))
     }
 
     case p: ParseNodes.PackageDeclaration => {
