@@ -10,13 +10,13 @@ import AbstractSyntaxNode.Referenceable
 /**
   - The hierarchy must be acyclic.
 
-  - A class must not extend an interface.
+  -* A class must not extend an interface.
 
-  - A class must not extend a final class.
+  -* A class must not extend a final class.
 
-  - A class must not implement a class.
+  -* A class must not implement a class.
 
-  - An interface must not extend a class.
+  -* An interface must not extend a class.
 
   - An interface must not be repeated in an implements clause of an interface.
 
@@ -84,6 +84,22 @@ object HierarchyChecker {
               throw new SyntaxError("ERROR: Should have been caught earlier.")
             }
         }
+        interfaces.foreach {
+          case i : InterfaceType =>
+            val env = mapping.mapping.get(node)
+            if (!env.isEmpty) {
+              val ref = env.get.lookup(i.name)
+              ref match {
+                case Some(ClassDeclaration(_, _, _, _, _)) =>
+                  throw new SyntaxError("A class must not implement a class.")
+                case _ => Unit
+              }
+            } else {
+              throw new SyntaxError("ERROR: Should have been caught earlier.")
+            }
+          case _ => Unit
+        }
+
       case node: InterfaceDeclaration =>
         val interfaces: Set[InterfaceType] = node.interfaces
 
@@ -102,6 +118,7 @@ object HierarchyChecker {
             }
           case _ => Unit
         }
+
       case _ => Unit
     }
 
