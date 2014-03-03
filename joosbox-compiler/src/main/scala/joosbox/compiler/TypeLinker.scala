@@ -45,16 +45,19 @@ object TypeLinker {
 
   def check(node: AbstractSyntaxNode)(implicit mapping: EnvironmentMapping) {
     import AbstractSyntaxNode.{
+      PackageDeclaration,
       ImportDeclaration,
       SingleTypeImportDeclaration,
       TypeImportOnDemandDeclaration,
       InterfaceDeclaration,
       ClassDeclaration,
-      QualifiedName
+      QualifiedName,
+      SimpleName
     }
 
     node match {
       case node: CompilationUnit =>
+        val classPackage : Option[PackageDeclaration] = node.packageDeclaration
         val imports: Seq[ImportDeclaration] = node.importDeclarations
         val interfaces: Seq[InterfaceDeclaration] = node.interfaceDeclarations
         val klass: Option[ClassDeclaration] = node.classDeclaration
@@ -62,10 +65,27 @@ object TypeLinker {
         klass match {
           case Some(ClassDeclaration(className, _, _, _, _)) =>
             imports.foreach {
-              case SingleTypeImportDeclaration(QualifiedName(nameSeq)) =>
-                val packageName: InputString = nameSeq.last
-                if (className.value == packageName.value) {
-                  throw new SyntaxError("Package import cannot be the same name as class name.");
+              case SingleTypeImportDeclaration(name) =>
+                val importName : Seq[InputString] = name match {
+                  case (q : QualifiedName) => q.value
+                  case (s : SimpleName) => Seq(s.value)
+                }
+                if (classPackage.isEmpty) {
+                  // In the default package, all class clashes are invalid
+                  if (className.value == importName.last.value) {
+                    throw new SyntaxError("Package import cannot be the same name as class name.")
+                  }
+                } else {
+                  val classPackageName : Seq[InputString] = classPackage.get.name match {
+                    case (q : QualifiedName) => q.value ++ Seq(className)
+                    case (s : SimpleName) => Seq(s.value) ++ Seq(className)
+                  }
+                  // A class may import itself, but no other clashing classes
+                  if (classPackageName != importName) {
+                    if (classPackageName.last.value == importName.last.value) {
+                      throw new SyntaxError("Package import cannot be the same name as class name.")
+                    }
+                  }
                 }
 
               case _ => Unit

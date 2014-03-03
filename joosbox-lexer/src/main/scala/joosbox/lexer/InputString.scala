@@ -7,6 +7,10 @@ case class InputString(
   idx: Int = 0
 ) {
   override def toString: String = "\"" + value + "\" (" + filename + ":" + line + " char " + idx + ")"
+  override def equals(o: Any) = o match {
+    case i: InputString => i.value.equalsIgnoreCase(this.value)
+    case _ => false
+  }
 }
 
 object InputStringImplicits {
