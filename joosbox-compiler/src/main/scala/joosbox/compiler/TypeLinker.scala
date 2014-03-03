@@ -67,8 +67,8 @@ object TypeLinker {
             imports.foreach {
               case SingleTypeImportDeclaration(name) =>
                 val importName : Seq[InputString] = name match {
-                  case (q : QualifiedName) => q.value
-                  case (s : SimpleName) => Seq(s.value)
+                  case QualifiedName(values) => values
+                  case SimpleName(value) => Seq(value)
                 }
                 if (classPackage.isEmpty) {
                   // In the default package, all class clashes are invalid
@@ -77,9 +77,10 @@ object TypeLinker {
                   }
                 } else {
                   val classPackageName : Seq[InputString] = classPackage.get.name match {
-                    case (q : QualifiedName) => q.value ++ Seq(className)
-                    case (s : SimpleName) => Seq(s.value) ++ Seq(className)
+                    case QualifiedName(values) => values ++ Seq(className)
+                    case SimpleName(value) => Seq(value) ++ Seq(className)
                   }
+
                   // A class may import itself, but no other clashing classes
                   if (classPackageName != importName) {
                     if (classPackageName.last.value == importName.last.value) {
@@ -87,7 +88,6 @@ object TypeLinker {
                     }
                   }
                 }
-
               case _ => Unit
             }
           case None => Unit
