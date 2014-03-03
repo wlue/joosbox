@@ -59,6 +59,8 @@ object HierarchyChecker {
       InterfaceType,
       ClassType,
       Modifier,
+      SimpleName,
+      QualifiedName,
       FinalKeyword
     }
 
@@ -70,15 +72,23 @@ object HierarchyChecker {
         if (!superclass.isEmpty) {
             val env = mapping.mapping.get(node)
             if (!env.isEmpty) {
-              val ref = env.get.parent.get.lookup(superclass.get.name)
-              ref match {
-                case Some(ClassDeclaration(_, _, modifiers, _, _)) =>
-                  if (modifiers.contains(FinalKeyword)) {
-                    throw new SyntaxError("A class must not extend a final class.")
+              val nameLookups : Seq[NameLookup]= superclass.get.name match {
+                case s: SimpleName => Seq(NameLookup(s.value))
+                case q: QualifiedName => q.value.map { i : InputString => NameLookup(i) }
+              }
+              nameLookups.foreach {
+                case nameLookup : NameLookup =>
+                  val ref = env.get.parent.get.lookup(nameLookup)
+                  ref match {
+                    case Some(ClassDeclaration(_, _, modifiers, _, _)) =>
+                      if (modifiers.contains(FinalKeyword)) {
+                        throw new SyntaxError("A class must not extend a final class.")
+                      }
+                    case Some(InterfaceDeclaration(_, _, _, _)) =>
+                      throw new SyntaxError("A class must not extend an interface.")
+                    case None => throw new SyntaxError("Declaration not found.")
+                    case _ => Unit
                   }
-                case Some(InterfaceDeclaration(_, _, _, _)) =>
-                  throw new SyntaxError("A class must not extend an interface.")
-                case None => throw new SyntaxError("A super class must be declared.")
                 case _ => Unit
               }
             } else {
@@ -91,11 +101,19 @@ object HierarchyChecker {
           case i : InterfaceType =>
             val env = mapping.mapping.get(node)
             if (!env.isEmpty) {
-              val ref = env.get.parent.get.lookup(i.name)
-              ref match {
-                case Some(ClassDeclaration(_, _, _, _, _)) =>
-                  throw new SyntaxError("A class must not implement a class.")
-                case None => throw new SyntaxError("You must implement a declared interface.")
+              val nameLookups : Seq[NameLookup]= i.name match {
+                case s: SimpleName => Seq(NameLookup(s.value))
+                case q: QualifiedName => q.value.map { i : InputString => NameLookup(i) }
+              }
+              nameLookups.foreach {
+                case nameLookup : NameLookup =>
+                  val ref = env.get.parent.get.lookup(nameLookup)
+                  ref match {
+                    case Some(ClassDeclaration(_, _, _, _, _)) =>
+                      throw new SyntaxError("A class must not implement a class.")
+                    case None => throw new SyntaxError("Declaration not found.")
+                    case _ => Unit
+                  }
                 case _ => Unit
               }
             } else {
@@ -116,11 +134,19 @@ object HierarchyChecker {
           case i : InterfaceType =>
             val env = mapping.mapping.get(node)
             if (!env.isEmpty) {
-              val ref = env.get.parent.get.lookup(i.name)
-              ref match {
-                case Some(ClassDeclaration(_, _, _, _, _)) =>
-                  throw new SyntaxError("An interface must not extend a class.")
-                case None => throw new SyntaxError("A super interface must be declared.")
+              val nameLookups : Seq[NameLookup]= i.name match {
+                case s: SimpleName => Seq(NameLookup(s.value))
+                case q: QualifiedName => q.value.map { i : InputString => NameLookup(i) }
+              }
+              nameLookups.foreach {
+                case nameLookup : NameLookup =>
+                  val ref = env.get.parent.get.lookup(nameLookup)
+                  ref match {
+                    case Some(ClassDeclaration(_, _, _, _, _)) =>
+                      throw new SyntaxError("An interface must not extend a class.")
+                    case None => throw new SyntaxError("Declaration not found.")
+                    case _ => Unit
+                  }
                 case _ => Unit
               }
             } else {
