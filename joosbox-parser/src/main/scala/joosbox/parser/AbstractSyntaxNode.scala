@@ -437,7 +437,7 @@ object AbstractSyntaxNode {
       val name: Identifier = children.collectFirst { case x: Identifier => x }.get
 
       val modifiers: Set[Modifier] = children.collect { case x: Modifier => x }.toSet
-      val superclass: Option[ClassType] = children.collectFirst { case x: ClassType => x }
+      var superclass: Option[ClassType] = children.collectFirst { case x: ClassType => x }
       val interfaces: Set[InterfaceType] = children.collect { case x: InterfaceType => x }.toSet
       val body: ClassBody = children.collectFirst { case x: ClassBody => x }.get
 
@@ -456,6 +456,15 @@ object AbstractSyntaxNode {
         if (!filename.contains("<input>")) {
           throw new SyntaxError("Class " + name.value + " must be in a file with the same name.")
         }
+      }
+
+      // If a class has no superclass then the class extends java.lang.Object implicity
+      if (superclass.isEmpty) {
+        superclass = Some(ClassType(QualifiedName(Seq(
+              InputString("java"),
+              InputString("lang"),
+              InputString("Object")
+            ))))
       }
 
       Seq(ClassDeclaration(name.value, body, modifiers, superclass, interfaces))
