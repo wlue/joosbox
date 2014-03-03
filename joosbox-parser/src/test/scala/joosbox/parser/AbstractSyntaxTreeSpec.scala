@@ -110,7 +110,7 @@ class AbstractSyntaxTreeSpec extends Specification {
                 AbstractSyntaxNode.ConstructorDeclaration(
                   "identifier",
                   Set(AbstractSyntaxNode.PublicKeyword),
-                  Set(),
+                  Seq.empty[AbstractSyntaxNode.FormalParameter],
                   Some(AbstractSyntaxNode.Block())
                 )
               )
@@ -242,7 +242,7 @@ class AbstractSyntaxTreeSpec extends Specification {
                 AbstractSyntaxNode.ConstructorDeclaration(
                   "identifier",
                   Set(AbstractSyntaxNode.PublicKeyword),
-                  Set(),
+                  Seq.empty[AbstractSyntaxNode.FormalParameter],
                   Some(AbstractSyntaxNode.Block())
                 )
               )
@@ -359,7 +359,7 @@ class AbstractSyntaxTreeSpec extends Specification {
                 AbstractSyntaxNode.ConstructorDeclaration(
                   "identifier",
                   Set(AbstractSyntaxNode.PublicKeyword),
-                  Set(),
+                  Seq.empty[AbstractSyntaxNode.FormalParameter],
                   Some(AbstractSyntaxNode.Block())
                 )
               )
@@ -653,7 +653,7 @@ class AbstractSyntaxTreeSpec extends Specification {
                 AbstractSyntaxNode.ConstructorDeclaration(
                   "identifier",
                   Set(AbstractSyntaxNode.PublicKeyword),
-                  Set(),
+                  Seq.empty[AbstractSyntaxNode.FormalParameter],
                   Some(AbstractSyntaxNode.Block())
                 ),
                 AbstractSyntaxNode.FieldDeclaration(
@@ -695,7 +695,7 @@ public class Test {
                   AbstractSyntaxNode.ConstructorDeclaration(
                     InputString("Test", "Test.java", 3, 9),
                     Set(AbstractSyntaxNode.PublicKeyword),
-                    Set(),
+                    Seq.empty[AbstractSyntaxNode.FormalParameter],
                     Some(AbstractSyntaxNode.Block(Seq(
                       AbstractSyntaxNode.LocalVariableDeclaration(
                         InputString("x", "Test.java", 4, 8),
@@ -756,7 +756,7 @@ public class Test {
                   AbstractSyntaxNode.ConstructorDeclaration(
                     InputString("Test", "Test.java", 3, 9),
                     Set(AbstractSyntaxNode.PublicKeyword),
-                    Set(),
+                    Seq.empty[AbstractSyntaxNode.FormalParameter],
                     Some(AbstractSyntaxNode.Block(Seq(
                       AbstractSyntaxNode.IfStatement(
                         AbstractSyntaxNode.TrueLiteral,

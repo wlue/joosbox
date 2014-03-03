@@ -638,8 +638,8 @@ object AbstractSyntaxNode {
       val children: Seq[AbstractSyntaxNode] = c.children.flatMap(recursive(_))
       val classBodyDeclarations: Seq[ClassBodyDeclaration] = children.collect { case x: ClassBodyDeclaration => x }
 
-      val constructor: Option[ConstructorDeclaration] = classBodyDeclarations.collectFirst { case x: ConstructorDeclaration => x }
-      if (constructor == None) {
+      val constructor: Seq[ConstructorDeclaration] = classBodyDeclarations.collect { case x: ConstructorDeclaration => x }
+      if (constructor.isEmpty) {
         throw new SyntaxError("Constructor is required in class body.");
       }
 
