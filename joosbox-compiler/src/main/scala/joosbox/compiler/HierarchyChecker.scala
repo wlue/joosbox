@@ -1,0 +1,93 @@
+package joosbox.compiler
+
+import joosbox.parser.AbstractSyntaxNode
+import joosbox.lexer.InputString
+import joosbox.lexer.SyntaxError
+
+import AbstractSyntaxNode.CompilationUnit
+import AbstractSyntaxNode.Referenceable
+
+/**
+  - The hierarchy must be acyclic.
+
+  - A class must not extend an interface.
+
+  - A class must not extend a final class.
+
+  - A class must not implement a class.
+
+  - An interface must not extend a class.
+
+  - An interface must not be repeated in an implements clause of an interface.
+
+  - An interface must not be repeated in an extends clause of an interface.
+
+  - A class or interface must not declare two methods with the same signature.
+
+  - A class must not declare two constructors with the same parameter type.
+
+  - A class or interface must not contain (declare or inherit) two methods with
+    the same signature but different return types
+
+  - A class that contains (declares or inherits) any abstract methods must be
+    abstract.
+
+  - A nonstatic method must not replace a static method.
+
+  - A method must not replace a method with a different return type.
+
+  - A protected method must not replace a public method.
+
+  - A method must not replace a final method.
+*/
+
+object HierarchyChecker {
+  def link(
+    units: Seq[CompilationUnit],
+    mapping: EnvironmentMapping
+  ): Map[Any, Referenceable] = {
+    units.foreach { unit =>
+      HierarchyChecker.check(unit)(mapping)
+    }
+    Map.empty
+  }
+
+  def check(node: AbstractSyntaxNode)(implicit mapping: EnvironmentMapping) {
+    import AbstractSyntaxNode.{
+      InterfaceDeclaration,
+      ClassDeclaration,
+      InterfaceType,
+      ClassType,
+      Modifier,
+      FinalKeyword
+    }
+
+    node match {
+      case node: ClassDeclaration =>
+        val superclass: Option[ClassType] = node.superclass
+        val interfaces: Set[InterfaceType] = node.interfaces
+
+        if (!superclass.isEmpty) {
+            val env = mapping.mapping.get(node)
+            if (!env.isEmpty) {
+              val ref = env.get.lookup(superclass.get.name)
+              ref match {
+                case Some(ClassDeclaration(_, _, modifiers, _, _)) =>
+                  if (modifiers.contains(FinalKeyword)) {
+                    throw new SyntaxError("A class must not extend a final class.")
+                  }
+                case Some(InterfaceDeclaration(_, _, _, _)) =>
+                  throw new SyntaxError("A class must not extend an interface.")
+                case Some(_) => Unit
+                case None => Unit
+              }
+            } else {
+              throw new SyntaxError("ERROR: Should have been caught earlier.")
+            }
+        }
+      case _ => Unit
+    }
+
+    node.children.foreach { node => check(node) }
+  }
+}

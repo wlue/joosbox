@@ -38,5 +38,6 @@ object CompilerRunner {
 
     val mapping = EnvironmentBuilder.build(nodes)
     TypeLinker.link(nodes, mapping)
+    // HierarchyChecker.link(nodes, mapping)
   }
 }
