@@ -39,9 +39,14 @@ public interface Test {
   public void method();
 }
         """
-        val ast: AbstractSyntaxNode = parser.parseString(input, "Test.java")
+        val cu: AbstractSyntaxNode.CompilationUnit
+          = parser.parseString(input, "Test.java").asInstanceOf[AbstractSyntaxNode.CompilationUnit]
 
-        true
+        val mapping: EnvironmentMapping = EnvironmentBuilder.build(Seq(cu))
+        
+        //  Verify that within the top-level scope, Test has some meaning.
+        val fileScope: Environment = mapping.mapping(cu).asInstanceOf[Environment]
+        fileScope.lookup(NameLookup(InputString("Test", "Test.java", 0, 0))) must beEqualTo(Some(cu.interfaceDeclarations(0)))
       }
     }
   }
