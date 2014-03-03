@@ -78,12 +78,29 @@ object HierarchyChecker {
                   }
                 case Some(InterfaceDeclaration(_, _, _, _)) =>
                   throw new SyntaxError("A class must not extend an interface.")
-                case Some(_) => Unit
-                case None => Unit
+                case _ => Unit
               }
             } else {
               throw new SyntaxError("ERROR: Should have been caught earlier.")
             }
+        }
+      case node: InterfaceDeclaration =>
+        val interfaces: Set[InterfaceType] = node.interfaces
+
+        interfaces.foreach {
+          case i : InterfaceType =>
+            val env = mapping.mapping.get(node)
+            if (!env.isEmpty) {
+              val ref = env.get.lookup(i.name)
+              ref match {
+                case Some(ClassDeclaration(_, _, _, _, _)) =>
+                  throw new SyntaxError("An interface must not extend a class.")
+                case _ => Unit
+              }
+            } else {
+              throw new SyntaxError("ERROR: Should have been caught earlier.")
+            }
+          case _ => Unit
         }
       case _ => Unit
     }
