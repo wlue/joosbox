@@ -30,7 +30,6 @@ public class Test {
         
         //  Verify that within the top-level scope, Test has some meaning.
         val fileScope: Environment = mapping.mapping(cu).asInstanceOf[Environment]
-        println("Filescope: " + fileScope)
         fileScope.lookup(NameLookup(InputString("Test", "Test.java", 0, 0))) must beEqualTo(cu.classDeclaration)
       }
 
