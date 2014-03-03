@@ -16,7 +16,14 @@ class AbstractSyntaxTreeSpec extends Specification {
 
           ParseNodes.PackageDeclaration(List[ParseNode](
             ParseNodes.PackageKeyword(List.empty[ParseNode], Some("package")),
-            ParseNodes.Name(List.empty[ParseNode], Some("mypackage")),
+            ParseNodes.Name(List(
+              ParseNodes.SimpleName(List(
+                ParseNodes.Identifier(
+                  List(),
+                  Some(InputString("mypackage"))
+                )
+              ))
+            )),
             ParseNodes.Semicolon(List.empty[ParseNode], Some(";"))
           )),
 
@@ -24,7 +31,14 @@ class AbstractSyntaxTreeSpec extends Specification {
             ParseNodes.ImportDeclaration(List[ParseNode](
               ParseNodes.SingleTypeImportDeclaration(List[ParseNode](
                 ParseNodes.ImportKeyword(List.empty[ParseNode], Some("import")),
-                ParseNodes.Name(List.empty[ParseNode], Some("myimport")),
+                ParseNodes.Name(List(
+                  ParseNodes.SimpleName(List(
+                    ParseNodes.Identifier(
+                      List(),
+                      Some(InputString("myimport"))
+                    )
+                  ))
+                )),
                 ParseNodes.Semicolon(List.empty[ParseNode], Some(";"))
               ))
             ))
@@ -84,9 +98,12 @@ class AbstractSyntaxTreeSpec extends Specification {
 
       AbstractSyntaxNode.parse(parseTree).head must beEqualTo(
         AbstractSyntaxNode.CompilationUnit(
-          Some(AbstractSyntaxNode.PackageDeclaration("mypackage")),
-          List(AbstractSyntaxNode.SingleTypeImportDeclaration("myimport")),
-          List(AbstractSyntaxNode.ClassDeclaration(
+          Some(AbstractSyntaxNode.PackageDeclaration(
+            AbstractSyntaxNode.SimpleName("mypackage"))),
+          List(AbstractSyntaxNode.SingleTypeImportDeclaration(
+            AbstractSyntaxNode.SimpleName("myimport"))),
+          List.empty[AbstractSyntaxNode.InterfaceDeclaration],
+          Some(AbstractSyntaxNode.ClassDeclaration(
             "identifier",
             AbstractSyntaxNode.ClassBody(
               List(
@@ -111,7 +128,14 @@ class AbstractSyntaxTreeSpec extends Specification {
 
           ParseNodes.PackageDeclaration(List[ParseNode](
             ParseNodes.PackageKeyword(List.empty[ParseNode], Some("package")),
-            ParseNodes.Name(List.empty[ParseNode], Some("mypackage")),
+            ParseNodes.Name(List(
+              ParseNodes.SimpleName(List(
+                ParseNodes.Identifier(
+                  List(),
+                  Some(InputString("mypackage"))
+                )
+              ))
+            )),
             ParseNodes.Semicolon(List.empty[ParseNode], Some(";"))
           )),
 
@@ -120,7 +144,14 @@ class AbstractSyntaxTreeSpec extends Specification {
               ParseNodes.ImportDeclaration(List[ParseNode](
                 ParseNodes.SingleTypeImportDeclaration(List[ParseNode](
                   ParseNodes.ImportKeyword(List.empty[ParseNode], Some("import")),
-                  ParseNodes.Name(List.empty[ParseNode], Some("myotherimport")),
+                  ParseNodes.Name(List(
+                    ParseNodes.SimpleName(List(
+                      ParseNodes.Identifier(
+                        List(),
+                        Some(InputString("myotherimport"))
+                      )
+                    ))
+                  )),
                   ParseNodes.Semicolon(List.empty[ParseNode], Some(";"))
                 ))
               ))
@@ -128,7 +159,14 @@ class AbstractSyntaxTreeSpec extends Specification {
             ParseNodes.ImportDeclaration(List[ParseNode](
               ParseNodes.SingleTypeImportDeclaration(List[ParseNode](
                 ParseNodes.ImportKeyword(List.empty[ParseNode], Some("import")),
-                ParseNodes.Name(List.empty[ParseNode], Some("myimport")),
+                ParseNodes.Name(List(
+                  ParseNodes.SimpleName(List(
+                    ParseNodes.Identifier(
+                      List(),
+                      Some(InputString("myimport"))
+                    )
+                  ))
+                )),
                 ParseNodes.Semicolon(List.empty[ParseNode], Some(";"))
               ))
             ))
@@ -188,12 +226,16 @@ class AbstractSyntaxTreeSpec extends Specification {
 
       AbstractSyntaxNode.parse(parseTree).head must beEqualTo(
         AbstractSyntaxNode.CompilationUnit(
-          Some(AbstractSyntaxNode.PackageDeclaration("mypackage")),
+          Some(AbstractSyntaxNode.PackageDeclaration(
+            AbstractSyntaxNode.SimpleName("mypackage"))),
           List(
-            AbstractSyntaxNode.SingleTypeImportDeclaration("myotherimport"),
-            AbstractSyntaxNode.SingleTypeImportDeclaration("myimport")
+            AbstractSyntaxNode.SingleTypeImportDeclaration(
+              AbstractSyntaxNode.SimpleName("myotherimport")),
+            AbstractSyntaxNode.SingleTypeImportDeclaration(
+              AbstractSyntaxNode.SimpleName("myimport"))
           ),
-          List(AbstractSyntaxNode.ClassDeclaration(
+          List.empty[AbstractSyntaxNode.InterfaceDeclaration],
+          Some(AbstractSyntaxNode.ClassDeclaration(
             "classname",
             AbstractSyntaxNode.ClassBody(
               List(
@@ -218,7 +260,14 @@ class AbstractSyntaxTreeSpec extends Specification {
 
           ParseNodes.PackageDeclaration(List[ParseNode](
             ParseNodes.PackageKeyword(List.empty[ParseNode], Some("package")),
-            ParseNodes.Name(List.empty[ParseNode], Some("mypackage")),
+            ParseNodes.Name(List(
+              ParseNodes.SimpleName(List(
+                ParseNodes.Identifier(
+                  List(),
+                  Some(InputString("mypackage"))
+                )
+              ))
+            )),
             ParseNodes.Semicolon(List.empty[ParseNode], Some(";"))
           )),
 
@@ -226,7 +275,14 @@ class AbstractSyntaxTreeSpec extends Specification {
             ParseNodes.ImportDeclaration(List[ParseNode](
               ParseNodes.SingleTypeImportDeclaration(List[ParseNode](
                 ParseNodes.ImportKeyword(List.empty[ParseNode], Some("import")),
-                ParseNodes.Name(List.empty[ParseNode], Some("myimport")),
+                ParseNodes.Name(List(
+                  ParseNodes.SimpleName(List(
+                    ParseNodes.Identifier(
+                      List(),
+                      Some(InputString("myimport"))
+                    )
+                  ))
+                )),
                 ParseNodes.Semicolon(List.empty[ParseNode], Some(";"))
               ))
             ))
@@ -291,9 +347,12 @@ class AbstractSyntaxTreeSpec extends Specification {
 
       AbstractSyntaxNode.parse(parseTree).head must beEqualTo(
         AbstractSyntaxNode.CompilationUnit(
-          Some(AbstractSyntaxNode.PackageDeclaration("mypackage")),
-          List(AbstractSyntaxNode.SingleTypeImportDeclaration("myimport")),
-          List(AbstractSyntaxNode.ClassDeclaration(
+          Some(AbstractSyntaxNode.PackageDeclaration(
+            AbstractSyntaxNode.SimpleName("mypackage"))),
+          List(AbstractSyntaxNode.SingleTypeImportDeclaration(
+            AbstractSyntaxNode.SimpleName("myimport"))),
+          List.empty[AbstractSyntaxNode.InterfaceDeclaration],
+          Some(AbstractSyntaxNode.ClassDeclaration(
             "identifier",
             AbstractSyntaxNode.ClassBody(
               List(
@@ -318,7 +377,14 @@ class AbstractSyntaxTreeSpec extends Specification {
 
           ParseNodes.PackageDeclaration(List[ParseNode](
             ParseNodes.PackageKeyword(List.empty[ParseNode], Some("package")),
-            ParseNodes.Name(List.empty[ParseNode], Some("mypackage")),
+            ParseNodes.Name(List(
+              ParseNodes.SimpleName(List(
+                ParseNodes.Identifier(
+                  List(),
+                  Some(InputString("mypackage"))
+                )
+              ))
+            )),
             ParseNodes.Semicolon(List.empty[ParseNode], Some(";"))
           )),
 
@@ -326,7 +392,14 @@ class AbstractSyntaxTreeSpec extends Specification {
             ParseNodes.ImportDeclaration(List[ParseNode](
               ParseNodes.SingleTypeImportDeclaration(List[ParseNode](
                 ParseNodes.ImportKeyword(List.empty[ParseNode], Some("import")),
-                ParseNodes.Name(List.empty[ParseNode], Some("myimport")),
+                ParseNodes.Name(List(
+                  ParseNodes.SimpleName(List(
+                    ParseNodes.Identifier(
+                      List(),
+                      Some(InputString("myimport"))
+                    )
+                  ))
+                )),
                 ParseNodes.Semicolon(List.empty[ParseNode], Some(";"))
               ))
             ))
@@ -371,7 +444,14 @@ class AbstractSyntaxTreeSpec extends Specification {
 
           ParseNodes.PackageDeclaration(List[ParseNode](
             ParseNodes.PackageKeyword(List.empty[ParseNode], Some("package")),
-            ParseNodes.Name(List.empty[ParseNode], Some("mypackage")),
+            ParseNodes.Name(List(
+              ParseNodes.SimpleName(List(
+                ParseNodes.Identifier(
+                  List(),
+                  Some(InputString("mypackage"))
+                )
+              ))
+            )),
             ParseNodes.Semicolon(List.empty[ParseNode], Some(";"))
           )),
 
@@ -379,7 +459,14 @@ class AbstractSyntaxTreeSpec extends Specification {
             ParseNodes.ImportDeclaration(List[ParseNode](
               ParseNodes.SingleTypeImportDeclaration(List[ParseNode](
                 ParseNodes.ImportKeyword(List.empty[ParseNode], Some("import")),
-                ParseNodes.Name(List.empty[ParseNode], Some("myimport")),
+                ParseNodes.Name(List(
+                  ParseNodes.SimpleName(List(
+                    ParseNodes.Identifier(
+                      List(),
+                      Some(InputString("myimport"))
+                    )
+                  ))
+                )),
                 ParseNodes.Semicolon(List.empty[ParseNode], Some(";"))
               ))
             ))
@@ -558,7 +645,8 @@ class AbstractSyntaxTreeSpec extends Specification {
         AbstractSyntaxNode.CompilationUnit(
           None,
           List.empty[AbstractSyntaxNode.ImportDeclaration],
-          List(AbstractSyntaxNode.ClassDeclaration(
+          List.empty[AbstractSyntaxNode.InterfaceDeclaration],
+          Some(AbstractSyntaxNode.ClassDeclaration(
             "identifier",
             AbstractSyntaxNode.ClassBody(
               Seq(
@@ -599,7 +687,8 @@ public class Test {
           AbstractSyntaxNode.CompilationUnit(
             None,
             List.empty[AbstractSyntaxNode.ImportDeclaration],
-            List(AbstractSyntaxNode.ClassDeclaration(
+            List.empty[AbstractSyntaxNode.InterfaceDeclaration],
+            Some(AbstractSyntaxNode.ClassDeclaration(
               InputString("Test", "Test.java", 2, 13),
               AbstractSyntaxNode.ClassBody(
                 Seq(
@@ -659,7 +748,8 @@ public class Test {
           AbstractSyntaxNode.CompilationUnit(
             None,
             List.empty[AbstractSyntaxNode.ImportDeclaration],
-            List(AbstractSyntaxNode.ClassDeclaration(
+            List.empty[AbstractSyntaxNode.InterfaceDeclaration],
+            Some(AbstractSyntaxNode.ClassDeclaration(
               InputString("Test", "Test.java", 2, 13),
               AbstractSyntaxNode.ClassBody(
                 Seq(

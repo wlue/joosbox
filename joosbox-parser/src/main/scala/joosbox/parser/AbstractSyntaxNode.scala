@@ -685,6 +685,7 @@ object AbstractSyntaxNode {
         }
 
       children.head match {
+        case y: FieldAccess => throw new SyntaxError("Field accesses cannot be cast to.")
         case y: ParenthesizedExpression => throw new SyntaxError("Casts cannot be overly parenthesized.")
         case y: SimpleMethodInvocation => throw new SyntaxError("Method invocations cannot be casted to.")
         case y: ComplexMethodInvocation => throw new SyntaxError("Method invocations cannot be casted to.")
