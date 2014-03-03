@@ -78,6 +78,7 @@ object HierarchyChecker {
                   }
                 case Some(InterfaceDeclaration(_, _, _, _)) =>
                   throw new SyntaxError("A class must not extend an interface.")
+                case None => throw new SyntaxError("A super class must be declared.")
                 case _ => Unit
               }
             } else {
@@ -94,6 +95,7 @@ object HierarchyChecker {
               ref match {
                 case Some(ClassDeclaration(_, _, _, _, _)) =>
                   throw new SyntaxError("A class must not implement a class.")
+                case None => throw new SyntaxError("You must implement a declared interface.")
                 case _ => Unit
               }
             } else {
@@ -118,6 +120,7 @@ object HierarchyChecker {
               ref match {
                 case Some(ClassDeclaration(_, _, _, _, _)) =>
                   throw new SyntaxError("An interface must not extend a class.")
+                case None => throw new SyntaxError("A super interface must be declared.")
                 case _ => Unit
               }
             } else {
