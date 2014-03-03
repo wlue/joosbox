@@ -63,7 +63,7 @@ object AbstractSyntaxNode {
   case class Identifier(value: InputString) extends AbstractSyntaxNode
 
   abstract class ClassBodyDeclaration(
-    name: InputString,
+    val name: InputString,
     modifiers: Set[Modifier] = Set.empty[Modifier]
   ) extends AbstractSyntaxNode {
     override def children: List[AbstractSyntaxNode] = modifiers.toList
@@ -77,7 +77,7 @@ object AbstractSyntaxNode {
 
     parameters: Set[FormalParameter] = Set.empty[FormalParameter],
     body: Option[Block] = None
-  ) extends AbstractSyntaxNode {
+  ) extends AbstractSyntaxNode with Referenceable {
     override def children: List[AbstractSyntaxNode] =
       modifiers.toList ++ parameters.toList ++ body.toList
   }
@@ -259,7 +259,7 @@ object AbstractSyntaxNode {
     val name: InputString,
     val modifiers: Set[Modifier] = Set.empty[Modifier],
     val interfaces: Set[InterfaceType] = Set.empty[InterfaceType]
-  ) extends AbstractSyntaxNode {
+  ) extends AbstractSyntaxNode with Referenceable {
     override def children: List[AbstractSyntaxNode] =
       modifiers.toList ++ interfaces.toList
   }
@@ -288,18 +288,18 @@ object AbstractSyntaxNode {
   }
 
   abstract class ClassMemberDeclaration(
-    name: InputString,
+    override val name: InputString,
     modifiers: Set[Modifier] = Set.empty[Modifier],
     memberType: Type
-  ) extends ClassBodyDeclaration(name, modifiers) with Referenceable {
+  ) extends ClassBodyDeclaration(name, modifiers) {
     override def children: List[AbstractSyntaxNode] =
       modifiers.toList ++ List(memberType)
   }
 
   case class ConstructorDeclaration(
-    name: InputString,
+    override val name: InputString,
     modifiers: Set[Modifier] = Set.empty[Modifier],
-    parameters: Set[FormalParameter] = Set.empty[FormalParameter],
+    parameters: Seq[FormalParameter] = Seq.empty[FormalParameter],
     body: Option[Block] = None
   ) extends ClassBodyDeclaration(name, modifiers) {
     override def children: List[AbstractSyntaxNode] =
@@ -307,10 +307,10 @@ object AbstractSyntaxNode {
   }
 
   case class MethodDeclaration(
-    name: InputString,
+    override val name: InputString,
     modifiers: Set[Modifier] = Set.empty[Modifier],
     memberType: Type,
-    parameters: Set[FormalParameter] = Set.empty[FormalParameter],
+    parameters: Seq[FormalParameter] = Seq.empty[FormalParameter],
     body: Option[Block] = None
   ) extends ClassMemberDeclaration(name, modifiers, memberType) with Referenceable {
     override def children: List[AbstractSyntaxNode] =
@@ -318,7 +318,7 @@ object AbstractSyntaxNode {
   }
 
   case class FieldDeclaration(
-    name: InputString,
+    override val name: InputString,
     modifiers: Set[Modifier] = Set.empty[Modifier],
     memberType: Type,
     expression: Option[Expression] = None
@@ -500,7 +500,7 @@ object AbstractSyntaxNode {
 
       val name: SimpleName = children.collectFirst { case x: SimpleName => x }.get
       val modifiers: Set[Modifier] = children.collect { case x: Modifier => x }.toSet
-      val parameters: Set[FormalParameter] = children.collect { case x: FormalParameter => x }.toSet
+      val parameters: Seq[FormalParameter] = children.collect { case x: FormalParameter => x }
       val body: Option[Block] = children.collectFirst { case x: Block => x }
 
       // TODO: Check if identifier is the same as class name. This doesn't work.
@@ -542,7 +542,7 @@ object AbstractSyntaxNode {
       val name: Identifier = children.collectFirst { case x: Identifier => x }.get
       val modifiers: Set[Modifier] = children.collect { case x: Modifier => x }.toSet
       val memberType: Type = children.collectFirst { case x:Type => x }.get
-      val parameters: Set[FormalParameter] = children.collect { case x:FormalParameter => x }.toSet
+      val parameters: Seq[FormalParameter] = children.collect { case x:FormalParameter => x }
       val body: Option[Block] = children.collectFirst { case x:Block => x }
 
       // Enforce: No package private methods
