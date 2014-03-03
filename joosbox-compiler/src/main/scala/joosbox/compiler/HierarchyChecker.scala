@@ -70,7 +70,7 @@ object HierarchyChecker {
         if (!superclass.isEmpty) {
             val env = mapping.mapping.get(node)
             if (!env.isEmpty) {
-              val ref = env.get.lookup(superclass.get.name)
+              val ref = env.get.parent.get.lookup(superclass.get.name)
               ref match {
                 case Some(ClassDeclaration(_, _, modifiers, _, _)) =>
                   if (modifiers.contains(FinalKeyword)) {
@@ -91,7 +91,7 @@ object HierarchyChecker {
           case i : InterfaceType =>
             val env = mapping.mapping.get(node)
             if (!env.isEmpty) {
-              val ref = env.get.lookup(i.name)
+              val ref = env.get.parent.get.lookup(i.name)
               ref match {
                 case Some(ClassDeclaration(_, _, _, _, _)) =>
                   throw new SyntaxError("A class must not implement a class.")
@@ -116,7 +116,7 @@ object HierarchyChecker {
           case i : InterfaceType =>
             val env = mapping.mapping.get(node)
             if (!env.isEmpty) {
-              val ref = env.get.lookup(i.name)
+              val ref = env.get.parent.get.lookup(i.name)
               ref match {
                 case Some(ClassDeclaration(_, _, _, _, _)) =>
                   throw new SyntaxError("An interface must not extend a class.")
