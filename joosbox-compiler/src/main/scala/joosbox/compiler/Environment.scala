@@ -68,7 +68,6 @@ class RootEnvironment(nodes: Seq[AbstractSyntaxNode.CompilationUnit]) extends En
             case q: QualifiedName => declaration.map(d => QualifiedName(q.value.toSeq ++ Seq(d.name)) -> d)
           }
 
-          //  TODO: If we are in the unnamed package, how do other packages access our members?
           case None => declaration.map(d => QualifiedName(Seq(InputString(""), d.name)) -> d)
         }
 
@@ -89,7 +88,10 @@ class RootEnvironment(nodes: Seq[AbstractSyntaxNode.CompilationUnit]) extends En
 
   def search(name: EnvironmentLookup): Option[Referenceable] = {
     name match {
-      case QualifiedNameLookup(qn: QualifiedName) => qualifiedNameMap.get(qn)
+      case QualifiedNameLookup(qn: QualifiedName) =>
+        qualifiedNameMap.get(qn)
+      case NameLookup(in: InputString) =>
+        qualifiedNameMap.get(QualifiedName(Seq(InputString(""), in)))
 
       //  The root environment can only handle qualified name lookups.
       case _ => None
