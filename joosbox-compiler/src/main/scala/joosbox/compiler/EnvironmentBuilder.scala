@@ -160,7 +160,7 @@ object EnvironmentBuilder {
             case _ => None
           }
 
-          Seq(packageName) ++ imports
+          Seq(packageName, QualifiedNameLookup(QualifiedName(Seq("java", "lang")))) ++ imports
         }
 
         new ScopeEnvironment(locals, otherScopeReferences, parent)
