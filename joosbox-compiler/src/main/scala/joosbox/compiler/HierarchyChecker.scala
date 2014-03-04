@@ -82,8 +82,7 @@ object HierarchyChecker {
             if (!env.isEmpty) {
               val nameLookup : EnvironmentLookup = superclass.get.name match {
                 case s: SimpleName => NameLookup(s.value)
-                case q: QualifiedName => NameLookup(q.value.last)
-                //case q: QualifiedName => QualifiedNameLookup(q.value)
+                case q: QualifiedName => QualifiedNameLookup(q)
               }
               val ref = env.get.parent.get.lookup(nameLookup)
               ref match {
@@ -107,8 +106,7 @@ object HierarchyChecker {
             if (!env.isEmpty) {
               val nameLookup : EnvironmentLookup = i.name match {
                 case s: SimpleName => NameLookup(s.value)
-                case q: QualifiedName => NameLookup(q.value.last)
-                //case q: QualifiedName => QualifiedNameLookup(q.value)
+                case q: QualifiedName => QualifiedNameLookup(q)
               }
               val ref = env.get.parent.get.lookup(nameLookup)
               ref match {
@@ -178,8 +176,7 @@ object HierarchyChecker {
             if (!env.isEmpty) {
               val nameLookup : EnvironmentLookup = i.name match {
                 case s: SimpleName => NameLookup(s.value)
-                case q: QualifiedName => NameLookup(q.value.last)
-                //case q: QualifiedName => QualifiedNameLookup(q.value)
+                case q: QualifiedName => QualifiedNameLookup(q)
               }
               val ref = env.get.parent.get.lookup(nameLookup)
               ref match {
