@@ -4,12 +4,14 @@ import org.specs2.mutable._
 import joosbox.compiler._
 import joosbox.parser._
 import joosbox.lexer._
+import java.io.File
 
 class EnvironmentBuilderSpec extends Specification {
   "EnvironmentBuilder" should {
     val parser = Parser.Joos
 
-    "Create an environment from" in {
+    "Create environments from" in {
+
       "Test class" in {
         val input = """
 public class Test {
@@ -142,6 +144,20 @@ public class Test { public Test() { ImportedClass x = new ImportedClass(); } }
           = parser.parseString(input2, "Test.java").asInstanceOf[AbstractSyntaxNode.CompilationUnit]
 
         EnvironmentBuilder.build(Seq(cu1, cu2)) must throwA[SyntaxError]
+      }
+
+      "verify the stdlib" in {
+        def getAllFiles(base: File): Array[File] = {
+          base.listFiles.filter(_.getName.endsWith(".java")) ++ base.listFiles.filter(_.isDirectory).flatMap(getAllFiles)
+        }
+
+        def stdlibFilePaths: Seq[String] =
+          getAllFiles(new File("joosbox-compiler/src/test/resources/stdlib/java")).map(_.getAbsolutePath)
+
+        val files = stdlibFilePaths
+        val compilationUnits: Seq[AbstractSyntaxNode.CompilationUnit] = stdlibFilePaths.map(parser.parseFilename(_))
+
+        EnvironmentBuilder.build(compilationUnits) must not(throwA[SyntaxError])
       }
     }
   }

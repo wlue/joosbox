@@ -11,6 +11,7 @@ case class InputString(
     case i: InputString => i.value.equalsIgnoreCase(this.value)
     case _ => false
   }
+  override def hashCode = this.value.hashCode()
 }
 
 object InputStringImplicits {
