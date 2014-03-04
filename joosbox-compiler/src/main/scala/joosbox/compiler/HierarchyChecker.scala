@@ -26,7 +26,7 @@ import AbstractSyntaxNode.Referenceable
 
   -* A class must not declare two constructors with the same parameter type.
 
-  - A class or interface must not contain (declare or inherit) two methods with
+  -* A class or interface must not contain (declare or inherit) two methods with
     the same signature but different return types
 
   -* A class that contains (declares or inherits) any abstract methods must be
