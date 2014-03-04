@@ -111,7 +111,7 @@ class ScopeEnvironment(
   par: Environment
 ) extends Environment {
   val parent: Option[Environment] = Some(par)
-  override def toString(): String = "ScopeEnvironment(" + locals.toString() + ")"
+  override def toString(): String = "ScopeEnvironment[refs: " +otherScopeReferences+ "](" + locals.toString() + ")"
 
   def search(name: EnvironmentLookup): Option[Referenceable] = {
     locals.get(name) match {
@@ -120,7 +120,7 @@ class ScopeEnvironment(
       //  Check our other scope references - our package scopes, then our wildcard imports.
       //  Note that wildcard imports are pretty much just additional package scopes.
       case None => {
-        otherScopeReferences.flatMap(par.packageScope(_)).flatMap(env => {
+        otherScopeReferences.flatMap(packageScope(_)).flatMap(env => {
           if (env != this) {
             env.search(name)
           } else {

@@ -31,7 +31,7 @@ public class Test {
         val mapping: EnvironmentMapping = EnvironmentBuilder.build(Seq(cu))
 
         //  Verify that within the top-level scope, Test has some meaning.
-        val fileScope: Environment = mapping.mapping(cu).asInstanceOf[Environment]
+        val fileScope: Environment = mapping.enclosingScopeOf(cu).get
         fileScope.lookup(NameLookup(InputString("Test", "Test.java", 0, 0))) must beEqualTo(cu.typeDeclaration)
       }
 
@@ -47,7 +47,7 @@ public interface Test {
         val mapping: EnvironmentMapping = EnvironmentBuilder.build(Seq(cu))
 
         //  Verify that within the top-level scope, Test has some meaning.
-        val fileScope: Environment = mapping.mapping(cu).asInstanceOf[Environment]
+        val fileScope: Environment = mapping.enclosingScopeOf(cu).get
         fileScope.lookup(NameLookup(InputString("Test", "Test.java", 0, 0))) must beEqualTo(cu.typeDeclaration)
       }
 
@@ -71,7 +71,7 @@ public class Test {
         val mapping: EnvironmentMapping = EnvironmentBuilder.build(Seq(cu))
 
         //  Verify that within the top-level scope, Test has some meaning.
-        val fileScope: Environment = mapping.mapping(cu).asInstanceOf[Environment]
+        val fileScope: Environment = mapping.enclosingScopeOf(cu).get
         val qualifiedName = AbstractSyntaxNode.QualifiedName(Seq(
           InputString("joosbox", "Test.java", 0, 0),
           InputString("test", "Test.java", 0, 0),
@@ -121,7 +121,7 @@ public class Test { public Test() { ImportedClass x = new ImportedClass(); } }
         val mapping: EnvironmentMapping = EnvironmentBuilder.build(Seq(cu1, cu2))
 
         //  Verify that within the top-level scope of input2, ImportedClass has some meaning.
-        val file2Scope: Environment = mapping.mapping(cu2).asInstanceOf[Environment]
+        val file2Scope: Environment = mapping.enclosingScopeOf(cu2).get
         file2Scope.lookup(NameLookup(InputString("ImportedClass"))) must beEqualTo(cu1.typeDeclaration)
       }
 
@@ -180,7 +180,7 @@ public class Test { public Test() { ImportedClass x = new ImportedClass(); } }
         val mapping: EnvironmentMapping = EnvironmentBuilder.build(Seq(cu1, cu2))
 
         //  Verify that within the top-level scope of input2, ImportedClass has some meaning.
-        val file2Scope: Environment = mapping.mapping(cu2).asInstanceOf[Environment]
+        val file2Scope: Environment = mapping.enclosingScopeOf(cu2).get
         file2Scope.lookup(NameLookup(InputString("ImportedClass"))) must beEqualTo(cu1.typeDeclaration)
       }
 
@@ -204,7 +204,7 @@ public class Test { public Test() { ImportedClass x = new ImportedClass(); } }
         val mapping: EnvironmentMapping = EnvironmentBuilder.build(Seq(cu1, cu2))
 
         //  Verify that within the top-level scope of input2, ImportedClass has some meaning.
-        val file2Scope: Environment = mapping.mapping(cu2).asInstanceOf[Environment]
+        val file2Scope: Environment = mapping.enclosingScopeOf(cu2).get
         file2Scope.lookup(NameLookup(InputString("ImportedClass"))) must beNone
       }
 
@@ -229,7 +229,7 @@ public class Test { public Test() { ImportedClass x = new ImportedClass(); } }
         val mapping: EnvironmentMapping = EnvironmentBuilder.build(Seq(cu1, cu2))
 
         //  Verify that within the top-level scope of input2, ImportedClass has some meaning.
-        val file2Scope: Environment = mapping.mapping(cu2).asInstanceOf[Environment]
+        val file2Scope: Environment = mapping.enclosingScopeOf(cu2).get
         file2Scope.lookup(NameLookup(InputString("ImportedClass"))) must beEqualTo(cu1.typeDeclaration)
       }
 
@@ -253,7 +253,7 @@ public class Test { public Test() { ImportedClass x = new ImportedClass(); } }
         val mapping: EnvironmentMapping = EnvironmentBuilder.build(Seq(cu1, cu2))
 
         //  Verify that within the top-level scope of input2, ImportedClass has some meaning.
-        val file2Scope: Environment = mapping.mapping(cu2).asInstanceOf[Environment]
+        val file2Scope: Environment = mapping.enclosingScopeOf(cu2).get
         file2Scope.lookup(NameLookup(InputString("ImportedClass"))) must beNone
       }
 
@@ -314,11 +314,13 @@ public class Test {
         val input1 = """
 package joosbox.test;
 public class Test {
-  public Test() {
+  public Test() {}
+  public int Method() {
     {
       int foo = 3;
     }
     int foo = 1;
+    return foo;
   } 
 }
         """
@@ -347,6 +349,7 @@ public class Test {
 
         EnvironmentBuilder.build(Seq(cu1)) must throwA[SyntaxError]
       }
+
     }
   }
 }

@@ -56,14 +56,52 @@ object EnvironmentBuilder {
   }
 
   def traverse(node: AbstractSyntaxNode, parent: Environment, root: RootEnvironment): Map[AbstractSyntaxNode, Environment] = {
-    val environment: Option[Environment] = environmentFromNode(node, parent)
-    environment match {
-      case Some(e: Environment) => Map(node -> e) ++ node.children.flatMap(traverse(_, e, root))
-      case None => node.children.flatMap(traverse(_, parent, root)).toMap
+    node match {
+      //  Special case for Blocks - we need to unroll their contents and make nested scopes.
+      case AbstractSyntaxNode.Block(seq: Seq[AbstractSyntaxNode.BlockStatement]) => {
+        scopeTreeFromBlockStatements(seq, parent)
+      }
+
+      case node: AbstractSyntaxNode => {
+        val e = environmentFromNode(node, parent)
+        Map(node -> e) ++ node.children.flatMap(traverse(_, e, root))
+      }
     }
   }
 
-  def environmentFromNode(node: AbstractSyntaxNode, parent: Environment): Option[Environment] = {
+  def scopeTreeFromBlockStatements(
+    statements: Seq[AbstractSyntaxNode.BlockStatement],
+    parent: Environment
+  ): Map[AbstractSyntaxNode, Environment] = {
+    statements match {
+      case Seq() => Map.empty[AbstractSyntaxNode, Environment]
+      case _ => {
+        val (preDecls, decls) = statements.span { 
+          case x: AbstractSyntaxNode.LocalVariableDeclaration => false 
+          case _ => true
+        }
+
+        decls.headOption match {
+          case Some(decl: AbstractSyntaxNode.LocalVariableDeclaration) => {
+            //  Make a scope that includes all of the pre-declaration statements,
+            //  plus the declaration.
+            val env = new ScopeEnvironment(Map(NameLookup(decl.name) -> decl), Seq.empty, parent)
+
+            (
+              preDecls.map(s => s -> env).toMap ++ Map(decl -> env)
+              ++ scopeTreeFromBlockStatements(decls.drop(1), env)
+            )
+          }
+
+          //  If there is no assignment, group all of the following
+          //  statements into the same scope.
+          case _ => statements.map(s => s -> parent).toMap
+        }
+      }
+    }
+  }
+
+  def environmentFromNode(node: AbstractSyntaxNode, parent: Environment): Environment = {
     node match {
       case n: AbstractSyntaxNode.CompilationUnit => {
         //  Locals of a CompilationUnit should contain all of its
@@ -120,7 +158,7 @@ object EnvironmentBuilder {
           Seq(packageName) ++ imports
         }
 
-        Some(new ScopeEnvironment(locals, otherScopeReferences, parent))
+        new ScopeEnvironment(locals, otherScopeReferences, parent)
       }
 
       case n: AbstractSyntaxNode.ClassBody => {
@@ -138,17 +176,17 @@ object EnvironmentBuilder {
             }
             case (map: Map[EnvironmentLookup, Referenceable], asn: AbstractSyntaxNode) => map
           })
-        Some(new ScopeEnvironment(mapping, Seq.empty, parent))
+        new ScopeEnvironment(mapping, Seq.empty, parent)
       }
 
       case n: AbstractSyntaxNode.InterfaceBody => {
         val mapping: Map[EnvironmentLookup, Referenceable] = n.declarations.map(imd => (NameLookup(imd.name), imd)).toMap
-        Some(new ScopeEnvironment(mapping, Seq.empty, parent))
+        new ScopeEnvironment(mapping, Seq.empty, parent)
       }
 
       case n: AbstractSyntaxNode.MethodDeclaration => {
         val mapping: Map[EnvironmentLookup, Referenceable] = n.parameters.map(fp => (NameLookup(fp.name), fp)).toMap
-        Some(new ScopeEnvironment(mapping, Seq.empty, parent))
+        new ScopeEnvironment(mapping, Seq.empty, parent)
       }
 
       case n: AbstractSyntaxNode.Block => {
@@ -170,10 +208,10 @@ object EnvironmentBuilder {
             case (map: Map[EnvironmentLookup, Referenceable], l: AbstractSyntaxNode) => map
           }
         
-        Some(new ScopeEnvironment(mapping, Seq.empty, parent))
+        new ScopeEnvironment(mapping, Seq.empty, parent)
       }
 
-      case _ => None
+      case _ => parent
     }
   }
 }
