@@ -63,6 +63,7 @@ object HierarchyChecker {
       QualifiedName,
       FinalKeyword,
       AbstractKeyword,
+      StaticKeyword,
       ClassBody,
       ClassBodyDeclaration,
       MethodDeclaration
@@ -135,11 +136,11 @@ object HierarchyChecker {
           case _ => Unit
         }
         superDeclarations.foreach {
-          case m : MethodDeclaration =>
-            if (m.modifiers.contains(AbstractKeyword)) {
-              val env = mapping.mapping.get(node)
+          case superMethod : MethodDeclaration =>
+            val env = mapping.mapping.get(node)
+            val methodLookup = MethodLookup(superMethod.name, superMethod.parameters.map{x=>x.varType})
+            if (superMethod.modifiers.contains(AbstractKeyword)) {
               if (!env.isEmpty) {
-                val methodLookup = MethodLookup(m.name, m.parameters.map{x=>x.varType})
                 val ref = env.get.parent.get.lookup(methodLookup)
                 ref match {
                   case None =>
@@ -150,12 +151,21 @@ object HierarchyChecker {
                 }
               }
             }
+
+            if (superMethod.modifiers.contains(StaticKeyword)) {
+              if (!env.isEmpty) {
+                val ref = env.get.parent.get.lookup(methodLookup)
+                ref match {
+                  case Some(MethodDeclaration(_, mods, _, _, _)) =>
+                    if (!mods.contains(StaticKeyword)) {
+                      throw new SyntaxError("A nonstatic method must not replace a static method.")
+                    }
+                  case _ => Unit
+                }
+              }
+            }
           case _ => Unit
         }
-
-
-
-
 
 
       case node: InterfaceDeclaration =>
@@ -178,9 +188,8 @@ object HierarchyChecker {
                 case None => throw new SyntaxError("Declaration not found.")
                 case _ => Unit
               }
-            } else {
-              //throw new SyntaxError("ERROR: Should have been caught earlier.")
             }
+
             if (extend_names.get(i.name).get > 1) {
               throw new SyntaxError("An interface must not be repeated in an extends clause of an interface.")
             }
