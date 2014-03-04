@@ -106,10 +106,11 @@ class RootEnvironment(nodes: Seq[AbstractSyntaxNode.CompilationUnit]) extends En
  * Environment for file or AST node scope (Compilation Unit in AST).
  */
 class ScopeEnvironment(
-  locals: Map[EnvironmentLookup, Referenceable],
+  val locals: Map[EnvironmentLookup, Referenceable],
   otherScopeReferences: Seq[QualifiedNameLookup],
   par: Environment
 ) extends Environment {
+
   val parent: Option[Environment] = Some(par)
   override def toString(): String = "ScopeEnvironment[refs: " +otherScopeReferences+ "](" + locals.toString() + ")"
 
@@ -122,7 +123,7 @@ class ScopeEnvironment(
       case None => {
         otherScopeReferences.flatMap(packageScope(_)).flatMap(env => {
           if (env != this) {
-            env.search(name)
+            env.locals.get(name)
           } else {
             None
           }

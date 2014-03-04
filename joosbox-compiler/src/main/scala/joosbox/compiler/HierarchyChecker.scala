@@ -88,7 +88,7 @@ object HierarchyChecker {
                 case s: SimpleName => NameLookup(s.value)
                 case q: QualifiedName => QualifiedNameLookup(q)
               }
-              val ref = env.get.parent.get.lookup(nameLookup)
+              val ref = env.get.lookup(nameLookup)
               ref match {
                 case Some(ClassDeclaration(_, superBody, superModifiers, _, _)) =>
                   if (superModifiers.contains(FinalKeyword)) {
@@ -97,7 +97,7 @@ object HierarchyChecker {
                   superDeclarations = superBody.declarations
                 case Some(InterfaceDeclaration(_, _, _, _)) =>
                   throw new SyntaxError("A class must not extend an interface.")
-                case None => throw new SyntaxError("Declaration not found.")
+                case None => throw new SyntaxError("Extended declaration not found.")
                 case _ => Unit
               }
             }
@@ -112,13 +112,13 @@ object HierarchyChecker {
               case q: QualifiedName => QualifiedNameLookup(q)
             }
             if (!env.isEmpty) {
-              val ref = env.get.parent.get.lookup(nameLookup)
+              val ref = env.get.lookup(nameLookup)
               ref match {
                 case Some(InterfaceDeclaration(_, intBody, mods, ints)) =>
                   intDeclarations = intDeclarations ++ intBody.declarations
                 case Some(ClassDeclaration(_, _, _, _, _)) =>
                   throw new SyntaxError("A class must not implement a class.")
-                case None => throw new SyntaxError("Declaration not found.")
+                case None => throw new SyntaxError("Implemented declaration not found.")
                 case _ => Unit
               }
             }
@@ -144,7 +144,7 @@ object HierarchyChecker {
             val env = mapping.enclosingScopeOf(node)
             val methodLookup = MethodLookup(superMethod.name, superMethod.parameters.map{x=>x.varType})
             if (!env.isEmpty) {
-              val ref = env.get.parent.get.lookup(methodLookup)
+              val ref = env.get.lookup(methodLookup)
               ref match {
                 case Some(MethodDeclaration(_, mods, retType, _, _)) =>
                   if (superMethod.memberType != retType) {
@@ -181,7 +181,7 @@ object HierarchyChecker {
             val env = mapping.enclosingScopeOf(node)
             val memberLookup = MethodLookup(intMember.name, intMember.parameters.map{x=>x.varType})
             if (!env.isEmpty) {
-              val ref = env.get.parent.get.lookup(memberLookup)
+              val ref = env.get.lookup(memberLookup)
               ref match {
                 case Some(MethodDeclaration(_, mods, retType, _, _)) =>
                   if (intMember.memberType != retType) {
@@ -228,11 +228,11 @@ object HierarchyChecker {
                 case s: SimpleName => NameLookup(s.value)
                 case q: QualifiedName => QualifiedNameLookup(q)
               }
-              val ref = env.get.parent.get.lookup(nameLookup)
+              val ref = env.get.lookup(nameLookup)
               ref match {
                 case Some(ClassDeclaration(_, _, _, _, _)) =>
                   throw new SyntaxError("An interface must not extend a class.")
-                case None => throw new SyntaxError("Declaration not found.")
+                case None => throw new SyntaxError("Extended declaration not found.")
                 case _ => Unit
               }
             }

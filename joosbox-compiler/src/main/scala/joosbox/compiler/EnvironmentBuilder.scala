@@ -43,7 +43,10 @@ object EnvironmentBuilder {
                 map + (qn -> (map.getOrElse(qn, Seq.empty[ScopeEnvironment]) ++ Seq(scope)))
               }
 
-              case None => map
+              case None => {
+                val qn = QualifiedName(Seq(InputString("")))
+                map + (qn -> (map.getOrElse(qn, Seq.empty[ScopeEnvironment]) ++ Seq(scope)))
+              }
             }
           }
           case _ => map
