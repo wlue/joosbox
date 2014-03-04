@@ -8,7 +8,7 @@ case class InputString(
 ) {
   override def toString: String = "\"" + value + "\" (" + filename + ":" + line + " char " + idx + ")"
   override def equals(o: Any) = o match {
-    case i: InputString => i.value.equalsIgnoreCase(this.value)
+    case i: InputString => i.value.equals(this.value)
     case _ => false
   }
   override def hashCode = this.value.hashCode()
