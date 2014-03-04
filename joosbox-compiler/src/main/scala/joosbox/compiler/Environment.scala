@@ -17,6 +17,7 @@ import AbstractSyntaxNode.{
 }
 
 sealed trait EnvironmentLookup
+case class IdentifierLookup(identifier: InputString) extends EnvironmentLookup
 case class NameLookup(name: InputString) extends EnvironmentLookup
 case class QualifiedNameLookup(name: QualifiedName) extends EnvironmentLookup
 case class MethodLookup(name: InputString, params: Seq[Type]) extends EnvironmentLookup
@@ -75,11 +76,17 @@ class RootEnvironment(nodes: Seq[AbstractSyntaxNode.CompilationUnit]) extends En
  * Environment for file or AST node scope (Compilation Unit in AST).
  */
 class ScopeEnvironment(
-  par: Environment,
-  members: Map[EnvironmentLookup, Referenceable]
+  locals: Map[EnvironmentLookup, Referenceable],
+  otherScopes: Seq[Environment],
+  par: Environment
 ) extends Environment {
   val parent: Option[Environment] = Some(par)
-  override def toString(): String = members.toString()
+  override def toString(): String = locals.toString()
 
-  def search(name: EnvironmentLookup): Option[Referenceable] = members.get(name)
+  def search(name: EnvironmentLookup): Option[Referenceable] = {
+    locals.get(name) match {
+      case Some(r: Referenceable) => Some(r)
+      case None => otherScopes.flatMap(_.search(name)).headOption
+    }
+  }
 }
