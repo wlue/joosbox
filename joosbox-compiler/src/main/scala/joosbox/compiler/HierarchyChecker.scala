@@ -29,7 +29,7 @@ import AbstractSyntaxNode.Referenceable
   - A class or interface must not contain (declare or inherit) two methods with
     the same signature but different return types
 
-  - A class that contains (declares or inherits) any abstract methods must be
+  -* A class that contains (declares or inherits) any abstract methods must be
     abstract.
 
   - A nonstatic method must not replace a static method.
@@ -61,13 +61,20 @@ object HierarchyChecker {
       Modifier,
       SimpleName,
       QualifiedName,
-      FinalKeyword
+      FinalKeyword,
+      AbstractKeyword,
+      ClassBody,
+      ClassBodyDeclaration,
+      MethodDeclaration
     }
 
     node match {
       case node: ClassDeclaration =>
+        val modifiers: Set[Modifier] = node.modifiers
         val superclass: Option[ClassType] = node.superclass
         val interfaces: Set[InterfaceType] = node.interfaces
+        val declarations : Seq[ClassBodyDeclaration] = node.body.declarations
+        var superDeclarations : Seq[ClassBodyDeclaration] = Seq.empty
 
         if (!superclass.isEmpty) {
             val env = mapping.mapping.get(node)
@@ -79,17 +86,16 @@ object HierarchyChecker {
               }
               val ref = env.get.parent.get.lookup(nameLookup)
               ref match {
-                case Some(ClassDeclaration(_, _, modifiers, _, _)) =>
-                  if (modifiers.contains(FinalKeyword)) {
+                case Some(ClassDeclaration(_, superBody, superModifiers, _, _)) =>
+                  if (superModifiers.contains(FinalKeyword)) {
                     throw new SyntaxError("A class must not extend a final class.")
                   }
+                  superDeclarations = superBody.declarations
                 case Some(InterfaceDeclaration(_, _, _, _)) =>
                   throw new SyntaxError("A class must not extend an interface.")
                 case None => throw new SyntaxError("Declaration not found.")
                 case _ => Unit
               }
-            } else {
-              //throw new SyntaxError("ERROR: Should have been caught earlier.")
             }
         }
 
@@ -110,15 +116,47 @@ object HierarchyChecker {
                 case None => throw new SyntaxError("Declaration not found.")
                 case _ => Unit
               }
-            } else {
-              //throw new SyntaxError("ERROR: Should have been caught earlier.")
             }
+
             if (implement_names.get(i.name).get > 1) {
               throw new SyntaxError("An interface must not be repeated in an extends clause of an interface.")
             }
 
           case _ => Unit
         }
+
+        declarations.foreach {
+          case m : MethodDeclaration =>
+            if (m.modifiers.contains(AbstractKeyword)) {
+              if (!modifiers.contains(AbstractKeyword)) {
+                throw new SyntaxError("Abstract methods must be defined in abstract classes/interfaces.")
+              }
+            }
+          case _ => Unit
+        }
+        superDeclarations.foreach {
+          case m : MethodDeclaration =>
+            if (m.modifiers.contains(AbstractKeyword)) {
+              val env = mapping.mapping.get(node)
+              if (!env.isEmpty) {
+                val methodLookup = MethodLookup(m.name, m.parameters.map{x=>x.varType})
+                val ref = env.get.parent.get.lookup(methodLookup)
+                ref match {
+                  case None =>
+                    if (!modifiers.contains(AbstractKeyword)) {
+                      throw new SyntaxError("Extending classes with abstract methods must either be an abstract class or implement the method.")
+                    }
+                  case _ => Unit
+                }
+              }
+            }
+          case _ => Unit
+        }
+
+
+
+
+
 
       case node: InterfaceDeclaration =>
         val interfaces: Set[InterfaceType] = node.interfaces
