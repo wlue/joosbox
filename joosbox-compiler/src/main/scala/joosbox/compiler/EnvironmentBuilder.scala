@@ -44,8 +44,8 @@ object EnvironmentBuilder {
               }
 
               case None => {
-                val qn = QualifiedName(Seq(InputString("")))
-                map + (qn -> (map.getOrElse(qn, Seq.empty[ScopeEnvironment]) ++ Seq(scope)))
+                val implicitPackage = QualifiedName(Seq(InputString("")))
+                map + (implicitPackage -> (map.getOrElse(implicitPackage, Seq.empty[ScopeEnvironment]) ++ Seq(scope)))
               }
             }
           }

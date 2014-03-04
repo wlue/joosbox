@@ -91,7 +91,11 @@ class RootEnvironment(nodes: Seq[AbstractSyntaxNode.CompilationUnit]) extends En
       case QualifiedNameLookup(qn: QualifiedName) =>
         qualifiedNameMap.get(qn)
       case NameLookup(in: InputString) =>
-        qualifiedNameMap.get(QualifiedName(Seq(InputString(""), in)))
+        var env = qualifiedNameMap.get(QualifiedName(Seq(InputString(""), in)))
+        env = env orElse qualifiedNameMap.get(QualifiedName(Seq(InputString("java"), InputString("lang"), in)))
+        env = env orElse qualifiedNameMap.get(QualifiedName(Seq(InputString("java"), InputString("io"), in)))
+        env = env orElse qualifiedNameMap.get(QualifiedName(Seq(InputString("java"), InputString("util"), in)))
+        env
 
       //  The root environment can only handle qualified name lookups.
       case _ => None
