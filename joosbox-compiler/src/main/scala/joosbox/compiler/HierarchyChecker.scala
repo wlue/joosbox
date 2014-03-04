@@ -34,7 +34,7 @@ import AbstractSyntaxNode.Referenceable
 
   -* A nonstatic method must not replace a static method.
 
-  - A method must not replace a method with a different return type.
+  -* A method must not replace a method with a different return type.
 
   -* A protected method must not replace a public method.
 
@@ -142,7 +142,10 @@ object HierarchyChecker {
             if (!env.isEmpty) {
               val ref = env.get.parent.get.lookup(methodLookup)
               ref match {
-                case Some(MethodDeclaration(_, mods, _, _, _)) =>
+                case Some(MethodDeclaration(_, mods, retType, _, _)) =>
+                  if (superMethod.memberType != retType) {
+                    throw new SyntaxError("A method must not replace a method with a different return type.")
+                  }
                   if (superMethod.modifiers.contains(FinalKeyword)) {
                     throw new SyntaxError("A method must not replace a final method.")
                   }
