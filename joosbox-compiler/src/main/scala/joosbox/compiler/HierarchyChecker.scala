@@ -32,13 +32,13 @@ import AbstractSyntaxNode.Referenceable
   -* A class that contains (declares or inherits) any abstract methods must be
     abstract.
 
-  - A nonstatic method must not replace a static method.
+  -* A nonstatic method must not replace a static method.
 
   - A method must not replace a method with a different return type.
 
-  - A protected method must not replace a public method.
+  -* A protected method must not replace a public method.
 
-  - A method must not replace a final method.
+  -* A method must not replace a final method.
 */
 
 object HierarchyChecker {
@@ -64,6 +64,8 @@ object HierarchyChecker {
       FinalKeyword,
       AbstractKeyword,
       StaticKeyword,
+      PublicKeyword,
+      ProtectedKeyword,
       ClassBody,
       ClassBodyDeclaration,
       MethodDeclaration
@@ -137,6 +139,18 @@ object HierarchyChecker {
           case superMethod : MethodDeclaration =>
             val env = mapping.mapping.get(node)
             val methodLookup = MethodLookup(superMethod.name, superMethod.parameters.map{x=>x.varType})
+
+            if (superMethod.modifiers.contains(FinalKeyword)) {
+              if (!env.isEmpty) {
+                val ref = env.get.parent.get.lookup(methodLookup)
+                ref match {
+                  case Some(MethodDeclaration(_, _, _, _, _)) =>
+                    throw new SyntaxError("A method must not replace a final method.")
+                  case _ => Unit
+                }
+              }
+            }
+
             if (superMethod.modifiers.contains(AbstractKeyword)) {
               if (!env.isEmpty) {
                 val ref = env.get.parent.get.lookup(methodLookup)
@@ -162,6 +176,20 @@ object HierarchyChecker {
                 }
               }
             }
+
+            if (superMethod.modifiers.contains(PublicKeyword)) {
+              if (!env.isEmpty) {
+                val ref = env.get.parent.get.lookup(methodLookup)
+                ref match {
+                  case Some(MethodDeclaration(_, mods, _, _, _)) =>
+                    if (mods.contains(ProtectedKeyword)) {
+                      throw new SyntaxError("A protected method must not replace a public method.")
+                    }
+                  case _ => Unit
+                }
+              }
+            }
+
           case _ => Unit
         }
 
