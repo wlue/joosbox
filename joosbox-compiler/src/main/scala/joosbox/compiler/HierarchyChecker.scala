@@ -22,9 +22,9 @@ import AbstractSyntaxNode.Referenceable
 
   -* An interface must not be repeated in an extends clause of an interface.
 
-  - A class or interface must not declare two methods with the same signature.
+  -* A class or interface must not declare two methods with the same signature.
 
-  - A class must not declare two constructors with the same parameter type.
+  -* A class must not declare two constructors with the same parameter type.
 
   - A class or interface must not contain (declare or inherit) two methods with
     the same signature but different return types
@@ -74,7 +74,8 @@ object HierarchyChecker {
             if (!env.isEmpty) {
               val nameLookup : EnvironmentLookup = superclass.get.name match {
                 case s: SimpleName => NameLookup(s.value)
-                case q: QualifiedName => QualifiedNameLookup(q.value)
+                case q: QualifiedName => NameLookup(q.value.last)
+                //case q: QualifiedName => QualifiedNameLookup(q.value)
               }
               val ref = env.get.parent.get.lookup(nameLookup)
               ref match {
@@ -88,7 +89,7 @@ object HierarchyChecker {
                 case _ => Unit
               }
             } else {
-              throw new SyntaxError("ERROR: Should have been caught earlier.")
+              //throw new SyntaxError("ERROR: Should have been caught earlier.")
             }
         }
 
@@ -99,7 +100,8 @@ object HierarchyChecker {
             if (!env.isEmpty) {
               val nameLookup : EnvironmentLookup = i.name match {
                 case s: SimpleName => NameLookup(s.value)
-                case q: QualifiedName => QualifiedNameLookup(q.value)
+                case q: QualifiedName => NameLookup(q.value.last)
+                //case q: QualifiedName => QualifiedNameLookup(q.value)
               }
               val ref = env.get.parent.get.lookup(nameLookup)
               ref match {
@@ -109,7 +111,7 @@ object HierarchyChecker {
                 case _ => Unit
               }
             } else {
-              throw new SyntaxError("ERROR: Should have been caught earlier.")
+              //throw new SyntaxError("ERROR: Should have been caught earlier.")
             }
             if (implement_names.get(i.name).get > 1) {
               throw new SyntaxError("An interface must not be repeated in an extends clause of an interface.")
@@ -128,7 +130,8 @@ object HierarchyChecker {
             if (!env.isEmpty) {
               val nameLookup : EnvironmentLookup = i.name match {
                 case s: SimpleName => NameLookup(s.value)
-                case q: QualifiedName => QualifiedNameLookup(q.value)
+                case q: QualifiedName => NameLookup(q.value.last)
+                //case q: QualifiedName => QualifiedNameLookup(q.value)
               }
               val ref = env.get.parent.get.lookup(nameLookup)
               ref match {
@@ -138,7 +141,7 @@ object HierarchyChecker {
                 case _ => Unit
               }
             } else {
-              throw new SyntaxError("ERROR: Should have been caught earlier.")
+              //throw new SyntaxError("ERROR: Should have been caught earlier.")
             }
             if (extend_names.get(i.name).get > 1) {
               throw new SyntaxError("An interface must not be repeated in an extends clause of an interface.")
