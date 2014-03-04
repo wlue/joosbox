@@ -1,6 +1,9 @@
 package joosbox.compiler
 
-import joosbox.lexer.InputString
+import joosbox.lexer.{
+  InputString,
+  SyntaxError
+}
 
 import joosbox.parser.{
   AbstractSyntaxNode
@@ -56,18 +59,30 @@ class RootEnvironment(nodes: Seq[AbstractSyntaxNode.CompilationUnit]) extends En
   val parent: Option[Environment] = None
 
   val qualifiedNameMap: Map[QualifiedName, Referenceable] = {
-    nodes.flatMap(cu => {
-      val declaration: Option[TypeDeclaration] = cu.typeDeclaration
-      cu.packageDeclaration match {
-        case Some(p: PackageDeclaration) => p.name match {
-          case s: SimpleName => declaration.map(d => QualifiedName(Seq(s.value, d.name)) -> d)
-          case q: QualifiedName => declaration.map(d => QualifiedName(q.value.toSeq ++ Seq(d.name)) -> d)
+    nodes.foldLeft(Map.empty[QualifiedName, Referenceable]) {
+      case (map: Map[QualifiedName, Referenceable], cu: AbstractSyntaxNode.CompilationUnit) => {
+        val declaration: Option[TypeDeclaration] = cu.typeDeclaration
+        val mapping = cu.packageDeclaration match {
+          case Some(p: PackageDeclaration) => p.name match {
+            case s: SimpleName => declaration.map(d => QualifiedName(Seq(s.value, d.name)) -> d)
+            case q: QualifiedName => declaration.map(d => QualifiedName(q.value.toSeq ++ Seq(d.name)) -> d)
+          }
+
+          //  TODO: If we are in the unnamed package, how do other packages access our members?
+          case None => declaration.map(d => QualifiedName(Seq(InputString(""), d.name)) -> d)
         }
 
-        //  TODO: If we are in the unnamed package, how do other packages access our members?
-        case None => declaration.map(d => QualifiedName(Seq(InputString(""), d.name)) -> d)
+        mapping match {
+          case Some((q: QualifiedName, t: TypeDeclaration)) => {
+            map.get(q) match {
+              case None => map + (q -> t)
+              case Some(_) => throw new SyntaxError("Duplicate qualified name " + q)
+            }
+          }
+          case _ => map
+        }
       }
-    }).toMap
+    }
   }
 
   var packageScopeMap: Map[QualifiedName, Seq[ScopeEnvironment]] = Map.empty[QualifiedName, Seq[ScopeEnvironment]]
