@@ -73,7 +73,7 @@ object AbstractSyntaxNode {
     modifiers: Set[Modifier] = Set.empty[Modifier],
     memberType: Type,
 
-    parameters: Set[FormalParameter] = Set.empty[FormalParameter],
+    parameters: Seq[FormalParameter] = Seq.empty[FormalParameter],
     body: Option[Block] = None
   ) extends AbstractSyntaxNode with Referenceable {
     override def children: List[AbstractSyntaxNode] =
@@ -620,7 +620,7 @@ object AbstractSyntaxNode {
       val name: Identifier = children.collectFirst { case x: Identifier => x }.get
       val modifiers: Set[Modifier] = children.collect { case x: Modifier => x }.toSet
       val memberType: Type = children.collectFirst { case x: Type => x }.get
-      val parameters: Set[FormalParameter] = children.collect { case x: FormalParameter => x }.toSet
+      val parameters: Seq[FormalParameter] = children.collect { case x: FormalParameter => x }
       val body: Option[Block] = children.collectFirst { case x: Block => x }
 
       // Enforce: An interface method cannot be static or final.

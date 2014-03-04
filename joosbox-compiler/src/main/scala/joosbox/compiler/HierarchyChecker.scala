@@ -68,7 +68,8 @@ object HierarchyChecker {
       ProtectedKeyword,
       ClassBody,
       ClassBodyDeclaration,
-      MethodDeclaration
+      MethodDeclaration,
+      InterfaceMemberDeclaration
     }
 
     node match {
@@ -78,6 +79,7 @@ object HierarchyChecker {
         val interfaces: Set[InterfaceType] = node.interfaces
         val declarations : Seq[ClassBodyDeclaration] = node.body.declarations
         var superDeclarations : Seq[ClassBodyDeclaration] = Seq.empty
+        var intDeclarations : Seq[InterfaceMemberDeclaration] = Seq.empty
 
         if (!superclass.isEmpty) {
             val env = mapping.mapping.get(node)
@@ -105,13 +107,15 @@ object HierarchyChecker {
         interfaces.foreach {
           case i : InterfaceType =>
             val env = mapping.mapping.get(node)
+            val nameLookup : EnvironmentLookup = i.name match {
+              case s: SimpleName => NameLookup(s.value)
+              case q: QualifiedName => QualifiedNameLookup(q)
+            }
             if (!env.isEmpty) {
-              val nameLookup : EnvironmentLookup = i.name match {
-                case s: SimpleName => NameLookup(s.value)
-                case q: QualifiedName => QualifiedNameLookup(q)
-              }
               val ref = env.get.parent.get.lookup(nameLookup)
               ref match {
+                case Some(InterfaceDeclaration(_, intBody, mods, ints)) =>
+                  intDeclarations = intDeclarations ++ intBody.declarations
                 case Some(ClassDeclaration(_, _, _, _, _)) =>
                   throw new SyntaxError("A class must not implement a class.")
                 case None => throw new SyntaxError("Declaration not found.")
@@ -171,6 +175,45 @@ object HierarchyChecker {
 
           case _ => Unit
         }
+
+        intDeclarations.foreach {
+          case intMember : InterfaceMemberDeclaration =>
+            val env = mapping.mapping.get(node)
+            val memberLookup = MethodLookup(intMember.name, intMember.parameters.map{x=>x.varType})
+            if (!env.isEmpty) {
+              val ref = env.get.parent.get.lookup(memberLookup)
+              ref match {
+                case Some(MethodDeclaration(_, mods, retType, _, _)) =>
+                  if (intMember.memberType != retType) {
+                    throw new SyntaxError("A method must not replace a method with a different return type.")
+                  }
+                  if (intMember.modifiers.contains(FinalKeyword)) {
+                    throw new SyntaxError("A method must not replace a final method.")
+                  }
+                  if (intMember.modifiers.contains(StaticKeyword)) {
+                    if (!mods.contains(StaticKeyword)) {
+                      throw new SyntaxError("A nonstatic method must not replace a static method.")
+                    }
+                  }
+                  if (intMember.modifiers.contains(PublicKeyword)) {
+                    if (mods.contains(ProtectedKeyword)) {
+                      throw new SyntaxError("A protected method must not replace a public method.")
+                    }
+                  }
+                  if (intMember.modifiers.contains(AbstractKeyword)) {
+                    if (!modifiers.contains(AbstractKeyword)) {
+                      throw new SyntaxError("Extending classes with abstract methods must either be an abstract class or implement the method.")
+                    }
+                  }
+
+                case _ => Unit
+              }
+            }
+
+          case _ => Unit
+        }
+
+
 
 
       case node: InterfaceDeclaration =>
