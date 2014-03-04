@@ -13,9 +13,18 @@ class TypeLinkerSpec extends Specification {
 package joosbox.test;
 
 public class Test {
-  public Apple() {}
+  public Test() {}
 }
     """
+
+    val testFileSomethingElse = """
+package joosbox.something_else;
+
+public class Test {
+  public Test() {}
+}
+    """
+
     val appleFile = """
 package joosbox.test;
 
@@ -25,8 +34,9 @@ public class Apple {
     """
 
     val precompiledNodes = Seq(
-      parser.parseString(testFile, "prebuilt/Test.java"),
-      parser.parseString(appleFile, "prebuilt/Apple.java")
+      parser.parseString(testFile, "joosbox/test/Test.java"),
+      parser.parseString(testFileSomethingElse, "joosbos/something_else/Test.java"),
+      parser.parseString(appleFile, "joosbox/test/Apple.java")
     ).asInstanceOf[Seq[AbstractSyntaxNode.CompilationUnit]]
 
     "check for imports" in {
@@ -70,20 +80,6 @@ public class Interface {
         TypeLinker.link(nodes, mapping) must not(throwA[Exception])
       }
 
-      "no collisions for interfaces" in {
-        val input = """
-import joosbox.test.Apple;
-
-public class SomethingElse {
-  public Test() {}
-}
-        """
-        val nodes = precompiledNodes ++ Seq(parser.parseString(input, "SomethingElse.java")
-          .asInstanceOf[AbstractSyntaxNode.CompilationUnit])
-        val mapping = EnvironmentBuilder.build(nodes)
-        TypeLinker.link(nodes, mapping) must not(throwA[Exception])
-      }
-
       "no imports for interface" in {
         val input = """
 public interface Test {
@@ -119,6 +115,23 @@ public interface Test {
         """
 
         val nodes = precompiledNodes ++ Seq(parser.parseString(input, "Test.java")
+          .asInstanceOf[AbstractSyntaxNode.CompilationUnit])
+        val mapping = EnvironmentBuilder.build(nodes)
+        TypeLinker.link(nodes, mapping) must throwA[Exception]
+      }
+
+      "colliding with single package import" in {
+        val input = """
+import joosbox.test.Apple;
+import joosbox.test.Test;
+import joosbox.something_else.Test;
+
+public class NotTest {
+  public NotTest() {}
+}
+        """
+
+        val nodes = precompiledNodes ++ Seq(parser.parseString(input, "NotTest.java")
           .asInstanceOf[AbstractSyntaxNode.CompilationUnit])
         val mapping = EnvironmentBuilder.build(nodes)
         TypeLinker.link(nodes, mapping) must throwA[Exception]

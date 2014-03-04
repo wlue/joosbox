@@ -70,8 +70,16 @@ object TypeLinker {
                 SingleTypeImportDeclaration(firstName),
                 SingleTypeImportDeclaration(secondName)
               ) => {
-                // (firstName, secondName) match {
-                // }
+                var Seq(firstNameSeq: Seq[String], secondNameSeq: Seq[String]): Seq[Seq[String]] = Seq(firstName, secondName).map {
+                  case SimpleName(name) => Seq(name.value)
+                  case QualifiedName(names) => names.map { input: InputString => input.value }
+                }
+
+                if (firstNameSeq.size == 1 || firstNameSeq != secondNameSeq) {
+                  if (firstNameSeq.last == secondNameSeq.last) {
+                    throw new SyntaxError("Import " + firstName + " conflicts with " + secondName + ".")
+                  }
+                }
               }
               case _ => {
               }
@@ -110,11 +118,13 @@ object TypeLinker {
                   }
                 }
               }
-            case _ => Unit
+            case _ => {
+            }
           }
         }
 
-      case _ => Unit
+      case _ => {
+      }
     }
 
     node.children.foreach { node => check(node) }
