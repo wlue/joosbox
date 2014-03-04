@@ -82,7 +82,7 @@ object HierarchyChecker {
         var intDeclarations : Seq[InterfaceMemberDeclaration] = Seq.empty
 
         if (!superclass.isEmpty) {
-            val env = mapping.mapping.get(node)
+            val env = mapping.enclosingScopeOf(node)
             if (!env.isEmpty) {
               val nameLookup : EnvironmentLookup = superclass.get.name match {
                 case s: SimpleName => NameLookup(s.value)
@@ -106,7 +106,7 @@ object HierarchyChecker {
         val implement_names = interfaces.groupBy(x => x.name).mapValues(_.size)
         interfaces.foreach {
           case i : InterfaceType =>
-            val env = mapping.mapping.get(node)
+            val env = mapping.enclosingScopeOf(node)
             val nameLookup : EnvironmentLookup = i.name match {
               case s: SimpleName => NameLookup(s.value)
               case q: QualifiedName => QualifiedNameLookup(q)
@@ -141,7 +141,7 @@ object HierarchyChecker {
         }
         superDeclarations.foreach {
           case superMethod : MethodDeclaration =>
-            val env = mapping.mapping.get(node)
+            val env = mapping.enclosingScopeOf(node)
             val methodLookup = MethodLookup(superMethod.name, superMethod.parameters.map{x=>x.varType})
             if (!env.isEmpty) {
               val ref = env.get.parent.get.lookup(methodLookup)
@@ -178,7 +178,7 @@ object HierarchyChecker {
 
         intDeclarations.foreach {
           case intMember : InterfaceMemberDeclaration =>
-            val env = mapping.mapping.get(node)
+            val env = mapping.enclosingScopeOf(node)
             val memberLookup = MethodLookup(intMember.name, intMember.parameters.map{x=>x.varType})
             if (!env.isEmpty) {
               val ref = env.get.parent.get.lookup(memberLookup)
@@ -222,7 +222,7 @@ object HierarchyChecker {
         val extend_names = interfaces.groupBy(x => x.name).mapValues(_.size)
         interfaces.foreach {
           case i : InterfaceType =>
-            val env = mapping.mapping.get(node)
+            val env = mapping.enclosingScopeOf(node)
             if (!env.isEmpty) {
               val nameLookup : EnvironmentLookup = i.name match {
                 case s: SimpleName => NameLookup(s.value)
