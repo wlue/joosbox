@@ -9,11 +9,16 @@ import joosbox.parser.{
 import AbstractSyntaxNode.{
   Name,
   Type,
-  Referenceable
+  Referenceable,
+  SimpleName,
+  QualifiedName,
+  TypeDeclaration,
+  PackageDeclaration
 }
 
 sealed trait EnvironmentLookup
 case class NameLookup(name: InputString) extends EnvironmentLookup
+case class QualifiedNameLookup(name: QualifiedName) extends EnvironmentLookup
 case class MethodLookup(name: InputString, params: Seq[Type]) extends EnvironmentLookup
 
 sealed trait Environment {
@@ -35,32 +40,39 @@ sealed trait Environment {
   def search(name: EnvironmentLookup): Option[Referenceable]
 }
 
-
 /**
- * Top level environment.
+ * Top level environment, encompassing multiple files' scopes.
  */
-class CompilationEnvironment extends Environment {
+class RootEnvironment(nodes: Seq[AbstractSyntaxNode.CompilationUnit]) extends Environment {
   val parent: Option[Environment] = None
 
-  // TODO
-  def search(name: EnvironmentLookup): Option[Referenceable] = None
+  val qualifiedNameMap: Map[QualifiedName, Referenceable] = {
+    nodes.flatMap(cu => {
+      val declarations: Seq[TypeDeclaration] = (cu.interfaceDeclarations ++ cu.classDeclaration)
+      cu.packageDeclaration match {
+        case Some(p: PackageDeclaration) => p.name match {
+          case s: SimpleName => declarations.map(d => QualifiedName(Seq(s.value, d.name)) -> d)
+          case q: QualifiedName => declarations.map(d => QualifiedName(q.value.toSeq ++ Seq(d.name)) -> d)
+        }
+
+        //  TODO: If we are in the unnamed package, how do other packages access our members?
+        case None => declarations.map(d => QualifiedName(Seq(InputString(""), d.name)) -> d)
+      }
+    }).toMap
+  }
+
+  def search(name: EnvironmentLookup): Option[Referenceable] = {
+    name match {
+      case QualifiedNameLookup(qn: QualifiedName) => qualifiedNameMap.get(qn)
+
+      //  The root environment can only handle qualified name lookups.
+      case _ => None
+    }
+  }
 }
 
-
 /**
- * Environment for file (Compilation Unit in AST).
- */
-class FileEnvironment(
-  par: CompilationEnvironment
-) extends Environment {
-  val parent: Option[Environment] = Some(par)
-
-  // TODO
-  def search(name: EnvironmentLookup): Option[Referenceable] = None
-}
-
-/**
- * Environment for file (Compilation Unit in AST).
+ * Environment for file or AST node scope (Compilation Unit in AST).
  */
 class ScopeEnvironment(
   par: Environment,

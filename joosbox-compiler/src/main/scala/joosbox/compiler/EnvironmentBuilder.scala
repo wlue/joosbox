@@ -14,16 +14,16 @@ import AbstractSyntaxNode.{
 
 object EnvironmentBuilder {
   def build(nodes: Seq[AbstractSyntaxNode.CompilationUnit]): EnvironmentMapping = {
-    val parent = new CompilationEnvironment()
-    val astMapping:Seq[Map[AbstractSyntaxNode, Environment]] = nodes.map(traverse(_, parent))    
+    val parent = new RootEnvironment(nodes)
+    val astMapping:Seq[Map[AbstractSyntaxNode, Environment]] = nodes.map(traverse(_, parent, parent))    
     new EnvironmentMapping(parent, astMapping.reduce(_ ++ _))
   }
 
-  def traverse(node: AbstractSyntaxNode, parent: Environment): Map[AbstractSyntaxNode, Environment] = {
+  def traverse(node: AbstractSyntaxNode, parent: Environment, root: RootEnvironment): Map[AbstractSyntaxNode, Environment] = {
     val environment: Option[Environment] = environmentFromNode(node, parent)
     environment match {
-      case Some(e: Environment) => Map(node -> e) ++ node.children.flatMap(traverse(_, e))
-      case None => node.children.flatMap(traverse(_, parent)).toMap
+      case Some(e: Environment) => Map(node -> e) ++ node.children.flatMap(traverse(_, e, root))
+      case None => node.children.flatMap(traverse(_, parent, root)).toMap
     }
   }
 
