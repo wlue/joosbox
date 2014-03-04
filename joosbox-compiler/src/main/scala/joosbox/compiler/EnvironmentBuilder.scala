@@ -62,7 +62,9 @@ object EnvironmentBuilder {
     node match {
       //  Special case for Blocks - we need to unroll their contents and make nested scopes.
       case AbstractSyntaxNode.Block(seq: Seq[AbstractSyntaxNode.BlockStatement]) => {
-        scopeTreeFromBlockStatements(seq, parent)
+        val e = environmentFromNode(node, parent)
+
+        scopeTreeFromBlockStatements(seq, parent) ++ Map(node -> e) ++ node.children.flatMap(traverse(_, e, root))
       }
 
       case node: AbstractSyntaxNode => {
