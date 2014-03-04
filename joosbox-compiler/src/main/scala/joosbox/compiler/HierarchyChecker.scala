@@ -139,54 +139,30 @@ object HierarchyChecker {
           case superMethod : MethodDeclaration =>
             val env = mapping.mapping.get(node)
             val methodLookup = MethodLookup(superMethod.name, superMethod.parameters.map{x=>x.varType})
-
-            if (superMethod.modifiers.contains(FinalKeyword)) {
-              if (!env.isEmpty) {
-                val ref = env.get.parent.get.lookup(methodLookup)
-                ref match {
-                  case Some(MethodDeclaration(_, _, _, _, _)) =>
+            if (!env.isEmpty) {
+              val ref = env.get.parent.get.lookup(methodLookup)
+              ref match {
+                case Some(MethodDeclaration(_, mods, _, _, _)) =>
+                  if (superMethod.modifiers.contains(FinalKeyword)) {
                     throw new SyntaxError("A method must not replace a final method.")
-                  case _ => Unit
-                }
-              }
-            }
-
-            if (superMethod.modifiers.contains(AbstractKeyword)) {
-              if (!env.isEmpty) {
-                val ref = env.get.parent.get.lookup(methodLookup)
-                ref match {
-                  case None =>
-                    if (!modifiers.contains(AbstractKeyword)) {
-                      throw new SyntaxError("Extending classes with abstract methods must either be an abstract class or implement the method.")
-                    }
-                  case _ => Unit
-                }
-              }
-            }
-
-            if (superMethod.modifiers.contains(StaticKeyword)) {
-              if (!env.isEmpty) {
-                val ref = env.get.parent.get.lookup(methodLookup)
-                ref match {
-                  case Some(MethodDeclaration(_, mods, _, _, _)) =>
+                  }
+                  if (superMethod.modifiers.contains(StaticKeyword)) {
                     if (!mods.contains(StaticKeyword)) {
                       throw new SyntaxError("A nonstatic method must not replace a static method.")
                     }
-                  case _ => Unit
-                }
-              }
-            }
-
-            if (superMethod.modifiers.contains(PublicKeyword)) {
-              if (!env.isEmpty) {
-                val ref = env.get.parent.get.lookup(methodLookup)
-                ref match {
-                  case Some(MethodDeclaration(_, mods, _, _, _)) =>
+                  }
+                  if (superMethod.modifiers.contains(PublicKeyword)) {
                     if (mods.contains(ProtectedKeyword)) {
                       throw new SyntaxError("A protected method must not replace a public method.")
                     }
-                  case _ => Unit
-                }
+                  }
+                  if (superMethod.modifiers.contains(AbstractKeyword)) {
+                    if (!modifiers.contains(AbstractKeyword)) {
+                      throw new SyntaxError("Extending classes with abstract methods must either be an abstract class or implement the method.")
+                    }
+                  }
+
+                case _ => Unit
               }
             }
 
