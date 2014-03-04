@@ -256,6 +256,97 @@ public class Test { public Test() { ImportedClass x = new ImportedClass(); } }
         val file2Scope: Environment = mapping.mapping(cu2).asInstanceOf[Environment]
         file2Scope.lookup(NameLookup(InputString("ImportedClass"))) must beNone
       }
+
+      "fail to return a class with multiple conflicting field names" in {
+        val input1 = """
+package joosbox.test;
+public class Test {
+  public ImportedClass() {} 
+  public int foo = 5;
+  public int foo = 6;
+}
+        """
+
+        val cu1: AbstractSyntaxNode.CompilationUnit
+          = parser.parseString(input1, "Test.java").asInstanceOf[AbstractSyntaxNode.CompilationUnit]
+
+        EnvironmentBuilder.build(Seq(cu1)) must throwA[SyntaxError]
+      }
+
+      "fail to return a class that has two same-name local variables in same scope" in {
+        val input1 = """
+package joosbox.test;
+public class Test {
+  public Test() {
+    int foo = 1;
+    int foo = 3;
+  } 
+}
+        """
+
+        val cu1: AbstractSyntaxNode.CompilationUnit
+          = parser.parseString(input1, "Test.java").asInstanceOf[AbstractSyntaxNode.CompilationUnit]
+
+        EnvironmentBuilder.build(Seq(cu1)) must throwA[SyntaxError]
+      }
+
+      "fail to return a class that has two same-name local variables in overlapping scope" in {
+        val input1 = """
+package joosbox.test;
+public class Test {
+  public Test() {
+    int foo = 1;
+    {
+      int innerfoo = 2;
+      int foo = 3;
+    }
+  } 
+}
+        """
+
+        val cu1: AbstractSyntaxNode.CompilationUnit
+          = parser.parseString(input1, "Test.java").asInstanceOf[AbstractSyntaxNode.CompilationUnit]
+
+        EnvironmentBuilder.build(Seq(cu1)) must throwA[SyntaxError]
+      }
+
+      "correctly build environments with properly nested variable redeclaration" in {
+        val input1 = """
+package joosbox.test;
+public class Test {
+  public Test() {
+    {
+      int foo = 3;
+    }
+    int foo = 1;
+  } 
+}
+        """
+
+        val cu1: AbstractSyntaxNode.CompilationUnit
+          = parser.parseString(input1, "Test.java").asInstanceOf[AbstractSyntaxNode.CompilationUnit]
+
+        EnvironmentBuilder.build(Seq(cu1)) must not(throwA[SyntaxError])
+      }
+
+      "fail to build with improperly nested variable redeclaration" in {
+        val input1 = """
+package joosbox.test;
+public class Test {
+  public Test() {
+    int foo = 1;
+    {
+      int foo = 3;
+    }
+  } 
+}
+        """
+
+        val cu1: AbstractSyntaxNode.CompilationUnit
+          = parser.parseString(input1, "Test.java").asInstanceOf[AbstractSyntaxNode.CompilationUnit]
+
+        EnvironmentBuilder.build(Seq(cu1)) must throwA[SyntaxError]
+      }
     }
   }
 }

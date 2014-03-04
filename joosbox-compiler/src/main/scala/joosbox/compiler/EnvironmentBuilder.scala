@@ -124,12 +124,20 @@ object EnvironmentBuilder {
       }
 
       case n: AbstractSyntaxNode.ClassBody => {
-        val mapping: Map[EnvironmentLookup, Referenceable] = n.declarations.flatMap({
-          case md: AbstractSyntaxNode.MethodDeclaration =>
-            Some((MethodLookup(md.name, md.parameters.map(_.varType)), md))
-          case fd: AbstractSyntaxNode.FieldDeclaration => Some((IdentifierLookup(fd.name), fd))
-          case _ => None
-        }).toMap
+        val mapping: Map[EnvironmentLookup, Referenceable]
+          = n.declarations.foldLeft(Map.empty[EnvironmentLookup, Referenceable])({
+            case (map: Map[EnvironmentLookup, Referenceable], md: AbstractSyntaxNode.MethodDeclaration) => {
+              map + (MethodLookup(md.name, md.parameters.map(_.varType)) -> md)
+            }
+            case (map: Map[EnvironmentLookup, Referenceable], fd: AbstractSyntaxNode.FieldDeclaration) => {
+              val key = IdentifierLookup(fd.name)
+              map.get(key) match {
+                case Some(_) => throw new SyntaxError("Duplicate field declaration for " + fd.name)
+                case None => map + (key -> fd)
+              }
+            }
+            case (map: Map[EnvironmentLookup, Referenceable], asn: AbstractSyntaxNode) => map
+          })
         Some(new ScopeEnvironment(mapping, Seq.empty, parent))
       }
 
@@ -144,10 +152,23 @@ object EnvironmentBuilder {
       }
 
       case n: AbstractSyntaxNode.Block => {
-        val mapping: Map[EnvironmentLookup, Referenceable] = n.statements.flatMap({
-          case l: AbstractSyntaxNode.LocalVariableDeclaration => Some(NameLookup(l.name), l)
-          case _ => None
-        }).toMap
+        val mapping: Map[EnvironmentLookup, Referenceable]
+          = n.statements.foldLeft(Map.empty[EnvironmentLookup, Referenceable]) {
+            case (map: Map[EnvironmentLookup, Referenceable], l: AbstractSyntaxNode.LocalVariableDeclaration) => {
+              val key = IdentifierLookup(l.name)
+              map.get(key) match {
+                case None => {
+                  parent.lookup(key) match {
+                    case Some(local: AbstractSyntaxNode.LocalVariableDeclaration)
+                      => throw new SyntaxError("Redefinition of " + l.name + " (previous definition: " + local + ")")
+                    case _ => map + (key -> l)
+                  }
+                }
+                case Some(r: Referenceable) => throw new SyntaxError("Redefined local variable " + l.name + " (previous definition: " + r + ")")
+              }
+            }
+            case (map: Map[EnvironmentLookup, Referenceable], l: AbstractSyntaxNode) => map
+          }
         
         Some(new ScopeEnvironment(mapping, Seq.empty, parent))
       }
