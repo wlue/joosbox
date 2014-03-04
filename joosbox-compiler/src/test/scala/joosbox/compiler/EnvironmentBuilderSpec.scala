@@ -28,8 +28,6 @@ public class Test {
 
         val mapping: EnvironmentMapping = EnvironmentBuilder.build(Seq(cu))
 
-        println(mapping.environment.asInstanceOf[RootEnvironment].qualifiedNameMap)
-        
         //  Verify that within the top-level scope, Test has some meaning.
         val fileScope: Environment = mapping.mapping(cu).asInstanceOf[Environment]
         fileScope.lookup(NameLookup(InputString("Test", "Test.java", 0, 0))) must beEqualTo(cu.classDeclaration)
