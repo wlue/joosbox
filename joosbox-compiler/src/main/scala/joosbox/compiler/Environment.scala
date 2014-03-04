@@ -49,15 +49,15 @@ class RootEnvironment(nodes: Seq[AbstractSyntaxNode.CompilationUnit]) extends En
 
   val qualifiedNameMap: Map[QualifiedName, Referenceable] = {
     nodes.flatMap(cu => {
-      val declarations: Seq[TypeDeclaration] = (cu.interfaceDeclarations ++ cu.classDeclaration)
+      val declaration: Option[TypeDeclaration] = cu.typeDeclaration
       cu.packageDeclaration match {
         case Some(p: PackageDeclaration) => p.name match {
-          case s: SimpleName => declarations.map(d => QualifiedName(Seq(s.value, d.name)) -> d)
-          case q: QualifiedName => declarations.map(d => QualifiedName(q.value.toSeq ++ Seq(d.name)) -> d)
+          case s: SimpleName => declaration.map(d => QualifiedName(Seq(s.value, d.name)) -> d)
+          case q: QualifiedName => declaration.map(d => QualifiedName(q.value.toSeq ++ Seq(d.name)) -> d)
         }
 
         //  TODO: If we are in the unnamed package, how do other packages access our members?
-        case None => declarations.map(d => QualifiedName(Seq(InputString(""), d.name)) -> d)
+        case None => declaration.map(d => QualifiedName(Seq(InputString(""), d.name)) -> d)
       }
     }).toMap
   }

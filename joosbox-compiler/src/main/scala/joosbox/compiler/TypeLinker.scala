@@ -51,46 +51,67 @@ object TypeLinker {
       TypeImportOnDemandDeclaration,
       InterfaceDeclaration,
       ClassDeclaration,
+      TypeDeclaration,
       QualifiedName,
       SimpleName
     }
 
     node match {
       case node: CompilationUnit =>
-        val classPackage : Option[PackageDeclaration] = node.packageDeclaration
+        val classPackage: Option[PackageDeclaration] = node.packageDeclaration
         val imports: Seq[ImportDeclaration] = node.importDeclarations
-        val interfaces: Seq[InterfaceDeclaration] = node.interfaceDeclarations
-        val klass: Option[ClassDeclaration] = node.classDeclaration
+        val typeDeclaration: Option[TypeDeclaration] = node.typeDeclaration
 
-        klass match {
-          case Some(ClassDeclaration(className, _, _, _, _)) =>
-            imports.foreach {
-              case SingleTypeImportDeclaration(name) =>
-                val importName : Seq[InputString] = name match {
-                  case QualifiedName(values) => values
-                  case SimpleName(value) => Seq(value)
+        // Check for single type import declaration clashes between each other.
+        imports.foreach { singleImport =>
+          imports.foreach { otherImport =>
+            (singleImport, otherImport) match {
+              case (
+                SingleTypeImportDeclaration(firstName),
+                SingleTypeImportDeclaration(secondName)
+              ) => {
+                // (firstName, secondName) match {
+                // }
+              }
+              case _ => {
+              }
+            }
+          }
+        }
+
+        typeDeclaration.foreach { typeDeclaration =>
+          var className = typeDeclaration match {
+            case ClassDeclaration(name, _, _, _, _) => name
+            case InterfaceDeclaration(name, _, _, _) => name
+          }
+
+          imports.foreach {
+            case SingleTypeImportDeclaration(name) =>
+              val importName: Seq[InputString] = name match {
+                case QualifiedName(values) => values
+                case SimpleName(value) => Seq(value)
+              }
+
+              if (classPackage.isEmpty) {
+                // In the default package, all class clashes are invalid
+                if (className.value == importName.last.value) {
+                  throw new SyntaxError("Package import cannot be the same name as class name.")
                 }
-                if (classPackage.isEmpty) {
-                  // In the default package, all class clashes are invalid
-                  if (className.value == importName.last.value) {
+              } else {
+                val classPackageName: Seq[InputString] = classPackage.get.name match {
+                  case QualifiedName(values) => values ++ Seq(className)
+                  case SimpleName(value) => Seq(value) ++ Seq(className)
+                }
+
+                // A class may import itself, but no other clashing classes
+                if (classPackageName != importName) {
+                  if (classPackageName.last.value == importName.last.value) {
                     throw new SyntaxError("Package import cannot be the same name as class name.")
                   }
-                } else {
-                  val classPackageName : Seq[InputString] = classPackage.get.name match {
-                    case QualifiedName(values) => values ++ Seq(className)
-                    case SimpleName(value) => Seq(value) ++ Seq(className)
-                  }
-
-                  // A class may import itself, but no other clashing classes
-                  if (classPackageName != importName) {
-                    if (classPackageName.last.value == importName.last.value) {
-                      throw new SyntaxError("Package import cannot be the same name as class name.")
-                    }
-                  }
                 }
-              case _ => Unit
-            }
-          case None => Unit
+              }
+            case _ => Unit
+          }
         }
 
       case _ => Unit

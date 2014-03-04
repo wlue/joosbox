@@ -66,8 +66,7 @@ object EnvironmentBuilder {
         }.toMap
 
         val locals: Map[EnvironmentLookup, Referenceable] = (
-          n.interfaceDeclarations.map(x => (NameLookup(x.name), x)).toMap
-          ++ n.classDeclaration.map(x => (NameLookup(x.name), x)).toMap
+          n.typeDeclaration.map(x => (NameLookup(x.name), x)).toMap
           ++ explicitImports
         )
         Some(new ScopeEnvironment(locals, Seq.empty, parent))

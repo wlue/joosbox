@@ -102,7 +102,6 @@ class AbstractSyntaxTreeSpec extends Specification {
             AbstractSyntaxNode.SimpleName("mypackage"))),
           List(AbstractSyntaxNode.SingleTypeImportDeclaration(
             AbstractSyntaxNode.SimpleName("myimport"))),
-          List.empty[AbstractSyntaxNode.InterfaceDeclaration],
           Some(AbstractSyntaxNode.ClassDeclaration(
             "identifier",
             AbstractSyntaxNode.ClassBody(
@@ -234,7 +233,6 @@ class AbstractSyntaxTreeSpec extends Specification {
             AbstractSyntaxNode.SingleTypeImportDeclaration(
               AbstractSyntaxNode.SimpleName("myimport"))
           ),
-          List.empty[AbstractSyntaxNode.InterfaceDeclaration],
           Some(AbstractSyntaxNode.ClassDeclaration(
             "classname",
             AbstractSyntaxNode.ClassBody(
@@ -351,7 +349,6 @@ class AbstractSyntaxTreeSpec extends Specification {
             AbstractSyntaxNode.SimpleName("mypackage"))),
           List(AbstractSyntaxNode.SingleTypeImportDeclaration(
             AbstractSyntaxNode.SimpleName("myimport"))),
-          List.empty[AbstractSyntaxNode.InterfaceDeclaration],
           Some(AbstractSyntaxNode.ClassDeclaration(
             "identifier",
             AbstractSyntaxNode.ClassBody(
@@ -645,7 +642,6 @@ class AbstractSyntaxTreeSpec extends Specification {
         AbstractSyntaxNode.CompilationUnit(
           None,
           List.empty[AbstractSyntaxNode.ImportDeclaration],
-          List.empty[AbstractSyntaxNode.InterfaceDeclaration],
           Some(AbstractSyntaxNode.ClassDeclaration(
             "identifier",
             AbstractSyntaxNode.ClassBody(
@@ -687,7 +683,6 @@ public class Test {
           AbstractSyntaxNode.CompilationUnit(
             None,
             List.empty[AbstractSyntaxNode.ImportDeclaration],
-            List.empty[AbstractSyntaxNode.InterfaceDeclaration],
             Some(AbstractSyntaxNode.ClassDeclaration(
               InputString("Test", "Test.java", 2, 13),
               AbstractSyntaxNode.ClassBody(
@@ -748,7 +743,6 @@ public class Test {
           AbstractSyntaxNode.CompilationUnit(
             None,
             List.empty[AbstractSyntaxNode.ImportDeclaration],
-            List.empty[AbstractSyntaxNode.InterfaceDeclaration],
             Some(AbstractSyntaxNode.ClassDeclaration(
               InputString("Test", "Test.java", 2, 13),
               AbstractSyntaxNode.ClassBody(

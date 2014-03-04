@@ -32,7 +32,7 @@ public class Test {
 
         //  Verify that within the top-level scope, Test has some meaning.
         val fileScope: Environment = mapping.mapping(cu).asInstanceOf[Environment]
-        fileScope.lookup(NameLookup(InputString("Test", "Test.java", 0, 0))) must beEqualTo(cu.classDeclaration)
+        fileScope.lookup(NameLookup(InputString("Test", "Test.java", 0, 0))) must beEqualTo(cu.typeDeclaration)
       }
 
       "Test interface" in {
@@ -45,10 +45,10 @@ public interface Test {
           = parser.parseString(input, "Test.java").asInstanceOf[AbstractSyntaxNode.CompilationUnit]
 
         val mapping: EnvironmentMapping = EnvironmentBuilder.build(Seq(cu))
-        
+
         //  Verify that within the top-level scope, Test has some meaning.
         val fileScope: Environment = mapping.mapping(cu).asInstanceOf[Environment]
-        fileScope.lookup(NameLookup(InputString("Test", "Test.java", 0, 0))) must beEqualTo(Some(cu.interfaceDeclarations(0)))
+        fileScope.lookup(NameLookup(InputString("Test", "Test.java", 0, 0))) must beEqualTo(cu.typeDeclaration)
       }
 
       "Test fully qualified lookup" in {
@@ -77,7 +77,7 @@ public class Test {
           InputString("test", "Test.java", 0, 0),
           InputString("Test", "Test.java", 0, 0)
         ))
-        fileScope.lookup(QualifiedNameLookup(qualifiedName)) must beEqualTo(cu.classDeclaration)
+        fileScope.lookup(QualifiedNameLookup(qualifiedName)) must beEqualTo(cu.typeDeclaration)
       }
 
       "throw an error on qualified name clashes" in {
@@ -122,7 +122,7 @@ public class Test { public Test() { ImportedClass x = new ImportedClass(); } }
 
         //  Verify that within the top-level scope of input2, ImportedClass has some meaning.
         val file2Scope: Environment = mapping.mapping(cu2).asInstanceOf[Environment]
-        file2Scope.lookup(NameLookup(InputString("ImportedClass"))) must beEqualTo(cu1.classDeclaration)
+        file2Scope.lookup(NameLookup(InputString("ImportedClass"))) must beEqualTo(cu1.typeDeclaration)
       }
 
       "fail on an import that does not exist" in {
