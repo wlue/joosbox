@@ -1,6 +1,9 @@
 package joosbox.compiler
 
-import joosbox.lexer.SyntaxError
+import joosbox.lexer.{
+  SyntaxError,
+  InputString
+}
 
 import joosbox.parser.{
   AbstractSyntaxNode
@@ -8,6 +11,8 @@ import joosbox.parser.{
 
 import AbstractSyntaxNode.{
   SingleTypeImportDeclaration,
+  TypeImportOnDemandDeclaration,
+  PackageDeclaration,
   CompilationUnit,
   Referenceable,
   FormalParameter,
@@ -19,8 +24,35 @@ import AbstractSyntaxNode.{
 object EnvironmentBuilder {
   def build(nodes: Seq[AbstractSyntaxNode.CompilationUnit]): EnvironmentMapping = {
     val parent = new RootEnvironment(nodes)
-    val astMapping:Seq[Map[AbstractSyntaxNode, Environment]] = nodes.map(traverse(_, parent, parent))    
-    new EnvironmentMapping(parent, astMapping.reduce(_ ++ _))
+    val astMapping:Seq[Map[AbstractSyntaxNode, Environment]] = nodes.map(traverse(_, parent, parent))
+
+    val mapping:Map[AbstractSyntaxNode, Environment] = astMapping.reduce(_ ++ _)
+
+    //  Set the parent's packageScopeMap to refer to the new scopes we have.
+    parent.packageScopeMap = mapping.foldLeft(Map.empty[QualifiedName, Seq[ScopeEnvironment]]) {
+      case (map: Map[QualifiedName, Seq[ScopeEnvironment]], (asn: AbstractSyntaxNode.CompilationUnit, env: Environment)) => {
+        env match {
+          case scope: ScopeEnvironment => {
+            asn.packageDeclaration match {
+              case Some(PackageDeclaration(qn: QualifiedName)) => {
+                map + (qn -> (map.getOrElse(qn, Seq.empty[ScopeEnvironment]) ++ Seq(scope)))
+              }
+
+              case Some(PackageDeclaration(sn: SimpleName)) => {
+                val qn = QualifiedName(Seq(sn.value))
+                map + (qn -> (map.getOrElse(qn, Seq.empty[ScopeEnvironment]) ++ Seq(scope)))
+              }
+
+              case None => map
+            }
+          }
+          case _ => map
+        }
+      }
+      case (map: Map[QualifiedName, Seq[ScopeEnvironment]], (asn: AbstractSyntaxNode, env: Environment)) => map
+    }
+
+    new EnvironmentMapping(parent, mapping)
   }
 
   def traverse(node: AbstractSyntaxNode, parent: Environment, root: RootEnvironment): Map[AbstractSyntaxNode, Environment] = {
@@ -69,7 +101,26 @@ object EnvironmentBuilder {
           n.typeDeclaration.map(x => (NameLookup(x.name), x)).toMap
           ++ explicitImports
         )
-        Some(new ScopeEnvironment(locals, Seq.empty, parent))
+
+        val otherScopeReferences: Seq[QualifiedNameLookup] = {
+          val packageName:QualifiedNameLookup = n.packageDeclaration match {
+            case Some(PackageDeclaration(qn: QualifiedName)) => QualifiedNameLookup(qn)
+            case Some(PackageDeclaration(sn: SimpleName)) => QualifiedNameLookup(QualifiedName(Seq(sn.value)))
+
+            //  The "default package", the empty string.
+            case None => QualifiedNameLookup(QualifiedName(Seq(InputString(""))))
+          }
+
+          val imports:Seq[QualifiedNameLookup] = n.importDeclarations.flatMap {
+            case TypeImportOnDemandDeclaration(qn: QualifiedName) => Some(QualifiedNameLookup(qn))
+            case TypeImportOnDemandDeclaration(sn: SimpleName) => Some(QualifiedNameLookup(QualifiedName(Seq(sn.value))))
+            case _ => None
+          }
+
+          Seq(packageName) ++ imports
+        }
+
+        Some(new ScopeEnvironment(locals, otherScopeReferences, parent))
       }
 
       case n: AbstractSyntaxNode.ClassBody => {

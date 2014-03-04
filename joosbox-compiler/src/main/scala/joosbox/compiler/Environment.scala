@@ -39,6 +39,14 @@ sealed trait Environment {
    * Search the current scope for the name.
    */
   def search(name: EnvironmentLookup): Option[Referenceable]
+
+  /**
+   * Get the package scope from the parent. Only the root should respond to this.
+   */
+  def packageScope(name: QualifiedNameLookup): Seq[ScopeEnvironment] = parent match {
+    case Some(p: Environment) => p.packageScope(name)
+    case _ => Seq.empty[ScopeEnvironment]
+  }
 }
 
 /**
@@ -62,6 +70,8 @@ class RootEnvironment(nodes: Seq[AbstractSyntaxNode.CompilationUnit]) extends En
     }).toMap
   }
 
+  var packageScopeMap: Map[QualifiedName, Seq[ScopeEnvironment]] = Map.empty[QualifiedName, Seq[ScopeEnvironment]]
+
   def search(name: EnvironmentLookup): Option[Referenceable] = {
     name match {
       case QualifiedNameLookup(qn: QualifiedName) => qualifiedNameMap.get(qn)
@@ -70,6 +80,9 @@ class RootEnvironment(nodes: Seq[AbstractSyntaxNode.CompilationUnit]) extends En
       case _ => None
     }
   }
+
+  override def packageScope(name: QualifiedNameLookup): Seq[ScopeEnvironment]
+    = packageScopeMap.getOrElse(name.name, Seq.empty[ScopeEnvironment])
 }
 
 /**
@@ -77,16 +90,27 @@ class RootEnvironment(nodes: Seq[AbstractSyntaxNode.CompilationUnit]) extends En
  */
 class ScopeEnvironment(
   locals: Map[EnvironmentLookup, Referenceable],
-  otherScopes: Seq[Environment],
+  otherScopeReferences: Seq[QualifiedNameLookup],
   par: Environment
 ) extends Environment {
   val parent: Option[Environment] = Some(par)
-  override def toString(): String = locals.toString()
+  override def toString(): String = "ScopeEnvironment(" + locals.toString() + ")"
 
   def search(name: EnvironmentLookup): Option[Referenceable] = {
     locals.get(name) match {
       case Some(r: Referenceable) => Some(r)
-      case None => otherScopes.flatMap(_.search(name)).headOption
+
+      //  Check our other scope references - our package scopes, then our wildcard imports.
+      //  Note that wildcard imports are pretty much just additional package scopes.
+      case None => {
+        otherScopeReferences.flatMap(par.packageScope(_)).flatMap(env => {
+          if (env != this) {
+            env.search(name)
+          } else {
+            None
+          }
+        }).headOption
+      }
     }
   }
 }

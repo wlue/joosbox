@@ -159,6 +159,54 @@ public class Test { public Test() { ImportedClass x = new ImportedClass(); } }
 
         EnvironmentBuilder.build(compilationUnits) must not(throwA[SyntaxError])
       }
+
+      "correctly return a class from the same package" in {
+        val input1 = """
+package joosbox.test;
+public class ImportedClass { public ImportedClass() {} }
+        """
+
+        val input2 = """
+package joosbox.test;
+public class Test { public Test() { ImportedClass x = new ImportedClass(); } }
+        """
+
+        val cu1: AbstractSyntaxNode.CompilationUnit
+          = parser.parseString(input1, "ImportedClass.java").asInstanceOf[AbstractSyntaxNode.CompilationUnit]
+
+        val cu2: AbstractSyntaxNode.CompilationUnit
+          = parser.parseString(input2, "Test.java").asInstanceOf[AbstractSyntaxNode.CompilationUnit]
+
+        val mapping: EnvironmentMapping = EnvironmentBuilder.build(Seq(cu1, cu2))
+
+        //  Verify that within the top-level scope of input2, ImportedClass has some meaning.
+        val file2Scope: Environment = mapping.mapping(cu2).asInstanceOf[Environment]
+        file2Scope.lookup(NameLookup(InputString("ImportedClass"))) must beEqualTo(cu1.typeDeclaration)
+      }
+
+      "fail to return a class from a different package" in {
+        val input1 = """
+package joosbox.tests;
+public class ImportedClass { public ImportedClass() {} }
+        """
+
+        val input2 = """
+package joosbox.test;
+public class Test { public Test() { ImportedClass x = new ImportedClass(); } }
+        """
+
+        val cu1: AbstractSyntaxNode.CompilationUnit
+          = parser.parseString(input1, "ImportedClass.java").asInstanceOf[AbstractSyntaxNode.CompilationUnit]
+
+        val cu2: AbstractSyntaxNode.CompilationUnit
+          = parser.parseString(input2, "Test.java").asInstanceOf[AbstractSyntaxNode.CompilationUnit]
+
+        val mapping: EnvironmentMapping = EnvironmentBuilder.build(Seq(cu1, cu2))
+
+        //  Verify that within the top-level scope of input2, ImportedClass has some meaning.
+        val file2Scope: Environment = mapping.mapping(cu2).asInstanceOf[Environment]
+        file2Scope.lookup(NameLookup(InputString("ImportedClass"))) must beNone
+      }
     }
   }
 }
