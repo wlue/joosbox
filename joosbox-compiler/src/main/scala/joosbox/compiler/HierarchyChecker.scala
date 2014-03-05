@@ -286,11 +286,8 @@ object HierarchyChecker {
                 }
               case _ => Unit
             }
-            if (!implemented) {
-              throw new SyntaxError("Implementing interfaces with abstract methods must either be an abstract class or implement the method.")
-            }
             if (intMember.modifiers.contains(AbstractKeyword)) {
-                if (!modifiers.contains(AbstractKeyword)) {
+                if (!modifiers.contains(AbstractKeyword) && !implemented) {
                   throw new SyntaxError("Implementing interfaces with abstract methods must either be an abstract class or implement the method.")
                 }
             }
