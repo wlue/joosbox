@@ -165,13 +165,12 @@ object HierarchyChecker {
                       throw new SyntaxError("A protected method must not replace a public method.")
                     }
                   }
-                  /* TODO : 
+                case _ =>
                   if (superMethod.modifiers.contains(AbstractKeyword)) {
                     if (!modifiers.contains(AbstractKeyword)) {
                       throw new SyntaxError("Extending classes with abstract methods must either be an abstract class or implement the method.")
                     }
-                  }*/
-                case _ => Unit
+                  }
               }
             case _ => Unit
           }
@@ -224,14 +223,13 @@ object HierarchyChecker {
                         throw new SyntaxError("A protected method must not replace a public method.")
                       }
                     }
-                    /* TODO: Look into why this isn't working
+
+                  case _ =>
                     if (intMember.modifiers.contains(AbstractKeyword)) {
                       if (!modifiers.contains(AbstractKeyword)) {
-                        throw new SyntaxError("Extending classes with abstract methods must either be an abstract class or implement the method.")
+                        throw new SyntaxError("Implementing interfaces with abstract methods must either be an abstract class or implement the method.")
                       }
-                    }*/
-
-                  case _ => Unit
+                    }
                 }
               case _ => Unit
             }
