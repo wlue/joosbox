@@ -110,7 +110,7 @@ class ScopeEnvironment(
 ) extends Environment {
 
   val parent: Option[Environment] = Some(par)
-  override def toString(): String = "ScopeEnvironment[refs: " +otherScopeReferences+ "](" + locals.toString() + ")"
+  override def toString(): String = super.toString()+"<par: @"+Integer.toHexString(par.hashCode())+">[refs: " +otherScopeReferences+ "](" + locals.toString() + ")"
 
   def search(name: EnvironmentLookup): Option[Referenceable] = {
     locals.get(name) match {

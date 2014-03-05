@@ -11,7 +11,6 @@ class EnvironmentBuilderSpec extends Specification {
     val parser = Parser.Joos
 
     "Create environments from" in {
-
       "Test class" in {
         val input = """
 public class Test {
@@ -272,7 +271,6 @@ public class Test {
 
         EnvironmentBuilder.build(Seq(cu1)) must throwA[SyntaxError]
       }
-
       "fail to return a class that has two same-name local variables in same scope" in {
         val input1 = """
 package joosbox.test;
@@ -348,6 +346,48 @@ public class Test {
           = parser.parseString(input1, "Test.java").asInstanceOf[AbstractSyntaxNode.CompilationUnit]
 
         EnvironmentBuilder.build(Seq(cu1)) must throwA[SyntaxError]
+      }
+      "build with complex nested variable declaration" in {
+        val input1 = """
+package joosbox.test;
+public class Test {
+  public Test() {
+    int bar = 3;
+    return bar;
+  } 
+}
+        """
+
+        val cu1: AbstractSyntaxNode.CompilationUnit
+          = parser.parseString(input1, "Test.java").asInstanceOf[AbstractSyntaxNode.CompilationUnit]
+
+        val mapping: EnvironmentMapping = EnvironmentBuilder.build(Seq(cu1))
+
+        cu1 match {
+          case AbstractSyntaxNode.CompilationUnit(
+            _, _, Some(
+              AbstractSyntaxNode.ClassDeclaration(
+                _, AbstractSyntaxNode.ClassBody(
+                  Seq(AbstractSyntaxNode.ConstructorDeclaration(
+                    _, _, _, Some(
+                      AbstractSyntaxNode.Block(
+                        statements: Seq[AbstractSyntaxNode.BlockStatement]
+                      )
+                    )
+                  )
+                )
+              ), _, _, _
+            )
+          )
+          ) => {
+            val returnStatement: AbstractSyntaxNode.BlockStatement = statements.last
+            val scope: Environment = mapping.enclosingScopeOf(returnStatement).get
+
+            scope.lookup(IdentifierLookup(InputString("bar"))) must beEqualTo(Some(statements(0)))
+          }
+
+          case _ => true must beFalse
+        }
       }
 
     }

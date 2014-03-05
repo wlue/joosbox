@@ -62,9 +62,10 @@ object EnvironmentBuilder {
     node match {
       //  Special case for Blocks - we need to unroll their contents and make nested scopes.
       case AbstractSyntaxNode.Block(seq: Seq[AbstractSyntaxNode.BlockStatement]) => {
-        val e = environmentFromNode(node, parent)
 
-        scopeTreeFromBlockStatements(seq, parent) ++ Map(node -> e) ++ node.children.flatMap(traverse(_, e, root))
+        val e = new ScopeEnvironment(Map.empty, Seq.empty, parent)
+        val scopetree = scopeTreeFromBlockStatements(seq, e, root)
+        node.children.flatMap(traverse(_, e, root)).toMap ++ scopetree ++ Map(node -> e)
       }
 
       case node: AbstractSyntaxNode => {
@@ -76,7 +77,8 @@ object EnvironmentBuilder {
 
   def scopeTreeFromBlockStatements(
     statements: Seq[AbstractSyntaxNode.BlockStatement],
-    parent: Environment
+    parent: Environment,
+    root: RootEnvironment
   ): Map[AbstractSyntaxNode, Environment] = {
     statements match {
       case Seq() => Map.empty[AbstractSyntaxNode, Environment]
@@ -88,19 +90,24 @@ object EnvironmentBuilder {
 
         decls.headOption match {
           case Some(decl: AbstractSyntaxNode.LocalVariableDeclaration) => {
-            //  Make a scope that includes all of the pre-declaration statements,
-            //  plus the declaration.
-            val env = new ScopeEnvironment(Map(NameLookup(decl.name) -> decl), Seq.empty, parent)
-
-            (
-              preDecls.map(s => s -> env).toMap ++ Map(decl -> env)
-              ++ scopeTreeFromBlockStatements(decls.drop(1), env)
-            )
+            //  Declaration implicitly creates a new scope for itself and everything after it.
+            val key = IdentifierLookup(decl.name)
+            parent.lookup(key) match {
+              case Some(local: AbstractSyntaxNode.LocalVariableDeclaration)
+                => throw new SyntaxError("Redefinition of " + decl.name + " (previous definition: " + local + ")")
+              case _ => {
+                val env = new ScopeEnvironment(Map(key -> decl), Seq.empty, parent)
+                (
+                  preDecls.map(s => s -> parent).toMap ++ Map(decl -> env)
+                  ++ scopeTreeFromBlockStatements(decls.drop(1), env, root)
+                )
+              }
+            }
           }
 
           //  If there is no assignment, group all of the following
-          //  statements into the same scope.
-          case _ => statements.map(s => s -> parent).toMap
+          //  statements into the same scope and continue traversing.
+          case _ => statements.flatMap(s => traverse(s, parent, root)).toMap
         }
       }
     }
@@ -191,28 +198,6 @@ object EnvironmentBuilder {
 
       case n: AbstractSyntaxNode.MethodDeclaration => {
         val mapping: Map[EnvironmentLookup, Referenceable] = n.parameters.map(fp => (NameLookup(fp.name), fp)).toMap
-        new ScopeEnvironment(mapping, Seq.empty, parent)
-      }
-
-      case n: AbstractSyntaxNode.Block => {
-        val mapping: Map[EnvironmentLookup, Referenceable]
-          = n.statements.foldLeft(Map.empty[EnvironmentLookup, Referenceable]) {
-            case (map: Map[EnvironmentLookup, Referenceable], l: AbstractSyntaxNode.LocalVariableDeclaration) => {
-              val key = IdentifierLookup(l.name)
-              map.get(key) match {
-                case None => {
-                  parent.lookup(key) match {
-                    case Some(local: AbstractSyntaxNode.LocalVariableDeclaration)
-                      => throw new SyntaxError("Redefinition of " + l.name + " (previous definition: " + local + ")")
-                    case _ => map + (key -> l)
-                  }
-                }
-                case Some(r: Referenceable) => throw new SyntaxError("Redefined local variable " + l.name + " (previous definition: " + r + ")")
-              }
-            }
-            case (map: Map[EnvironmentLookup, Referenceable], l: AbstractSyntaxNode) => map
-          }
-        
         new ScopeEnvironment(mapping, Seq.empty, parent)
       }
 
