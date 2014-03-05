@@ -232,43 +232,6 @@ public class Test {
     }
 
     "prefixes for imports don't collide" in {
-      "no prefix collision" in {
-        val three = """
-package One.Two;
-
-public class Three {
-  public Three() {}
-}
-        """
-
-        val two = """
-package One;
-
-public class Two {
-  public Two() {}
-}
-        """
-
-        val input = """
-import One.Two.Three;
-
-public class Main {
-  public Main() {
-    Three three = null;
-    One.Two two = null;
-  }
-}
-        """
-
-        val nodes = precompiledNodes ++ Seq(
-          parser.parseString(three, "One/Two/Three.java"),
-          parser.parseString(two, "One/Two.java"),
-          parser.parseString(input, "Main.java")
-        ).asInstanceOf[Seq[AbstractSyntaxNode.CompilationUnit]]
-        val mapping = EnvironmentBuilder.build(nodes)
-        TypeLinker.link(nodes, mapping) must not(throwA[Exception])
-      }
-
       "prefix collision" in {
         val three = """
 package One.Two;
@@ -318,6 +281,31 @@ public class Main {
 
         val nodes = precompiledNodes ++ Seq(
           parser.parseString(input, "Main.java")
+        ).asInstanceOf[Seq[AbstractSyntaxNode.CompilationUnit]]
+        val mapping = EnvironmentBuilder.build(nodes)
+        TypeLinker.link(nodes, mapping) must throwA[Exception]
+      }
+
+      "package resolves to a class or interface" in {
+        val input = """
+package foo;
+
+public class bar {
+  public bar() {}
+}
+        """
+
+        val input2 = """
+package foo.bar;
+
+public class baz {
+  public baz() {}
+}
+        """
+
+        val nodes = precompiledNodes ++ Seq(
+          parser.parseString(input, "foo/bar.java"),
+          parser.parseString(input2, "foo/bar/baz.java")
         ).asInstanceOf[Seq[AbstractSyntaxNode.CompilationUnit]]
         val mapping = EnvironmentBuilder.build(nodes)
         TypeLinker.link(nodes, mapping) must throwA[Exception]

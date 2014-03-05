@@ -35,9 +35,10 @@ object EnvironmentBuilder {
           case scope: ScopeEnvironment => {
             asn.packageDeclaration match {
               case Some(PackageDeclaration(qn: QualifiedName)) => {
-                val prefixMap: Map[QualifiedName, Seq[ScopeEnvironment]]
-                  = qn.prefixes.map{prefix => (prefix, map.getOrElse(prefix, Seq.empty[ScopeEnvironment]))}.toMap
-
+                val prefixMap: Map[QualifiedName, Seq[ScopeEnvironment]] = 
+                  qn.prefixes.map { prefix =>
+                    (prefix, map.getOrElse(prefix, Seq.empty[ScopeEnvironment]))
+                  }.toMap
                 map ++ prefixMap + (qn -> (map.getOrElse(qn, Seq.empty[ScopeEnvironment]) ++ Seq(scope)))
               }
 

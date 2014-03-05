@@ -44,6 +44,20 @@ object TypeLinker {
 
   def check(node: AbstractSyntaxNode)(implicit mapping: EnvironmentMapping) {
     node match {
+      case pkg: PackageDeclaration => {
+        // Make sure the package does not resolve to a type.
+
+        // Lookup the top level environment, and make sure the package does not resolve to a type.
+        val environment = mapping.environment
+        val lookup: EnvironmentLookup = pkg.name match {
+          case SimpleName(name) => NameLookup(name)
+          case name: QualifiedName => QualifiedNameLookup(name)
+        }
+
+        environment.lookup(lookup).foreach { result =>
+          throw new SyntaxError("Package name " + pkg.name.niceName + " resolves to a type " + result +  ".")
+        }
+      }
       case node: CompilationUnit => {
         val classPackage: Option[PackageDeclaration] = node.packageDeclaration
         val imports: Seq[ImportDeclaration] = node.importDeclarations
@@ -123,17 +137,18 @@ object TypeLinker {
           name <- nameOption
           environment <- mapping.enclosingScopeOf(ref)
         } {
-          var (lookup: EnvironmentLookup, niceName: String) = name match {
-            case SimpleName(input) => (NameLookup(input), input.value)
-            case name: QualifiedName => (QualifiedNameLookup(name), name.value.map(_.value).mkString("."))
+          var lookup: EnvironmentLookup = name match {
+            case SimpleName(input) => NameLookup(input)
+            case name: QualifiedName => QualifiedNameLookup(name)
           }
 
           environment.lookup(lookup) match {
-            case None => throw new SyntaxError("Could not look up type " + niceName + ".")
+            case None => throw new SyntaxError("Could not look up type " + name.niceName + ".")
             case _ => {
               name match {
                 // If a qualified name was found, then make sure no strict prefix resolves.
                 case QualifiedName(values) => {
+                  // name.prefixes.foreach { prefix: QualifiedName =>
                   (1 to (values.size - 1)).foreach { count =>
                     var prefix: Seq[InputString] = values.take(count)
                     var prefixName: String = prefix.map(_.value).mkString(".")
@@ -144,7 +159,7 @@ object TypeLinker {
                     }
 
                     environment.lookup(lookup) match {
-                      case Some(_) => throw new SyntaxError("Type " + niceName + " conflicts with " + prefixName + ".")
+                      case Some(_) => throw new SyntaxError("Type " + name.niceName + " conflicts with " + prefixName + ".")
                       case _ => {}
                     }
                   }
