@@ -364,7 +364,7 @@ object AbstractSyntaxNode {
 
   case class ForVariableDeclaration(typeDeclaration: Type,
                                     variableName: InputString,
-                                    expression: Option[Expression] = None) extends ForInit {
+                                    expression: Option[Expression] = None) extends ForInit with Referenceable {
     override def children: List[AbstractSyntaxNode] = List(typeDeclaration) ++ expression.toList
   }
   case class ForStatement(init: Option[ForInit],

@@ -84,7 +84,8 @@ object EnvironmentBuilder {
       case Seq() => Map.empty[AbstractSyntaxNode, Environment]
       case _ => {
         val (preDecls, decls) = statements.span { 
-          case x: AbstractSyntaxNode.LocalVariableDeclaration => false 
+          case x: AbstractSyntaxNode.LocalVariableDeclaration => false
+          case AbstractSyntaxNode.ForStatement(Some(v: AbstractSyntaxNode.ForVariableDeclaration), _, _, _) => false
           case _ => true
         }
 
@@ -95,6 +96,8 @@ object EnvironmentBuilder {
             parent.lookup(key) match {
               case Some(local: AbstractSyntaxNode.LocalVariableDeclaration)
                 => throw new SyntaxError("Redefinition of " + decl.name + " (previous definition: " + local + ")")
+              case Some(forv: AbstractSyntaxNode.ForVariableDeclaration)
+                => throw new SyntaxError("Redefinition of " + decl.name + " (previous definition: " + forv + ")")
               case _ => {
                 val env = new ScopeEnvironment(Map(key -> decl), Seq.empty, parent)
                 (
@@ -103,6 +106,30 @@ object EnvironmentBuilder {
                 )
               }
             }
+          }
+
+          case Some(AbstractSyntaxNode.ForStatement(
+            Some(decl: AbstractSyntaxNode.ForVariableDeclaration),
+            check: Option[AbstractSyntaxNode.Expression],
+            update: Option[AbstractSyntaxNode.StatementExpression],
+            statement: AbstractSyntaxNode.Statement
+          )) => {
+            val key = IdentifierLookup(decl.variableName)
+            parent.lookup(key) match {
+              case Some(local: AbstractSyntaxNode.LocalVariableDeclaration)
+                => throw new SyntaxError("Redefinition of " + decl.variableName + " (previous definition: " + local + ")")
+              case Some(forv: AbstractSyntaxNode.ForVariableDeclaration)
+                => throw new SyntaxError("Redefinition of " + decl.variableName + " (previous definition: " + forv + ")")
+              case _ => {
+                val env = new ScopeEnvironment(Map(key -> decl), Seq.empty, parent)
+                (
+                  Map(decl -> env) ++
+                  (check.toSeq ++ update.toSeq ++ Seq(statement)).flatMap(traverse(_, env, root)).toMap
+                )
+              }
+            }
+
+            statements.flatMap(traverse(_, parent, root)).toMap
           }
 
           //  If there is no assignment, group all of the following
