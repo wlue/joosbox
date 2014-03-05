@@ -230,7 +230,16 @@ object EnvironmentBuilder {
       }
 
       case n: AbstractSyntaxNode.InterfaceBody => {
-        val mapping: Map[EnvironmentLookup, Referenceable] = n.declarations.map(imd => (NameLookup(imd.name), imd)).toMap
+        val mapping: Map[EnvironmentLookup, Referenceable]
+          = n.declarations.foldLeft(Map.empty[EnvironmentLookup, Referenceable])({
+            case (map: Map[EnvironmentLookup, Referenceable], md: AbstractSyntaxNode.InterfaceMemberDeclaration) => {
+              val key = MethodLookup(md.name, md.parameters.map(_.varType))
+              map.get(key) match {
+                case Some(_) => throw new SyntaxError("Duplicate method declaration for " + md.name)
+                case None => map + (key -> md)
+              }
+            }
+          })
         new ScopeEnvironment(mapping, Seq.empty, parent)
       }
 
