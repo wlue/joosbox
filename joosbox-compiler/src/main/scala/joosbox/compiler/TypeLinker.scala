@@ -110,6 +110,7 @@ object TypeLinker {
           }
         }
       }
+
       case ref: ReferenceType => {
         val nameOption: Option[Name] = ref match {
           case ClassOrInterfaceType(name) => Some(name)
@@ -128,12 +129,27 @@ object TypeLinker {
           }
 
           environment.lookup(lookup) match {
-            case None =>
-              throw new SyntaxError("Could not look up type " + niceName + ".")
-            case _ => {}
+            case None => throw new SyntaxError("Could not look up type " + niceName + ".")
+            case _ => {
+              name match {
+                // If a qualified name was found, then make sure no strict prefix resolves.
+                case QualifiedName(values) => {
+                  (1 to (values.size - 1)).foreach { count =>
+                    var prefix = values.take(count)
+                    var prefixName = prefix.map(_.value).mkString(".")
+                    environment.lookup(QualifiedNameLookup(QualifiedName(prefix))) match {
+                      case Some(_) => throw new SyntaxError("Type " + niceName + " conflicts with " + prefixName + ".")
+                      case _ => {}
+                    }
+                  }
+                }
+                case _ => {}
+              }
+            }
           }
         }
       }
+
       case _ => {}
     }
 

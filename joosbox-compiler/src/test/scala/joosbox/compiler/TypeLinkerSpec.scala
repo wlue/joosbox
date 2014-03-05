@@ -199,10 +199,84 @@ public class Test {
         val nodes = precompiledNodes ++ Seq(
           parser.parseString(other, "joosbox/test/Other.java"),
           parser.parseString(input, "Test.java")
-
         ).asInstanceOf[Seq[AbstractSyntaxNode.CompilationUnit]]
         val mapping = EnvironmentBuilder.build(nodes)
         TypeLinker.link(nodes, mapping) must not(throwA[Exception])
+      }
+    }
+
+    "prefixes for imports don't collide" in {
+      "no prefix collision" in {
+        val three = """
+package One.Two;
+
+public class Three {
+  public Three() {}
+}
+        """
+
+        val two = """
+package One;
+
+public class Two {
+  public Two() {}
+}
+        """
+
+        val input = """
+import One.Two.Three;
+
+public class Main {
+  public Main() {
+    Three three = null;
+    One.Two two = null;
+  }
+}
+        """
+
+        val nodes = precompiledNodes ++ Seq(
+          parser.parseString(three, "One/Two/Three.java"),
+          parser.parseString(two, "One/Two.java"),
+          parser.parseString(input, "Main.java")
+        ).asInstanceOf[Seq[AbstractSyntaxNode.CompilationUnit]]
+        val mapping = EnvironmentBuilder.build(nodes)
+        TypeLinker.link(nodes, mapping) must not(throwA[Exception])
+      }
+
+      "prefix collision" in {
+        val three = """
+package One.Two;
+
+public class Three {
+  public Three() {}
+}
+        """
+
+        val two = """
+package One;
+
+public class Two {
+  public Two() {}
+}
+        """
+
+        val input = """
+import One.Two;
+
+public class Main {
+  public Main() {
+    One.Two.Three three = null;
+  }
+}
+        """
+
+        val nodes = precompiledNodes ++ Seq(
+          parser.parseString(three, "One/Two/Three.java"),
+          parser.parseString(two, "One/Two.java"),
+          parser.parseString(input, "Main.java")
+        ).asInstanceOf[Seq[AbstractSyntaxNode.CompilationUnit]]
+        val mapping = EnvironmentBuilder.build(nodes)
+        TypeLinker.link(nodes, mapping) must throwA[Exception]
       }
     }
   }
