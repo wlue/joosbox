@@ -303,7 +303,7 @@ object AbstractSyntaxNode {
     modifiers: Set[Modifier] = Set.empty[Modifier],
     parameters: Seq[FormalParameter] = Seq.empty[FormalParameter],
     body: Option[Block] = None
-  ) extends ClassBodyDeclaration(name, modifiers) {
+  ) extends ClassBodyDeclaration(name, modifiers) with Referenceable {
     override def children: List[AbstractSyntaxNode] =
       modifiers.toList ++ parameters.toList ++ body.toList
   }

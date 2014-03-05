@@ -176,8 +176,19 @@ object EnvironmentBuilder {
       case n: AbstractSyntaxNode.ClassBody => {
         val mapping: Map[EnvironmentLookup, Referenceable]
           = n.declarations.foldLeft(Map.empty[EnvironmentLookup, Referenceable])({
+            case (map: Map[EnvironmentLookup, Referenceable], cd: AbstractSyntaxNode.ConstructorDeclaration) => {
+              val key = MethodLookup(cd.name, cd.parameters.map(_.varType))
+              map.get(key) match {
+                case Some(_) => throw new SyntaxError("Duplicate constructor declaration for " + cd.name)
+                case None => map + (key -> cd)
+              }
+            }
             case (map: Map[EnvironmentLookup, Referenceable], md: AbstractSyntaxNode.MethodDeclaration) => {
-              map + (MethodLookup(md.name, md.parameters.map(_.varType)) -> md)
+              val key = MethodLookup(md.name, md.parameters.map(_.varType))
+              map.get(key) match {
+                case Some(_) => throw new SyntaxError("Duplicate method declaration for " + md.name)
+                case None => map + (key -> md)
+              }
             }
             case (map: Map[EnvironmentLookup, Referenceable], fd: AbstractSyntaxNode.FieldDeclaration) => {
               val key = IdentifierLookup(fd.name)
