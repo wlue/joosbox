@@ -105,6 +105,7 @@ object HierarchyChecker {
         var intDeclarations : Seq[InterfaceMemberDeclaration] = Seq.empty
 
         val env = mapping.enclosingScopeOf(node).get
+        val classEnv = mapping.enclosingScopeOf(node.body).get
 
         // Check extends hierarchy
         HierarchyChecker.checkClassHierarchy(superclass, List(Seq(name)), env)
@@ -141,12 +142,11 @@ object HierarchyChecker {
 
           }
 
-          val superAST = ref.get.asInstanceOf[AbstractSyntaxNode]
-          val superEnv = mapping.enclosingScopeOf(superAST).get
+          // For each super method, look for it in this class' scope
           superDeclarations.foreach {
             case superMethod : MethodDeclaration =>
               val methodLookup = MethodLookup(superMethod.name, superMethod.parameters.map(_.varType))
-              val ref = superEnv.lookup(methodLookup)
+              val ref = classEnv.lookup(methodLookup)
               ref match {
                 case Some(MethodDeclaration(_, mods, retType, _, _)) =>
                   if (superMethod.memberType != retType) {
@@ -165,11 +165,12 @@ object HierarchyChecker {
                       throw new SyntaxError("A protected method must not replace a public method.")
                     }
                   }
+                  /* TODO : 
                   if (superMethod.modifiers.contains(AbstractKeyword)) {
                     if (!modifiers.contains(AbstractKeyword)) {
                       throw new SyntaxError("Extending classes with abstract methods must either be an abstract class or implement the method.")
                     }
-                  }
+                  }*/
                 case _ => Unit
               }
             case _ => Unit
@@ -200,12 +201,11 @@ object HierarchyChecker {
               throw new SyntaxError("An interface must not be repeated in an extends clause of an interface.")
             }
 
-            val intAST = ref.get.asInstanceOf[AbstractSyntaxNode]
-            val intEnv = mapping.enclosingScopeOf(intAST).get
+            // For each interface method, look for it in this class' scope
             intDeclarations.foreach {
               case intMember : InterfaceMemberDeclaration =>
                 val memberLookup = MethodLookup(intMember.name, intMember.parameters.map(_.varType))
-                val ref = intEnv.lookup(memberLookup)
+                val ref = classEnv.lookup(memberLookup)
                 ref match {
                   case Some(MethodDeclaration(_, mods, retType, _, _)) =>
                     if (intMember.memberType != retType) {
@@ -224,11 +224,12 @@ object HierarchyChecker {
                         throw new SyntaxError("A protected method must not replace a public method.")
                       }
                     }
+                    /* TODO: Look into why this isn't working
                     if (intMember.modifiers.contains(AbstractKeyword)) {
                       if (!modifiers.contains(AbstractKeyword)) {
                         throw new SyntaxError("Extending classes with abstract methods must either be an abstract class or implement the method.")
                       }
-                    }
+                    }*/
 
                   case _ => Unit
                 }
