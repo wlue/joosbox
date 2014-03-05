@@ -227,6 +227,13 @@ object EnvironmentBuilder {
         val mapping: Map[EnvironmentLookup, Referenceable]
           = n.declarations.foldLeft(Map.empty[EnvironmentLookup, Referenceable])({
             case (map: Map[EnvironmentLookup, Referenceable], cd: AbstractSyntaxNode.ConstructorDeclaration) => {
+
+              //  TODO: We shouldn't just catch conflicting parameter /names/,
+              //  these should technically be different scopes for each param...
+              if (cd.parameters.map(_.name).size != cd.parameters.size) {
+                throw new SyntaxError("Duplicate parameter names in constructor.")
+              }
+
               val key = ConstructorLookup(cd.parameters.map(_.varType))
               map.get(key) match {
                 case Some(_) => throw new SyntaxError("Duplicate constructor declaration for " + cd.name)
@@ -234,6 +241,13 @@ object EnvironmentBuilder {
               }
             }
             case (map: Map[EnvironmentLookup, Referenceable], md: AbstractSyntaxNode.MethodDeclaration) => {
+
+              //  TODO: We shouldn't just catch conflicting parameter /names/,
+              //  these should technically be different scopes for each param...
+              if (md.parameters.map(_.name).size != md.parameters.size) {
+                throw new SyntaxError("Duplicate parameter names in constructor.")
+              }
+
               val key = MethodLookup(md.name, md.parameters.map(_.varType))
               map.get(key) match {
                 case Some(_) => throw new SyntaxError("Duplicate method declaration for " + md.name)
