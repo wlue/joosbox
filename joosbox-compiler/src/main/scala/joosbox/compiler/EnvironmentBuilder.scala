@@ -114,6 +114,8 @@ object EnvironmentBuilder {
                 => throw new SyntaxError("Redefinition of " + decl.name + " (previous definition: " + local + ")")
               case Some(forv: AbstractSyntaxNode.ForVariableDeclaration)
                 => throw new SyntaxError("Redefinition of " + decl.name + " (previous definition: " + forv + ")")
+              case Some(param: AbstractSyntaxNode.FormalParameter)
+                => throw new SyntaxError("Redefinition of " + decl.name + " (conflicts with parameter: " + param + ")")
               case _ => {
                 val env = new ScopeEnvironment(Map(key -> decl), None, Seq.empty, parent)
                 (
@@ -136,6 +138,8 @@ object EnvironmentBuilder {
                 => throw new SyntaxError("Redefinition of " + decl.variableName + " (previous definition: " + local + ")")
               case Some(forv: AbstractSyntaxNode.ForVariableDeclaration)
                 => throw new SyntaxError("Redefinition of " + decl.variableName + " (previous definition: " + forv + ")")
+              case Some(param: AbstractSyntaxNode.FormalParameter)
+                => throw new SyntaxError("Redefinition of " + decl.variableName + " (conflicts with parameter: " + param + ")")
               case _ => {
                 val env = new ScopeEnvironment(Map(key -> decl), None, Seq.empty, parent)
                 (
@@ -262,7 +266,12 @@ object EnvironmentBuilder {
       }
 
       case n: AbstractSyntaxNode.MethodDeclaration => {
-        val mapping: Map[EnvironmentLookup, Referenceable] = n.parameters.map(fp => (NameLookup(fp.name), fp)).toMap
+        val mapping: Map[EnvironmentLookup, Referenceable] = n.parameters.map(fp => (IdentifierLookup(fp.name), fp)).toMap
+        new ScopeEnvironment(mapping, None, Seq.empty, parent)
+      }
+
+      case n: AbstractSyntaxNode.ConstructorDeclaration => {
+        val mapping: Map[EnvironmentLookup, Referenceable] = n.parameters.map(fp => (IdentifierLookup(fp.name), fp)).toMap
         new ScopeEnvironment(mapping, None, Seq.empty, parent)
       }
 
