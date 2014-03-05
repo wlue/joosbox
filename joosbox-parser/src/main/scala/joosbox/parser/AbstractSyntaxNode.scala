@@ -4,6 +4,7 @@ import joosbox.lexer.InputString
 import joosbox.lexer.SyntaxError
 
 sealed trait AbstractSyntaxNode {
+  def parentOption: Option[AbstractSyntaxNode] = None
   def children: List[AbstractSyntaxNode] = List.empty[AbstractSyntaxNode]
 
   def simpleString(indent: Int = 0): String = {
@@ -16,7 +17,7 @@ object AbstractSyntaxNode {
   /**
    * AST nodes that can be referenced as a name.
    */
-  sealed trait Referenceable
+  sealed trait Referenceable extends AbstractSyntaxNode
 
   sealed trait Literal extends Expression
   case class CharLiteral(value: InputString) extends Literal
@@ -264,7 +265,11 @@ object AbstractSyntaxNode {
   sealed abstract class TypeDeclaration(
     val name: InputString,
     val modifiers: Set[Modifier] = Set.empty[Modifier],
-    val interfaces: Set[InterfaceType] = Set.empty[InterfaceType]
+    val interfaces: Set[InterfaceType] = Set.empty[InterfaceType],
+
+    //  This was added so that we can disambiguate identical
+    //  classes/interfaces that are declared in different files.
+    var parent: Option[CompilationUnit] = None
   ) extends AbstractSyntaxNode with Referenceable {
     override def children: List[AbstractSyntaxNode] =
       modifiers.toList ++ interfaces.toList
@@ -280,6 +285,8 @@ object AbstractSyntaxNode {
   ) extends TypeDeclaration(name, modifiers, interfaces) with Referenceable {
     override def children: List[AbstractSyntaxNode] =
       List(body) ++ superclass.toList ++ modifiers.toList ++ interfaces.toList
+
+    override def parentOption: Option[AbstractSyntaxNode] = parent
   }
 
   case class InterfaceDeclaration(
@@ -291,6 +298,8 @@ object AbstractSyntaxNode {
   ) extends TypeDeclaration(name, modifiers, interfaces) with Referenceable {
     override def children: List[AbstractSyntaxNode] =
       List(body) ++ modifiers.toList ++ interfaces.toList
+
+    override def parentOption: Option[AbstractSyntaxNode] = parent
   }
 
   abstract class ClassMemberDeclaration(
@@ -421,7 +430,18 @@ object AbstractSyntaxNode {
         throw new SyntaxError("Cannot define more than one class or interface in a file.");
       }
 
-      Seq(CompilationUnit(packageDeclaration, importDeclarations, typeDeclarations.headOption))
+      val typeDeclaration: Option[TypeDeclaration] = typeDeclarations.headOption
+
+      typeDeclaration match {
+        case Some(td: TypeDeclaration) => {
+          val cu = CompilationUnit(packageDeclaration, importDeclarations, Some(td))
+          td.parent = Some(cu)
+          Seq(cu)
+        }
+        case None => {
+          Seq(CompilationUnit(packageDeclaration, importDeclarations, None))
+        }
+      }
     }
 
     case p: ParseNodes.PackageDeclaration => {

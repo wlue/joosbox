@@ -106,7 +106,7 @@ class RootEnvironment(nodes: Seq[AbstractSyntaxNode.CompilationUnit]) extends En
  */
 class ScopeEnvironment(
   val locals: Map[EnvironmentLookup, Referenceable],
-  otherScopeReferences: Seq[QualifiedNameLookup],
+  val otherScopeReferences: Seq[QualifiedNameLookup],
   par: Environment
 ) extends Environment {
 
@@ -129,5 +129,36 @@ class ScopeEnvironment(
         }).headOption
       }
     }
+  }
+
+  def ensureUnambiguousReferences(mapping: Map[AbstractSyntaxNode, Environment]) = {
+    val uniqueScopes: Seq[ScopeEnvironment] =
+      otherScopeReferences.flatMap(packageScope(_)).toSet[ScopeEnvironment].toSeq
+
+    val uniqueDeclarations: Map[EnvironmentLookup, AbstractSyntaxNode.Referenceable]
+      = uniqueScopes.foldLeft(Map.empty[EnvironmentLookup, AbstractSyntaxNode.Referenceable]) {
+      case (map: Map[EnvironmentLookup, AbstractSyntaxNode.Referenceable], s: ScopeEnvironment) => {
+        s.locals.keys.flatMap(k => {
+          val ref: AbstractSyntaxNode.Referenceable = s.lookup(k).get
+          map.get(k) match {
+            case None => map + (k -> ref)
+            case Some(existing: AbstractSyntaxNode.Referenceable) => {
+              //  Compare the enclosing scopes of each of these,
+              //  because it's entirely possible that the nodes themselves
+              //  could be content-identical.
+
+              if ((ref == existing) && (ref.parentOption == existing.parentOption)) {
+                map
+              } else {
+                throw new SyntaxError("Multiple conflicting types found for " + ref)
+              }
+            }
+          }
+        }).toMap
+      }
+    }
+
+    //val duplicateTypes = types.groupBy(identity).filter {case (_, l) => l.size > 1 }.keys
+    //println(duplicateTypes)
   }
 }
