@@ -121,7 +121,7 @@ object HierarchyChecker {
         val name : InputString = node.name
         val modifiers: Set[Modifier] = node.modifiers
         val superclass: Option[ClassType] = node.superclass
-        val interfaces: Set[InterfaceType] = node.interfaces
+        val interfaces: Seq[InterfaceType] = node.interfaces
         val declarations : Seq[ClassBodyDeclaration] = node.body.declarations
         var superDeclarations : Seq[ClassBodyDeclaration] = Seq.empty
         var intDeclarations : Seq[InterfaceMemberDeclaration] = Seq.empty
@@ -171,7 +171,6 @@ object HierarchyChecker {
               throw new SyntaxError("A class must not extend an interface.")
             case None => throw new SyntaxError("Extended declaration not found.")
             case _ => throw new SyntaxError("A class can only extend a class.")
-
           }
 
           // For each super method, look for it in this class' scope
@@ -210,7 +209,7 @@ object HierarchyChecker {
         }
 
         // Check the implented interfaces
-        val implement_names = interfaces.groupBy(x => x.name).mapValues(_.size)
+        var interfaceNodes : List[String] = List.empty[String]
         interfaces.foreach {
           case i : InterfaceType =>
             val nameLookup : EnvironmentLookup = i.name match {
@@ -220,15 +219,15 @@ object HierarchyChecker {
             val ref = env.lookup(nameLookup)
             ref match {
               case Some(InterfaceDeclaration(_, intBody, mods, ints)) =>
+                if (interfaceNodes.contains(ref.get.asInstanceOf[InterfaceDeclaration].name.filename)) {
+                  throw new SyntaxError("An interface must not be repeated in a implements clause of a class.")
+                }
+                interfaceNodes = ref.get.asInstanceOf[InterfaceDeclaration].name.filename :: interfaceNodes
                 intDeclarations = intBody.declarations
               case Some(ClassDeclaration(_, _, _, _, _)) =>
                 throw new SyntaxError("A class must not implement a class.")
               case None => throw new SyntaxError("Implemented declaration not found.")
               case _ => Unit
-            }
-
-            if (implement_names.get(i.name).get > 1) {
-              throw new SyntaxError("An interface must not be repeated in an extends clause of an interface.")
             }
 
             // For each interface method, look for it in this class' scope
@@ -270,12 +269,12 @@ object HierarchyChecker {
 
       case node: InterfaceDeclaration =>
         val name : InputString = node.name
-        val interfaces: Set[InterfaceType] = node.interfaces
+        val interfaces: Seq[InterfaceType] = node.interfaces
 
         val env = mapping.enclosingScopeOf(node).get
         val interfaceEnv = mapping.enclosingScopeOf(node.body).get
 
-        val extend_names = interfaces.groupBy(_.name).mapValues(_.size)
+        var superNodes : List[InterfaceDeclaration] = List.empty[InterfaceDeclaration]
         interfaces.foreach {
           case i : InterfaceType =>
 
@@ -294,9 +293,10 @@ object HierarchyChecker {
               case _ => Unit
             }
 
-            if (extend_names.get(i.name).get > 1) {
+            if (superNodes.contains(ref.get.asInstanceOf[InterfaceDeclaration])) {
               throw new SyntaxError("An interface must not be repeated in an extends clause of an interface.")
             }
+            superNodes = ref.get.asInstanceOf[InterfaceDeclaration] :: superNodes
           case _ => Unit
         }
 

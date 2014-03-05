@@ -274,7 +274,7 @@ object AbstractSyntaxNode {
   sealed abstract class TypeDeclaration(
     val name: InputString,
     val modifiers: Set[Modifier] = Set.empty[Modifier],
-    val interfaces: Set[InterfaceType] = Set.empty[InterfaceType],
+    val interfaces: Seq[InterfaceType] = Seq.empty[InterfaceType],
 
     //  This was added so that we can disambiguate identical
     //  classes/interfaces that are declared in different files.
@@ -290,7 +290,7 @@ object AbstractSyntaxNode {
 
     override val modifiers: Set[Modifier] = Set.empty[Modifier],
     superclass: Option[ClassType] = None,
-    override val interfaces: Set[InterfaceType] = Set.empty[InterfaceType]
+    override val interfaces: Seq[InterfaceType] = Seq.empty[InterfaceType]
   ) extends TypeDeclaration(name, modifiers, interfaces) with Referenceable {
     override def children: List[AbstractSyntaxNode] =
       List(body) ++ superclass.toList ++ modifiers.toList ++ interfaces.toList
@@ -303,7 +303,7 @@ object AbstractSyntaxNode {
     body: InterfaceBody,
 
     override val modifiers: Set[Modifier] = Set.empty[Modifier],
-    override val interfaces: Set[InterfaceType] = Set.empty[InterfaceType]
+    override val interfaces: Seq[InterfaceType] = Seq.empty[InterfaceType]
   ) extends TypeDeclaration(name, modifiers, interfaces) with Referenceable {
     override def children: List[AbstractSyntaxNode] =
       List(body) ++ modifiers.toList ++ interfaces.toList
@@ -475,7 +475,7 @@ object AbstractSyntaxNode {
 
       val modifiers: Set[Modifier] = children.collect { case x: Modifier => x }.toSet
       var superclass: Option[ClassType] = children.collectFirst { case x: ClassType => x }
-      val interfaces: Set[InterfaceType] = children.collect { case x: InterfaceType => x }.toSet
+      val interfaces: Seq[InterfaceType] = children.collect { case x: InterfaceType => x }.toSeq
       val body: ClassBody = children.collectFirst { case x: ClassBody => x }.get
 
       //  Enforce "A class cannot be both abstract and final."
@@ -503,7 +503,7 @@ object AbstractSyntaxNode {
 
       val name:Identifier = children.collectFirst { case x: Identifier => x }.get
       val modifiers:Set[Modifier] = children.collect { case x: Modifier => x }.toSet
-      val interfaces:Set[InterfaceType] = children.collect { case x: InterfaceType => x }.toSet
+      val interfaces:Seq[InterfaceType] = children.collect { case x: InterfaceType => x }.toSeq
       val body:InterfaceBody = children.collectFirst { case x: InterfaceBody => x }.get
 
       // Enforce: No package private interface

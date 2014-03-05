@@ -116,7 +116,8 @@ class ScopeEnvironment(
 
   def search(name: EnvironmentLookup): Option[Referenceable] = {
     locals.get(name) match {
-      case Some(r: Referenceable) => Some(r)
+      case Some(r: Referenceable) =>
+        Some(r)
 
       //  Check our other scope references - our package scopes, then our wildcard imports.
       //  Note that wildcard imports are pretty much just additional package scopes, except
@@ -161,7 +162,6 @@ class ScopeEnvironment(
                   }
                 }
               }
-
             uniqueDeclarations.get(name)
           }
         }
