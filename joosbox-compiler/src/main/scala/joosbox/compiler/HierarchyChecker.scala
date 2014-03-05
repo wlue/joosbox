@@ -237,20 +237,20 @@ object HierarchyChecker {
                 val memberLookup = MethodLookup(intMember.name, intMember.parameters.map(_.varType))
                 val ref = classEnv.lookup(memberLookup)
                 ref match {
-                  case Some(MethodDeclaration(_, mods, retType, _, _)) =>
-                    if (intMember.memberType != retType) {
+                  case Some(m : MethodDeclaration) =>
+                    if (intMember.memberType != m.memberType) {
                       throw new SyntaxError("A method must not replace a method with a different return type.")
                     }
                     if (intMember.modifiers.contains(FinalKeyword)) {
                       throw new SyntaxError("A method must not replace a final method.")
                     }
                     if (intMember.modifiers.contains(StaticKeyword)) {
-                      if (!mods.contains(StaticKeyword)) {
+                      if (!m.modifiers.contains(StaticKeyword)) {
                         throw new SyntaxError("A nonstatic method must not replace a static method.")
                       }
                     }
                     if (intMember.modifiers.contains(PublicKeyword)) {
-                      if (mods.contains(ProtectedKeyword)) {
+                      if (m.modifiers.contains(ProtectedKeyword)) {
                         throw new SyntaxError("A protected method must not replace a public method.")
                       }
                     }
