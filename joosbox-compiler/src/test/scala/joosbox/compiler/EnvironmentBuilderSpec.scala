@@ -207,6 +207,24 @@ public class Test { public Test() { ImportedClass x = new ImportedClass(); } }
         file2Scope.lookup(NameLookup(InputString("ImportedClass"))) must beNone
       }
 
+      "fail when two different classes in the same package share a name" in {
+        val input1 = """
+public class Test { public Test() {} }
+        """
+
+        val input2 = """
+public class Test { public Test() { ImportedClass x = new ImportedClass(); } }
+        """
+
+        val cu1: AbstractSyntaxNode.CompilationUnit
+          = parser.parseString(input1, "Test.java").asInstanceOf[AbstractSyntaxNode.CompilationUnit]
+
+        val cu2: AbstractSyntaxNode.CompilationUnit
+          = parser.parseString(input2, "Test.java").asInstanceOf[AbstractSyntaxNode.CompilationUnit]
+
+        EnvironmentBuilder.build(Seq(cu1, cu2)) must throwA[SyntaxError]
+      }
+
       "correctly return a class from a wildcard import" in {
         val input1 = """
 package joosbox.test;
@@ -260,7 +278,7 @@ public class Test { public Test() { ImportedClass x = new ImportedClass(); } }
         val input1 = """
 package joosbox.test;
 public class Test {
-  public ImportedClass() {} 
+  public Test() {} 
   public int foo = 5;
   public int foo = 6;
 }
@@ -271,6 +289,54 @@ public class Test {
 
         EnvironmentBuilder.build(Seq(cu1)) must throwA[SyntaxError]
       }
+
+      "return OK on a class with multiple same-name method declarations but different params" in {
+        val input1 = """
+package joosbox.test;
+public class Test {
+  public Test() {} 
+  public int foo() {}
+  public int foo(int a) {}
+}
+        """
+
+        val cu1: AbstractSyntaxNode.CompilationUnit
+          = parser.parseString(input1, "Test.java").asInstanceOf[AbstractSyntaxNode.CompilationUnit]
+
+        EnvironmentBuilder.build(Seq(cu1)) must not(throwA[SyntaxError])
+      }
+
+      "fail to return a class with multiple conflicting method declarations" in {
+        val input1 = """
+package joosbox.test;
+public class Test {
+  public Test() {} 
+  public int foo() {}
+  public int foo() {}
+}
+        """
+
+        val cu1: AbstractSyntaxNode.CompilationUnit
+          = parser.parseString(input1, "Test.java").asInstanceOf[AbstractSyntaxNode.CompilationUnit]
+
+        EnvironmentBuilder.build(Seq(cu1)) must throwA[SyntaxError]
+      }
+
+      "fail to return a class with multiple conflicting constructor declarations" in {
+        val input1 = """
+package joosbox.test;
+public class Test {
+  public Test() {} 
+  public Test() {} 
+}
+        """
+
+        val cu1: AbstractSyntaxNode.CompilationUnit
+          = parser.parseString(input1, "Test.java").asInstanceOf[AbstractSyntaxNode.CompilationUnit]
+
+        EnvironmentBuilder.build(Seq(cu1)) must throwA[SyntaxError]
+      }
+
       "fail to return a class that has two same-name local variables in same scope" in {
         val input1 = """
 package joosbox.test;
