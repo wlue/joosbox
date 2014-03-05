@@ -106,57 +106,76 @@ class RootEnvironment(nodes: Seq[AbstractSyntaxNode.CompilationUnit]) extends En
  */
 class ScopeEnvironment(
   val locals: Map[EnvironmentLookup, Referenceable],
-  val otherScopeReferences: Seq[QualifiedNameLookup],
+  val packageScopeReference: Option[QualifiedNameLookup],
+  val importScopeReferences: Seq[QualifiedNameLookup],
   par: Environment
 ) extends Environment {
 
   val parent: Option[Environment] = Some(par)
-  override def toString(): String = super.toString()+"<par: @"+Integer.toHexString(par.hashCode())+">[refs: " +otherScopeReferences+ "](" + locals.toString() + ")"
+  override def toString(): String = super.toString()+"<par: @"+Integer.toHexString(par.hashCode())+">[package: " + packageScopeReference + ", imports: " + importScopeReferences + "](" + locals.toString() + ")"
 
   def search(name: EnvironmentLookup): Option[Referenceable] = {
     locals.get(name) match {
       case Some(r: Referenceable) => Some(r)
 
       //  Check our other scope references - our package scopes, then our wildcard imports.
-      //  Note that wildcard imports are pretty much just additional package scopes.
+      //  Note that wildcard imports are pretty much just additional package scopes, except
+      //  for the fact that package scopes are higher priority than wildcard imports.
       case None => {
-        otherScopeReferences.flatMap(packageScope(_)).flatMap(env => {
+        val packageResolved: Option[Referenceable]
+          = packageScopeReference.toSeq.flatMap(packageScope(_)).flatMap(env => {
           if (env != this) {
             env.locals.get(name)
           } else {
             None
           }
         }).headOption
+
+        packageResolved match {
+          case Some(_) => packageResolved
+          case None => {
+            val importScopes: Seq[ScopeEnvironment]
+              = importScopeReferences.flatMap(packageScope(_))
+
+            val uniqueDeclarations: Map[EnvironmentLookup, AbstractSyntaxNode.Referenceable]
+              = importScopes.foldLeft(Map.empty[EnvironmentLookup, AbstractSyntaxNode.Referenceable]) {
+                case (map: Map[EnvironmentLookup, AbstractSyntaxNode.Referenceable], env: ScopeEnvironment) => {
+                  if (env != this) {
+                    env.locals.get(name) match {
+                      case Some(ref: AbstractSyntaxNode.Referenceable) => {
+                        map.get(name) match {
+                          case None => map + (name -> ref)
+                          case Some(existing: AbstractSyntaxNode.Referenceable) => {
+                            if ((ref == existing) && (ref.parentOption == existing.parentOption)) {
+                              map
+                            } else {
+                              throw new SyntaxError("Multiple conflicting on-demand-imported types found for " + ref)
+                            }
+                          }
+                        }
+                      }
+                      case None => map
+                    }
+                  } else {
+                    map
+                  }
+                }
+              }
+
+            uniqueDeclarations.get(name)
+          }
+        }
       }
     }
   }
 
   def ensureUnambiguousReferences(mapping: Map[AbstractSyntaxNode, Environment]) = {
     val uniqueScopes: Seq[ScopeEnvironment] =
-      otherScopeReferences.flatMap(packageScope(_)).toSet[ScopeEnvironment].toSeq
+      (packageScopeReference.toSeq ++ importScopeReferences).flatMap(packageScope(_)).toSet[ScopeEnvironment].toSeq
 
-    val uniqueDeclarations: Map[EnvironmentLookup, AbstractSyntaxNode.Referenceable]
-      = uniqueScopes.foldLeft(Map.empty[EnvironmentLookup, AbstractSyntaxNode.Referenceable]) {
-      case (map: Map[EnvironmentLookup, AbstractSyntaxNode.Referenceable], s: ScopeEnvironment) => {
-        s.locals.keys.flatMap(k => {
-          val ref: AbstractSyntaxNode.Referenceable = s.lookup(k).get
-          map.get(k) match {
-            case None => map + (k -> ref)
-            case Some(existing: AbstractSyntaxNode.Referenceable) => {
-              //  Compare the enclosing scopes of each of these,
-              //  because it's entirely possible that the nodes themselves
-              //  could be content-identical.
-
-              if ((ref == existing) && (ref.parentOption == existing.parentOption)) {
-                map
-              } else {
-                throw new SyntaxError("Multiple conflicting types found for " + ref)
-              }
-            }
-          }
-        }).toMap
-      }
-    }
+    val uniqueDeclarations = uniqueScopes.flatMap(s => {
+      s.locals.keys.flatMap(s.lookup(_))
+    })
 
     //val duplicateTypes = types.groupBy(identity).filter {case (_, l) => l.size > 1 }.keys
     //println(duplicateTypes)

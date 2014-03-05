@@ -57,7 +57,7 @@ object EnvironmentBuilder {
 
     mapping.values.toSet[Environment].collect({ case s: ScopeEnvironment => s }).foreach(s => {
       s.ensureUnambiguousReferences(mapping)
-      s.otherScopeReferences.foreach((q: QualifiedNameLookup) => {
+      s.importScopeReferences.foreach((q: QualifiedNameLookup) => {
         parent.packageScopeMap.get(q.name) match {
           case None => throw new SyntaxError("Attempted on-demand import " + q.name + " could not be found.")
           case Some(_) => Unit
@@ -73,7 +73,7 @@ object EnvironmentBuilder {
       //  Special case for Blocks - we need to unroll their contents and make nested scopes.
       case AbstractSyntaxNode.Block(seq: Seq[AbstractSyntaxNode.BlockStatement]) => {
 
-        val e = new ScopeEnvironment(Map.empty, Seq.empty, parent)
+        val e = new ScopeEnvironment(Map.empty, None, Seq.empty, parent)
         val scopetree = scopeTreeFromBlockStatements(seq, e, root)
         node.children.flatMap(traverse(_, e, root)).toMap ++ scopetree ++ Map(node -> e)
       }
@@ -109,7 +109,7 @@ object EnvironmentBuilder {
               case Some(forv: AbstractSyntaxNode.ForVariableDeclaration)
                 => throw new SyntaxError("Redefinition of " + decl.name + " (previous definition: " + forv + ")")
               case _ => {
-                val env = new ScopeEnvironment(Map(key -> decl), Seq.empty, parent)
+                val env = new ScopeEnvironment(Map(key -> decl), None, Seq.empty, parent)
                 (
                   preDecls.map(s => s -> parent).toMap ++ Map(decl -> env)
                   ++ scopeTreeFromBlockStatements(decls.drop(1), env, root)
@@ -131,7 +131,7 @@ object EnvironmentBuilder {
               case Some(forv: AbstractSyntaxNode.ForVariableDeclaration)
                 => throw new SyntaxError("Redefinition of " + decl.variableName + " (previous definition: " + forv + ")")
               case _ => {
-                val env = new ScopeEnvironment(Map(key -> decl), Seq.empty, parent)
+                val env = new ScopeEnvironment(Map(key -> decl), None, Seq.empty, parent)
                 (
                   Map(decl -> env) ++
                   (check.toSeq ++ update.toSeq ++ Seq(statement)).flatMap(traverse(_, env, root)).toMap
@@ -189,25 +189,27 @@ object EnvironmentBuilder {
           ++ explicitImports
         )
 
-        val otherScopeReferences: Seq[QualifiedNameLookup] = {
-          val packageName:QualifiedNameLookup = n.packageDeclaration match {
+        val packageScopeReference: QualifiedNameLookup = {
+          n.packageDeclaration match {
             case Some(PackageDeclaration(qn: QualifiedName)) => QualifiedNameLookup(qn)
             case Some(PackageDeclaration(sn: SimpleName)) => QualifiedNameLookup(QualifiedName(Seq(sn.value)))
 
             //  The "default package", the empty string.
             case None => QualifiedNameLookup(QualifiedName(Seq(InputString(""))))
           }
+        }
 
+        val importScopeReferences: Seq[QualifiedNameLookup] = {
           val imports:Seq[QualifiedNameLookup] = n.importDeclarations.flatMap {
             case TypeImportOnDemandDeclaration(qn: QualifiedName) => Some(QualifiedNameLookup(qn))
             case TypeImportOnDemandDeclaration(sn: SimpleName) => Some(QualifiedNameLookup(QualifiedName(Seq(sn.value))))
             case _ => None
           }
 
-          Seq(packageName, QualifiedNameLookup(QualifiedName(Seq(InputString("java"), InputString("lang"))))) ++ imports
+          Seq(QualifiedNameLookup(QualifiedName(Seq(InputString("java"), InputString("lang"))))) ++ imports
         }
 
-        new ScopeEnvironment(locals, otherScopeReferences, parent)
+        new ScopeEnvironment(locals, Some(packageScopeReference), importScopeReferences, parent)
       }
 
       case n: AbstractSyntaxNode.ClassBody => {
@@ -236,7 +238,7 @@ object EnvironmentBuilder {
             }
             case (map: Map[EnvironmentLookup, Referenceable], asn: AbstractSyntaxNode) => map
           })
-        new ScopeEnvironment(mapping, Seq.empty, parent)
+        new ScopeEnvironment(mapping, None, Seq.empty, parent)
       }
 
       case n: AbstractSyntaxNode.InterfaceBody => {
@@ -250,12 +252,12 @@ object EnvironmentBuilder {
               }
             }
           })
-        new ScopeEnvironment(mapping, Seq.empty, parent)
+        new ScopeEnvironment(mapping, None, Seq.empty, parent)
       }
 
       case n: AbstractSyntaxNode.MethodDeclaration => {
         val mapping: Map[EnvironmentLookup, Referenceable] = n.parameters.map(fp => (NameLookup(fp.name), fp)).toMap
-        new ScopeEnvironment(mapping, Seq.empty, parent)
+        new ScopeEnvironment(mapping, None, Seq.empty, parent)
       }
 
       case _ => parent
