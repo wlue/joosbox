@@ -135,9 +135,15 @@ object TypeLinker {
                 // If a qualified name was found, then make sure no strict prefix resolves.
                 case QualifiedName(values) => {
                   (1 to (values.size - 1)).foreach { count =>
-                    var prefix = values.take(count)
-                    var prefixName = prefix.map(_.value).mkString(".")
-                    environment.lookup(QualifiedNameLookup(QualifiedName(prefix))) match {
+                    var prefix: Seq[InputString] = values.take(count)
+                    var prefixName: String = prefix.map(_.value).mkString(".")
+                    var lookup: EnvironmentLookup = if (count == 1) {
+                      NameLookup(prefix.head)
+                    } else {
+                      QualifiedNameLookup(QualifiedName(prefix))
+                    }
+
+                    environment.lookup(lookup) match {
                       case Some(_) => throw new SyntaxError("Type " + niceName + " conflicts with " + prefixName + ".")
                       case _ => {}
                     }

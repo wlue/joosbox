@@ -119,7 +119,7 @@ public class Interface {
 public interface Test {
 }
         """
-        val nodes = Seq(parser.parseString(input, "Test.java")
+        val nodes = precompiledNodes ++ Seq(parser.parseString(input, "Test.java")
           .asInstanceOf[AbstractSyntaxNode.CompilationUnit])
         val mapping = EnvironmentBuilder.build(nodes)
         TypeLinker.link(nodes, mapping) must not(throwA[Exception])
@@ -299,6 +299,24 @@ public class Main {
         val nodes = precompiledNodes ++ Seq(
           parser.parseString(three, "One/Two/Three.java"),
           parser.parseString(two, "One/Two.java"),
+          parser.parseString(input, "Main.java")
+        ).asInstanceOf[Seq[AbstractSyntaxNode.CompilationUnit]]
+        val mapping = EnvironmentBuilder.build(nodes)
+        TypeLinker.link(nodes, mapping) must throwA[Exception]
+      }
+
+      "same package as class name" in {
+        val input = """
+package Main;
+
+public class Main {
+  public Main() {
+    Main.Main main = null;
+  }
+}
+        """
+
+        val nodes = precompiledNodes ++ Seq(
           parser.parseString(input, "Main.java")
         ).asInstanceOf[Seq[AbstractSyntaxNode.CompilationUnit]]
         val mapping = EnvironmentBuilder.build(nodes)
