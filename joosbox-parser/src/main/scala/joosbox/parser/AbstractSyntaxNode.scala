@@ -242,6 +242,10 @@ object AbstractSyntaxNode {
   }
   case class InterfaceType(name: Name) extends ReferenceType {
     override def children: List[AbstractSyntaxNode] = List(name)
+    def inputString: Seq[InputString] = name match {
+        case n: SimpleName => Seq(n.value)
+        case q: QualifiedName => q.value
+    }
   }
 
   sealed trait Modifier extends AbstractSyntaxNode

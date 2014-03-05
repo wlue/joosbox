@@ -93,6 +93,28 @@ object HierarchyChecker {
     }
   }
 
+  def checkInterfaceHierarchy(interface: InterfaceType, interfaceList: List[Seq[InputString]], env: Environment) {
+    var intList : List[Seq[InputString]] = interface.inputString :: interfaceList
+    val nameLookup : EnvironmentLookup = interface.name match {
+      case s: SimpleName => NameLookup(s.value)
+      case q: QualifiedName => QualifiedNameLookup(q)
+    }
+    val ref = env.lookup(nameLookup)
+    ref match {
+      case Some(InterfaceDeclaration(_, _, _, interfaces)) =>
+        if(!interfaces.isEmpty) {
+          interfaces.foreach {
+            case i: InterfaceType =>
+              if (intList.contains(i.inputString)) {
+                throw new SyntaxError("Interface hierarchy must be acyclic.")
+              }
+              checkInterfaceHierarchy(i, intList, env)
+          }
+        }
+      case _ => Unit
+    }
+  }
+
   def check(node: AbstractSyntaxNode)(implicit mapping: EnvironmentMapping) {
     node match {
       case node: ClassDeclaration =>
@@ -238,24 +260,29 @@ object HierarchyChecker {
         }
 
       case node: InterfaceDeclaration =>
+        val name : InputString = node.name
         val interfaces: Set[InterfaceType] = node.interfaces
 
-        val extend_names = interfaces.groupBy(x => x.name).mapValues(_.size)
+        val env = mapping.enclosingScopeOf(node).get
+        val interfaceEnv = mapping.enclosingScopeOf(node.body).get
+
+        val extend_names = interfaces.groupBy(_.name).mapValues(_.size)
         interfaces.foreach {
           case i : InterfaceType =>
-            val env = mapping.enclosingScopeOf(node)
-            if (!env.isEmpty) {
-              val nameLookup : EnvironmentLookup = i.name match {
-                case s: SimpleName => NameLookup(s.value)
-                case q: QualifiedName => QualifiedNameLookup(q)
-              }
-              val ref = env.get.lookup(nameLookup)
-              ref match {
-                case Some(ClassDeclaration(_, _, _, _, _)) =>
-                  throw new SyntaxError("An interface must not extend a class.")
-                case None => throw new SyntaxError("Extended declaration not found.")
-                case _ => Unit
-              }
+
+            // Check interface hierarchy
+            HierarchyChecker.checkInterfaceHierarchy(i, List(Seq(name)), env)
+
+            val nameLookup : EnvironmentLookup = i.name match {
+              case s: SimpleName => NameLookup(s.value)
+              case q: QualifiedName => QualifiedNameLookup(q)
+            }
+            val ref = env.lookup(nameLookup)
+            ref match {
+              case Some(ClassDeclaration(_, _, _, _, _)) =>
+                throw new SyntaxError("An interface must not extend a class.")
+              case None => throw new SyntaxError("Extended declaration not found.")
+              case _ => Unit
             }
 
             if (extend_names.get(i.name).get > 1) {
