@@ -24,6 +24,7 @@ case class IdentifierLookup(identifier: InputString) extends EnvironmentLookup
 case class NameLookup(name: InputString) extends EnvironmentLookup
 case class QualifiedNameLookup(name: QualifiedName) extends EnvironmentLookup
 case class MethodLookup(name: InputString, params: Seq[Type]) extends EnvironmentLookup
+case class ConstructorLookup(params: Seq[Type]) extends EnvironmentLookup
 
 sealed trait Environment {
   val parent: Option[Environment]
