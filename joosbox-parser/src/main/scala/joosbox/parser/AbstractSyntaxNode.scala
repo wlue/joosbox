@@ -206,7 +206,16 @@ object AbstractSyntaxNode {
   sealed trait Type extends AbstractSyntaxNode
   sealed trait Name extends Type with PostfixExpression
   case class SimpleName(value: InputString) extends Name
-  case class QualifiedName(value: Seq[InputString]) extends Name
+  case class QualifiedName(value: Seq[InputString]) extends Name {
+    def prefixesIncludingSelf: Seq[QualifiedName] = Seq(this) ++ prefixes
+    def prefixes: Seq[QualifiedName] = value.headOption match {
+      case None => Seq.empty[QualifiedName]
+      case Some(_) => {
+        val oneSmaller = QualifiedName(value.dropRight(1))
+        Seq(oneSmaller) ++ oneSmaller.prefixes
+      }
+    }
+  }
 
   sealed trait PrimitiveType extends Type
   sealed trait ReferenceType extends Type
