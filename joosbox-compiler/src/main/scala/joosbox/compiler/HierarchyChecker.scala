@@ -144,12 +144,22 @@ object HierarchyChecker {
         }
 
         // Direct superclass checks
-        if (!superclass.isEmpty) {
-          val nameLookup : EnvironmentLookup = superclass.get.name match {
-            case s: SimpleName => NameLookup(s.value)
-            case q: QualifiedName => QualifiedNameLookup(q)
+        val nameLookupOpt : Option[EnvironmentLookup] =
+          if (superclass.isEmpty) {
+            if (name != InputString("Object")) {
+              Some(QualifiedNameLookup(QualifiedName(Seq(InputString("java"), InputString("lang"), InputString("Object")))))
+            } else {
+              None
+            }
+          } else {
+            superclass.get.name match {
+              case s: SimpleName => Some(NameLookup(s.value))
+              case q: QualifiedName => Some(QualifiedNameLookup(q))
+            }
           }
-          val ref = env.lookup(nameLookup)
+
+        if (nameLookupOpt != None) {
+          val ref = env.lookup(nameLookupOpt.get)
           ref match {
             case Some(ClassDeclaration(_, superBody, superModifiers, _, _)) =>
               if (superModifiers.contains(FinalKeyword)) {
@@ -170,34 +180,33 @@ object HierarchyChecker {
               val methodLookup = MethodLookup(superMethod.name, superMethod.parameters.map(_.varType))
               val ref = classEnv.lookup(methodLookup)
               ref match {
-                case Some(MethodDeclaration(_, mods, retType, _, _)) =>
-                  if (superMethod.memberType != retType) {
+                case Some(m : MethodDeclaration) =>
+                  if (superMethod.memberType != m.memberType) {
                     throw new SyntaxError("A method must not replace a method with a different return type.")
                   }
                   if (superMethod.modifiers.contains(FinalKeyword)) {
                     throw new SyntaxError("A method must not replace a final method.")
                   }
                   if (superMethod.modifiers.contains(StaticKeyword)) {
-                    if (!mods.contains(StaticKeyword)) {
+                    if (!m.modifiers.contains(StaticKeyword)) {
                       throw new SyntaxError("A nonstatic method must not replace a static method.")
                     }
                   }
                   if (superMethod.modifiers.contains(PublicKeyword)) {
-                    if (mods.contains(ProtectedKeyword)) {
+                    if (m.modifiers.contains(ProtectedKeyword)) {
                       throw new SyntaxError("A protected method must not replace a public method.")
                     }
                   }
-                case _ =>
+                case None =>
                   if (superMethod.modifiers.contains(AbstractKeyword)) {
                     if (!modifiers.contains(AbstractKeyword)) {
                       throw new SyntaxError("Extending classes with abstract methods must either be an abstract class or implement the method.")
                     }
                   }
+                case _ => Unit
               }
             case _ => Unit
           }
-
-
         }
 
         // Check the implented interfaces
