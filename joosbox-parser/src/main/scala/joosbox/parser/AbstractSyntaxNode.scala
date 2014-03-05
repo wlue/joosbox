@@ -230,17 +230,17 @@ object AbstractSyntaxNode {
   case class ArrayType(subtype: Type) extends ReferenceType {
     override def children: List[AbstractSyntaxNode] = List(subtype)
   }
-  case class ClassOrInterfaceType(name: Name) extends ReferenceType{
+  case class ClassOrInterfaceType(name: Name) extends ReferenceType {
     override def children: List[AbstractSyntaxNode] = List(name)
   }
-  case class ClassType(name: Name) extends ReferenceType{
+  case class ClassType(name: Name) extends ReferenceType {
     override def children: List[AbstractSyntaxNode] = List(name)
     def inputString: Seq[InputString] = name match {
         case n: SimpleName => Seq(n.value)
         case q: QualifiedName => q.value
     }
   }
-  case class InterfaceType(name: Name) extends ReferenceType{
+  case class InterfaceType(name: Name) extends ReferenceType {
     override def children: List[AbstractSyntaxNode] = List(name)
   }
 

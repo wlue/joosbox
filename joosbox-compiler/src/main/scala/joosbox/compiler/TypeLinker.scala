@@ -4,8 +4,7 @@ import joosbox.parser.AbstractSyntaxNode
 import joosbox.lexer.InputString
 import joosbox.lexer.SyntaxError
 
-import AbstractSyntaxNode.CompilationUnit
-import AbstractSyntaxNode.Referenceable
+import AbstractSyntaxNode._
 
 /**
    - No single-type-import declaration clashes with the class or interface
@@ -44,20 +43,8 @@ object TypeLinker {
   }
 
   def check(node: AbstractSyntaxNode)(implicit mapping: EnvironmentMapping) {
-    import AbstractSyntaxNode.{
-      PackageDeclaration,
-      ImportDeclaration,
-      SingleTypeImportDeclaration,
-      TypeImportOnDemandDeclaration,
-      InterfaceDeclaration,
-      ClassDeclaration,
-      TypeDeclaration,
-      QualifiedName,
-      SimpleName
-    }
-
     node match {
-      case node: CompilationUnit =>
+      case node: CompilationUnit => {
         val classPackage: Option[PackageDeclaration] = node.packageDeclaration
         val imports: Seq[ImportDeclaration] = node.importDeclarations
         val typeDeclaration: Option[TypeDeclaration] = node.typeDeclaration
@@ -122,9 +109,32 @@ object TypeLinker {
             }
           }
         }
-
-      case _ => {
       }
+      case ref: ReferenceType => {
+        val nameOption: Option[Name] = ref match {
+          case ClassOrInterfaceType(name) => Some(name)
+          case ClassType(name) => Some(name)
+          case InterfaceType(name) => Some(name)
+          case _ => None
+        }
+
+        for {
+          name <- nameOption
+          environment <- mapping.enclosingScopeOf(ref)
+        } {
+          var (lookup: EnvironmentLookup, niceName: String) = name match {
+            case SimpleName(input) => (NameLookup(input), input.value)
+            case name: QualifiedName => (QualifiedNameLookup(name), name.value.map(_.value).mkString("."))
+          }
+
+          environment.lookup(lookup) match {
+            case None =>
+              throw new SyntaxError("Could not look up type " + niceName + ".")
+            case _ => {}
+          }
+        }
+      }
+      case _ => {}
     }
 
     node.children.foreach { node => check(node) }

@@ -9,6 +9,13 @@ class TypeLinkerSpec extends Specification {
   "TypeLinker" should {
     val parser = Parser.Joos
 
+    val javaLangObject = """
+package java.lang;
+public class Object {
+  public Object() {}
+}
+    """
+
     val testFile = """
 package joosbox.test;
 
@@ -34,6 +41,7 @@ public class Apple {
     """
 
     val precompiledNodes = Seq(
+      parser.parseString(javaLangObject, "java/lang/Object.java"),
       parser.parseString(testFile, "joosbox/test/Test.java"),
       parser.parseString(testFileSomethingElse, "joosbos/something_else/Test.java"),
       parser.parseString(appleFile, "joosbox/test/Apple.java")
@@ -46,7 +54,7 @@ public class Test {
   public Test() {}
 }
         """
-        val nodes = Seq(parser.parseString(input, "Test.java")
+        val nodes = precompiledNodes ++ Seq(parser.parseString(input, "Test.java")
           .asInstanceOf[AbstractSyntaxNode.CompilationUnit])
         val mapping = EnvironmentBuilder.build(nodes)
         TypeLinker.link(nodes, mapping) must not(throwA[Exception])
@@ -135,6 +143,66 @@ public class NotTest {
           .asInstanceOf[AbstractSyntaxNode.CompilationUnit])
         val mapping = EnvironmentBuilder.build(nodes)
         TypeLinker.link(nodes, mapping) must throwA[Exception]
+      }
+    }
+
+    "All type names must resolve to some class or interface declared in some file listed on the Joos command line." in {
+      "self referential class reference" in {
+        val input = """
+public class Test {
+  public Test() {
+    Test test = null;
+  }
+}
+        """
+
+        val nodes = precompiledNodes ++ Seq(parser.parseString(input, "Test.java")
+          .asInstanceOf[AbstractSyntaxNode.CompilationUnit])
+        val mapping = EnvironmentBuilder.build(nodes)
+        TypeLinker.link(nodes, mapping) must not(throwA[Exception])
+      }
+
+      "invalid class or interface type reference" in {
+        val input = """
+public class Test {
+  public Test() {
+    NotTest notTest = null;
+  }
+}
+        """
+
+        val nodes = precompiledNodes ++Seq(parser.parseString(input, "Test.java")
+          .asInstanceOf[AbstractSyntaxNode.CompilationUnit])
+        val mapping = EnvironmentBuilder.build(nodes)
+        TypeLinker.link(nodes, mapping) must throwA[Exception]
+      }
+
+      "valid package type class reference" in {
+        val other = """
+package joosbox.test;
+
+public class Other {
+  public Other() {}
+}
+        """
+
+        val input = """
+import joosbox.test.Other;
+
+public class Test {
+  public Test() {
+    Other other = null;
+  }
+}
+        """
+
+        val nodes = precompiledNodes ++ Seq(
+          parser.parseString(other, "joosbox/test/Other.java"),
+          parser.parseString(input, "Test.java")
+
+        ).asInstanceOf[Seq[AbstractSyntaxNode.CompilationUnit]]
+        val mapping = EnvironmentBuilder.build(nodes)
+        TypeLinker.link(nodes, mapping) must not(throwA[Exception])
       }
     }
   }
