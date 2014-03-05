@@ -48,6 +48,32 @@ public class Apple {
     ).asInstanceOf[Seq[AbstractSyntaxNode.CompilationUnit]]
 
     "check for imports" in {
+      "importing nonexistant class" in {
+        val input = """
+import foo.bar.Baz;
+
+public class Main {
+  public Main() {}
+}
+        """
+        val nodes = Seq(parser.parseString(input, "Main.java")
+          .asInstanceOf[AbstractSyntaxNode.CompilationUnit])
+        TypeLinker.link(nodes, EnvironmentBuilder.build(nodes)) must throwA[Exception]
+      }
+
+      "importing nonexistant package" in {
+        val input = """
+import foo.bar.*;
+
+public class Main {
+  public Main() {}
+}
+        """
+        val nodes = Seq(parser.parseString(input, "Main.java")
+          .asInstanceOf[AbstractSyntaxNode.CompilationUnit])
+        TypeLinker.link(nodes, EnvironmentBuilder.build(nodes)) must throwA[Exception]
+      }
+
       "no imports for class" in {
         val input = """
 public class Test {
