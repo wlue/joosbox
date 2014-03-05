@@ -55,6 +55,16 @@ object EnvironmentBuilder {
       case (map: Map[QualifiedName, Seq[ScopeEnvironment]], (asn: AbstractSyntaxNode, env: Environment)) => map
     }
 
+    mapping.values.toSet[Environment].collect({ case s: ScopeEnvironment => s }).foreach(s => {
+      s.ensureUnambiguousReferences(mapping)
+      s.otherScopeReferences.foreach((q: QualifiedNameLookup) => {
+        parent.packageScopeMap.get(q.name) match {
+          case None => throw new SyntaxError("Attempted on-demand import " + q.name + " could not be found.")
+          case Some(_) => Unit
+        }
+      })
+    })
+
     new EnvironmentMapping(parent, mapping)
   }
 
