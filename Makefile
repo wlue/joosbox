@@ -1,4 +1,5 @@
 JAR=joosbox-compiler/target/scala-2.10/joosbox-compiler-assembly-0.1-SNAPSHOT.jar
+JAVA_OPT=-Xss10m
 
 .PHONY: clean zip
 
@@ -9,7 +10,7 @@ $(JAR):
 
 joosc: $(JAR)
 	@echo "#!/bin/sh\n\
-java -jar $(JAR) \$$@" > joosc
+java $(JAVA_OPT) -jar $(JAR) \$$@" > joosc
 	chmod +x joosc
 
 clean:
