@@ -309,12 +309,12 @@ object HierarchyChecker {
             (MethodLookup(m.name, m.parameters.map(_.varType)), m)
         }
 
+        intDeclarations = HierarchyChecker.checkInterfaceHierarchy(InterfaceType(SimpleName(name)), List(Seq()), env)
+
+        // Below is just for checking 'duplicate' ints in extends list
         var interfaceNodes : List[String] = List.empty[String]
         interfaces.foreach {
           case i : InterfaceType =>
-            intDeclarations = intDeclarations ++ HierarchyChecker.checkInterfaceHierarchy(i, List(Seq()), env)
-
-            // Below is just for checking 'duplicate' ints in extends list
             val nameLookup : EnvironmentLookup = i.name match {
               case s: SimpleName => NameLookup(s.value)
               case q: QualifiedName => QualifiedNameLookup(q)
@@ -365,9 +365,6 @@ object HierarchyChecker {
             val ref = interfaceEnv.lookup(methodLookup)
             ref match {
               case Some(m : InterfaceMemberDeclaration) =>
-                if (superMethod.name == SimpleName(InputString("toString"))) {
-                  println(superMethod.memberType, m.memberType)
-                }
                 if (superMethod.memberType != m.memberType) {
                   throw new SyntaxError("A method must not replace a method with a different return type.")
                 }
