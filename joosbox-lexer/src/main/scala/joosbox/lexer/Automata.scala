@@ -137,7 +137,7 @@ class DFA(
     throw new IllegalArgumentException("DFA cannot contain epsilon transitions.")
   }
 
-  def consume(inputString: String, state: State = startState): Option[(State, String)] = {
+  final def consume(inputString: String, state: State = startState): Option[(State, String)] = {
     if (inputString.length == 0) {
       if (acceptingStates.contains(state)) {
         Some(state, inputString)
@@ -152,11 +152,12 @@ class DFA(
           //  ...check if the symbol matches our input
           if (symbol.matchSymbol(inputString.head.toString)) {
             rules.get(symbol).flatMap { (targetStates:Set[State]) =>
-              targetStates.flatMap { (targetState:State) =>
-
-                //  If it does, we move to that state and consume the rest of the input.
-                consume(inputString.drop(1), targetState)
-              }.headOption
+              targetStates.headOption match {
+                case Some(targetState: State) =>
+                  //  If it does, we move to that state and consume the rest of the input.  
+                  consume(inputString.drop(1), targetState)
+                case None => None
+              }
             }
           } else {
             None
