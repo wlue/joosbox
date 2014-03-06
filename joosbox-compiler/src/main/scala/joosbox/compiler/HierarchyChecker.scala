@@ -163,7 +163,7 @@ object HierarchyChecker {
             }
           }
       case Some(ClassDeclaration(_, _, _, _, _)) =>
-        throw new SyntaxError("A class must not implement a class.")
+        throw new SyntaxError("An interface must not implement a class.")
       case None => throw new SyntaxError("Implemented declaration not found.")
       case _ => Unit
     }
@@ -298,35 +298,106 @@ object HierarchyChecker {
       case node: InterfaceDeclaration =>
         val name : InputString = node.name
         val interfaces: Seq[InterfaceType] = node.interfaces
+        val modifiers: Set[Modifier] = node.modifiers
 
         val env = mapping.enclosingScopeOf(node).get
         val interfaceEnv = mapping.enclosingScopeOf(node.body).get
 
-        var superNodes : List[InterfaceDeclaration] = List.empty[InterfaceDeclaration]
+        var declarations : Seq[(EnvironmentLookup, AbstractSyntaxNode)] = Seq.empty
+        var intDeclarations : Seq[(EnvironmentLookup, AbstractSyntaxNode)] = Seq.empty
+
+        declarations = node.body.declarations.map {
+          case m: InterfaceMemberDeclaration =>
+            (MethodLookup(m.name, m.parameters.map(_.varType)), m)
+        }
+
+        var interfaceNodes : List[String] = List.empty[String]
         interfaces.foreach {
           case i : InterfaceType =>
+            intDeclarations = intDeclarations ++ HierarchyChecker.checkInterfaceHierarchy(i, List(Seq()), env)
 
-            // Check interface hierarchy
-            HierarchyChecker.checkInterfaceHierarchy(i, List(Seq(name)), env)
-
+            // Below is just for checking 'duplicate' ints in extends list
             val nameLookup : EnvironmentLookup = i.name match {
               case s: SimpleName => NameLookup(s.value)
               case q: QualifiedName => QualifiedNameLookup(q)
             }
             val ref = env.lookup(nameLookup)
             ref match {
-              case Some(ClassDeclaration(_, _, _, _, _)) =>
-                throw new SyntaxError("An interface must not extend a class.")
-              case None => throw new SyntaxError("Extended declaration not found.")
+              case Some(InterfaceDeclaration(_, intBody, mods, ints)) =>
+                if (interfaceNodes.contains(ref.get.asInstanceOf[InterfaceDeclaration].name.filename)) {
+                  throw new SyntaxError("An interface must not be repeated in a extends clause of a class.")
+                }
+                interfaceNodes = ref.get.asInstanceOf[InterfaceDeclaration].name.filename :: interfaceNodes
               case _ => Unit
             }
+        }
 
-            if (superNodes.contains(ref.get.asInstanceOf[InterfaceDeclaration])) {
-              throw new SyntaxError("An interface must not be repeated in an extends clause of an interface.")
+        // For each super method, look for it in this interface's scope
+        intDeclarations.foreach {
+          case (methodLookup : MethodLookup, superMethod : InterfaceMemberDeclaration) =>
+            val ref = interfaceEnv.lookup(methodLookup)
+            ref match {
+              case Some(m : InterfaceMemberDeclaration) =>
+                if (superMethod.memberType != m.memberType) {
+                  throw new SyntaxError("A method must not replace a method with a different return type.")
+                }
+                if (superMethod.modifiers.contains(FinalKeyword)) {
+                  throw new SyntaxError("A method must not replace a final method.")
+                }
+                if (superMethod.modifiers.contains(StaticKeyword)) {
+                  if (!m.modifiers.contains(StaticKeyword)) {
+                    throw new SyntaxError("A nonstatic method must not replace a static method.")
+                  }
+                }
+                if (superMethod.modifiers.contains(PublicKeyword)) {
+                  if (m.modifiers.contains(ProtectedKeyword)) {
+                    throw new SyntaxError("A protected method must not replace a public method.")
+                  }
+                }
+              case None =>
+                if (superMethod.modifiers.contains(AbstractKeyword)) {
+                  if (!modifiers.contains(AbstractKeyword)) {
+                    throw new SyntaxError("Extending classes with abstract methods must either be an abstract class or implement the method.")
+                  }
+                }
+              case _ => Unit
             }
-            superNodes = ref.get.asInstanceOf[InterfaceDeclaration] :: superNodes
+          // TODO: Clean this up (copy-pasta'd from above -- handles implicit case
+          case (methodLookup : MethodLookup, superMethod : MethodDeclaration) =>
+            val ref = interfaceEnv.lookup(methodLookup)
+            ref match {
+              case Some(m : InterfaceMemberDeclaration) =>
+                if (superMethod.name == SimpleName(InputString("toString"))) {
+                  println(superMethod.memberType, m.memberType)
+                }
+                if (superMethod.memberType != m.memberType) {
+                  throw new SyntaxError("A method must not replace a method with a different return type.")
+                }
+                if (superMethod.modifiers.contains(FinalKeyword)) {
+                  throw new SyntaxError("A method must not replace a final method.")
+                }
+                if (superMethod.modifiers.contains(StaticKeyword)) {
+                  if (!m.modifiers.contains(StaticKeyword)) {
+                    throw new SyntaxError("A nonstatic method must not replace a static method.")
+                  }
+                }
+                if (superMethod.modifiers.contains(PublicKeyword)) {
+                  if (m.modifiers.contains(ProtectedKeyword)) {
+                    throw new SyntaxError("A protected method must not replace a public method.")
+                  }
+                }
+              case None =>
+                if (superMethod.modifiers.contains(AbstractKeyword)) {
+                  if (!modifiers.contains(AbstractKeyword)) {
+                    throw new SyntaxError("Extending classes with abstract methods must either be an abstract class or implement the method.")
+                  }
+                }
+              case _ => Unit
+            }
           case _ => Unit
         }
+
+
 
       case _ => Unit
     }

@@ -21,14 +21,6 @@ class FailCompilerSpec extends Specification {
     }
   }
 
-  "Compiler" should {
-    "pass marmoset tests for assignment 2" in {
-      "J2_4_ImplementsInterface_TwiceByName" in {
-        val files = filesForTest("J2_4_ImplementsInterface_TwiceByName") ++ stdlibFilePaths
-        CompilerRunner.runTestable(files.toArray) must not(throwA[Exception])
-      }
-    }
-  }
 }
 
 class CompilerSpec extends Specification {
