@@ -84,7 +84,7 @@ object HierarchyChecker {
       }
       val ref = env.lookup(nameLookup)
       ref match {
-        case Some(ClassDeclaration(_, body, mods, superklass, _)) =>
+        case Some(ClassDeclaration(_, body, mods, superklass, interfaces)) =>
           methodList = body.declarations.map {
             case m: MethodDeclaration =>
               (MethodLookup(m.name, m.parameters.map(_.varType)), m)
@@ -92,6 +92,10 @@ object HierarchyChecker {
               (ConstructorLookup(c.parameters.map(_.varType)), c)
             case f: FieldDeclaration =>
               (IdentifierLookup(f.name), f)
+          }
+          interfaces.foreach{
+            case i : InterfaceType =>
+              methodList = methodList ++ HierarchyChecker.checkInterfaceHierarchy(i, List(Seq.empty), env)
           }
           if(!superklass.isEmpty) {
             if (klassList.contains(superklass.get.inputString)) {
@@ -104,7 +108,6 @@ object HierarchyChecker {
           }
         case Some(InterfaceDeclaration(_, _, _, _)) =>
           throw new SyntaxError("A class must not extend an interface.")
-        case None => throw new SyntaxError("Extended declaration not found.")
         case _ => throw new SyntaxError("A class can only extend a class.")
       }
     } else {
@@ -144,7 +147,7 @@ object HierarchyChecker {
             case i: InterfaceType =>
               if (intList.contains(i.inputString)) {
                 throw new SyntaxError("Interface hierarchy must be acyclic.")
-            }
+              }
               methodList = methodList ++ HierarchyChecker.checkInterfaceHierarchy(i, intList, env)
           }
         } else {
@@ -164,7 +167,6 @@ object HierarchyChecker {
           }
       case Some(ClassDeclaration(_, _, _, _, _)) =>
         throw new SyntaxError("An interface must not implement a class.")
-      case None => throw new SyntaxError("Implemented declaration not found.")
       case _ => Unit
     }
     methodList
@@ -269,6 +271,43 @@ object HierarchyChecker {
                 throw new SyntaxError("Extending classes with abstract methods must either be an abstract class or implement the method.")
               }
             }
+
+          // TODO copypastad from above
+          case (superMethodLookup : MethodLookup, superMethod : InterfaceMemberDeclaration) =>
+            var implemented : Boolean = false
+            declarations.foreach {
+              case (methodLookup : MethodLookup, method : MethodDeclaration) =>
+                if (superMethodLookup == methodLookup) {
+                  implemented = true
+                  if (superMethod.memberType != method.memberType) {
+                    throw new SyntaxError("A method must not replace a method with a different return type.")
+                  }
+                  if (superMethod.modifiers.contains(FinalKeyword)) {
+                    throw new SyntaxError("A method must not replace a final method.")
+                  }
+                  if (superMethod.modifiers.contains(StaticKeyword)) {
+                    if (!method.modifiers.contains(StaticKeyword)) {
+                      throw new SyntaxError("A nonstatic method must not replace a static method.")
+                    }
+                  }
+                  if (!superMethod.modifiers.contains(StaticKeyword)) {
+                    if (method.modifiers.contains(StaticKeyword)) {
+                      throw new SyntaxError("A static method must not replace an instance method.")
+                    }
+                  }
+                  if (superMethod.modifiers.contains(PublicKeyword)) {
+                    if (method.modifiers.contains(ProtectedKeyword)) {
+                      throw new SyntaxError("A protected method must not replace a public method.")
+                    }
+                  }
+                }
+              case _ => Unit
+            }
+            if (!modifiers.contains(AbstractKeyword) && !implemented) {
+              throw new SyntaxError("Extending classes with abstract methods must either be an abstract class or implement the method.")
+            }
+
+
 
           case _ => Unit
         }
