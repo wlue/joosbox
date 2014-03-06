@@ -233,7 +233,7 @@ object EnvironmentBuilder {
 
               //  TODO: We shouldn't just catch conflicting parameter /names/,
               //  these should technically be different scopes for each param...
-              if (cd.parameters.map(_.name).size != cd.parameters.size) {
+              if (cd.parameters.map(_.name).toSet.size != cd.parameters.size) {
                 throw new SyntaxError("Duplicate parameter names in constructor.")
               }
 
@@ -247,7 +247,7 @@ object EnvironmentBuilder {
 
               //  TODO: We shouldn't just catch conflicting parameter /names/,
               //  these should technically be different scopes for each param...
-              if (md.parameters.map(_.name).size != md.parameters.size) {
+              if (md.parameters.map(_.name).toSet.size != md.parameters.size) {
                 throw new SyntaxError("Duplicate parameter names in constructor.")
               }
 
