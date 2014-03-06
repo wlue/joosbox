@@ -115,10 +115,8 @@ class AbstractSyntaxTreeSpec extends Specification {
               )
             ),
             Set(AbstractSyntaxNode.PublicKeyword),
-            Some(AbstractSyntaxNode.ClassType(
-              AbstractSyntaxNode.QualifiedName(List(
-                "java", "lang", "Object")))),
-            Seq()
+            None,
+            Seq.empty[AbstractSyntaxNode.InterfaceType]
           ))
         )
       )
@@ -250,9 +248,7 @@ class AbstractSyntaxTreeSpec extends Specification {
               )
             ),
             Set(AbstractSyntaxNode.PublicKeyword),
-            Some(AbstractSyntaxNode.ClassType(
-              AbstractSyntaxNode.QualifiedName(List(
-                "java", "lang", "Object"))))
+            None
           ))
         )
       )
@@ -369,9 +365,7 @@ class AbstractSyntaxTreeSpec extends Specification {
               )
             ),
             Set(AbstractSyntaxNode.StaticKeyword, AbstractSyntaxNode.PublicKeyword),
-            Some(AbstractSyntaxNode.ClassType(
-              AbstractSyntaxNode.QualifiedName(List(
-                "java", "lang", "Object"))))
+            None
           ))
         )
       )
@@ -672,9 +666,7 @@ class AbstractSyntaxTreeSpec extends Specification {
               )
             ),
             Set(AbstractSyntaxNode.StaticKeyword, AbstractSyntaxNode.PublicKeyword),
-            Some(AbstractSyntaxNode.ClassType(
-              AbstractSyntaxNode.QualifiedName(List(
-                "java", "lang", "Object"))))
+            None
           ))
         )
       )
@@ -737,9 +729,7 @@ public class Test {
                 )
               ),
               Set(AbstractSyntaxNode.PublicKeyword),
-              Some(AbstractSyntaxNode.ClassType(
-                AbstractSyntaxNode.QualifiedName(List(
-                  "java", "lang", "Object"))))
+              None
             ))
           )
         )
@@ -777,9 +767,7 @@ public class Test {
                 )
               ),
               Set(AbstractSyntaxNode.PublicKeyword),
-              Some(AbstractSyntaxNode.ClassType(
-                AbstractSyntaxNode.QualifiedName(List(
-                  "java", "lang", "Object"))))
+              None
             ))
           )
         )
