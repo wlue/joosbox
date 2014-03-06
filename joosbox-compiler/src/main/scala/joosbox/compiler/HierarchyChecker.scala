@@ -353,6 +353,26 @@ object HierarchyChecker {
           case _ => Unit
         }
 
+        // For each interface method, look for it in this class' scope
+        intDeclarations.foreach {
+          case (memberLookup : MethodLookup, intMember : InterfaceMemberDeclaration) =>
+            var implemented : Boolean = false
+            (intDeclarations).foreach {
+              case (memberLookup2 : MethodLookup, intMember2 : InterfaceMemberDeclaration) =>
+                if (memberLookup == memberLookup2) {
+                  if (intMember.memberType != intMember2.memberType) {
+                    throw new SyntaxError("Class implements two incompatible interfaces")
+                  }
+                }
+
+              case _ => Unit
+            }
+
+          case _ => Unit
+        }
+
+
+
       case node: InterfaceDeclaration =>
         val name : InputString = node.name
         val interfaces: Seq[InterfaceType] = node.interfaces
