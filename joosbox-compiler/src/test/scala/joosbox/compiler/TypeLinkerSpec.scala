@@ -274,7 +274,7 @@ package Main;
 
 public class Main {
   public Main() {
-    Main.Main main = null;
+    new Main.Main();
   }
 }
         """

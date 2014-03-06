@@ -78,7 +78,7 @@ object AbstractSyntaxNode {
     body: Option[Block] = None
   ) extends AbstractSyntaxNode with Referenceable {
     override def children: List[AbstractSyntaxNode] =
-      modifiers.toList ++ parameters.toList ++ body.toList
+      modifiers.toList ++ parameters.toList ++ body.toList ++ List(memberType)
   }
 
   case class ClassBody(
@@ -104,6 +104,18 @@ object AbstractSyntaxNode {
     rightHandSide: Expression
   ) extends StatementExpression {
     override def children: List[AbstractSyntaxNode] = List(leftHandSide, rightHandSide)
+  }
+
+  case class ClassCreationStatementExpression(
+    creation: ClassCreationPrimary
+  ) extends StatementExpression {
+    override def children: List[AbstractSyntaxNode] = List(creation)
+  }
+
+  case class MethodInvocationExpression(
+    invocation: MethodInvocation
+  ) extends StatementExpression {
+    override def children: List[AbstractSyntaxNode] = List(invocation)
   }
 
   sealed trait PostfixExpression extends Expression
@@ -188,10 +200,12 @@ object AbstractSyntaxNode {
     override def children: List[AbstractSyntaxNode] = List(classType) ++ args.toList
   }
 
+  sealed trait MethodInvocation extends Expression
+
   case class SimpleMethodInvocation(
     name: Name,
     args: Seq[Expression] = Seq.empty[Expression]
-  ) extends Expression {
+  ) extends MethodInvocation {
     override def children: List[AbstractSyntaxNode] = List(name) ++ args.toList
   }
 
@@ -199,7 +213,7 @@ object AbstractSyntaxNode {
     primary: Primary,
     name: InputString,
     args: Seq[Expression] = Seq.empty[Expression]
-  ) extends Expression {
+  ) extends MethodInvocation {
     override def children: List[AbstractSyntaxNode] = List(primary) ++ args.toList
   }
 
@@ -371,7 +385,7 @@ object AbstractSyntaxNode {
     override def children: List[AbstractSyntaxNode] = statements.toList
   }
 
-  case class CastExpression() extends Expression
+  case object CastExpression extends Expression
 
   sealed trait Statement extends BlockStatement
   case object EmptyStatement extends Statement
@@ -726,8 +740,8 @@ object AbstractSyntaxNode {
       }
 
       check_children(children.head) match {
-        case y: Name => Seq(CastExpression())
-        case y: PrimitiveType => Seq(CastExpression())
+        case y: Name => Seq(CastExpression)
+        case y: PrimitiveType => Seq(CastExpression)
         case _ => throw new SyntaxError("Casting with invalid cast type.")
       }
     }
@@ -827,7 +841,7 @@ object AbstractSyntaxNode {
         case n: SimpleName => Some(n.value)
         case n: Identifier => Some(n.value)
         case n: QualifiedName => n.value
-        case n: AbstractSyntaxNode => throw new SyntaxError("Qualified name contains non-identifiers.")
+        case _ => throw new SyntaxError("Qualified name contains non-identifiers.")
       }))
 
     // TODO: Implement
@@ -1147,6 +1161,17 @@ object AbstractSyntaxNode {
       Seq(ParenthesizedExpression(content.children.flatMap(recursive(_)).collectFirst {case x: Expression => x}.get))
 
     case t: ParseNodes.ThisKeyword => Seq(ThisKeyword)
+
+    case p: ParseNodes.StatementExpression => {
+      val children: Seq[AbstractSyntaxNode] = p.children.flatMap(recursive(_))
+      val expression: Expression = children.collectFirst { case x: Expression => x }.get
+
+      expression match {
+        case node: ClassCreationPrimary => Seq(ClassCreationStatementExpression(node))
+        case node: MethodInvocation => Seq(MethodInvocationExpression(node))
+        case _ => children
+      }
+    }
 
     case p: ParseNodes.ArrayCreationExpression => {
       val children:Seq[AbstractSyntaxNode] = p.children.flatMap(recursive(_))

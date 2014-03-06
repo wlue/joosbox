@@ -118,7 +118,7 @@ class AbstractSyntaxTreeSpec extends Specification {
             Some(AbstractSyntaxNode.ClassType(
               AbstractSyntaxNode.QualifiedName(List(
                 "java", "lang", "Object")))),
-            Set()
+            Seq()
           ))
         )
       )
