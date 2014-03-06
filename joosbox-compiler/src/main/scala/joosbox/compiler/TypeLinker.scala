@@ -47,15 +47,27 @@ object TypeLinker {
       case pkg: PackageDeclaration => {
         // Make sure the package does not resolve to a type.
 
-        // Lookup the top level environment, and make sure the package does not resolve to a type.
+        // Lookup the top level environment, and make sure the package and any 
+        // of its prefixes does not resolve to a type.
         val environment = mapping.environment
-        val lookup: EnvironmentLookup = pkg.name match {
-          case SimpleName(name) => NameLookup(name)
-          case name: QualifiedName => QualifiedNameLookup(name)
+        val qualifiedName: QualifiedName = pkg.name match {
+          case name: QualifiedName => name
+          case SimpleName(input) => QualifiedName(Seq(input))
         }
 
-        environment.lookup(lookup).foreach { result =>
-          throw new SyntaxError("Package name " + pkg.name.niceName + " resolves to a type " + result +  ".")
+        qualifiedName.prefixesIncludingSelf.foreach { prefix =>
+          var lookupOption: Option[EnvironmentLookup] = prefix match {
+            case QualifiedName(Seq()) => None
+            case QualifiedName(Seq(name)) => Some(NameLookup(name))
+            case _ => Some(QualifiedNameLookup(prefix))
+          }
+
+          for {
+            lookup <- lookupOption
+            result <- environment.lookup(lookup)
+          } {
+            throw new SyntaxError("Package name " + pkg.name.niceName + " resolves to a type " + result +  ".")
+          }
         }
       }
       case node: CompilationUnit => {
@@ -147,20 +159,19 @@ object TypeLinker {
             case _ => {
               name match {
                 // If a qualified name was found, then make sure no strict prefix resolves.
-                case QualifiedName(values) => {
-                  // name.prefixes.foreach { prefix: QualifiedName =>
-                  (1 to (values.size - 1)).foreach { count =>
-                    var prefix: Seq[InputString] = values.take(count)
-                    var prefixName: String = prefix.map(_.value).mkString(".")
-                    var lookup: EnvironmentLookup = if (count == 1) {
-                      NameLookup(prefix.head)
-                    } else {
-                      QualifiedNameLookup(QualifiedName(prefix))
+                case qualifiedName: QualifiedName => {
+                  qualifiedName.prefixes.foreach { prefix =>
+                    var lookupOption: Option[EnvironmentLookup] = prefix match {
+                      case QualifiedName(Seq()) => None
+                      case QualifiedName(Seq(name)) => Some(NameLookup(name))
+                      case _ => Some(QualifiedNameLookup(prefix))
                     }
 
-                    environment.lookup(lookup) match {
-                      case Some(_) => throw new SyntaxError("Type " + name.niceName + " conflicts with " + prefixName + ".")
-                      case _ => {}
+                    for {
+                      lookup <- lookupOption
+                      result <- environment.lookup(lookup)
+                    } {
+                      throw new SyntaxError("Type " + name.niceName + " conflicts with " + prefix.niceName + ".")
                     }
                   }
                 }
