@@ -149,11 +149,10 @@ object EnvironmentBuilder {
                 (
                   Map(decl -> env) ++
                   (check.toSeq ++ update.toSeq ++ Seq(statement)).flatMap(traverse(_, env, root)).toMap
+                  ++ scopeTreeFromBlockStatements(decls.drop(1), parent, root)
                 )
               }
             }
-
-            statements.flatMap(traverse(_, parent, root)).toMap
           }
 
           //  If there is no assignment, group all of the following
