@@ -60,7 +60,8 @@ object HierarchyChecker {
     MethodDeclaration,
     InterfaceMemberDeclaration,
     ConstructorDeclaration,
-    FieldDeclaration
+    FieldDeclaration,
+    Type
   }
 
   def link(
@@ -172,6 +173,62 @@ object HierarchyChecker {
     methodList
   }
 
+  def checkMethodOverrideReturnType(base:Type, extended:Type) = {
+    if (extended != base) {
+      throw new SyntaxError("A method must not replace a method with a different return type.")
+    }
+  }
+
+  def checkMethodOverrideModifiers(base:Set[Modifier], extended:Set[Modifier]) = {
+    if (extended.contains(FinalKeyword)) {
+      throw new SyntaxError("A method must not replace a final method.")
+    }
+    if (extended.contains(StaticKeyword)) {
+      if (!base.contains(StaticKeyword)) {
+        throw new SyntaxError("A nonstatic method must not replace a static method.")
+      }
+    }
+    if (!extended.contains(StaticKeyword)) {
+      if (base.contains(StaticKeyword)) {
+        throw new SyntaxError("A static method must not replace an instance method.")
+      }
+    }
+    if (extended.contains(PublicKeyword)) {
+      if (base.contains(ProtectedKeyword)) {
+        throw new SyntaxError("A protected method must not replace a public method.")
+      }
+    }
+  }
+
+  def checkSuperMethodForClassOrInterface(
+    declarations:Seq[(EnvironmentLookup, AbstractSyntaxNode)],
+    modifiers:Set[Modifier],
+    superLookup:MethodLookup,
+    superType:Type,
+    superModifiers:Set[Modifier]) = {
+      var implemented : Boolean = false
+      (declarations).foreach {
+        case (methodLookup : MethodLookup, method : MethodDeclaration) =>
+          if (superLookup == methodLookup) {
+            implemented = true
+            checkMethodOverrideReturnType(method.memberType, superType)
+            checkMethodOverrideModifiers(method.modifiers, superModifiers)
+          }
+        case (methodLookup : MethodLookup, method: InterfaceMemberDeclaration) =>
+          if (superLookup == methodLookup) {
+            implemented = true
+            checkMethodOverrideReturnType(method.memberType, superType)
+            checkMethodOverrideModifiers(method.modifiers, superModifiers)
+          }
+        case _ => Unit
+      }
+      if (superModifiers.contains(AbstractKeyword)) {
+        if (!modifiers.contains(AbstractKeyword) && !implemented) {
+          throw new SyntaxError("Extending classes with abstract methods must either be an abstract class or implement the method.")
+        }
+      }
+  }
+
   def check(node: AbstractSyntaxNode)(implicit mapping: EnvironmentMapping) {
     node match {
       case node: ClassDeclaration =>
@@ -235,79 +292,20 @@ object HierarchyChecker {
 
         // For each super method, look for it in this class' scope
         superDeclarations.foreach {
-          case (superMethodLookup : MethodLookup, superMethod : MethodDeclaration) =>
-            var implemented : Boolean = false
-            declarations.foreach {
-              case (methodLookup : MethodLookup, method : MethodDeclaration) =>
-                if (superMethodLookup == methodLookup) {
-                  implemented = true
-                  if (superMethod.memberType != method.memberType) {
-                    throw new SyntaxError("A method must not replace a method with a different return type.")
-                  }
-                  if (superMethod.modifiers.contains(FinalKeyword)) {
-                    throw new SyntaxError("A method must not replace a final method.")
-                  }
-                  if (superMethod.modifiers.contains(StaticKeyword)) {
-                    if (!method.modifiers.contains(StaticKeyword)) {
-                      throw new SyntaxError("A nonstatic method must not replace a static method.")
-                    }
-                  }
-                  if (!superMethod.modifiers.contains(StaticKeyword)) {
-                    if (method.modifiers.contains(StaticKeyword)) {
-                      throw new SyntaxError("A static method must not replace an instance method.")
-                    }
-                  }
-                  if (superMethod.modifiers.contains(PublicKeyword)) {
-                    if (method.modifiers.contains(ProtectedKeyword)) {
-                      throw new SyntaxError("A protected method must not replace a public method.")
-                    }
-                  }
-                }
-
-              case _ => Unit
-            }
-            if (superMethod.modifiers.contains(AbstractKeyword)) {
-              if (!modifiers.contains(AbstractKeyword) && !implemented) {
-                throw new SyntaxError("Extending classes with abstract methods must either be an abstract class or implement the method.")
-              }
-            }
-
-          // TODO copypastad from above
-          case (superMethodLookup : MethodLookup, superMethod : InterfaceMemberDeclaration) =>
-            var implemented : Boolean = false
-            declarations.foreach {
-              case (methodLookup : MethodLookup, method : MethodDeclaration) =>
-                if (superMethodLookup == methodLookup) {
-                  implemented = true
-                  if (superMethod.memberType != method.memberType) {
-                    throw new SyntaxError("A method must not replace a method with a different return type.")
-                  }
-                  if (superMethod.modifiers.contains(FinalKeyword)) {
-                    throw new SyntaxError("A method must not replace a final method.")
-                  }
-                  if (superMethod.modifiers.contains(StaticKeyword)) {
-                    if (!method.modifiers.contains(StaticKeyword)) {
-                      throw new SyntaxError("A nonstatic method must not replace a static method.")
-                    }
-                  }
-                  if (!superMethod.modifiers.contains(StaticKeyword)) {
-                    if (method.modifiers.contains(StaticKeyword)) {
-                      throw new SyntaxError("A static method must not replace an instance method.")
-                    }
-                  }
-                  if (superMethod.modifiers.contains(PublicKeyword)) {
-                    if (method.modifiers.contains(ProtectedKeyword)) {
-                      throw new SyntaxError("A protected method must not replace a public method.")
-                    }
-                  }
-                }
-              case _ => Unit
-            }
-            if (!modifiers.contains(AbstractKeyword) && !implemented) {
-              throw new SyntaxError("Extending classes with abstract methods must either be an abstract class or implement the method.")
-            }
-
-
+          case (methodLookup : MethodLookup, method : MethodDeclaration) =>
+            HierarchyChecker.checkSuperMethodForClassOrInterface(
+                declarations,
+                modifiers,
+                methodLookup,
+                method.memberType,
+                method.modifiers)
+          case (memberLookup : MethodLookup, intMember : InterfaceMemberDeclaration) =>
+            HierarchyChecker.checkSuperMethodForClassOrInterface(
+                declarations,
+                modifiers,
+                memberLookup,
+                intMember.memberType,
+                intMember.modifiers ++ Set(AbstractKeyword))
 
           case _ => Unit
         }
@@ -316,39 +314,12 @@ object HierarchyChecker {
         // For each interface method, look for it in this class' scope
         intDeclarations.foreach {
           case (memberLookup : MethodLookup, intMember : InterfaceMemberDeclaration) =>
-            var implemented : Boolean = false
-            (declarations ++ superDeclarations).foreach {
-              case (methodLookup : MethodLookup, method : MethodDeclaration) =>
-                if (memberLookup == methodLookup) {
-                  implemented = true
-                  if (intMember.memberType != method.memberType) {
-                    throw new SyntaxError("A method must not replace a method with a different return type.")
-                  }
-                  if (intMember.modifiers.contains(FinalKeyword)) {
-                    throw new SyntaxError("A method must not replace a final method.")
-                  }
-                  if (intMember.modifiers.contains(StaticKeyword)) {
-                    if (!method.modifiers.contains(StaticKeyword)) {
-                      throw new SyntaxError("A nonstatic method must not replace a static method.")
-                    }
-                  }
-                  if (!intMember.modifiers.contains(StaticKeyword)) {
-                    if (method.modifiers.contains(StaticKeyword)) {
-                      throw new SyntaxError("A static method must not replace an instance method.")
-                    }
-                  }
- 
-                  if (intMember.modifiers.contains(PublicKeyword)) {
-                    if (method.modifiers.contains(ProtectedKeyword)) {
-                      throw new SyntaxError("A protected method must not replace a public method.")
-                    }
-                  }
-                }
-              case _ => Unit
-            }
-            if (!modifiers.contains(AbstractKeyword) && !implemented) {
-              throw new SyntaxError("Implementing interfaces with abstract methods must either be an abstract class or implement the method.")
-            }
+            HierarchyChecker.checkSuperMethodForClassOrInterface(
+                declarations ++ superDeclarations,
+                modifiers,
+                memberLookup,
+                intMember.memberType,
+                intMember.modifiers ++ Set(AbstractKeyword))
 
           case _ => Unit
         }
@@ -412,77 +383,22 @@ object HierarchyChecker {
 
         // For each super method, look for it in this interface's scope
         intDeclarations.foreach {
-          case (methodLookup : MethodLookup, superMethod : InterfaceMemberDeclaration) =>
-            val ref = interfaceEnv.lookup(methodLookup)
-            ref match {
-              case Some(m : InterfaceMemberDeclaration) =>
-                if (superMethod.memberType != m.memberType) {
-                  throw new SyntaxError("A method must not replace a method with a different return type.")
-                }
-                if (superMethod.modifiers.contains(FinalKeyword)) {
-                  throw new SyntaxError("A method must not replace a final method.")
-                }
-                if (superMethod.modifiers.contains(StaticKeyword)) {
-                  if (!m.modifiers.contains(StaticKeyword)) {
-                    throw new SyntaxError("A nonstatic method must not replace a static method.")
-                  }
-                }
-                if (!superMethod.modifiers.contains(StaticKeyword)) {
-                  if (m.modifiers.contains(StaticKeyword)) {
-                    throw new SyntaxError("A static method must not replace an instance method.")
-                  }
-                }
-                if (superMethod.modifiers.contains(PublicKeyword)) {
-                  if (m.modifiers.contains(ProtectedKeyword)) {
-                    throw new SyntaxError("A protected method must not replace a public method.")
-                  }
-                }
-              case None =>
-                if (superMethod.modifiers.contains(AbstractKeyword)) {
-                  if (!modifiers.contains(AbstractKeyword)) {
-                    throw new SyntaxError("Extending interfaces with abstract methods must either be an abstract interface or implement the method.")
-                  }
-                }
-              case _ => Unit
-            }
-          // TODO: Clean this up (copy-pasta'd from above -- handles implicit case
-          case (methodLookup : MethodLookup, superMethod : MethodDeclaration) =>
-            val ref = interfaceEnv.lookup(methodLookup)
-            ref match {
-              case Some(m : InterfaceMemberDeclaration) =>
-                if (superMethod.memberType != m.memberType) {
-                  throw new SyntaxError("A method must not replace a method with a different return type.")
-                }
-                if (superMethod.modifiers.contains(FinalKeyword)) {
-                  throw new SyntaxError("A method must not replace a final method.")
-                }
-                if (superMethod.modifiers.contains(StaticKeyword)) {
-                  if (!m.modifiers.contains(StaticKeyword)) {
-                    throw new SyntaxError("A nonstatic method must not replace a static method.")
-                  }
-                }
-                if (!superMethod.modifiers.contains(StaticKeyword)) {
-                  if (m.modifiers.contains(StaticKeyword)) {
-                    throw new SyntaxError("A static method must not replace an instance method.")
-                  }
-                }
-                if (superMethod.modifiers.contains(PublicKeyword)) {
-                  if (m.modifiers.contains(ProtectedKeyword)) {
-                    throw new SyntaxError("A protected method must not replace a public method.")
-                  }
-                }
-              case None =>
-                if (superMethod.modifiers.contains(AbstractKeyword)) {
-                  if (!modifiers.contains(AbstractKeyword)) {
-                    throw new SyntaxError("Extending interfaces with abstract methods must either be an abstract interface or implement the method.")
-                  }
-                }
-              case _ => Unit
-            }
+          case (methodLookup : MethodLookup, method : InterfaceMemberDeclaration) =>
+            checkSuperMethodForClassOrInterface(
+              declarations,
+              modifiers ++ Set(AbstractKeyword),
+              methodLookup,
+              method.memberType,
+              method.modifiers)
+          case (methodLookup : MethodLookup, method : MethodDeclaration) =>
+            checkSuperMethodForClassOrInterface(
+              declarations,
+              modifiers ++ Set(AbstractKeyword),
+              methodLookup,
+              method.memberType,
+              method.modifiers)
           case _ => Unit
         }
-
-
 
       case _ => Unit
     }
