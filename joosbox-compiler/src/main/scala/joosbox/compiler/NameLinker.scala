@@ -48,7 +48,7 @@ object NameLinker {
         //  Lookup the entire qualified name, but fall back to prefixes if necessary.
         //  If a prefix matches a variable or a field, then the remainder refers to
         //  non-static fields or methods on that object. (Currently, for a3, those are not resolved.)
-        val results: Seq[(Referenceable, Seq[InputString])] = q.prefixes.flatMap{prefix: QualifiedName => {
+        val results: Seq[(Referenceable, Seq[InputString])] = q.prefixesIncludingSelf.flatMap{prefix: QualifiedName => {
           if (prefix.value.size == 1) {
             mapping.enclosingScopeOf(name).get.lookup(IdentifierLookup(prefix.value(0))) match {
               case None => {
@@ -62,12 +62,14 @@ object NameLinker {
                 Some((x, q.value.drop(prefix.value.size)))
               }
             }
-          } else {
+          } else if (prefix.value.size > 1) {
             val result = mapping.enclosingScopeOf(name).get.lookup(QualifiedNameLookup(prefix))
             result match {
               case Some(x: Referenceable) => Some((x, q.value.drop(prefix.value.size)))
               case None => None
             }
+          } else {
+            None
           }
         }}
 

@@ -228,9 +228,10 @@ object AbstractSyntaxNode {
   case class QualifiedName(value: Seq[InputString]) extends Name {
     def niceName: String = value.map(_.value).mkString(".")
     def prefixesIncludingSelf: Seq[QualifiedName] = Seq(this) ++ prefixes
-    def prefixes: Seq[QualifiedName] = value.headOption match {
-      case None => Seq.empty[QualifiedName]
-      case Some(_) => {
+    def prefixes: Seq[QualifiedName] = value.size match {
+      case 0 => Seq.empty[QualifiedName]
+      case 1 => Seq.empty[QualifiedName]
+      case _ => {
         val oneSmaller = QualifiedName(value.dropRight(1))
         Seq(oneSmaller) ++ oneSmaller.prefixes
       }
