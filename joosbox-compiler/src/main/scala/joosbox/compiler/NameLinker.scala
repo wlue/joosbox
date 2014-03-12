@@ -23,6 +23,59 @@ object NameLinker {
       case e: ConditionalExpression => verifyNamesExist(e.children.collect {case c: Name => c})(mapping)
       case e: ArithmeticExpression => verifyNamesExist(e.children.collect {case c: Name => c})(mapping)
       case e: RelationalExpression => verifyNamesExist(e.children.collect {case c: Name => c})(mapping)
+      case s: SimpleMethodInvocation => {
+        /*
+         * Split the method's name into parts:
+         *          String.valueOf
+         *      |------^      ^------|
+         *    Class              MethodName
+         * Look up the class by its qualified name, if there is one.
+         * Then, look up the method in that class's scope.
+         * If there is no qualified name, look up the method in the current scope.
+         */
+
+        s.name match {
+          case SimpleName(v: InputString) => {
+            mapping.enclosingScopeOf(s).get.lookupMethodsByName(v) match {
+              case Seq(method: MethodDeclaration) => {
+                //println("Method name lookup " + v + " found exactly one method:\n" + method)
+              }
+              case Seq(method: MethodDeclaration, others@_*) => {
+                //println("Found " + (others.size + 1) + " methods named " + v)
+              }
+              case Seq() => throw new SyntaxError("Unknown method: " + v)
+            }
+          }
+
+          case QualifiedName(components: Seq[InputString]) => {
+            val accessor:QualifiedName = QualifiedName(components.dropRight(1))
+
+            disambiguateReferenceToMethodCall(accessor)(mapping.enclosingScopeOf(s).get) match {
+              case None => throw new SyntaxError("Unknown object for method invocation: " + s.name.niceName)
+              case Some(cd: ClassDeclaration) => {
+                val declarationEnvironment: Environment = mapping.enclosingScopeOf(cd.body).get
+                val v: InputString = components.last
+
+                declarationEnvironment.lookupMethodsByName(v) match {
+                  case Seq(method: MethodDeclaration) => {
+                    //println("Method name lookup " + v + " found exactly one method:\n" + method)
+                  }
+                  case Seq(method: MethodDeclaration, others@_*) => {
+                    //println("Found " + (others.size + 1) + " methods named " + v)
+                  }
+                  case Seq() => throw new SyntaxError("Unknown method: " + v + " in env: " + declarationEnvironment)
+                }
+              }
+
+              case Some(asn: AbstractSyntaxNode) => {
+                println("Method call on unhandled AST node: " + asn)
+              }
+            }
+          }
+        }
+
+        verifyNamesExist(s.args.collect {case c: Name => c})(mapping)
+      }
 
       case _ => Unit
     }
@@ -37,7 +90,7 @@ object NameLinker {
           case None => {
             mapping.enclosingScopeOf(name).get.lookup(NameLookup(s.value)) match {
               case None => 
-                throw new SyntaxError("Unknown name " + s + ", enclosing scope: " + mapping.enclosingScopeOf(name))
+                throw new SyntaxError("Unknown name " + s)
               case _ => Unit
             }
           }
@@ -74,14 +127,39 @@ object NameLinker {
         }}
 
         results.headOption match {
-          case None => throw new SyntaxError("Unknown name " + q + ", enclosing scope: " + mapping.enclosingScopeOf(name))
+          case None => throw new SyntaxError("Unknown name " + q)
           case Some((x: Referenceable, rem: Seq[InputString])) => {
-            //println("Name " + q + " resolved to " + x + " with remainder " + rem)
+            if (rem.size > 0) {
+              //  Verify that the Referenceable resolves to a class,
+              //  and verify that the class has a static field or method
+              //  with this name on it.
+
+              //println(x + " with remainder " + rem + "\n")
+            }
             Unit
           }
         }
       }
       case _ => {}
     })
+  }
+
+  def findByStringInEnvironment(name: InputString)(implicit environment: Environment): Option[Referenceable] = {
+    val queries = Seq(IdentifierLookup(name), NameLookup(name))
+    queries.toStream.flatMap(environment.lookup(_)).headOption
+  }
+
+  def disambiguateReferenceToMethodCall(name: QualifiedName)(implicit environment: Environment): Option[Referenceable] = {
+    if (name.value.size == 1) {
+      Seq(
+        IdentifierLookup(name.value(0)),
+        NameLookup(name.value(0)),
+        QualifiedNameLookup(name)
+      ).toStream.flatMap(environment.lookup(_)).headOption
+    } else if (name.value.size > 1) {
+      Seq(QualifiedNameLookup(name)).toStream.flatMap(environment.lookup(_)).headOption
+    } else {
+      None
+    }
   }
 }

@@ -18,7 +18,8 @@ import AbstractSyntaxNode.{
   FormalParameter,
   SimpleName,
   QualifiedName,
-  Name
+  Name,
+  ClassType
 }
 
 object EnvironmentBuilder {
@@ -67,6 +68,7 @@ object EnvironmentBuilder {
 
     mapping.values.toSet[Environment].collect({ case s: ScopeEnvironment => s }).foreach(s => {
       s.ensureUnambiguousReferences(mapping)
+      s.linkScopesWithMapping(mapping)
       s.importScopeReferences.foreach((q: QualifiedNameLookup) => {
         parent.packageScopeMap.get(q.name) match {
           case None => throw new SyntaxError("Attempted on-demand import " + q.name + " could not be found.")
@@ -226,7 +228,9 @@ object EnvironmentBuilder {
         new ScopeEnvironment(locals, Some(packageScopeReference), importScopeReferences, parent)
       }
 
-      case n: AbstractSyntaxNode.ClassBody => {
+      case cd: AbstractSyntaxNode.ClassDeclaration => {
+        val n: AbstractSyntaxNode.ClassBody = cd.body
+
         val mapping: Map[EnvironmentLookup, Referenceable]
           = n.declarations.foldLeft(Map.empty[EnvironmentLookup, Referenceable])({
             case (map: Map[EnvironmentLookup, Referenceable], cd: AbstractSyntaxNode.ConstructorDeclaration) => {
@@ -252,6 +256,7 @@ object EnvironmentBuilder {
               }
 
               val key = MethodLookup(md.name, md.parameters.map(_.varType))
+
               map.get(key) match {
                 case Some(_) => throw new SyntaxError("Duplicate method declaration for " + md.name)
                 case None => map + (key -> md)
@@ -266,7 +271,17 @@ object EnvironmentBuilder {
             }
             case (map: Map[EnvironmentLookup, Referenceable], asn: AbstractSyntaxNode) => map
           })
-        new ScopeEnvironment(mapping, None, Seq.empty, parent)
+
+        //  Include all superclasses and implemented interfaces in this scope.
+        val linkedScopeReferences: Seq[EnvironmentLookup] = {
+          (cd.superclass.toSeq ++ cd.interfaces).flatMap {
+            case ClassType(qn: QualifiedName) => Some(QualifiedNameLookup(qn))
+            case ClassType(sn: SimpleName) => Some(NameLookup(sn.value))
+            case _ => None
+          }
+        }
+
+        new ScopeEnvironment(mapping, None, Seq.empty, parent, linkedScopeReferences)
       }
 
       case n: AbstractSyntaxNode.InterfaceBody => {

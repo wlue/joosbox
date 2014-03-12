@@ -16,7 +16,8 @@ import AbstractSyntaxNode.{
   SimpleName,
   QualifiedName,
   TypeDeclaration,
-  PackageDeclaration
+  PackageDeclaration,
+  MethodDeclaration
 }
 
 sealed trait EnvironmentLookup
@@ -38,6 +39,18 @@ sealed trait Environment {
         parent.flatMap { env: Environment => env.lookup(name) }
     }
   }
+
+  //  To facilitate method lookups without knowledge of their parameter types.
+  def lookupMethodsByName(name: InputString): Seq[MethodDeclaration] =
+    searchForMethodsWithName(name) ++ (parent match {
+      case Some(env: Environment) => env.lookupMethodsByName(name)
+      case None => Seq.empty[MethodDeclaration]
+    })
+
+  /**
+   * Search the current scope for a method with the given name.
+   */
+  def searchForMethodsWithName(name: InputString): Seq[MethodDeclaration] = Seq.empty[MethodDeclaration]
 
   /**
    * Search the current scope for the name.
@@ -106,13 +119,32 @@ class RootEnvironment(nodes: Seq[AbstractSyntaxNode.CompilationUnit]) extends En
  */
 class ScopeEnvironment(
   val locals: Map[EnvironmentLookup, Referenceable],
+
+  //  For top-level scopepes.
   val packageScopeReference: Option[QualifiedNameLookup],
   val importScopeReferences: Seq[QualifiedNameLookup],
-  par: Environment
+  par: Environment,
+
+  //  For classes, how do we find methods and fields in their superclasses/interfaces?
+  val linkedScopeReferences: Seq[EnvironmentLookup] = Seq.empty[EnvironmentLookup]
 ) extends Environment {
 
   val parent: Option[Environment] = Some(par)
   override def toString(): String = super.toString()+"<par: @"+Integer.toHexString(par.hashCode())+">[package: " + packageScopeReference + ", imports: " + importScopeReferences + "](" + locals.toString() + ")"
+
+  override def searchForMethodsWithName(name: InputString): Seq[MethodDeclaration] = {
+    locals.collect{
+      case (MethodLookup(methodName: InputString, _), method: MethodDeclaration)
+      if (methodName == name) => method
+    }.toSeq ++ linkedScopes.flatMap(_.searchForMethodsWithName(name))
+  }
+
+  //  This is not very scala-y or functional, but we need this to link class
+  //  scopes to the scopes of their superclasses and interfaces.
+  var linkedScopes: Seq[ScopeEnvironment] = Seq.empty[ScopeEnvironment]
+  def linkScopesWithMapping(mapping: Map[AbstractSyntaxNode, Environment]) = {
+    linkedScopes = linkedScopeReferences.flatMap(lookup(_)).flatMap(mapping.get(_)).collect{case c: ScopeEnvironment => c}
+  }
 
   def search(name: EnvironmentLookup): Option[Referenceable] = {
     locals.get(name) match {
@@ -161,8 +193,21 @@ class ScopeEnvironment(
                     map
                   }
                 }
+            }
+
+            uniqueDeclarations.get(name) match {
+              case Some(x) => Some(x)
+              case None => {
+                //  Finally, search all of our linked scopes for the name (but not their parents).
+                linkedScopes.toStream.flatMap(_.search(name)).headOption match {
+                  case Some(r: Referenceable) => {
+                    println("Found referenceable when looking in other scope: " + r)
+                    None
+                  }
+                  case None => None
+                }
               }
-            uniqueDeclarations.get(name)
+            }
           }
         }
       }
