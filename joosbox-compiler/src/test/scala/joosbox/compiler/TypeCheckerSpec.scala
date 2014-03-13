@@ -4,6 +4,32 @@ import org.specs2.mutable._
 import joosbox.compiler._
 import java.io.File
 
+class FailTypeCheckerSpec extends Specification {
+  def getAllFiles(base: File): Array[File] = {
+    base.listFiles.filter(_.getName.endsWith(".java")) ++ base.listFiles.filter(_.isDirectory).flatMap(getAllFiles)
+  }
+
+  def stdlibFilePaths: Seq[String] =
+    getAllFiles(new File("joosbox-compiler/src/test/resources/stdlib/java")).map(_.getAbsolutePath)
+
+  def filesForTest(name: String): Seq[String] = {
+    val prefix = "joosbox-compiler/src/test/resources/marmoset-tests/a3/"
+    if (name.endsWith(".java")) {
+      Seq(new File(prefix + name).getAbsolutePath())
+    } else {
+      (getAllFiles(new File(prefix + name))).map(_.getAbsolutePath)
+    }
+  }
+
+  "Type Checker" should {
+      "J1_namelinking3.java" in {
+        val files = filesForTest("J1_namelinking3.java") ++ stdlibFilePaths
+        CompilerRunner.runTestable(files.toArray) //must not(throwA[Exception])
+        true
+      }
+    }
+}
+
 class TypeCheckerSpec extends Specification {
 
   def getAllFiles(base: File): Array[File] = {
@@ -26,7 +52,7 @@ class TypeCheckerSpec extends Specification {
     "pass marmoset tests for assignment 3" in {
       "J1_5_AmbiguousName_DefaultPackageNotVisible" in {
         val files = filesForTest("J1_5_AmbiguousName_DefaultPackageNotVisible") ++ stdlibFilePaths
-        CompilerRunner.runTestable(files.toArray) must not(throwA[Exception])
+        CompilerRunner.runTestable(files.toArray) must  not(throwA[Exception])
       }
       "J1_5_AmbiguousName_FieldVsType.java" in {
         val files = filesForTest("J1_5_AmbiguousName_FieldVsType.java") ++ stdlibFilePaths
