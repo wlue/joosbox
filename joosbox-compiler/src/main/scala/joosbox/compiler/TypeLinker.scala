@@ -107,7 +107,7 @@ object TypeLinker {
 
               if (classPackage.isEmpty) {
                 // In the default package, all class clashes are invalid
-                if (className.value == importName.last.value) {
+                if (className.value == importName.last) {
                   throw new SyntaxError("Package import cannot be the same name as class name.")
                 }
               } else {
