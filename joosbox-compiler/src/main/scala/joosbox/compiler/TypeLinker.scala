@@ -131,7 +131,7 @@ object TypeLinker {
           case ClassOrInterfaceType(name) => Some(name)
           case ClassType(name) => Some(name)
           case InterfaceType(name) => Some(name)
-          case _ => None
+          case _ => None  //  TODO: What if this gets an ArrayType?
         }
 
         for {
@@ -144,8 +144,8 @@ object TypeLinker {
             case _ => {
               name match {
                 // If a qualified name was found, then make sure no strict prefix resolves.
-                case qualifiedName: QualifiedName => {
-                  qualifiedName.prefixes.foreach { prefix =>
+                case typeName: TypeName => {
+                  typeName.toQualifiedName.prefixes.foreach { prefix =>
                     var lookupOption: Option[EnvironmentLookup] = prefix match {
                       case QualifiedName(Seq()) => None
                       case name: QualifiedName => Some(TypeNameLookup(name.toTypeName))
