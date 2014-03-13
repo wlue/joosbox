@@ -24,7 +24,8 @@ object NameLinker {
       case e: ArithmeticExpression => verifyNamesExist(e.children.collect {case c: Name => c})(mapping)
       case e: RelationalExpression => verifyNamesExist(e.children.collect {case c: Name => c})(mapping)
       case s: SimpleMethodInvocation => {
-
+         // TODO: This is commented out because it doesn't work yet. AmbiguousName resolution is required.
+         /*
         val argTypes:Seq[Type] = s.args.flatMap {
           case x: StringLiteral => {
             Some(ClassType(QualifiedName("java.lang.String".split("\\.").map(InputString(_)))))
@@ -32,8 +33,6 @@ object NameLinker {
           case c: CastExpression => Some(c.targetType)
         }.collect{case t: Type => t}
 
-         // TODO: This is commented out because it doesn't work yet. AmbiguousName resolution is required.
-         /*
         s.name match {
           case sn: SimpleName => {
             val methodLookup = MethodLookup(sn.value, argTypes)
