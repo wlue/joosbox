@@ -34,6 +34,8 @@ object NameLinker {
          * If there is no qualified name, look up the method in the current scope.
          */
 
+         // TODO: This is commented out because it doesn't work yet. AmbiguousName resolution is required.
+         /*
         s.name match {
           case SimpleName(v: InputString) => {
             mapping.enclosingScopeOf(s).get.lookupMethodsByName(v) match {
@@ -68,12 +70,12 @@ object NameLinker {
               }
 
               case Some(asn: AbstractSyntaxNode) => {
-                println("Method call on unhandled AST node: " + asn)
+                //println("Method call on unhandled AST node: " + asn)
               }
             }
           }
         }
-
+        */
         verifyNamesExist(s.args.collect {case c: Name => c})(mapping)
       }
 

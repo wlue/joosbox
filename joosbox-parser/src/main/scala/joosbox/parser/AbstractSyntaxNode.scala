@@ -510,9 +510,7 @@ object AbstractSyntaxNode {
 
     case p: ParseNodes.PackageDeclaration => {
       val children: Seq[AbstractSyntaxNode] = p.children.flatMap(recursive(_))
-      val r = Seq(PackageDeclaration(children.collectFirst { case x: QualifiedName => x.toPackageName }.get))
-      println("\n\nCreated package decl: " + r + "\n\n")
-      r
+      Seq(PackageDeclaration(children.collectFirst { case x: QualifiedName => x.toPackageName }.get))
     }
 
     case i: ParseNodes.SingleTypeImportDeclaration   => {
