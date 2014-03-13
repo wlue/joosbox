@@ -21,7 +21,7 @@ object TypeChecker {
     Map.empty
   }
 
-  def resolveType(node: AbstractSyntaxNode)(implicit mapping: EnvironmentMapping) : Option[Type] = {
+  def resolveType(node: AbstractSyntaxNode)(implicit mapping: EnvironmentMapping): Option[Type] = {
     node match {
       case TrueLiteral => Some(BooleanKeyword)
       case FalseLiteral => Some(BooleanKeyword)
@@ -56,24 +56,40 @@ object TypeChecker {
   }
 
   def check(node: AbstractSyntaxNode)(implicit mapping: EnvironmentMapping) {
+    val env = mapping.enclosingScopeOf(node).get
     node match {
       case e: AndExpression =>
         Unit //TypeChecker.checkLogicalExpression(e.e1, e.e2)
       case e: OrExpression =>
         Unit //TypeChecker.checkLogicalExpression(e.e1, e.e2)
-      case c : ClassCreationPrimary =>
-        val classType : ClassType = c.classType
-        val env = mapping.enclosingScopeOf(node).get
-        val ref = env.lookup(TypeNameLookup(classType.name)).get
-        ref match {
-          case klass: ClassDeclaration =>
+      /*
+      case c: ClassCreationPrimary => {
+        val className: TypeName = c.classType.name
+        env.lookup(TypeNameLookup(className)) match {
+          case Some(klass: ClassDeclaration) => {
             if (klass.modifiers.contains(AbstractKeyword)) {
               throw new SyntaxError("Can't create instances of an abstract class.")
             }
-          case _ => Unit
+          }
+          case _ => {}
         }
 
-      case _ => Unit
+        // Check to see if the constructor exists by searching for a constructor
+        // with the correct signature.
+        val types: Seq[Type] = c.args.map { arg =>
+          resolveType(arg) match {
+            case Some(argType) => argType
+            case None => throw new SyntaxError("Could not resolve type for argument \"" + arg + "\"")
+          }
+        }
+
+        val lookup: EnvironmentLookup = ConstructorLookup(className.value, types)
+        if (env.lookup(lookup).isEmpty) {
+          throw new SyntaxError("Can't find constructor matching arguments " + className.niceName + "(" + types.mkString(",") + ")")
+        }
+      }
+      */
+      case _ => {}
     }
     node.children.foreach { node => check(node) }
   }

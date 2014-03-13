@@ -35,11 +35,9 @@ sealed trait Environment {
 
   def lookup(name: EnvironmentLookup): Option[Referenceable] = {
     // Recursively look up to each parent.
-    val result = search(name)
-    result match {
+    search(name) match {
       case Some(ref) => Some(ref)
-      case None =>
-        parent.flatMap { env: Environment => env.lookup(name) }
+      case None => parent.flatMap { env: Environment => env.lookup(name) }
     }
   }
 
