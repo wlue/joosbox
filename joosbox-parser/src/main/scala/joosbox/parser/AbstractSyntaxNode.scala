@@ -1280,12 +1280,18 @@ object AbstractSyntaxNode {
         case Seq(p: ParseNodes.Primary, d: ParseNodes.Dot, i: ParseNodes.Identifier, l: ParseNodes.LeftParen, e: ParseNodes.ArgumentList, r: ParseNodes.RightParen) => {
           val primary: Primary = children.collectFirst { case x: Primary => x }.get
           val args: Seq[Expression] = children.collect { case x: Expression => x }
-          val name: MethodName = children.collectFirst { case x: QualifiedName => x.toMethodName }.get
+          val name: MethodName = children.collectFirst {
+            case x: QualifiedName => x.toMethodName
+            case x: Identifier => MethodName(x.value)
+          }.get
           Seq(ComplexMethodInvocation(primary, name, args))
         }
         case Seq(p: ParseNodes.Primary, d: ParseNodes.Dot, i: ParseNodes.Identifier, l: ParseNodes.LeftParen, r: ParseNodes.RightParen) => {
           val primary: Primary = children.collectFirst { case x: Primary => x }.get
-          val name: MethodName = children.collectFirst { case x: QualifiedName => x.toMethodName }.get
+          val name: MethodName = children.collectFirst {
+            case x: QualifiedName => x.toMethodName
+            case x: Identifier => MethodName(x.value)
+          }.get
           Seq(ComplexMethodInvocation(primary, name))
         }
         case _ => m.children.flatMap(recursive(_))
