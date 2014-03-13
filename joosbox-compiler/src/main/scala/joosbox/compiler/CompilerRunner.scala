@@ -40,5 +40,6 @@ object CompilerRunner {
     TypeLinker.link(nodes, mapping)
     HierarchyChecker.link(nodes, mapping)
     NameLinker.link(nodes, mapping)
+    TypeChecker.link(nodes, mapping)
   }
 }
