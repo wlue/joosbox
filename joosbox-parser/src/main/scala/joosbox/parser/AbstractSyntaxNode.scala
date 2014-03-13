@@ -249,7 +249,7 @@ object AbstractSyntaxNode {
   }
 
   sealed trait Type extends AbstractSyntaxNode
-  sealed trait Name extends Type with PostfixExpression {
+  sealed trait Name extends PostfixExpression {
     def niceName: String
   }
   case class SimpleName(value: InputString) extends Name {
@@ -885,6 +885,7 @@ object AbstractSyntaxNode {
       val children:Seq[AbstractSyntaxNode] = a.children.flatMap(recursive(_))
       children.headOption match {
         case Some(x: Type) => Seq(ArrayType(x))
+        case Some(qn: QualifiedName) => Seq(ArrayType(ClassOrInterfaceType(qn.toTypeName)))
         case _ => throw new SyntaxError("Array type contains non-type node.")
       }
     }
