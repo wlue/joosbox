@@ -229,7 +229,7 @@ object AbstractSyntaxNode {
   sealed trait MethodInvocation extends Expression
 
   case class SimpleMethodInvocation(
-    name: Name,
+    name: MethodName,
     args: Seq[Expression] = Seq.empty[Expression]
   ) extends MethodInvocation {
     override def children: List[AbstractSyntaxNode] = List(name) ++ args.toList
@@ -237,7 +237,7 @@ object AbstractSyntaxNode {
 
   case class ComplexMethodInvocation(
     primary: Primary,
-    name: InputString,
+    name: MethodName,
     args: Seq[Expression] = Seq.empty[Expression]
   ) extends MethodInvocation {
     override def children: List[AbstractSyntaxNode] = List(primary) ++ args.toList
@@ -279,6 +279,14 @@ object AbstractSyntaxNode {
       }
     }
 
+    def toMethodName: MethodName = {
+      value.size match {
+        case 0 => throw new SyntaxError("MethodName must contain one identifier.")
+        case 1 => MethodName(value.last, None)
+        case _ =>
+          MethodName(value.last, Some(QualifiedName(value.dropRight(1)).toAmbiguousName))
+      }
+    }
     def toAmbiguousName: AmbiguousName = {
       value.size match {
         case 0 => throw new SyntaxError("AmbiguousName must contain one identifier.")
@@ -1248,25 +1256,25 @@ object AbstractSyntaxNode {
       val children = m.children.flatMap(recursive(_))
       m.children match {
         case Seq(n: ParseNodes.Name, l: ParseNodes.LeftParen, a: ParseNodes.ArgumentList, r: ParseNodes.RightParen) => {
-          val name: Name = children.collectFirst { case x: Name => x }.get
+          val name: MethodName = children.collectFirst { case x: QualifiedName => x.toMethodName }.get
           val args: Seq[Expression] = children.drop(1).collect { case x: Expression => x }
           Seq(SimpleMethodInvocation(name, args))
         }
         case Seq(n: ParseNodes.Name, l: ParseNodes.LeftParen, r: ParseNodes.RightParen) => {
-          val name: Name = children.collectFirst { case x: Name => x }.get
+          val name: MethodName = children.collectFirst { case x: QualifiedName => x.toMethodName }.get
           Seq(SimpleMethodInvocation(name))
         }
 
         case Seq(p: ParseNodes.Primary, d: ParseNodes.Dot, i: ParseNodes.Identifier, l: ParseNodes.LeftParen, e: ParseNodes.ArgumentList, r: ParseNodes.RightParen) => {
           val primary: Primary = children.collectFirst { case x: Primary => x }.get
           val args: Seq[Expression] = children.collect { case x: Expression => x }
-          val name: Identifier = children.collectFirst { case x: Identifier => x }.get
-          Seq(ComplexMethodInvocation(primary, name.value, args))
+          val name: MethodName = children.collectFirst { case x: QualifiedName => x.toMethodName }.get
+          Seq(ComplexMethodInvocation(primary, name, args))
         }
         case Seq(p: ParseNodes.Primary, d: ParseNodes.Dot, i: ParseNodes.Identifier, l: ParseNodes.LeftParen, r: ParseNodes.RightParen) => {
           val primary: Primary = children.collectFirst { case x: Primary => x }.get
-          val name: Identifier = children.collectFirst { case x: Identifier => x }.get
-          Seq(ComplexMethodInvocation(primary, name.value))
+          val name: MethodName = children.collectFirst { case x: QualifiedName => x.toMethodName }.get
+          Seq(ComplexMethodInvocation(primary, name))
         }
         case _ => m.children.flatMap(recursive(_))
       }
