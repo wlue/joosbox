@@ -55,8 +55,7 @@ object TypeLinker {
         qualifiedName.prefixesIncludingSelf.foreach { prefix =>
           var lookupOption: Option[EnvironmentLookup] = prefix match {
             case QualifiedName(Seq()) => None
-            case QualifiedName(Seq(name)) => Some(NameLookup(name))
-            case _ => Some(QualifiedNameLookup(prefix))
+            case name: QualifiedName => Some(TypeNameLookup(name.toTypeName))
           }
 
           for {
@@ -149,8 +148,7 @@ object TypeLinker {
                   qualifiedName.prefixes.foreach { prefix =>
                     var lookupOption: Option[EnvironmentLookup] = prefix match {
                       case QualifiedName(Seq()) => None
-                      case QualifiedName(Seq(name)) => Some(NameLookup(name))
-                      case _ => Some(QualifiedNameLookup(prefix))
+                      case name: QualifiedName => Some(TypeNameLookup(name.toTypeName))
                     }
 
                     for {

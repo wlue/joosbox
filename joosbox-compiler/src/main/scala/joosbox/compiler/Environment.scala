@@ -10,8 +10,7 @@ import joosbox.parser.AbstractSyntaxNode._
 
 sealed trait EnvironmentLookup
 case class IdentifierLookup(identifier: InputString) extends EnvironmentLookup
-case class NameLookup(name: InputString) extends EnvironmentLookup
-case class QualifiedNameLookup(name: QualifiedName) extends EnvironmentLookup
+
 case class PackageNameLookup(name: PackageName) extends EnvironmentLookup
 case class TypeNameLookup(name: TypeName) extends EnvironmentLookup
 case class MethodLookup(name: InputString, params: Seq[Type]) extends EnvironmentLookup
@@ -19,14 +18,6 @@ case class ConstructorLookup(params: Seq[Type]) extends EnvironmentLookup
 
 object EnvironmentLookup {
   def lookupFromName(name: Name) = name match {
-    case SimpleName(input) => NameLookup(input)
-    case name: QualifiedName => {
-      if (name.value.size > 1) {
-        QualifiedNameLookup(name)
-      } else {
-        NameLookup(name.value.head)
-      }
-    }
     case p: PackageName => PackageNameLookup(p)
     case t: TypeName => TypeNameLookup(t)
   }

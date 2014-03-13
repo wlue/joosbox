@@ -111,7 +111,7 @@ object HierarchyChecker {
       }
     } else {
       // Implicit extends java.lang.Object
-      val implicitSuperclass = QualifiedNameLookup(QualifiedName(Seq(InputString("java"), InputString("lang"), InputString("Object"))))
+      val implicitSuperclass = TypeNameLookup(QualifiedName(Seq(InputString("java"), InputString("lang"), InputString("Object"))).toTypeName)
       val implicitRef = env.lookup(implicitSuperclass)
       implicitRef match {
         case Some(ClassDeclaration(_, superbody, _, _, _)) =>
@@ -148,7 +148,7 @@ object HierarchyChecker {
           }
         } else {
             // Implicit extends java.lang.Object as interface
-            val implicitSuperinterface = QualifiedNameLookup(QualifiedName(Seq(InputString("java"), InputString("lang"), InputString("Object"))))
+            val implicitSuperinterface = TypeNameLookup(QualifiedName(Seq(InputString("java"), InputString("lang"), InputString("Object"))).toTypeName)
             val implicitRef = env.lookup(implicitSuperinterface)
             implicitRef match {
               case Some(ClassDeclaration(_, superbody, _, _, _)) =>

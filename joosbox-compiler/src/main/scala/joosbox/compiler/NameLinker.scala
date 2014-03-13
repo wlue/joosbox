@@ -82,11 +82,13 @@ object NameLinker {
   }
 
   def verifyNamesExist(names: Seq[Name])(implicit mapping: EnvironmentMapping) {
+    //  TODO: Rewrite this to deal with the proper names
+    /*
     names.foreach(name => name match {
       case s: SimpleName => {
         mapping.enclosingScopeOf(name).get.lookup(IdentifierLookup(s.value)) match {
           case None => {
-            mapping.enclosingScopeOf(name).get.lookup(NameLookup(s.value)) match {
+            mapping.enclosingScopeOf(name).get.lookup(TypeNameLookup(s.value)) match {
               case None => 
                 throw new SyntaxError("Unknown name " + s)
               case _ => Unit
@@ -103,7 +105,7 @@ object NameLinker {
           if (prefix.value.size == 1) {
             mapping.enclosingScopeOf(name).get.lookup(IdentifierLookup(prefix.value(0))) match {
               case None => {
-                val result = mapping.enclosingScopeOf(name).get.lookup(NameLookup(prefix.value(0)))
+                val result = mapping.enclosingScopeOf(name).get.lookup(TypeNameLookup(prefix.value(0)))
                 result match {
                   case Some(x: Referenceable) => Some((x, q.value.drop(prefix.value.size)))
                   case None => None
@@ -142,14 +144,15 @@ object NameLinker {
       }
       case _ => {}
     })
+*/
   }
-
+/*
   def findByStringInEnvironment(name: InputString)(implicit environment: Environment): Option[Referenceable] = {
     val queries = Seq(IdentifierLookup(name), NameLookup(name))
     queries.toStream.flatMap(environment.lookup(_)).headOption
   }
-
-
+*/
+/*
   //TODO THIS IS BROKEN
   //TODO THIS SHOULD RETURN THE AST NODE 
   def disambiguateReferenceToMethodCall(name: QualifiedName)(
@@ -205,4 +208,5 @@ object NameLinker {
       None
     }
   }
+  */
 }

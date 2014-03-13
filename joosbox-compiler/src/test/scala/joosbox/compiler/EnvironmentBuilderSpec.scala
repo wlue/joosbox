@@ -31,7 +31,7 @@ public class Test {
 
         //  Verify that within the top-level scope, Test has some meaning.
         val fileScope: Environment = mapping.enclosingScopeOf(cu).get
-        fileScope.lookup(NameLookup(InputString("Test", "Test.java", 0, 0))) must beEqualTo(cu.typeDeclaration)
+        fileScope.lookup(TypeNameLookup(AbstractSyntaxNode.TypeName(InputString("Test", "Test.java", 0, 0)))) must beEqualTo(cu.typeDeclaration)
       }
 
       "Test interface" in {
@@ -47,7 +47,7 @@ public interface Test {
 
         //  Verify that within the top-level scope, Test has some meaning.
         val fileScope: Environment = mapping.enclosingScopeOf(cu).get
-        fileScope.lookup(NameLookup(InputString("Test", "Test.java", 0, 0))) must beEqualTo(cu.typeDeclaration)
+        fileScope.lookup(TypeNameLookup(AbstractSyntaxNode.TypeName(InputString("Test", "Test.java", 0, 0)))) must beEqualTo(cu.typeDeclaration)
       }
 
       "Test fully qualified lookup" in {
@@ -76,7 +76,7 @@ public class Test {
           InputString("test", "Test.java", 0, 0),
           InputString("Test", "Test.java", 0, 0)
         ))
-        fileScope.lookup(QualifiedNameLookup(qualifiedName)) must beEqualTo(cu.typeDeclaration)
+        fileScope.lookup(TypeNameLookup(qualifiedName.toTypeName)) must beEqualTo(cu.typeDeclaration)
       }
 
       "throw an error on qualified name clashes" in {
@@ -121,7 +121,7 @@ public class Test { public Test() { ImportedClass x = new ImportedClass(); } }
 
         //  Verify that within the top-level scope of input2, ImportedClass has some meaning.
         val file2Scope: Environment = mapping.enclosingScopeOf(cu2).get
-        file2Scope.lookup(NameLookup(InputString("ImportedClass"))) must beEqualTo(cu1.typeDeclaration)
+        file2Scope.lookup(TypeNameLookup(AbstractSyntaxNode.TypeName(InputString("ImportedClass")))) must beEqualTo(cu1.typeDeclaration)
       }
 
       "fail on an import that does not exist" in {
@@ -180,7 +180,7 @@ public class Test { public Test() { ImportedClass x = new ImportedClass(); } }
 
         //  Verify that within the top-level scope of input2, ImportedClass has some meaning.
         val file2Scope: Environment = mapping.enclosingScopeOf(cu2).get
-        file2Scope.lookup(NameLookup(InputString("ImportedClass"))) must beEqualTo(cu1.typeDeclaration)
+        file2Scope.lookup(TypeNameLookup(AbstractSyntaxNode.TypeName(InputString("ImportedClass")))) must beEqualTo(cu1.typeDeclaration)
       }
 
       "fail to return a class from a different package" in {
@@ -204,7 +204,7 @@ public class Test { public Test() { ImportedClass x = new ImportedClass(); } }
 
         //  Verify that within the top-level scope of input2, ImportedClass has some meaning.
         val file2Scope: Environment = mapping.enclosingScopeOf(cu2).get
-        file2Scope.lookup(NameLookup(InputString("ImportedClass"))) must beNone
+        file2Scope.lookup(TypeNameLookup(AbstractSyntaxNode.TypeName(InputString("ImportedClass")))) must beNone
       }
 
       "fail when two different classes in the same package share a name" in {
@@ -247,7 +247,7 @@ public class Test { public Test() { ImportedClass x = new ImportedClass(); } }
 
         //  Verify that within the top-level scope of input2, ImportedClass has some meaning.
         val file2Scope: Environment = mapping.enclosingScopeOf(cu2).get
-        file2Scope.lookup(NameLookup(InputString("ImportedClass"))) must beEqualTo(cu1.typeDeclaration)
+        file2Scope.lookup(TypeNameLookup(AbstractSyntaxNode.TypeName(InputString("ImportedClass")))) must beEqualTo(cu1.typeDeclaration)
       }
 
       "fail to return a class with a missing wildcard import" in {
@@ -271,7 +271,7 @@ public class Test { public Test() { ImportedClass x = new ImportedClass(); } }
 
         //  Verify that within the top-level scope of input2, ImportedClass has some meaning.
         val file2Scope: Environment = mapping.enclosingScopeOf(cu2).get
-        file2Scope.lookup(NameLookup(InputString("ImportedClass"))) must beNone
+        file2Scope.lookup(TypeNameLookup(AbstractSyntaxNode.TypeName(InputString("ImportedClass")))) must beNone
       }
 
       "fail to return a class with multiple conflicting field names" in {
