@@ -9,6 +9,7 @@ import AbstractSyntaxNode.Referenceable
 
 
 object TypeChecker {
+  import AbstractSyntaxNode._
 
   def link(
     units: Seq[CompilationUnit],
@@ -20,8 +21,18 @@ object TypeChecker {
     Map.empty
   }
 
+  def resolveType(node: AbstractSyntaxNode) : Type = {
+    node match {
+      case x: StringLiteral =>
+        ClassType(QualifiedName("java.lang.String".split("\\.").map(InputString(_))).toTypeName)
+      case c: CastExpression => c.targetType
+      case _ => Unit
+    }
+  }
+
   def check(node: AbstractSyntaxNode)(implicit mapping: EnvironmentMapping) {
     node match {
+
       case _ => Unit
     }
     node.children.foreach { node => check(node) }
