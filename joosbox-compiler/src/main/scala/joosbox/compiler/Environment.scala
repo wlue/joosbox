@@ -75,7 +75,7 @@ class RootEnvironment(nodes: Seq[AbstractSyntaxNode.CompilationUnit]) extends En
         val mapping = cu.packageDeclaration match {
           case Some(p: PackageDeclaration) => declaration.map(d => TypeName(d.name.value, Some(p.name)) -> d)
 
-          case None => declaration.map(d => TypeName(d.name.value, None) -> d)
+          case None => declaration.map(d => TypeName(d.name.value, Some(PackageName(InputString("")))) -> d)
         }
 
         mapping match {
