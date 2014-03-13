@@ -86,11 +86,11 @@ object HierarchyChecker {
         case Some(ClassDeclaration(_, body, mods, superklass, interfaces)) =>
           methodList = body.declarations.map {
             case m: MethodDeclaration =>
-              (MethodLookup(m.name, m.parameters.map(_.varType)), m)
+              (MethodLookup(m.name.value, m.parameters.map(_.varType)), m)
             case c: ConstructorDeclaration =>
               (ConstructorLookup(c.parameters.map(_.varType)), c)
             case f: FieldDeclaration =>
-              (IdentifierLookup(f.name), f)
+              (IdentifierLookup(f.name.value), f)
           }
           interfaces.foreach{
             case i : InterfaceType =>
@@ -117,7 +117,7 @@ object HierarchyChecker {
         case Some(ClassDeclaration(_, superbody, _, _, _)) =>
           methodList = methodList ++ superbody.declarations.map {
             case m: MethodDeclaration =>
-              (MethodLookup(m.name, m.parameters.map(_.varType)), m)
+              (MethodLookup(m.name.value, m.parameters.map(_.varType)), m)
             case c: ConstructorDeclaration =>
               (ConstructorLookup(c.parameters.map(_.varType)), c)
           }
@@ -154,7 +154,7 @@ object HierarchyChecker {
               case Some(ClassDeclaration(_, superbody, _, _, _)) =>
                 methodList = methodList ++ superbody.declarations.map {
                   case m: MethodDeclaration =>
-                    (MethodLookup(m.name, m.parameters.map(_.varType)), m)
+                    (MethodLookup(m.name.value, m.parameters.map(_.varType)), m)
                   case c: ConstructorDeclaration => //Appeasement
                     (ConstructorLookup(c.parameters.map(_.varType)), c)
                 }
@@ -243,13 +243,12 @@ object HierarchyChecker {
                   throw new SyntaxError("Abstract methods must be defined in abstract classes/interfaces.")
                 }
               }
-              (MethodLookup(m.name, m.parameters.map(_.varType)), m)
+              (MethodLookup(m.name.value, m.parameters.map(_.varType)), m)
             case c: ConstructorDeclaration =>
               (ConstructorLookup(c.parameters.map(_.varType)), c)
             case f: FieldDeclaration =>
-              (IdentifierLookup(f.name), f)
+              (IdentifierLookup(f.name.value), f)
         }
-
 
         val env = mapping.enclosingScopeOf(node).get
         val classEnv = mapping.enclosingScopeOf(node.body).get

@@ -222,7 +222,7 @@ object EnvironmentBuilder {
                 throw new SyntaxError("Duplicate parameter names in constructor.")
               }
 
-              val key = MethodLookup(md.name, md.parameters.map(_.varType))
+              val key = MethodLookup(md.name.value, md.parameters.map(_.varType))
 
               map.get(key) match {
                 case Some(_) => throw new SyntaxError("Duplicate method declaration for " + md.name)
@@ -230,7 +230,7 @@ object EnvironmentBuilder {
               }
             }
             case (map: Map[EnvironmentLookup, Referenceable], fd: FieldDeclaration) => {
-              val key = IdentifierLookup(fd.name)
+              val key = IdentifierLookup(fd.name.value)
               map.get(key) match {
                 case Some(_) => throw new SyntaxError("Duplicate field declaration for " + fd.name)
                 case None => map + (key -> fd)

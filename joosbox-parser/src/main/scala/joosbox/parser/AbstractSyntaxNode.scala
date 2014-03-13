@@ -93,10 +93,10 @@ object AbstractSyntaxNode {
   }
 
   abstract class ClassBodyDeclaration(
-    val name: InputString,
+    val name: Name,
     modifiers: Set[Modifier] = Set.empty[Modifier]
   ) extends AbstractSyntaxNode {
-    override def children: List[AbstractSyntaxNode] = modifiers.toList
+    override def children: List[AbstractSyntaxNode] = List(name) ++ modifiers.toList
   }
 
   //  TODO; implement me properly, not just stubbed out
@@ -397,7 +397,7 @@ object AbstractSyntaxNode {
   }
 
   abstract class ClassMemberDeclaration(
-    override val name: InputString,
+    name: Name,
     modifiers: Set[Modifier] = Set.empty[Modifier],
     memberType: Type
   ) extends ClassBodyDeclaration(name, modifiers) {
@@ -406,7 +406,7 @@ object AbstractSyntaxNode {
   }
 
   case class ConstructorDeclaration(
-    override val name: InputString,
+    override val name: MethodName,
     modifiers: Set[Modifier] = Set.empty[Modifier],
     parameters: Seq[FormalParameter] = Seq.empty[FormalParameter],
     body: Option[Block] = None
@@ -416,7 +416,7 @@ object AbstractSyntaxNode {
   }
 
   case class MethodDeclaration(
-    override val name: InputString,
+    override val name: MethodName,
     modifiers: Set[Modifier] = Set.empty[Modifier],
     memberType: Type,
     parameters: Seq[FormalParameter] = Seq.empty[FormalParameter],
@@ -427,7 +427,7 @@ object AbstractSyntaxNode {
   }
 
   case class FieldDeclaration(
-    override val name: InputString,
+    override val name: ExpressionName,
     modifiers: Set[Modifier] = Set.empty[Modifier],
     memberType: Type,
     expression: Option[Expression] = None
@@ -610,7 +610,7 @@ object AbstractSyntaxNode {
     case c: ParseNodes.ConstructorDeclaration => {
       val children: Seq[AbstractSyntaxNode] = c.children.flatMap(recursive(_))
 
-      val name: QualifiedName = children.collectFirst { case x: QualifiedName => x }.get
+      val name: MethodName = children.collectFirst { case x: QualifiedName => x.toMethodName }.get
       val modifiers: Set[Modifier] = children.collect { case x: Modifier => x }.toSet
       val parameters: Seq[FormalParameter] = children.collect { case x: FormalParameter => x }
       val body: Option[Block] = children.collectFirst { case x: Block => x }
@@ -644,16 +644,18 @@ object AbstractSyntaxNode {
         throw new SyntaxError("Constructor " + name.value + " has to have a body.")
       }
 
-      //  Why name.value.head here? We got rid of using SimpleName, but the lexer
-      //  guarantees that this QualifiedName will only have one sub-name.
-      Seq(ConstructorDeclaration(name.value.head, modifiers, parameters, body))
+      Seq(ConstructorDeclaration(name, modifiers, parameters, body))
     }
 
 
     case c: ParseNodes.MethodDeclaration => {
       val children: Seq[AbstractSyntaxNode] = c.children.flatMap(recursive(_))
 
-      val name: Identifier = children.collectFirst { case x: Identifier => x }.get
+      val name: MethodName = children
+        .collectFirst { case x: Identifier => x }
+        .map { identifier: Identifier => MethodName(identifier.value) }
+        .get
+
       val modifiers: Set[Modifier] = children.collect { case x: Modifier => x }.toSet
       val memberType: Type = children.collectFirst { case x:Type => x }.get
       val parameters: Seq[FormalParameter] = children.collect { case x:FormalParameter => x }
@@ -661,44 +663,48 @@ object AbstractSyntaxNode {
 
       // Enforce: No package private methods
       if (!modifiers.contains(PublicKeyword) && !modifiers.contains(ProtectedKeyword)) {
-        throw new SyntaxError("Method " + name.value + " cannot be package private.")
+        throw new SyntaxError("Method " + name.niceName + " cannot be package private.")
       }
 
       // Enforce: A static method cannot be final.
       if (modifiers.contains(StaticKeyword) && modifiers.contains(FinalKeyword)) {
-        throw new SyntaxError("Method " + name.value + " cannot be both static and final.")
+        throw new SyntaxError("Method " + name.niceName + " cannot be both static and final.")
       }
 
       // Enforce: A native method must be static.
       if (modifiers.contains(NativeKeyword) && !modifiers.contains(StaticKeyword)) {
-        throw new SyntaxError("Method " + name.value + " is native so it must be static.")
+        throw new SyntaxError("Method " + name.niceName + " is native so it must be static.")
       }
 
       //Enforce: An abstract method cannot be static or final.
       if (modifiers.contains(AbstractKeyword)) {
         if (modifiers.contains(StaticKeyword) || modifiers.contains(FinalKeyword)) {
-          throw new SyntaxError("Method " + name.value + " is abstract so it cant be static or final.")
+          throw new SyntaxError("Method " + name.niceName + " is abstract so it cant be static or final.")
         }
       }
 
       // Enforce: A method has a body if and only if it is neither abstract nor native.
       if (modifiers.contains(NativeKeyword) || modifiers.contains(AbstractKeyword)) {
         if (!body.isEmpty) {
-          throw new SyntaxError("Method " + name.value + " cannot have a body.")
+          throw new SyntaxError("Method " + name.niceName + " cannot have a body.")
         }
       } else {
         if (body.isEmpty) {
-          throw new SyntaxError("Method " + name.value + " must have a body.")
+          throw new SyntaxError("Method " + name.niceName + " must have a body.")
         }
       }
 
-      Seq(MethodDeclaration(name.value, modifiers, memberType, parameters, body))
+      Seq(MethodDeclaration(name, modifiers, memberType, parameters, body))
     }
 
     case c: ParseNodes.FieldDeclaration => {
       val children: Seq[AbstractSyntaxNode] = c.children.flatMap(recursive(_))
 
-      val name: Identifier = children.collectFirst { case x: Identifier => x }.get
+      val name: ExpressionName = children
+        .collectFirst { case x: Identifier => x }
+        .map { identifier: Identifier => ExpressionName(identifier.value) }
+        .get
+
       val modifiers: Set[Modifier] = children.collect { case x: Modifier => x }.toSet
       val memberType: Type = children.collectFirst { case x: Type => x }.get
       val expression: Option[Expression] = children.collectFirst { case x: Expression => x }
@@ -706,26 +712,26 @@ object AbstractSyntaxNode {
       // Enforce: A final field must have an initializer.
       if (modifiers.contains(FinalKeyword)) {
         if (expression.isEmpty) {
-          throw new SyntaxError("Field " + name.value + " is final so it must have an initializer.")
+          throw new SyntaxError("Field " + name.niceName + " is final so it must have an initializer.")
         }
       }
 
       // Enfore: A field can not be package private
       if (!modifiers.contains(PublicKeyword) && !modifiers.contains(ProtectedKeyword)) {
-        throw new SyntaxError("Field " + name.value + " cannot be package private.")
+        throw new SyntaxError("Field " + name.niceName + " cannot be package private.")
       }
 
       // Enforce: A field can not be abstract
       if (modifiers.contains(AbstractKeyword)) {
-        throw new SyntaxError("Field " + name.value + " cannot be abstract.")
+        throw new SyntaxError("Field " + name.niceName + " cannot be abstract.")
       }
 
       // Enforce: A field can not be native
       if (modifiers.contains(NativeKeyword)) {
-        throw new SyntaxError("Field " + name.value + " cannot be native.")
+        throw new SyntaxError("Field " + name.niceName + " cannot be native.")
       }
 
-      Seq(FieldDeclaration(name.value, modifiers, memberType, expression))
+      Seq(FieldDeclaration(name, modifiers, memberType, expression))
     }
 
     case c: ParseNodes.InterfaceMemberDeclaration => {
@@ -1226,7 +1232,7 @@ object AbstractSyntaxNode {
       }
     }
 
-    case ParseNodes.PrimaryNoNewArray(List(lp: ParseNodes.LeftParen, content: ParseNode, rp: ParseNodes.RightParen), _) => 
+    case ParseNodes.PrimaryNoNewArray(List(lp: ParseNodes.LeftParen, content: ParseNode, rp: ParseNodes.RightParen), _) =>
       Seq(ParenthesizedExpression(content.children.flatMap(recursive(_)).collectFirst {case x: Expression => x}.get))
 
     case t: ParseNodes.ThisKeyword => Seq(ThisKeyword)
@@ -1250,6 +1256,7 @@ object AbstractSyntaxNode {
 
       Seq(ArrayCreationPrimary(varType, dimExpr))
     }
+
     case p: ParseNodes.ClassInstanceCreationExpression => {
       val children:Seq[AbstractSyntaxNode] = p.children.flatMap(recursive(_))
 
@@ -1271,7 +1278,6 @@ object AbstractSyntaxNode {
           val name: MethodName = children.collectFirst { case x: QualifiedName => x.toMethodName }.get
           Seq(SimpleMethodInvocation(name))
         }
-
         case Seq(p: ParseNodes.Primary, d: ParseNodes.Dot, i: ParseNodes.Identifier, l: ParseNodes.LeftParen, e: ParseNodes.ArgumentList, r: ParseNodes.RightParen) => {
           val primary: Primary = children.collectFirst { case x: Primary => x }.get
           val args: Seq[Expression] = children.collect { case x: Expression => x }
