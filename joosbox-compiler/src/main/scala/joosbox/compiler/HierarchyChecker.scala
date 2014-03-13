@@ -276,10 +276,7 @@ object HierarchyChecker {
             intDeclarations = intDeclarations ++ HierarchyChecker.checkInterfaceHierarchy(i, List(Seq()), env)
 
             // Below is just for checking 'duplicate' ints in implements list
-            val nameLookup : EnvironmentLookup = i.name match {
-              case s: SimpleName => NameLookup(s.value)
-              case q: QualifiedName => QualifiedNameLookup(q)
-            }
+            val nameLookup : EnvironmentLookup = TypeNameLookup(i.name)
             val ref = env.lookup(nameLookup)
             ref match {
               case Some(InterfaceDeclaration(_, intBody, mods, ints)) =>
@@ -367,10 +364,7 @@ object HierarchyChecker {
         var interfaceNodes : List[String] = List.empty[String]
         interfaces.foreach {
           case i : InterfaceType =>
-            val nameLookup : EnvironmentLookup = i.name match {
-              case s: SimpleName => NameLookup(s.value)
-              case q: QualifiedName => QualifiedNameLookup(q)
-            }
+            val nameLookup : EnvironmentLookup = TypeNameLookup(i.name)
             val ref = env.lookup(nameLookup)
             ref match {
               case Some(InterfaceDeclaration(_, intBody, mods, ints)) =>
