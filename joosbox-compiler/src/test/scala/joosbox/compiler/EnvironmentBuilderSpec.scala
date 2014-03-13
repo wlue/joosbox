@@ -449,7 +449,7 @@ public class Test {
             val returnStatement: AbstractSyntaxNode.BlockStatement = statements.last
             val scope: Environment = mapping.enclosingScopeOf(returnStatement).get
 
-            scope.lookup(IdentifierLookup(InputString("bar"))) must beEqualTo(Some(statements(0)))
+            scope.lookup(ExpressionNameLookup(AbstractSyntaxNode.ExpressionName(InputString("bar")))) must beEqualTo(Some(statements(0)))
           }
 
           case _ => true must beFalse

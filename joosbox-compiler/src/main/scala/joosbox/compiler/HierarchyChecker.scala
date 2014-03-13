@@ -83,14 +83,14 @@ object HierarchyChecker {
       val nameLookup : EnvironmentLookup = EnvironmentLookup.lookupFromName(klass.get.name)
       val ref = env.lookup(nameLookup)
       ref match {
-        case Some(ClassDeclaration(_, body, mods, superklass, interfaces)) =>
+        case Some(ClassDeclaration(name, body, mods, superklass, interfaces)) =>
           methodList = body.declarations.map {
             case m: MethodDeclaration =>
               (MethodLookup(m.name.value, m.parameters.map(_.varType)), m)
             case c: ConstructorDeclaration =>
-              (ConstructorLookup(c.parameters.map(_.varType)), c)
+              (ConstructorLookup(name.value, c.parameters.map(_.varType)), c)
             case f: FieldDeclaration =>
-              (IdentifierLookup(f.name.value), f)
+              (ExpressionNameLookup(f.name), f)
           }
           interfaces.foreach{
             case i : InterfaceType =>
@@ -114,12 +114,12 @@ object HierarchyChecker {
       val implicitSuperclass = TypeNameLookup(QualifiedName(Seq(InputString("java"), InputString("lang"), InputString("Object"))).toTypeName)
       val implicitRef = env.lookup(implicitSuperclass)
       implicitRef match {
-        case Some(ClassDeclaration(_, superbody, _, _, _)) =>
+        case Some(ClassDeclaration(name, superbody, _, _, _)) =>
           methodList = methodList ++ superbody.declarations.map {
             case m: MethodDeclaration =>
               (MethodLookup(m.name.value, m.parameters.map(_.varType)), m)
             case c: ConstructorDeclaration =>
-              (ConstructorLookup(c.parameters.map(_.varType)), c)
+              (ConstructorLookup(name.value, c.parameters.map(_.varType)), c)
           }
         case _ => Unit
       }
@@ -151,12 +151,12 @@ object HierarchyChecker {
             val implicitSuperinterface = TypeNameLookup(QualifiedName(Seq(InputString("java"), InputString("lang"), InputString("Object"))).toTypeName)
             val implicitRef = env.lookup(implicitSuperinterface)
             implicitRef match {
-              case Some(ClassDeclaration(_, superbody, _, _, _)) =>
+              case Some(ClassDeclaration(name, superbody, _, _, _)) =>
                 methodList = methodList ++ superbody.declarations.map {
                   case m: MethodDeclaration =>
                     (MethodLookup(m.name.value, m.parameters.map(_.varType)), m)
                   case c: ConstructorDeclaration => //Appeasement
-                    (ConstructorLookup(c.parameters.map(_.varType)), c)
+                    (ConstructorLookup(name.value, c.parameters.map(_.varType)), c)
                 }
               case _ => Unit
             }
@@ -245,9 +245,9 @@ object HierarchyChecker {
               }
               (MethodLookup(m.name.value, m.parameters.map(_.varType)), m)
             case c: ConstructorDeclaration =>
-              (ConstructorLookup(c.parameters.map(_.varType)), c)
+              (ConstructorLookup(name.value, c.parameters.map(_.varType)), c)
             case f: FieldDeclaration =>
-              (IdentifierLookup(f.name.value), f)
+              (ExpressionNameLookup(f.name), f)
         }
 
         val env = mapping.enclosingScopeOf(node).get

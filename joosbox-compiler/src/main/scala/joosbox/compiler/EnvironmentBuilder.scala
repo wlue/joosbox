@@ -90,7 +90,7 @@ object EnvironmentBuilder {
         decls.headOption match {
           case Some(decl: LocalVariableDeclaration) => {
             //  Declaration implicitly creates a new scope for itself and everything after it.
-            val key = IdentifierLookup(decl.name)
+            val key = ExpressionNameLookup(decl.name)
             parent.lookup(key) match {
               case Some(local: LocalVariableDeclaration)
                 => throw new SyntaxError("Redefinition of " + decl.name + " (previous definition: " + local + ")")
@@ -115,7 +115,7 @@ object EnvironmentBuilder {
             update: Option[StatementExpression],
             statement: Statement
           )) => {
-            val key = IdentifierLookup(decl.variableName)
+            val key = ExpressionNameLookup(decl.variableName)
             parent.lookup(key) match {
               case Some(local: LocalVariableDeclaration)
                 => throw new SyntaxError("Redefinition of " + decl.variableName + " (previous definition: " + local + ")")
@@ -208,7 +208,7 @@ object EnvironmentBuilder {
                 throw new SyntaxError("Duplicate parameter names in constructor.")
               }
 
-              val key = ConstructorLookup(cd.parameters.map(_.varType))
+              val key = ConstructorLookup(cd.name.value, cd.parameters.map(_.varType))
               map.get(key) match {
                 case Some(_) => throw new SyntaxError("Duplicate constructor declaration for " + cd.name)
                 case None => map + (key -> cd)
@@ -230,7 +230,7 @@ object EnvironmentBuilder {
               }
             }
             case (map: Map[EnvironmentLookup, Referenceable], fd: FieldDeclaration) => {
-              val key = IdentifierLookup(fd.name.value)
+              val key = ExpressionNameLookup(fd.name)
               map.get(key) match {
                 case Some(_) => throw new SyntaxError("Duplicate field declaration for " + fd.name)
                 case None => map + (key -> fd)
@@ -270,12 +270,12 @@ object EnvironmentBuilder {
       }
 
       case n: MethodDeclaration => {
-        val mapping: Map[EnvironmentLookup, Referenceable] = n.parameters.map(fp => (IdentifierLookup(fp.name), fp)).toMap
+        val mapping: Map[EnvironmentLookup, Referenceable] = n.parameters.map(fp => (ExpressionNameLookup(fp.name), fp)).toMap
         new ScopeEnvironment(mapping, None, Seq.empty, parent)
       }
 
       case n: ConstructorDeclaration => {
-        val mapping: Map[EnvironmentLookup, Referenceable] = n.parameters.map(fp => (IdentifierLookup(fp.name), fp)).toMap
+        val mapping: Map[EnvironmentLookup, Referenceable] = n.parameters.map(fp => (ExpressionNameLookup(fp.name), fp)).toMap
         new ScopeEnvironment(mapping, None, Seq.empty, parent)
       }
 

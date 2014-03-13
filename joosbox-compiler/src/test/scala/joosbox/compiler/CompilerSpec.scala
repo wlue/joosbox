@@ -23,10 +23,9 @@ class FailCompilerSpec extends Specification {
   }
 
   "Type Checker" should {
-      "J1_importNameLookup1" in {
-        val files = filesForTest("J1_importNameLookup1") ++ stdlibFilePaths
-        CompilerRunner.runTestable(files.toArray) //must not(throwA[Exception])
-        true
+      "Je_3_SingleTypeImport_ClashWithClass" in {
+        val files = filesForTest("Je_3_SingleTypeImport_ClashWithClass") ++ stdlibFilePaths
+        CompilerRunner.runTestable(files.toArray) must throwA[Exception]
       }
     }
 }

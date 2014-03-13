@@ -63,6 +63,7 @@ object AbstractSyntaxNode {
 
   case class PackageName(value: InputString, prefix: Option[PackageName] = None) extends Name {
     def niceName = value.value
+    def isAmbiguous: Boolean = false
     def toSeq: Seq[InputString] = prefix match {
       case Some(p: PackageName) => p.toSeq ++ Seq(value)
       case None => Seq(value)
@@ -71,6 +72,7 @@ object AbstractSyntaxNode {
   }
   case class TypeName(value: InputString, prefix: Option[PackageName] = None) extends Name {
     def niceName = value.value
+    def isAmbiguous: Boolean = false
     def toSeq: Seq[InputString] = prefix match {
       case Some(p: PackageName) => p.toSeq ++ Seq(value)
       case None => Seq(value)
@@ -79,9 +81,17 @@ object AbstractSyntaxNode {
   }
   case class ExpressionName(value: InputString, prefix: Option[AmbiguousName] = None) extends Name {
     def niceName = value.value
+    def isAmbiguous: Boolean = prefix match {
+      case Some(n: Name) => n.isAmbiguous
+      case None => false
+    }
   }
   case class MethodName(value: InputString, prefix: Option[AmbiguousName] = None) extends Name {
     def niceName = value.value
+    def isAmbiguous: Boolean = prefix match {
+      case Some(n: Name) => n.isAmbiguous
+      case None => false
+    }
   }
 
   //  Note we don't need PackageOrTypeName - Java seems to use it for nested classes.
@@ -90,6 +100,7 @@ object AbstractSyntaxNode {
   }*/
   case class AmbiguousName(value: InputString, prefix: Option[AmbiguousName] = None) extends Name {
     def niceName = value.value
+    def isAmbiguous: Boolean = true
   }
 
   abstract class ClassBodyDeclaration(
@@ -251,13 +262,16 @@ object AbstractSyntaxNode {
   sealed trait Type extends AbstractSyntaxNode
   sealed trait Name extends PostfixExpression {
     def niceName: String
+    def isAmbiguous: Boolean
   }
   case class SimpleName(value: InputString) extends Name {
     def niceName: String = value.value
+    def isAmbiguous: Boolean = false
   }
 
   case class QualifiedName(value: Seq[InputString]) extends Name {
     def niceName: String = value.map(_.value).mkString(".")
+    def isAmbiguous: Boolean = false
     def prefixesIncludingSelf: Seq[QualifiedName] = Seq(this) ++ prefixes
     def prefixes: Seq[QualifiedName] = value.size match {
       case 0 => Seq.empty[QualifiedName]
@@ -322,7 +336,7 @@ object AbstractSyntaxNode {
   case object CharKeyword extends NumericType
 
   case class FormalParameter(
-    val name: InputString,
+    val name: ExpressionName,
     val varType: Type
   ) extends AbstractSyntaxNode with Referenceable {
     override def children: List[AbstractSyntaxNode] = List(varType)
@@ -439,7 +453,7 @@ object AbstractSyntaxNode {
   sealed trait BlockStatement extends AbstractSyntaxNode
 
   case class LocalVariableDeclaration(
-    name: InputString,
+    name: ExpressionName,
     memberType: Type,
     expression: Option[Expression] = None
   ) extends BlockStatement with Referenceable {
@@ -470,9 +484,9 @@ object AbstractSyntaxNode {
   }
 
   case class ForVariableDeclaration(typeDeclaration: Type,
-                                    variableName: InputString,
+                                    variableName: ExpressionName,
                                     expression: Option[Expression] = None) extends ForInit with Referenceable {
-    override def children: List[AbstractSyntaxNode] = List(typeDeclaration) ++ expression.toList
+    override def children: List[AbstractSyntaxNode] = List(typeDeclaration, variableName) ++ expression.toList
   }
   case class ForStatement(init: Option[ForInit],
                           check: Option[Expression],
@@ -901,7 +915,7 @@ object AbstractSyntaxNode {
       val name: Identifier = children.collectFirst { case x: Identifier => x }.get
       val varType: Type = children.collectFirst { case x: Type => x }.get
 
-      Seq(FormalParameter(name.value, varType))
+      Seq(FormalParameter(ExpressionName(name.value), varType))
     }
 
     case c: ParseNodes.CharLiteral => Seq(CharLiteral(c.value.get))
@@ -942,7 +956,7 @@ object AbstractSyntaxNode {
       val memberType:Type = children.collectFirst { case x: Type => x }.get
       val expression:Option[Expression] = children.collectFirst { case x:Expression => x }
 
-      Seq(LocalVariableDeclaration(name.value, memberType, expression))
+      Seq(LocalVariableDeclaration(ExpressionName(name.value), memberType, expression))
     }
 
     case i: ParseNodes.IfThenStatement => {
@@ -1004,7 +1018,7 @@ object AbstractSyntaxNode {
           val name: Identifier = vChildren.collectFirst { case x: Identifier => x }.get
           val expression: Option[Expression] = vChildren.collectFirst { case x: Expression => x }
 
-          Seq(ForVariableDeclaration(memberType, name.value, expression))
+          Seq(ForVariableDeclaration(memberType, ExpressionName(name.value), expression))
         }
         case _ => f.children.flatMap(recursive(_))
       }

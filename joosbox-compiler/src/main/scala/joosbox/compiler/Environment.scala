@@ -9,17 +9,24 @@ import joosbox.parser.AbstractSyntaxNode
 import joosbox.parser.AbstractSyntaxNode._
 
 sealed trait EnvironmentLookup
-case class IdentifierLookup(identifier: InputString) extends EnvironmentLookup
 
 case class PackageNameLookup(name: PackageName) extends EnvironmentLookup
 case class TypeNameLookup(name: TypeName) extends EnvironmentLookup
+case class ExpressionNameLookup(name: ExpressionName) extends EnvironmentLookup
 case class MethodLookup(name: InputString, params: Seq[Type]) extends EnvironmentLookup
-case class ConstructorLookup(params: Seq[Type]) extends EnvironmentLookup
+case class ConstructorLookup(name: InputString, params: Seq[Type]) extends EnvironmentLookup
 
 object EnvironmentLookup {
   def lookupFromName(name: Name) = name match {
     case p: PackageName => PackageNameLookup(p)
     case t: TypeName => TypeNameLookup(t)
+    case e: ExpressionName => ExpressionNameLookup(e)
+
+    case m: MethodName => throw new SyntaxError("MethodName lookups must include parameters.")
+    case a: AmbiguousName => throw new SyntaxError("AmbiguousNames cannot be looked up.")
+
+    case s: SimpleName => throw new SyntaxError("SimpleNames cannot be looked up.")
+    case q: QualifiedName => throw new SyntaxError("SimpleNames cannot be looked up.")
   }
 }
 
