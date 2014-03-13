@@ -28,6 +28,7 @@ object EnvironmentLookup {
       }
     }
     case p: PackageName => PackageNameLookup(p)
+    case t: TypeName => TypeNameLookup(t)
   }
 }
 
@@ -76,18 +77,18 @@ sealed trait Environment {
 class RootEnvironment(nodes: Seq[AbstractSyntaxNode.CompilationUnit]) extends Environment {
   val parent: Option[Environment] = None
 
-  val qualifiedNameMap: Map[QualifiedName, Referenceable] = {
-    nodes.foldLeft(Map.empty[QualifiedName, Referenceable]) {
-      case (map: Map[QualifiedName, Referenceable], cu: AbstractSyntaxNode.CompilationUnit) => {
+  val qualifiedNameMap: Map[TypeName, Referenceable] = {
+    nodes.foldLeft(Map.empty[TypeName, Referenceable]) {
+      case (map: Map[TypeName, Referenceable], cu: AbstractSyntaxNode.CompilationUnit) => {
         val declaration: Option[TypeDeclaration] = cu.typeDeclaration
         val mapping = cu.packageDeclaration match {
-          case Some(p: PackageDeclaration) => declaration.map(d => QualifiedName(p.name.toSeq ++ Seq(d.name)) -> d)
+          case Some(p: PackageDeclaration) => declaration.map(d => TypeName(d.name.value, Some(p.name)) -> d)
 
-          case None => declaration.map(d => QualifiedName(Seq(InputString(""), d.name)) -> d)
+          case None => declaration.map(d => TypeName(d.name.value, None) -> d)
         }
 
         mapping match {
-          case Some((q: QualifiedName, t: TypeDeclaration)) => {
+          case Some((q: TypeName, t: TypeDeclaration)) => {
             map.get(q) match {
               case None => map + (q -> t)
               case Some(_) => throw new SyntaxError("Duplicate qualified name " + q)
@@ -102,7 +103,7 @@ class RootEnvironment(nodes: Seq[AbstractSyntaxNode.CompilationUnit]) extends En
 
   def search(name: EnvironmentLookup): Option[Referenceable] = {
     name match {
-      case QualifiedNameLookup(qn: QualifiedName) =>
+      case TypeNameLookup(qn: TypeName) =>
         qualifiedNameMap.get(qn)
 
       //  The root environment can only handle qualified name lookups.

@@ -56,8 +56,8 @@ object AbstractSyntaxNode {
     def name: Name
   }
 
-  case class SingleTypeImportDeclaration(name: Name) extends ImportDeclaration
-  case class TypeImportOnDemandDeclaration(name: Name) extends ImportDeclaration
+  case class SingleTypeImportDeclaration(name: TypeName) extends ImportDeclaration
+  case class TypeImportOnDemandDeclaration(name: PackageName) extends ImportDeclaration
 
   case class Identifier(value: InputString) extends AbstractSyntaxNode
 
@@ -71,6 +71,11 @@ object AbstractSyntaxNode {
   }
   case class TypeName(value: InputString, prefix: Option[PackageName] = None) extends Name {
     def niceName = value.value
+    def toSeq: Seq[InputString] = prefix match {
+      case Some(p: PackageName) => p.toSeq ++ Seq(value)
+      case None => Seq(value)
+    }
+    def toQualifiedName: QualifiedName = QualifiedName(toSeq)
   }
   case class ExpressionName(value: InputString, prefix: Option[AmbiguousName] = None) extends Name {
     def niceName = value.value
@@ -294,6 +299,13 @@ object AbstractSyntaxNode {
         case _ => AmbiguousName(value.last, Some(QualifiedName(value.dropRight(1)).toAmbiguousName))
       }
     }
+    def toTypeName: TypeName = {
+      value.size match {
+        case 0 => throw new SyntaxError("TypeName must contain one identifier.")
+        case 1 => TypeName(value.last, None)
+        case _ => TypeName(value.last, Some(QualifiedName(value.dropRight(1)).toPackageName))
+      }
+    }
   }
 
   sealed trait PrimitiveType extends Type
@@ -319,17 +331,17 @@ object AbstractSyntaxNode {
   case class ArrayType(subtype: Type) extends ReferenceType {
     override def children: List[AbstractSyntaxNode] = List(subtype)
   }
-  case class ClassOrInterfaceType(name: Name) extends ReferenceType {
+  case class ClassOrInterfaceType(name: TypeName) extends ReferenceType {
     override def children: List[AbstractSyntaxNode] = List(name)
   }
-  case class ClassType(name: Name) extends ReferenceType {
+  case class ClassType(name: TypeName) extends ReferenceType {
     override def children: List[AbstractSyntaxNode] = List(name)
     def inputString: Seq[InputString] = name match {
         case n: SimpleName => Seq(n.value)
         case q: QualifiedName => q.value
     }
   }
-  case class InterfaceType(name: Name) extends ReferenceType {
+  case class InterfaceType(name: TypeName) extends ReferenceType {
     override def children: List[AbstractSyntaxNode] = List(name)
     def inputString: Seq[InputString] = name match {
         case n: SimpleName => Seq(n.value)
@@ -351,7 +363,7 @@ object AbstractSyntaxNode {
   case object NativeKeyword extends NonAccessModifier
 
   sealed abstract class TypeDeclaration(
-    val name: InputString,
+    val name: TypeName,
     val modifiers: Set[Modifier] = Set.empty[Modifier],
     val interfaces: Seq[InterfaceType] = Seq.empty[InterfaceType],
 
@@ -364,7 +376,7 @@ object AbstractSyntaxNode {
   }
 
   case class ClassDeclaration(
-    override val name: InputString,
+    override val name: TypeName,
     body: ClassBody,
 
     override val modifiers: Set[Modifier] = Set.empty[Modifier],
@@ -378,7 +390,7 @@ object AbstractSyntaxNode {
   }
 
   case class InterfaceDeclaration(
-    override val name: InputString,
+    override val name: TypeName,
     body: InterfaceBody,
 
     override val modifiers: Set[Modifier] = Set.empty[Modifier],
@@ -539,12 +551,12 @@ object AbstractSyntaxNode {
 
     case i: ParseNodes.SingleTypeImportDeclaration   => {
       val children: Seq[AbstractSyntaxNode] = i.children.flatMap(recursive(_))
-      Seq(SingleTypeImportDeclaration(children.collectFirst { case x: Name => x }.get))
+      Seq(SingleTypeImportDeclaration(children.collectFirst { case x: QualifiedName => x.toTypeName }.get))
     }
 
     case i: ParseNodes.TypeImportOnDemandDeclaration => {
       val children: Seq[AbstractSyntaxNode] = i.children.flatMap(recursive(_))
-      Seq(TypeImportOnDemandDeclaration(children.collectFirst { case x: Name => x }.get))
+      Seq(TypeImportOnDemandDeclaration(children.collectFirst { case x: QualifiedName => x.toPackageName }.get))
     }
 
 
@@ -574,7 +586,7 @@ object AbstractSyntaxNode {
         }
       }
 
-      Seq(ClassDeclaration(name.value, body, modifiers, superclass, interfaces))
+      Seq(ClassDeclaration(TypeName(name.value), body, modifiers, superclass, interfaces))
     }
 
     case c: ParseNodes.InterfaceDeclaration => {
@@ -598,7 +610,7 @@ object AbstractSyntaxNode {
         }
       }
 
-      Seq(InterfaceDeclaration(name.value, body, modifiers, interfaces))
+      Seq(InterfaceDeclaration(TypeName(name.value), body, modifiers, interfaces))
     }
 
     case c: ParseNodes.ConstructorDeclaration => {
@@ -799,7 +811,7 @@ object AbstractSyntaxNode {
       }
 
       check_children(children.head) match {
-        case y: Name => Seq(CastExpression(ClassOrInterfaceType(y)))
+        case y: QualifiedName => Seq(CastExpression(ClassOrInterfaceType(y.toTypeName)))
         case y: PrimitiveType => Seq(CastExpression(y))
         case _ => throw new SyntaxError("Casting with invalid cast type.")
       }
@@ -807,7 +819,7 @@ object AbstractSyntaxNode {
 
     case t: ParseNodes.ClassOrInterfaceType => {
       val children: Seq[AbstractSyntaxNode] = t.children.flatMap(recursive(_))
-      Seq(ClassOrInterfaceType(children.head.asInstanceOf[Name]))
+      Seq(ClassOrInterfaceType(children.head.asInstanceOf[QualifiedName].toTypeName))
     }
     case t: ParseNodes.ClassType => {
       val children: Seq[AbstractSyntaxNode] = t.children.flatMap(recursive(_))

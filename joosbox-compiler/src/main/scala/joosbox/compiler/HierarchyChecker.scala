@@ -61,7 +61,8 @@ object HierarchyChecker {
     InterfaceMemberDeclaration,
     ConstructorDeclaration,
     FieldDeclaration,
-    Type
+    Type,
+    TypeName
   }
 
   def link(
@@ -229,7 +230,7 @@ object HierarchyChecker {
   def check(node: AbstractSyntaxNode)(implicit mapping: EnvironmentMapping) {
     node match {
       case node: ClassDeclaration =>
-        val name : InputString = node.name
+        val name : TypeName = node.name
         val modifiers: Set[Modifier] = node.modifiers
         val superclass: Option[ClassType] = node.superclass
         val interfaces: Seq[InterfaceType] = node.interfaces
@@ -259,10 +260,10 @@ object HierarchyChecker {
         // Check extends hierarchy
         val implicitSuperclass = QualifiedNameLookup(QualifiedName(Seq(InputString("java"), InputString("lang"), InputString("Object"))))
         val implicitRef = env.lookup(implicitSuperclass).get
-        val ref = env.lookup(NameLookup(name)).get 
+        val ref = env.lookup(TypeNameLookup(name)).get 
         // If we are checking java.lang.Object, dont
         if (implicitRef != ref) {
-          superDeclarations = HierarchyChecker.checkClassHierarchy(superclass, List(Seq(name)), env)
+          superDeclarations = HierarchyChecker.checkClassHierarchy(superclass, List(Seq(name.value)), env)
         }
 
         // Check the implemented interfaces
@@ -279,10 +280,10 @@ object HierarchyChecker {
             val ref = env.lookup(nameLookup)
             ref match {
               case Some(InterfaceDeclaration(_, intBody, mods, ints)) =>
-                if (interfaceNodes.contains(ref.get.asInstanceOf[InterfaceDeclaration].name.filename)) {
+                if (interfaceNodes.contains(ref.get.asInstanceOf[InterfaceDeclaration].name.value.filename)) {
                   throw new SyntaxError("An interface must not be repeated in a implements clause of a class.")
                 }
-                interfaceNodes = ref.get.asInstanceOf[InterfaceDeclaration].name.filename :: interfaceNodes
+                interfaceNodes = ref.get.asInstanceOf[InterfaceDeclaration].name.value.filename :: interfaceNodes
               case _ => Unit
             }
         }
@@ -342,7 +343,7 @@ object HierarchyChecker {
 
 
       case node: InterfaceDeclaration =>
-        val name : InputString = node.name
+        val name : TypeName = node.name
         val interfaces: Seq[InterfaceType] = node.interfaces
         val modifiers: Set[Modifier] = node.modifiers
 
@@ -357,7 +358,7 @@ object HierarchyChecker {
             (MethodLookup(m.name, m.parameters.map(_.varType)), m)
         }
 
-        intDeclarations = HierarchyChecker.checkInterfaceHierarchy(InterfaceType(SimpleName(name)), List(Seq()), env)
+        intDeclarations = HierarchyChecker.checkInterfaceHierarchy(InterfaceType(name), List(Seq()), env)
 
         // Below is just for checking 'duplicate' ints in extends list
         var interfaceNodes : List[String] = List.empty[String]
@@ -370,10 +371,10 @@ object HierarchyChecker {
             val ref = env.lookup(nameLookup)
             ref match {
               case Some(InterfaceDeclaration(_, intBody, mods, ints)) =>
-                if (interfaceNodes.contains(ref.get.asInstanceOf[InterfaceDeclaration].name.filename)) {
+                if (interfaceNodes.contains(ref.get.asInstanceOf[InterfaceDeclaration].name.value.filename)) {
                   throw new SyntaxError("An interface must not be repeated in a extends clause of a class.")
                 }
-                interfaceNodes = ref.get.asInstanceOf[InterfaceDeclaration].name.filename :: interfaceNodes
+                interfaceNodes = ref.get.asInstanceOf[InterfaceDeclaration].name.value.filename :: interfaceNodes
               case _ => Unit
             }
         }

@@ -81,8 +81,7 @@ object TypeLinker {
                 SingleTypeImportDeclaration(secondName)
               ) => {
                 var Seq(firstNameSeq: Seq[String], secondNameSeq: Seq[String]): Seq[Seq[String]] = Seq(firstName, secondName).map {
-                  case SimpleName(name) => Seq(name.value)
-                  case QualifiedName(names) => names.map { input: InputString => input.value }
+                  case TypeName(name, _) => Seq(name.value)
                 }
 
                 if (firstNameSeq.size == 1 || firstNameSeq != secondNameSeq) {
@@ -98,17 +97,14 @@ object TypeLinker {
         }
 
         typeDeclaration.foreach { typeDeclaration =>
-          var className = typeDeclaration match {
+          var className: TypeName = typeDeclaration match {
             case ClassDeclaration(name, _, _, _, _) => name
             case InterfaceDeclaration(name, _, _, _) => name
           }
 
           imports.foreach {
             case SingleTypeImportDeclaration(name) =>
-              val importName: Seq[InputString] = name match {
-                case QualifiedName(values) => values
-                case SimpleName(value) => Seq(value)
-              }
+              val importName: Seq[InputString] = name.toSeq
 
               if (classPackage.isEmpty) {
                 // In the default package, all class clashes are invalid
@@ -116,7 +112,7 @@ object TypeLinker {
                   throw new SyntaxError("Package import cannot be the same name as class name.")
                 }
               } else {
-                val classPackageName: Seq[InputString] = classPackage.get.name.toQualifiedName.value ++ Seq(className)
+                val classPackageName: Seq[InputString] = classPackage.get.name.toQualifiedName.value ++ className.toSeq
 
                 // A class may import itself, but no other clashing classes
                 if (classPackageName != importName) {
@@ -145,7 +141,7 @@ object TypeLinker {
         } {
           var lookup: EnvironmentLookup = EnvironmentLookup.lookupFromName(name)
           environment.lookup(lookup) match {
-            case None => throw new SyntaxError("Could not look up type " + name.niceName + ".")
+            case None => throw new SyntaxError("Could not look up type " + lookup + ". " + name)
             case _ => {
               name match {
                 // If a qualified name was found, then make sure no strict prefix resolves.

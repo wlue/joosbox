@@ -155,20 +155,13 @@ object EnvironmentBuilder {
         //      All * imports.
 
         //  All single type imports should be fully qualified.
-        val explicitImports: Map[NameLookup, Referenceable] = n.importDeclarations.flatMap {
+        val explicitImports: Map[TypeNameLookup, Referenceable] = n.importDeclarations.flatMap {
           case i: SingleTypeImportDeclaration => {
             i.name match {
-              case q: QualifiedName => {
-                parent.search(QualifiedNameLookup(q)) match {
-                  case Some(r: Referenceable) => Some(NameLookup(q.value.last) -> r)
-                  case None => throw new SyntaxError("Type import '" + i.name + "' not found.")
-                }
-              }
-
-              case s: SimpleName => {
-                parent.search(QualifiedNameLookup(QualifiedName(Seq(s.value)))) match {
-                  case Some(r: Referenceable) => Some(NameLookup(s.value) -> r)
-                  case None => throw new SyntaxError("Type import '" + i.name + "' not found.")
+              case t: TypeName => {
+                parent.search(TypeNameLookup(t)) match {
+                  case Some(r: Referenceable) => Some(TypeNameLookup(TypeName(t.value)) -> r)
+                  case None => throw new SyntaxError("Type import '" + i.name + "' not found in " + parent)
                 }
               }
             }
@@ -177,7 +170,7 @@ object EnvironmentBuilder {
         }.toMap
 
         val locals: Map[EnvironmentLookup, Referenceable] = (
-          n.typeDeclaration.map(x => (NameLookup(x.name), x)).toMap
+          n.typeDeclaration.map(x => (TypeNameLookup(x.name), x)).toMap
           ++ explicitImports
         )
 
@@ -192,8 +185,8 @@ object EnvironmentBuilder {
 
         val importScopeReferences: Seq[PackageNameLookup] = {
           val imports:Seq[PackageNameLookup] = n.importDeclarations.flatMap {
-            case TypeImportOnDemandDeclaration(qn: QualifiedName) => Some(PackageNameLookup(qn.toPackageName))
-            case SingleTypeImportDeclaration(qn: QualifiedName) => None
+            case TypeImportOnDemandDeclaration(pn: PackageName) => Some(PackageNameLookup(pn))
+            case SingleTypeImportDeclaration(tn: TypeName) => None
           }
 
           Seq(PackageNameLookup(QualifiedName(Seq(InputString("java"), InputString("lang"))).toPackageName)) ++ imports
