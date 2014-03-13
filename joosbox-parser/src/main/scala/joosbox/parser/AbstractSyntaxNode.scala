@@ -210,7 +210,7 @@ object AbstractSyntaxNode {
   case class FieldAccess(primary: Primary, name: InputString) extends Expression {
     override def children: List[AbstractSyntaxNode] = List(primary)
   }
-  case class SimpleArrayAccess(name: Name, expr: Expression) extends Expression {
+  case class SimpleArrayAccess(name: ExpressionName, expr: Expression) extends Expression {
     override def children: List[AbstractSyntaxNode] = List(name, expr)
   }
   case class ComplexArrayAccess(primary: Primary, expr: Expression) extends Expression {
@@ -1206,7 +1206,7 @@ object AbstractSyntaxNode {
       val children = a.children.flatMap(recursive(_))
       a.children match {
         case Seq(n: ParseNodes.Name, l: ParseNodes.LeftBracket, e: ParseNodes.Expression, r: ParseNodes.RightBracket) => {
-          val name: Name = children.collectFirst { case x: Name => x }.get
+          val name: ExpressionName = children.collectFirst { case x: QualifiedName => x.toExpressionName }.get
           val expr: Expression = children.collectFirst { case x: Expression => x }.get
           Seq(SimpleArrayAccess(name, expr))
         }
