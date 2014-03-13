@@ -270,6 +270,22 @@ object AbstractSyntaxNode {
         case _ => PackageName(value.last, Some(QualifiedName(value.dropRight(1)).toPackageName))
       }
     }
+
+    def toExpressionName: ExpressionName = {
+      value.size match {
+        case 0 => throw new SyntaxError("ExpressionName must contain one identifier.")
+        case 1 => ExpressionName(value.last, None)
+        case _ => ExpressionName(value.last, Some(QualifiedName(value.dropRight(1)).toAmbiguousName))
+      }
+    }
+
+    def toAmbiguousName: AmbiguousName = {
+      value.size match {
+        case 0 => throw new SyntaxError("AmbiguousName must contain one identifier.")
+        case 1 => AmbiguousName(value.last, None)
+        case _ => AmbiguousName(value.last, Some(QualifiedName(value.dropRight(1)).toAmbiguousName))
+      }
+    }
   }
 
   sealed trait PrimitiveType extends Type
@@ -695,8 +711,6 @@ object AbstractSyntaxNode {
         throw new SyntaxError("Field " + name.value + " cannot be native.")
       }
 
-
-
       Seq(FieldDeclaration(name.value, modifiers, memberType, expression))
     }
 
@@ -881,7 +895,6 @@ object AbstractSyntaxNode {
         case _ => throw new SyntaxError("Qualified name contains non-identifiers.")
       }))
 
-    // TODO: Implement
     case b: ParseNodes.Block => {
       val children: Seq[AbstractSyntaxNode] = b.children.flatMap(recursive(_))
       val blockStatements: Seq[BlockStatement] = children.collect { case x: BlockStatement => x }
@@ -1153,10 +1166,13 @@ object AbstractSyntaxNode {
 
     case e: ParseNodes.Assignment => {
       e.children match {
-        case Seq(l: ParseNodes.LeftHandSide, a: ParseNodes.Assign, r: ParseNodes.AssignmentExpression) => {
-          val right: Expression = r.children.flatMap(recursive(_)).collectFirst { case x: Expression => x }.get
-          l.children.flatMap(recursive(_)).headOption match {
-            case Some(left: Name) => Seq(Assignment(left, right))
+        case Seq(l: ParseNodes.LeftHandSide, _, r: ParseNodes.AssignmentExpression) => {
+          val leftChildren = l.children.flatMap(recursive(_))
+          val rightChildren = r.children.flatMap(recursive(_))
+
+          val right: Expression = rightChildren.collectFirst { case x: Expression => x }.get
+          leftChildren.headOption match {
+            case Some(left: QualifiedName) => Seq(Assignment(left.toExpressionName, right))
             case Some(left: FieldAccess) => Seq(Assignment(left, right))
             case Some(left: SimpleArrayAccess) => Seq(Assignment(left, right))
             case Some(left: ComplexArrayAccess) => Seq(Assignment(left, right))
@@ -1164,6 +1180,7 @@ object AbstractSyntaxNode {
               throw new SyntaxError("Assignment has invalid left hand side.")
             }
           }
+
         }
         case _ => e.children.flatMap(recursive(_))
       }
