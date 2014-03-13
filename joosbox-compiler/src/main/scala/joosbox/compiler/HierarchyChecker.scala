@@ -130,10 +130,7 @@ object HierarchyChecker {
   def checkInterfaceHierarchy(interface: InterfaceType, interfaceList: List[Seq[InputString]], env: Environment) : Seq[(EnvironmentLookup, AbstractSyntaxNode)]  = {
     var methodList : Seq[(EnvironmentLookup, AbstractSyntaxNode)] = Seq.empty
     var intList : List[Seq[InputString]] = interface.inputString :: interfaceList
-    val nameLookup : EnvironmentLookup = interface.name match {
-      case s: SimpleName => NameLookup(s.value)
-      case q: QualifiedName => QualifiedNameLookup(q)
-    }
+    val nameLookup : EnvironmentLookup = TypeNameLookup(interface.name)
     val ref = env.lookup(nameLookup)
     ref match {
       case Some(InterfaceDeclaration(_, body, _, interfaces)) =>
