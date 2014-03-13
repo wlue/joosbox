@@ -79,10 +79,7 @@ object HierarchyChecker {
     var methodList : Seq[(EnvironmentLookup, AbstractSyntaxNode)] = Seq.empty
     if (!klass.isEmpty) {
       var klassList = klass.get.inputString :: classList
-      val nameLookup : EnvironmentLookup = klass.get.name match {
-        case s: SimpleName => NameLookup(s.value)
-        case q: QualifiedName => QualifiedNameLookup(q)
-      }
+      val nameLookup : EnvironmentLookup = EnvironmentLookup.lookupFromName(klass.get.name)
       val ref = env.lookup(nameLookup)
       ref match {
         case Some(ClassDeclaration(_, body, mods, superklass, interfaces)) =>

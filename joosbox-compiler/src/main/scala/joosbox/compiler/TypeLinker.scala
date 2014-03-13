@@ -50,10 +50,7 @@ object TypeLinker {
         // Lookup the top level environment, and make sure the package and any 
         // of its prefixes does not resolve to a type.
         val environment = mapping.environment
-        val qualifiedName: QualifiedName = pkg.name match {
-          case name: QualifiedName => name
-          case SimpleName(input) => QualifiedName(Seq(input))
-        }
+        val qualifiedName: QualifiedName = pkg.name.toQualifiedName
 
         qualifiedName.prefixesIncludingSelf.foreach { prefix =>
           var lookupOption: Option[EnvironmentLookup] = prefix match {
@@ -119,10 +116,7 @@ object TypeLinker {
                   throw new SyntaxError("Package import cannot be the same name as class name.")
                 }
               } else {
-                val classPackageName: Seq[InputString] = classPackage.get.name match {
-                  case QualifiedName(values) => values ++ Seq(className)
-                  case SimpleName(value) => Seq(value) ++ Seq(className)
-                }
+                val classPackageName: Seq[InputString] = classPackage.get.name.toQualifiedName.value ++ Seq(className)
 
                 // A class may import itself, but no other clashing classes
                 if (classPackageName != importName) {
@@ -149,11 +143,7 @@ object TypeLinker {
           name <- nameOption
           environment <- mapping.enclosingScopeOf(ref)
         } {
-          var lookup: EnvironmentLookup = name match {
-            case SimpleName(input) => NameLookup(input)
-            case name: QualifiedName => QualifiedNameLookup(name)
-          }
-
+          var lookup: EnvironmentLookup = EnvironmentLookup.lookupFromName(name)
           environment.lookup(lookup) match {
             case None => throw new SyntaxError("Could not look up type " + name.niceName + ".")
             case _ => {

@@ -5,27 +5,30 @@ import joosbox.lexer.{
   SyntaxError
 }
 
-import joosbox.parser.{
-  AbstractSyntaxNode
-}
-
-import AbstractSyntaxNode.{
-  Name,
-  Type,
-  Referenceable,
-  SimpleName,
-  QualifiedName,
-  TypeDeclaration,
-  PackageDeclaration,
-  MethodDeclaration
-}
+import joosbox.parser.AbstractSyntaxNode
+import joosbox.parser.AbstractSyntaxNode._
 
 sealed trait EnvironmentLookup
 case class IdentifierLookup(identifier: InputString) extends EnvironmentLookup
 case class NameLookup(name: InputString) extends EnvironmentLookup
 case class QualifiedNameLookup(name: QualifiedName) extends EnvironmentLookup
+case class PackageNameLookup(name: PackageName) extends EnvironmentLookup
 case class MethodLookup(name: InputString, params: Seq[Type]) extends EnvironmentLookup
 case class ConstructorLookup(params: Seq[Type]) extends EnvironmentLookup
+
+object EnvironmentLookup {
+  def lookupFromName(name: Name) = name match {
+    case SimpleName(input) => NameLookup(input)
+    case name: QualifiedName => {
+      if (name.value.size > 1) {
+        QualifiedNameLookup(name)
+      } else {
+        NameLookup(name.value.head)
+      }
+    }
+    case p: PackageName => PackageNameLookup(p)
+  }
+}
 
 sealed trait Environment {
   val parent: Option[Environment]
@@ -60,7 +63,7 @@ sealed trait Environment {
   /**
    * Get the package scope from the parent. Only the root should respond to this.
    */
-  def packageScope(name: QualifiedNameLookup): Seq[ScopeEnvironment] = parent match {
+  def packageScope(name: PackageNameLookup): Seq[ScopeEnvironment] = parent match {
     case Some(p: Environment) => p.packageScope(name)
     case _ => Seq.empty[ScopeEnvironment]
   }
@@ -77,10 +80,7 @@ class RootEnvironment(nodes: Seq[AbstractSyntaxNode.CompilationUnit]) extends En
       case (map: Map[QualifiedName, Referenceable], cu: AbstractSyntaxNode.CompilationUnit) => {
         val declaration: Option[TypeDeclaration] = cu.typeDeclaration
         val mapping = cu.packageDeclaration match {
-          case Some(p: PackageDeclaration) => p.name match {
-            case s: SimpleName => declaration.map(d => QualifiedName(Seq(s.value, d.name)) -> d)
-            case q: QualifiedName => declaration.map(d => QualifiedName(q.value.toSeq ++ Seq(d.name)) -> d)
-          }
+          case Some(p: PackageDeclaration) => declaration.map(d => QualifiedName(p.name.toSeq ++ Seq(d.name)) -> d)
 
           case None => declaration.map(d => QualifiedName(Seq(InputString(""), d.name)) -> d)
         }
@@ -97,8 +97,7 @@ class RootEnvironment(nodes: Seq[AbstractSyntaxNode.CompilationUnit]) extends En
       }
     }
   }
-
-  var packageScopeMap: Map[QualifiedName, Seq[ScopeEnvironment]] = Map.empty[QualifiedName, Seq[ScopeEnvironment]]
+  var packageScopeMap: Map[PackageName, Seq[ScopeEnvironment]] = Map.empty[PackageName, Seq[ScopeEnvironment]]
 
   def search(name: EnvironmentLookup): Option[Referenceable] = {
     name match {
@@ -110,7 +109,7 @@ class RootEnvironment(nodes: Seq[AbstractSyntaxNode.CompilationUnit]) extends En
     }
   }
 
-  override def packageScope(name: QualifiedNameLookup): Seq[ScopeEnvironment]
+  override def packageScope(name: PackageNameLookup): Seq[ScopeEnvironment]
     = packageScopeMap.getOrElse(name.name, Seq.empty[ScopeEnvironment])
 }
 
@@ -121,8 +120,8 @@ class ScopeEnvironment(
   val locals: Map[EnvironmentLookup, Referenceable],
 
   //  For top-level scopepes.
-  val packageScopeReference: Option[QualifiedNameLookup],
-  val importScopeReferences: Seq[QualifiedNameLookup],
+  val packageScopeReference: Option[PackageNameLookup],
+  val importScopeReferences: Seq[PackageNameLookup],
   par: Environment,
 
   //  For classes, how do we find methods and fields in their superclasses/interfaces?

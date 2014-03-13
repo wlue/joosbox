@@ -50,7 +50,7 @@ object AbstractSyntaxNode {
       packageDeclaration.toList ++ importDeclarations.toList ++ typeDeclaration.toList
   }
 
-  case class PackageDeclaration(name: Name) extends AbstractSyntaxNode
+  case class PackageDeclaration(name: PackageName) extends AbstractSyntaxNode
 
   sealed trait ImportDeclaration extends AbstractSyntaxNode {
     def name: Name
@@ -60,6 +60,32 @@ object AbstractSyntaxNode {
   case class TypeImportOnDemandDeclaration(name: Name) extends ImportDeclaration
 
   case class Identifier(value: InputString) extends AbstractSyntaxNode
+
+  case class PackageName(value: InputString, prefix: Option[PackageName] = None) extends Name {
+    def niceName = value.value
+    def toSeq: Seq[InputString] = prefix match {
+      case Some(p: PackageName) => p.toSeq ++ Seq(value)
+      case None => Seq(value)
+    }
+    def toQualifiedName: QualifiedName = QualifiedName(toSeq)
+  }
+  case class TypeName(value: InputString, prefix: Option[PackageName] = None) extends Name {
+    def niceName = value.value
+  }
+  case class ExpressionName(value: InputString, prefix: Option[AmbiguousName] = None) extends Name {
+    def niceName = value.value
+  }
+  case class MethodName(value: InputString, prefix: Option[AmbiguousName] = None) extends Name {
+    def niceName = value.value
+  }
+
+  //  Note we don't need PackageOrTypeName - Java seems to use it for nested classes.
+  /*case class PackageOrTypeName(value: InputString, prefix: Option[PackageOrTypeName]) extends Name {
+    def niceName = value.value
+  }*/
+  case class AmbiguousName(value: InputString, prefix: Option[AmbiguousName] = None) extends Name {
+    def niceName = value.value
+  }
 
   abstract class ClassBodyDeclaration(
     val name: InputString,
@@ -236,6 +262,14 @@ object AbstractSyntaxNode {
         Seq(oneSmaller) ++ oneSmaller.prefixes
       }
     }
+
+    def toPackageName: PackageName = {
+      value.size match {
+        case 0 => throw new SyntaxError("PackageName must contain one identifier.")
+        case 1 => PackageName(value.last, None)
+        case _ => PackageName(value.last, Some(QualifiedName(value.dropRight(1)).toPackageName))
+      }
+    }
   }
 
   sealed trait PrimitiveType extends Type
@@ -386,7 +420,7 @@ object AbstractSyntaxNode {
     override def children: List[AbstractSyntaxNode] = statements.toList
   }
 
-  case object CastExpression extends Expression
+  case class CastExpression(targetType: Type) extends Expression
 
   sealed trait Statement extends BlockStatement
   case object EmptyStatement extends Statement
@@ -476,7 +510,9 @@ object AbstractSyntaxNode {
 
     case p: ParseNodes.PackageDeclaration => {
       val children: Seq[AbstractSyntaxNode] = p.children.flatMap(recursive(_))
-      Seq(PackageDeclaration(children.collectFirst { case x: Name => x }.get))
+      val r = Seq(PackageDeclaration(children.collectFirst { case x: QualifiedName => x.toPackageName }.get))
+      println("\n\nCreated package decl: " + r + "\n\n")
+      r
     }
 
     case i: ParseNodes.SingleTypeImportDeclaration   => {
@@ -546,7 +582,7 @@ object AbstractSyntaxNode {
     case c: ParseNodes.ConstructorDeclaration => {
       val children: Seq[AbstractSyntaxNode] = c.children.flatMap(recursive(_))
 
-      val name: SimpleName = children.collectFirst { case x: SimpleName => x }.get
+      val name: QualifiedName = children.collectFirst { case x: QualifiedName => x }.get
       val modifiers: Set[Modifier] = children.collect { case x: Modifier => x }.toSet
       val parameters: Seq[FormalParameter] = children.collect { case x: FormalParameter => x }
       val body: Option[Block] = children.collectFirst { case x: Block => x }
@@ -580,7 +616,9 @@ object AbstractSyntaxNode {
         throw new SyntaxError("Constructor " + name.value + " has to have a body.")
       }
 
-      Seq(ConstructorDeclaration(name.value, modifiers, parameters, body))
+      //  Why name.value.head here? We got rid of using SimpleName, but the lexer
+      //  guarantees that this QualifiedName will only have one sub-name.
+      Seq(ConstructorDeclaration(name.value.head, modifiers, parameters, body))
     }
 
 
@@ -741,8 +779,8 @@ object AbstractSyntaxNode {
       }
 
       check_children(children.head) match {
-        case y: Name => Seq(CastExpression)
-        case y: PrimitiveType => Seq(CastExpression)
+        case y: Name => Seq(CastExpression(ClassOrInterfaceType(y)))
+        case y: PrimitiveType => Seq(CastExpression(y))
         case _ => throw new SyntaxError("Casting with invalid cast type.")
       }
     }
@@ -836,7 +874,7 @@ object AbstractSyntaxNode {
     case c: ParseNodes.CharLiteral => Seq(CharLiteral(c.value.get))
     case s: ParseNodes.StringLiteral => Seq(StringLiteral(s.value.get))
 
-    case s: ParseNodes.SimpleName => Seq(SimpleName(s.children(0).value.get))
+    case s: ParseNodes.SimpleName => Seq(QualifiedName(Seq(s.children(0).value.get)))
     case s: ParseNodes.QualifiedName =>
       Seq(QualifiedName(s.children.flatMap(recursive(_)).flatMap {
         case n: SimpleName => Some(n.value)
