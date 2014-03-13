@@ -23,6 +23,9 @@ object TypeChecker {
 
   def resolveType(node: AbstractSyntaxNode) : Option[Type] = {
     node match {
+      case TrueLiteral => Some(BooleanKeyword)
+      case FalseLiteral => Some(BooleanKeyword)
+      case VoidKeyword => Some(VoidKeyword)
       case x: StringLiteral =>
         Some(ClassType(QualifiedName("java.lang.String".split("\\.").map(InputString(_))).toTypeName))
       case c: CastExpression => Some(c.targetType)
