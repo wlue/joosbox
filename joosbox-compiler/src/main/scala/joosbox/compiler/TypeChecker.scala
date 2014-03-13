@@ -21,17 +21,28 @@ object TypeChecker {
     Map.empty
   }
 
-  def resolveType(node: AbstractSyntaxNode) : Type = {
+  def resolveType(node: AbstractSyntaxNode) : Option[Type] = {
     node match {
       case x: StringLiteral =>
-        ClassType(QualifiedName("java.lang.String".split("\\.").map(InputString(_))).toTypeName)
-      case c: CastExpression => c.targetType
-      case _ => Unit
+        Some(ClassType(QualifiedName("java.lang.String".split("\\.").map(InputString(_))).toTypeName))
+      case c: CastExpression => Some(c.targetType)
+      case _ => None
     }
   }
 
   def check(node: AbstractSyntaxNode)(implicit mapping: EnvironmentMapping) {
     node match {
+      case c : ClassCreationPrimary =>
+        val classType : ClassType = c.classType
+        val env = mapping.enclosingScopeOf(node).get
+        val ref = env.lookup(TypeNameLookup(classType.name)).get
+        ref match {
+          case klass: ClassDeclaration =>
+            if (klass.modifiers.contains(AbstractKeyword)) {
+              throw new SyntaxError("Can't create instances of an abstract class.")
+            }
+          case _ => Unit
+        }
 
       case _ => Unit
     }
