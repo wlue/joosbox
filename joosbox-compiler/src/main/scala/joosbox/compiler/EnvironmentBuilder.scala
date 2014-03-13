@@ -241,11 +241,15 @@ object EnvironmentBuilder {
 
         //  Include all superclasses and implemented interfaces in this scope.
         val linkedScopeReferences: Seq[EnvironmentLookup] = {
+          /*
           (cd.superclass.toSeq ++ cd.interfaces).flatMap {
-            case ClassType(qn: QualifiedName) => Some(QualifiedNameLookup(qn))
-            case ClassType(sn: SimpleName) => Some(NameLookup(sn.value))
+            case ClassType(tn: TypeName) => Some(TypeNameLookup(tn))
+            case InterfaceType(tn: TypeName) => Some(TypeNameLookup(tn))
             case _ => None
-          }
+          }*/
+
+          //  For now, just leave this empty because it might break our hierarchy checker.
+          Seq.empty[EnvironmentLookup]
         }
 
         new ScopeEnvironment(mapping, None, Seq.empty, parent, linkedScopeReferences)

@@ -258,7 +258,13 @@ object HierarchyChecker {
         val classEnv = mapping.enclosingScopeOf(node.body).get
 
         // Check extends hierarchy
-        val implicitSuperclass = QualifiedNameLookup(QualifiedName(Seq(InputString("java"), InputString("lang"), InputString("Object"))))
+        val implicitSuperclass = TypeNameLookup(
+          QualifiedName(Seq(
+            InputString("java"),
+            InputString("lang"),
+            InputString("Object")
+          )).toTypeName
+        )
         val implicitRef = env.lookup(implicitSuperclass).get
         val ref = env.lookup(TypeNameLookup(name)).get 
         // If we are checking java.lang.Object, dont

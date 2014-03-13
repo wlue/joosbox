@@ -81,7 +81,7 @@ object TypeLinker {
                 SingleTypeImportDeclaration(secondName)
               ) => {
                 var Seq(firstNameSeq: Seq[String], secondNameSeq: Seq[String]): Seq[Seq[String]] = Seq(firstName, secondName).map {
-                  case TypeName(name, _) => Seq(name.value)
+                  case name: TypeName => name.toSeq.map(_.value)
                 }
 
                 if (firstNameSeq.size == 1 || firstNameSeq != secondNameSeq) {
