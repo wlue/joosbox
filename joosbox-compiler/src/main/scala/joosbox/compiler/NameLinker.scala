@@ -132,9 +132,9 @@ object NameLinker {
               //  and verify that the class has a static field or method
               //  with this name on it.
 
-              println(x + " with remainder " + rem + "\n")
+//              println(x + " with remainder " + rem + "\n")
             } else {
-              println(x)
+//              println(x)
             }
             Unit
           }
@@ -168,7 +168,7 @@ object NameLinker {
     //  look for the remainder in the scope of the returned.
     //  If there is any part of the name left unmatched, return that.
 
-    println("\ndisambiguateReferenceToMethodCall(" + name + ")\n")
+//    println("\ndisambiguateReferenceToMethodCall(" + name + ")\n")
     val environment = mapping.enclosingScopeOf(owner).get
     if (name.value.size == 1) {
       Seq(
@@ -177,7 +177,7 @@ object NameLinker {
         QualifiedNameLookup(name)
       ).toStream.flatMap(environment.lookup(_)).headOption
     } else if (name.value.size > 1) {
-      println("\n\nQuerying for prefixes: " + name.prefixesIncludingSelf + "\n\n")
+//      println("\n\nQuerying for prefixes: " + name.prefixesIncludingSelf + "\n\n")
       name.prefixesIncludingSelf.toStream.flatMap{
         x: QualifiedName => environment.lookup(QualifiedNameLookup(x))
       }.headOption match {
@@ -189,9 +189,9 @@ object NameLinker {
             case Some(scopeOwner: Referenceable) => {
               //  If the top level (i.e.: "X") is an object or class or whatnot,
               //  then look up "Y.Z" within the scope of that object.
-              println("Found scope of " + lookup)
+//              println("Found scope of " + lookup)
               val r = disambiguateReferenceToMethodCall(QualifiedName(name.value.drop(1)))(mapping, scopeOwner)
-              println("Found AST node: " + r)
+//              println("Found AST node: " + r)
               r
             }
             case None => {
