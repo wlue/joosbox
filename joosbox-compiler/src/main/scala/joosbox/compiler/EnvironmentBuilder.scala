@@ -66,7 +66,15 @@ object EnvironmentBuilder {
       }
 
       case cd: ClassDeclaration => {
-        val declarationScope = new ScopeEnvironment(Map.empty, None, Seq.empty, parent, Some(cd))
+        val linkedScopeReferences: Seq[EnvironmentLookup] = {
+          (cd.superclass.toSeq ++ cd.interfaces).flatMap {
+            case ClassType(tn: TypeName) => Some(TypeNameLookup(tn))
+            case InterfaceType(tn: TypeName) => Some(TypeNameLookup(tn))
+            case _ => None  
+          }
+        }
+
+        val declarationScope = new ScopeEnvironment(Map.empty, None, Seq.empty, parent, Some(cd), linkedScopeReferences)
         val n: ClassBody = cd.body
 
         val methodMapping: Map[EnvironmentLookup, Referenceable]
@@ -103,14 +111,6 @@ object EnvironmentBuilder {
             case (map: Map[EnvironmentLookup, Referenceable], asn: AbstractSyntaxNode) => map
           })
 
-        val linkedScopeReferences: Seq[EnvironmentLookup] = {
-          (cd.superclass.toSeq ++ cd.interfaces).flatMap {
-            case ClassType(tn: TypeName) => Some(TypeNameLookup(tn))
-            case InterfaceType(tn: TypeName) => Some(TypeNameLookup(tn))
-            case _ => None
-          }
-        }
-
         val staticFields:Seq[FieldDeclaration] = n.declarations.collect({
           case f: FieldDeclaration if f.modifiers.contains(StaticKeyword) => f
         })
@@ -130,11 +130,7 @@ object EnvironmentBuilder {
         //  Methods live in an environment "to the right"
         //  of all of the fields - that is, after they have
         //  all been defined.
-        val methodEnvironment = new ScopeEnvironment(
-          methodMapping, None, Seq.empty,
-          rightMostEnvironment,
-          Some(cd), linkedScopeReferences
-        )
+        val methodEnvironment = new ScopeEnvironment(methodMapping, None, Seq.empty, rightMostEnvironment, Some(cd), linkedScopeReferences)
 
         (
           Map(cd -> methodEnvironment, n -> methodEnvironment)

@@ -137,7 +137,7 @@ class ScopeEnvironment(
   val node: Option[AbstractSyntaxNode] = enclosingClassNode
 
   val parent: Option[Environment] = Some(par)
-  override def toString(): String = super.toString()+"<par: @"+Integer.toHexString(par.hashCode())+">[package: " + packageScopeReference + ", imports: " + importScopeReferences + "](" + locals.keys.toString() + ")"
+  override def toString(): String = super.toString()+"<par: @"+Integer.toHexString(par.hashCode())+">[package: " + packageScopeReference + ", imports: " + importScopeReferences + ", links: " + linkedScopes + "](" + locals.keys.toString() + ")"
 
   override def searchForMethodsWithName(name: InputString): Seq[MethodDeclaration] = {
     var searchScopes = locals.collect{
@@ -161,8 +161,14 @@ class ScopeEnvironment(
   //  This is not very scala-y or functional, but we need this to link class
   //  scopes to the scopes of their superclasses and interfaces.
   var linkedScopes: Seq[ScopeEnvironment] = Seq.empty[ScopeEnvironment]
-  def linkScopesWithMapping(mapping: Map[AbstractSyntaxNode, Environment]) = {
-    linkedScopes = linkedScopeReferences.flatMap(lookup(_)).flatMap(mapping.get(_)).collect{case c: ScopeEnvironment => c}
+  def linkScopesWithMapping(mapping: Map[AbstractSyntaxNode, Environment]): Unit = {
+    if (linkedScopes.size == 0 && linkedScopeReferences.size > 0) {
+      linkedScopes = linkedScopeReferences.flatMap(lookup(_)).flatMap(mapping.get(_)).collect{case c: ScopeEnvironment => c}
+    }
+    parent match {
+      case Some(s: ScopeEnvironment) => s.linkScopesWithMapping(mapping)
+      case _ => Unit
+    }
   }
 
   def search(name: EnvironmentLookup): Option[Referenceable] = {
@@ -218,7 +224,7 @@ class ScopeEnvironment(
               case Some(x) => Some(x)
               case None => {
                 if (useLinkedScopes) {
-                  linkedScopes.toStream.flatMap(_.search(name)).headOption match {
+                  linkedScopes.toStream.flatMap(_.lookup(name)).headOption match {
                     case Some(r: Referenceable) => {
                       Some(r)
                     }
