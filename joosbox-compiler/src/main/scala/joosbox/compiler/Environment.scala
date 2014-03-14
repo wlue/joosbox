@@ -61,6 +61,8 @@ sealed trait Environment {
    */
   def search(name: EnvironmentLookup): Option[Referenceable]
 
+  def getEnclosingClassNode: Option[AbstractSyntaxNode] = None
+
   /**
    * Get the package scope from the parent. Only the root should respond to this.
    */
@@ -127,12 +129,12 @@ class ScopeEnvironment(
   val importScopeReferences: Seq[PackageNameLookup],
   par: Environment,
 
-  //  Certain scopes can have a node associated with them for convenience.
-  val enclosingNode: Option[AbstractSyntaxNode] = None,
+  //  Class' sub-scopes can have a class node associated with them for convenience.
+  val enclosingClassNode: Option[AbstractSyntaxNode] = None,
   val linkedScopeReferences: Seq[EnvironmentLookup] = Seq.empty[EnvironmentLookup],
   var useLinkedScopes: Boolean = false
 ) extends Environment {
-  val node: Option[AbstractSyntaxNode] = enclosingNode
+  val node: Option[AbstractSyntaxNode] = enclosingClassNode
 
   val parent: Option[Environment] = Some(par)
   override def toString(): String = super.toString()+"<par: @"+Integer.toHexString(par.hashCode())+">[package: " + packageScopeReference + ", imports: " + importScopeReferences + "](" + locals.keys.toString() + ")"
@@ -146,6 +148,14 @@ class ScopeEnvironment(
       searchScopes = searchScopes ++ linkedScopes.flatMap(_.searchForMethodsWithName(name))
     }
     searchScopes
+  }
+
+  override def getEnclosingClassNode: Option[AbstractSyntaxNode] = node match {
+    case None => parent match {
+      case None => None
+      case Some(s) => s.getEnclosingClassNode
+    }
+    case Some(a) => Some(a)
   }
 
   //  This is not very scala-y or functional, but we need this to link class

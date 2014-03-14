@@ -111,7 +111,10 @@ object NameLinker {
 
   def check(node: AbstractSyntaxNode)(implicit mapping: EnvironmentMapping) {
     node match {
-      case p: Name => disambiguateName(p)(mapping.enclosingScopeOf(p).get)
+      case p: Name => disambiguateName(p)(mapping.enclosingScopeOf(p) match {
+        case Some(x) => x
+        case None => throw new SyntaxError("Enclosing scope of " + p + " not found.")
+      })
       case s: SimpleMethodInvocation => {
         val argTypes:Seq[Type] = s.args.flatMap {
           case x: StringLiteral => {
