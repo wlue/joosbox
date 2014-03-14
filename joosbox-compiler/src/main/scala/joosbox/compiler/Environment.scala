@@ -126,11 +126,10 @@ class ScopeEnvironment(
   val importScopeReferences: Seq[PackageNameLookup],
   par: Environment,
 
-  //  For classes, how do we find methods and fields in their superclasses/interfaces?
-  val linkedScopeReferences: Seq[EnvironmentLookup] = Seq.empty[EnvironmentLookup],
-
   //  Certain scopes can have a node associated with them for convenience.
-  val enclosingNode: Option[AbstractSyntaxNode] = None
+  val enclosingNode: Option[AbstractSyntaxNode] = None,
+  val linkedScopeReferences: Seq[EnvironmentLookup] = Seq.empty[EnvironmentLookup],
+  var useLinkedScopes: Boolean = false
 ) extends Environment {
   val node: Option[AbstractSyntaxNode] = enclosingNode
 
@@ -138,10 +137,14 @@ class ScopeEnvironment(
   override def toString(): String = super.toString()+"<par: @"+Integer.toHexString(par.hashCode())+">[package: " + packageScopeReference + ", imports: " + importScopeReferences + "](" + locals.toString() + ")"
 
   override def searchForMethodsWithName(name: InputString): Seq[MethodDeclaration] = {
-    locals.collect{
+    var searchScopes = locals.collect{
       case (MethodLookup(methodName: InputString, _), method: MethodDeclaration)
       if (methodName == name) => method
-    }.toSeq ++ linkedScopes.flatMap(_.searchForMethodsWithName(name))
+    }.toSeq
+    if (useLinkedScopes) {
+      searchScopes = searchScopes ++ linkedScopes.flatMap(_.searchForMethodsWithName(name))
+    }
+    searchScopes
   }
 
   //  This is not very scala-y or functional, but we need this to link class
@@ -203,13 +206,15 @@ class ScopeEnvironment(
             uniqueDeclarations.get(name) match {
               case Some(x) => Some(x)
               case None => {
-                //  Finally, search all of our linked scopes for the name (but not their parents).
-                linkedScopes.toStream.flatMap(_.search(name)).headOption match {
-                  case Some(r: Referenceable) => {
-                    println("Found referenceable when looking in other scope: " + r)
-                    None
+                if (useLinkedScopes) {
+                  linkedScopes.toStream.flatMap(_.search(name)).headOption match {
+                    case Some(r: Referenceable) => {
+                      Some(r)
+                    }
+                    case None => None
                   }
-                  case None => None
+                } else {
+                  None
                 }
               }
             }
