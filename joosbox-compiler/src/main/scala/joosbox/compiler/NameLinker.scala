@@ -97,7 +97,15 @@ object NameLinker {
         case n: Name => n
       }
     } else {
-      name
+      name match {
+        case m: MethodName => m // TODO: disambiguate method name parameters first for lookup here.
+        case _ => {
+          env.lookup(EnvironmentLookup.lookupFromName(name)) match {
+            case Some(x) => name
+            case None => throw new SyntaxError("Unknown name reference: " + name)
+          }
+        }
+      }
     }
   }
 

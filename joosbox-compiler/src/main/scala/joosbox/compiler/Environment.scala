@@ -28,9 +28,6 @@ object EnvironmentLookup {
     case m: MethodName => throw new SyntaxError("MethodName lookups must include parameters.")
     case a: AmbiguousName => throw new SyntaxError("AmbiguousNames cannot be looked up.")
     case p: PackageName => throw new SyntaxError("PackageName lookups must use packageScope(), not lookup().")
-
-    case s: SimpleName => throw new SyntaxError("SimpleNames cannot be looked up.")
-    case q: QualifiedName => throw new SyntaxError("SimpleNames cannot be looked up.")
   }
 }
 
@@ -138,7 +135,7 @@ class ScopeEnvironment(
   val node: Option[AbstractSyntaxNode] = enclosingNode
 
   val parent: Option[Environment] = Some(par)
-  override def toString(): String = super.toString()+"<par: @"+Integer.toHexString(par.hashCode())+">[package: " + packageScopeReference + ", imports: " + importScopeReferences + "](" + locals.toString() + ")"
+  override def toString(): String = super.toString()+"<par: @"+Integer.toHexString(par.hashCode())+">[package: " + packageScopeReference + ", imports: " + importScopeReferences + "](" + locals.keys.toString() + ")"
 
   override def searchForMethodsWithName(name: InputString): Seq[MethodDeclaration] = {
     var searchScopes = locals.collect{

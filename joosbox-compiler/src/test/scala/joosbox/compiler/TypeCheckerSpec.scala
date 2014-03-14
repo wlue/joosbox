@@ -22,9 +22,9 @@ class FailTypeCheckerSpec extends Specification {
   }
 
   "Type Checker" should {
-      "J1_namelinking3.java" in {
-        val files = filesForTest("J1_namelinking3.java") ++ stdlibFilePaths
-        CompilerRunner.runTestable(files.toArray) //must not(throwA[Exception])
+      "J1_ArrayInterfaces.java" in {
+        val files = filesForTest("J1_ArrayInterfaces.java") ++ stdlibFilePaths
+        CompilerRunner.runTestable(files.toArray)// must not(throwA[Exception])
         true
       }
     }
