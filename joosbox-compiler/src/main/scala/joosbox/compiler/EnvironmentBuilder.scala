@@ -251,7 +251,7 @@ object EnvironmentBuilder {
           Seq.empty[EnvironmentLookup]
         }
 
-        new ScopeEnvironment(mapping, None, Seq.empty, parent, linkedScopeReferences)
+        new ScopeEnvironment(mapping, None, Seq.empty, parent, linkedScopeReferences, Some(cd))
       }
 
       case n: InterfaceBody => {
@@ -269,8 +269,34 @@ object EnvironmentBuilder {
       }
 
       case n: MethodDeclaration => {
-        val mapping: Map[EnvironmentLookup, Referenceable] = n.parameters.map(fp => (ExpressionNameLookup(fp.name), fp)).toMap
+        val parameterMapping: Map[EnvironmentLookup, Referenceable] = n.parameters.map(fp => (ExpressionNameLookup(fp.name), fp)).toMap
+        val mapping = if (n.modifiers.contains(StaticKeyword)) {
+          parameterMapping
+        } else {
+          parent.node match {
+            case Some(classDeclaration: ClassDeclaration) => {
+              val thisExpression = QualifiedName(Seq(InputString("this"))).toExpressionName
+              parameterMapping + (ExpressionNameLookup(thisExpression) -> classDeclaration)
+            }
+            case _ => parameterMapping
+          }
+        }
         new ScopeEnvironment(mapping, None, Seq.empty, parent)
+      }
+
+      case f: FieldDeclaration => {
+        if (f.modifiers.contains(StaticKeyword)) {
+          parent
+        } else {
+          parent.node match {
+            case Some(classDeclaration: ClassDeclaration) => {
+              val thisExpression = QualifiedName(Seq(InputString("this"))).toExpressionName
+              val mapping: Map[EnvironmentLookup, Referenceable] = Map(ExpressionNameLookup(thisExpression) -> classDeclaration)
+              new ScopeEnvironment(mapping, None, Seq.empty, parent)
+            }
+            case _ => parent
+          }
+        }
       }
 
       case n: ConstructorDeclaration => {

@@ -33,6 +33,8 @@ object EnvironmentLookup {
 sealed trait Environment {
   val parent: Option[Environment]
 
+  val node: Option[AbstractSyntaxNode]
+
   def lookup(name: EnvironmentLookup): Option[Referenceable] = {
     // Recursively look up to each parent.
     search(name) match {
@@ -72,6 +74,8 @@ sealed trait Environment {
  */
 class RootEnvironment(nodes: Seq[AbstractSyntaxNode.CompilationUnit]) extends Environment {
   val parent: Option[Environment] = None
+  
+  val node: Option[AbstractSyntaxNode] = None
 
   val qualifiedNameMap: Map[TypeName, Referenceable] = {
     nodes.foldLeft(Map.empty[TypeName, Referenceable]) {
@@ -123,8 +127,12 @@ class ScopeEnvironment(
   par: Environment,
 
   //  For classes, how do we find methods and fields in their superclasses/interfaces?
-  val linkedScopeReferences: Seq[EnvironmentLookup] = Seq.empty[EnvironmentLookup]
+  val linkedScopeReferences: Seq[EnvironmentLookup] = Seq.empty[EnvironmentLookup],
+
+  //  Certain scopes can have a node associated with them for convenience.
+  val enclosingNode: Option[AbstractSyntaxNode] = None
 ) extends Environment {
+  val node: Option[AbstractSyntaxNode] = enclosingNode
 
   val parent: Option[Environment] = Some(par)
   override def toString(): String = super.toString()+"<par: @"+Integer.toHexString(par.hashCode())+">[package: " + packageScopeReference + ", imports: " + importScopeReferences + "](" + locals.toString() + ")"
