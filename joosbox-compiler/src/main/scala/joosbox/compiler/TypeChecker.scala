@@ -81,33 +81,40 @@ object TypeChecker {
 
   def resolveType(node: AbstractSyntaxNode)(implicit mapping: EnvironmentMapping): Option[Type] = {
     node match {
+      case t: Type => Some(t)
+
       case TrueLiteral => Some(BooleanKeyword)
       case FalseLiteral => Some(BooleanKeyword)
-      case VoidKeyword => Some(VoidKeyword)
+      case ThisKeyword => None // TODO
       case Num(value, _) => Some(IntKeyword)
       case _: CharLiteral => Some(CharKeyword)
       case _: StringLiteral => Some(ClassType(QualifiedName("java.lang.String".split("\\.").map(InputString(_))).toTypeName))
-      case c: CastExpression => Some(c.targetType)
 
-      case name: ExpressionName => {
-        val env = mapping.enclosingScopeOf(node).get
-        env.lookup(ExpressionNameLookup(name)) match {
-          case None => throw new SyntaxError("Name " + name.niceName + " does not resolve to a type.")
-          case Some(result) => result match {
-            case p: FormalParameter => Some(p.varType)
-            case f: FieldDeclaration => Some(f.memberType)
-            case v: LocalVariableDeclaration => Some(v.memberType)
-            case v: ForVariableDeclaration => Some(v.typeDeclaration)
-            case _ => throw new SyntaxError("Could not resolve type of expression.");
-          }
-        }
-      }
+      case param: FormalParameter => Some(param.varType)
+      case field: FieldDeclaration => Some(field.memberType)
+      case variable: LocalVariableDeclaration => Some(variable.memberType)
+      case variable: ForVariableDeclaration => Some(variable.typeDeclaration)
 
       case expr: Expression => expr match {
+        case c: CastExpression => Some(c.targetType)
         case ParenthesizedExpression(expression) => resolveType(expression)
 
-        // TODO
-        case _: PostfixExpression => None
+        case e: PostfixExpression => e match {
+          case name: ExpressionName => {
+            val env = mapping.enclosingScopeOf(node).get
+            env.lookup(ExpressionNameLookup(name)) match {
+              case None => throw new SyntaxError("Name " + name.niceName + " does not resolve to a type.")
+              case Some(result) => result match {
+                case p: FormalParameter => Some(p.varType)
+                case f: FieldDeclaration => Some(f.memberType)
+                case v: LocalVariableDeclaration => Some(v.memberType)
+                case v: ForVariableDeclaration => Some(v.typeDeclaration)
+                case _ => throw new SyntaxError("Could not resolve type of expression.");
+              }
+            }
+          }
+          case _ => None
+        }
 
         case conditional: ConditionalExpression => conditional match {
           // Eager boolean is supported, bitwise are not
@@ -142,9 +149,36 @@ object TypeChecker {
           case ModExpression(e1, e2)        => promotedTypeOption(matchCompatibleType(resolveType(e1), resolveType(e2)))
         }
 
+        case NegatedExpression(e1) => promotedTypeOption(resolveType(e1))
+
+        //TODO
+        case FieldAccess(ref, name) => None
+        case SimpleArrayAccess(name, expr) => None
+        case ComplexArrayAccess(ref, expr) => None
+
+        case ArrayCreationPrimary(t, expr) => None
+        case ClassCreationPrimary(t, args) => None
+
+        case method : MethodInvocation => method match {
+          case SimpleMethodInvocation(name, args) => None
+          case ComplexMethodInvocation(ref, name, args) => None
+        }
+
         case _ => None
       }
 
+      case statement: Statement => statement match {
+        case ReturnStatement(expr) =>
+          if (expr.isEmpty) {
+            Some(VoidKeyword)
+          } else {
+            resolveType(expr.get)
+          }
+        // Loops, ifs, etc. don't make sense to check for type 
+        case _ => None
+      }
+
+      // Some nodes just don't make sense to every look/check for type
       case _ => None
     }
   }
