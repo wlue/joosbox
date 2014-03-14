@@ -211,8 +211,23 @@ object TypeChecker {
 
         case NegatedExpression(e1) => promotedTypeOption(resolveType(e1))
 
-        //TODO
-        case FieldAccess(ref, name) => None
+        case FieldAccess(ref, name) => {
+          val env = mapping.enclosingScopeOf(node).get
+          val scope:Environment = resolvePrimaryAndFindScope(ref, env)
+          val fieldName: ExpressionName = ExpressionName(name)
+
+          scope.lookup(ExpressionNameLookup(fieldName)) match {
+            case None => throw new SyntaxError("Accessing " + fieldName.niceName + " does not resolve.")
+            case Some(result) => result match {
+              case p: FormalParameter => Some(p.varType)
+              case f: FieldDeclaration => Some(f.memberType)
+              case v: LocalVariableDeclaration => Some(v.memberType)
+              case v: ForVariableDeclaration => Some(v.typeDeclaration)
+              case _ => throw new SyntaxError("Accessing non-field!!!")
+            }
+          }
+        }
+
         case SimpleArrayAccess(name, expr) => None
         case ComplexArrayAccess(ref, expr) => None
 
