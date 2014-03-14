@@ -228,11 +228,11 @@ object TypeChecker {
           }
         }
 
-        case SimpleArrayAccess(name, expr) => None
+        case SimpleArrayAccess(name, _) => resolveType(name)
         case ComplexArrayAccess(ref, expr) => None
 
-        case ArrayCreationPrimary(t, expr) => None
-        case ClassCreationPrimary(t, args) => None
+        case ArrayCreationPrimary(t, _) => Some(t)
+        case ClassCreationPrimary(t, _) => Some(t)
 
         case method : MethodInvocation => method match {
           case SimpleMethodInvocation(name, args) => {
@@ -301,7 +301,6 @@ object TypeChecker {
         Unit //TypeChecker.checkLogicalExpression(e.e1, e.e2)
       case e: OrExpression =>
         Unit //TypeChecker.checkLogicalExpression(e.e1, e.e2)
-      /*
       case c: ClassCreationPrimary => {
         val className: TypeName = c.classType.name
         env.lookup(TypeNameLookup(className)) match {
@@ -327,7 +326,6 @@ object TypeChecker {
           throw new SyntaxError("Can't find constructor matching arguments: " + className.niceName + "(" + types.mkString(",") + ")")
         }
       }
-      */
       case _ => {}
     }
     node.children.foreach { node => check(node) }
