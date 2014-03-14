@@ -90,7 +90,7 @@ object TypeChecker {
         val thisExpression = QualifiedName(Seq(InputString("this"))).toExpressionName
         env.lookup(ExpressionNameLookup(thisExpression)) match {
           case Some(result) => result match {
-            case decl: ClassDeclaration => Some(ClassType(decl.name))
+            case decl: ClassDeclaration => resolveType(decl.name)
             case _ => throw new SyntaxError("this resolved to non-class declaration.")
           }
           case None => throw new SyntaxError("this could not be resolved.")
@@ -124,9 +124,20 @@ object TypeChecker {
             }
           }
 
-          // TODO
           case name: PackageName => None
-          case name: TypeName => None
+          case name: TypeName => {
+            val env = mapping.enclosingScopeOf(node).get
+            env.lookup(TypeNameLookup(name)) match {
+              case None => throw new SyntaxError("Name " + name.niceName + " does not resolve to a type.")
+              case Some(result) => result match {
+                case _: ClassDeclaration => Some(ClassType(name))
+                case _: InterfaceDeclaration => Some(InterfaceType(name))
+                case _ => throw new SyntaxError("Name " + name.niceName + " does not resolve to a class or interface type.")
+              }
+            }
+          }
+
+          // TODO
           case name: MethodName => None
           case name: AmbiguousName => None
 
