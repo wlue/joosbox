@@ -79,14 +79,14 @@ object AbstractSyntaxNode {
     }
     def toQualifiedName: QualifiedName = QualifiedName(toSeq)
   }
-  case class ExpressionName(value: InputString, prefix: Option[AmbiguousName] = None) extends Name {
+  case class ExpressionName(value: InputString, prefix: Option[Name] = None) extends Name {
     def niceName = value.value
     def isAmbiguous: Boolean = prefix match {
       case Some(n: Name) => n.isAmbiguous
       case None => false
     }
   }
-  case class MethodName(value: InputString, prefix: Option[AmbiguousName] = None) extends Name {
+  case class MethodName(value: InputString, prefix: Option[Name] = None) extends Name {
     def niceName = value.value
     def isAmbiguous: Boolean = prefix match {
       case Some(n: Name) => n.isAmbiguous
@@ -98,7 +98,7 @@ object AbstractSyntaxNode {
   /*case class PackageOrTypeName(value: InputString, prefix: Option[PackageOrTypeName]) extends Name {
     def niceName = value.value
   }*/
-  case class AmbiguousName(value: InputString, prefix: Option[AmbiguousName] = None) extends Name {
+  case class AmbiguousName(value: InputString, prefix: Option[Name] = None) extends Name {
     def niceName = value.value
     def isAmbiguous: Boolean = true
   }

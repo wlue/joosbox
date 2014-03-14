@@ -8,9 +8,13 @@ import joosbox.lexer.{
 import joosbox.parser.AbstractSyntaxNode
 import joosbox.parser.AbstractSyntaxNode._
 
+
+//  Looking up a package name does not return us a Referenceable,
+//  so let's not call it an EnvironmentLookup.
+case class PackageNameLookup(name: PackageName)
+
 sealed trait EnvironmentLookup
 
-case class PackageNameLookup(name: PackageName) extends EnvironmentLookup
 case class TypeNameLookup(name: TypeName) extends EnvironmentLookup
 case class ExpressionNameLookup(name: ExpressionName) extends EnvironmentLookup
 case class MethodLookup(name: InputString, params: Seq[Type]) extends EnvironmentLookup
@@ -18,12 +22,12 @@ case class ConstructorLookup(name: InputString, params: Seq[Type]) extends Envir
 
 object EnvironmentLookup {
   def lookupFromName(name: Name) = name match {
-    case p: PackageName => PackageNameLookup(p)
     case t: TypeName => TypeNameLookup(t)
     case e: ExpressionName => ExpressionNameLookup(e)
 
     case m: MethodName => throw new SyntaxError("MethodName lookups must include parameters.")
     case a: AmbiguousName => throw new SyntaxError("AmbiguousNames cannot be looked up.")
+    case p: PackageName => throw new SyntaxError("PackageName lookups must use packageScope(), not lookup().")
 
     case s: SimpleName => throw new SyntaxError("SimpleNames cannot be looked up.")
     case q: QualifiedName => throw new SyntaxError("SimpleNames cannot be looked up.")
@@ -63,9 +67,9 @@ sealed trait Environment {
   /**
    * Get the package scope from the parent. Only the root should respond to this.
    */
-  def packageScope(name: PackageNameLookup): Seq[ScopeEnvironment] = parent match {
+  def packageScope(name: PackageNameLookup): Option[Seq[ScopeEnvironment]] = parent match {
     case Some(p: Environment) => p.packageScope(name)
-    case _ => Seq.empty[ScopeEnvironment]
+    case _ => None
   }
 }
 
@@ -111,8 +115,8 @@ class RootEnvironment(nodes: Seq[AbstractSyntaxNode.CompilationUnit]) extends En
     }
   }
 
-  override def packageScope(name: PackageNameLookup): Seq[ScopeEnvironment]
-    = packageScopeMap.getOrElse(name.name, Seq.empty[ScopeEnvironment])
+  override def packageScope(name: PackageNameLookup): Option[Seq[ScopeEnvironment]] = 
+    packageScopeMap.get(name.name)
 }
 
 /**
@@ -164,7 +168,7 @@ class ScopeEnvironment(
       //  for the fact that package scopes are higher priority than wildcard imports.
       case None => {
         val packageResolved: Option[Referenceable]
-          = packageScopeReference.toSeq.flatMap(packageScope(_)).flatMap(env => {
+          = packageScopeReference.toSeq.flatMap(packageScope(_)).flatten.flatMap(env => {
           if (env != this) {
             env.locals.get(name)
           } else {
@@ -176,7 +180,7 @@ class ScopeEnvironment(
           case Some(_) => packageResolved
           case None => {
             val importScopes: Seq[ScopeEnvironment]
-              = importScopeReferences.flatMap(packageScope(_))
+              = importScopeReferences.flatMap(packageScope(_)).flatten
 
             val uniqueDeclarations: Map[EnvironmentLookup, AbstractSyntaxNode.Referenceable]
               = importScopes.foldLeft(Map.empty[EnvironmentLookup, AbstractSyntaxNode.Referenceable]) {
@@ -226,7 +230,7 @@ class ScopeEnvironment(
 
   def ensureUnambiguousReferences(mapping: Map[AbstractSyntaxNode, Environment]) = {
     val uniqueScopes: Seq[ScopeEnvironment] =
-      (packageScopeReference.toSeq ++ importScopeReferences).flatMap(packageScope(_)).toSet[ScopeEnvironment].toSeq
+      (packageScopeReference.toSeq ++ importScopeReferences).flatMap(packageScope(_)).flatten.toSet[ScopeEnvironment].toSeq
 
     val uniqueDeclarations = uniqueScopes.flatMap(s => {
       s.locals.keys.flatMap(s.lookup(_))
