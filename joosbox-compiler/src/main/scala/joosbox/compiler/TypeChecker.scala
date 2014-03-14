@@ -85,7 +85,17 @@ object TypeChecker {
 
       case TrueLiteral => Some(BooleanKeyword)
       case FalseLiteral => Some(BooleanKeyword)
-      case ThisKeyword => None // TODO
+      case ThisKeyword =>
+        val env = mapping.enclosingScopeOf(node).get
+        val thisExpression = QualifiedName(Seq(InputString("this"))).toExpressionName
+        env.lookup(ExpressionNameLookup(thisExpression)) match {
+          case Some(result) => result match {
+            case decl: ClassDeclaration => Some(ClassType(decl.name))
+            case _ => throw new SyntaxError("this resolved to non-class declaration.")
+          }
+          case None => throw new SyntaxError("this could not be resolved.")
+        }
+
       case Num(value, _) => Some(IntKeyword)
       case _: CharLiteral => Some(CharKeyword)
       case _: StringLiteral => Some(ClassType(QualifiedName("java.lang.String".split("\\.").map(InputString(_))).toTypeName))
@@ -113,6 +123,13 @@ object TypeChecker {
               }
             }
           }
+
+          // TODO
+          case name: PackageName => None
+          case name: TypeName => None
+          case name: MethodName => None
+          case name: AmbiguousName => None
+
           case _ => None
         }
 
