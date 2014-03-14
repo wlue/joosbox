@@ -110,13 +110,13 @@ object TypeChecker {
         case _: PostfixExpression => None
 
         case conditional: ConditionalExpression => conditional match {
+          // Eager boolean is supported, bitwise are not
           case OrExpression(_, _) => Some(BooleanKeyword)
           case AndExpression(_, _) => Some(BooleanKeyword)
-
-          // Bitwise expressions are not supported, so don't even bother resolving.
-          case BinOrExpression(_, _) => None
-          case BinXorExpression(_, _) => None
-          case BinAndExpression(_, _) => None
+          // Binary expression are supported
+          case BinOrExpression(_, _) => Some(BooleanKeyword)
+          case BinXorExpression(_, _) => Some(BooleanKeyword)
+          case BinAndExpression(_, _) => Some(BooleanKeyword)
         }
 
         case relational: RelationalExpression => relational match {
