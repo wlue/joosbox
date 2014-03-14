@@ -21,6 +21,15 @@ object TypeChecker {
     Map.empty
   }
 
+  def resolvedTypesForArgs(exprs:Seq[Expression])(implicit mapping: EnvironmentMapping) : Seq[Type] = {
+     exprs.map { arg =>
+      resolveType(arg) match {
+        case Some(argType) => argType
+        case None => throw new SyntaxError("Could not resolve type for argument \"" + arg + "\"")
+      }
+    }
+  }
+
   def compatibleTypes(type1: Type, type2: Type): Boolean = (type1, type2) match {
     // Exact types are compatible.
     case (one, two) if one == two => true
@@ -124,7 +133,6 @@ object TypeChecker {
             }
           }
 
-          case name: PackageName => None
           case name: TypeName => {
             val env = mapping.enclosingScopeOf(node).get
             env.lookup(TypeNameLookup(name)) match {
@@ -137,7 +145,8 @@ object TypeChecker {
             }
           }
 
-          // TODO
+          // TODO - I think these should be None, but not sure
+          case name: PackageName => None
           case name: MethodName => None
           case name: AmbiguousName => None
 
@@ -188,8 +197,51 @@ object TypeChecker {
         case ClassCreationPrimary(t, args) => None
 
         case method : MethodInvocation => method match {
-          case SimpleMethodInvocation(name, args) => None
-          case ComplexMethodInvocation(ref, name, args) => None
+          case SimpleMethodInvocation(name, args) => {
+            val env = mapping.enclosingScopeOf(node).get
+            val argTypes: Seq[Type] = resolvedTypesForArgs(args)
+
+            env.lookup(MethodLookup(name.value, argTypes)) match {
+              case None => throw new SyntaxError("Invoking " + name.niceName + " does not resolve.")
+              case Some(result) => result match {
+                case method: MethodDeclaration => Some(method.memberType)
+                case method: InterfaceMemberDeclaration => Some(method.memberType)
+                case _ => throw new SyntaxError("Invoking non-method!!!")
+              }
+            }
+          }
+          case ComplexMethodInvocation(ref, name, args) => {
+            val argTypes: Seq[Type] = resolvedTypesForArgs(args)
+            val primaryType: Option[Type] = resolveType(ref)
+            if (primaryType.isEmpty) {
+              throw new SyntaxError("Method invocation attempted on unresolvable type.")
+            }
+
+            val typeName: TypeName = primaryType.get match {
+              case c: ClassType => c.name
+              case i: InterfaceType => i.name
+              case _ => throw new SyntaxError("Can't perform method invocation on non-class, non-interface type.")
+            }
+
+            val env = mapping.enclosingScopeOf(node).get
+            val scope = env.lookup(TypeNameLookup(typeName)) match {
+              case None => throw new SyntaxError("Name " + name.niceName + " does not resolve to a type.")
+              case Some(result) => result match {
+                case c: ClassDeclaration => mapping.enclosingScopeOf(c.body).get
+                case i: InterfaceDeclaration => mapping.enclosingScopeOf(i.body).get
+                case _ => throw new SyntaxError("Name " + name.niceName + " does not resolve to a class or interface type.")
+              }
+            }
+
+            scope.lookup(MethodLookup(name.value, argTypes)) match {
+              case None => throw new SyntaxError("Invoking " + name.niceName + " does not resolve.")
+              case Some(result) => result match {
+                case method: MethodDeclaration => Some(method.memberType)
+                case method: InterfaceMemberDeclaration => Some(method.memberType)
+                case _ => throw new SyntaxError("Invoking non-method!!!")
+              }
+            }
+          }
         }
 
         case _ => None
