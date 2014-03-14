@@ -30,6 +30,29 @@ object TypeChecker {
     }
   }
 
+  def resolvePrimaryAndFindScope(ref:Primary, env:Environment)(implicit mapping: EnvironmentMapping) : Environment = {
+    val primaryType: Option[Type] = resolveType(ref)
+    if (primaryType.isEmpty) {
+      throw new SyntaxError("Attempted access of unresolvable type.")
+    }
+
+    val typeName: TypeName = primaryType.get match {
+      case c: ClassType => c.name
+      case i: InterfaceType => i.name
+      case _ => throw new SyntaxError("Can't perform access on non-class, non-interface type.")
+    }
+
+    val scope = env.lookup(TypeNameLookup(typeName)) match {
+      case None => throw new SyntaxError("Name " + typeName.niceName + " does not resolve to a type.")
+      case Some(result) => result match {
+        case c: ClassDeclaration => mapping.enclosingScopeOf(c.body).get
+        case i: InterfaceDeclaration => mapping.enclosingScopeOf(i.body).get
+        case _ => throw new SyntaxError("Name " + typeName.niceName + " does not resolve to a class or interface type.")
+      }
+    }
+    scope
+  }
+
   def compatibleTypes(type1: Type, type2: Type): Boolean = (type1, type2) match {
     // Exact types are compatible.
     case (one, two) if one == two => true
@@ -212,26 +235,8 @@ object TypeChecker {
           }
           case ComplexMethodInvocation(ref, name, args) => {
             val argTypes: Seq[Type] = resolvedTypesForArgs(args)
-            val primaryType: Option[Type] = resolveType(ref)
-            if (primaryType.isEmpty) {
-              throw new SyntaxError("Method invocation attempted on unresolvable type.")
-            }
-
-            val typeName: TypeName = primaryType.get match {
-              case c: ClassType => c.name
-              case i: InterfaceType => i.name
-              case _ => throw new SyntaxError("Can't perform method invocation on non-class, non-interface type.")
-            }
-
             val env = mapping.enclosingScopeOf(node).get
-            val scope = env.lookup(TypeNameLookup(typeName)) match {
-              case None => throw new SyntaxError("Name " + name.niceName + " does not resolve to a type.")
-              case Some(result) => result match {
-                case c: ClassDeclaration => mapping.enclosingScopeOf(c.body).get
-                case i: InterfaceDeclaration => mapping.enclosingScopeOf(i.body).get
-                case _ => throw new SyntaxError("Name " + name.niceName + " does not resolve to a class or interface type.")
-              }
-            }
+            val scope:Environment = resolvePrimaryAndFindScope(ref, env)
 
             scope.lookup(MethodLookup(name.value, argTypes)) match {
               case None => throw new SyntaxError("Invoking " + name.niceName + " does not resolve.")
