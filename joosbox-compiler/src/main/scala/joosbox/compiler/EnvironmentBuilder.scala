@@ -65,9 +65,102 @@ object EnvironmentBuilder {
         node.children.flatMap(traverse(_, e, root)).toMap ++ scopetree ++ Map(node -> e)
       }
 
+      case cd: ClassDeclaration => {
+        val linkedScopeReferences: Seq[EnvironmentLookup] = {
+          (cd.superclass.toSeq ++ cd.interfaces).flatMap {
+            case ClassType(tn: TypeName) => Some(TypeNameLookup(tn))
+            case InterfaceType(tn: TypeName) => Some(TypeNameLookup(tn))
+            case _ => None  
+          }
+        }
+
+        val declarationScope = new ScopeEnvironment(Map.empty, None, Seq.empty, parent, Some(cd), linkedScopeReferences)
+        val n: ClassBody = cd.body
+
+        val methodMapping: Map[EnvironmentLookup, Referenceable]
+          = n.declarations.foldLeft(Map.empty[EnvironmentLookup, Referenceable])({
+            case (map: Map[EnvironmentLookup, Referenceable], cd: ConstructorDeclaration) => {
+
+              //  TODO: We shouldn't just catch conflicting parameter /names/,
+              //  these should technically be different scopes for each param...
+              if (cd.parameters.map(_.name).toSet.size != cd.parameters.size) {
+                throw new SyntaxError("Duplicate parameter names in constructor.")
+              }
+
+              val key = ConstructorLookup(cd.name.value, cd.parameters.map(_.varType))
+              map.get(key) match {
+                case Some(_) => throw new SyntaxError("Duplicate constructor declaration for " + cd.name)
+                case None => map + (key -> cd)
+              }
+            }
+            case (map: Map[EnvironmentLookup, Referenceable], md: MethodDeclaration) => {
+
+              //  TODO: We shouldn't just catch conflicting parameter /names/,
+              //  these should technically be different scopes for each param...
+              if (md.parameters.map(_.name).toSet.size != md.parameters.size) {
+                throw new SyntaxError("Duplicate parameter names in constructor.")
+              }
+
+              val key = MethodLookup(md.name.value, md.parameters.map(_.varType))
+
+              map.get(key) match {
+                case Some(_) => throw new SyntaxError("Duplicate method declaration for " + md.name)
+                case None => map + (key -> md)
+              }
+            }
+            case (map: Map[EnvironmentLookup, Referenceable], asn: AbstractSyntaxNode) => map
+          })
+
+        val staticFields:Seq[FieldDeclaration] = n.declarations.collect({
+          case f: FieldDeclaration if f.modifiers.contains(StaticKeyword) => f
+        })
+        val instanceFields:Seq[FieldDeclaration] = n.declarations.collect({
+          case f: FieldDeclaration if !f.modifiers.contains(StaticKeyword) => f
+        })
+
+        val fieldEnvironments = scopeTreeFromFieldDeclarations(
+          staticFields ++ instanceFields, declarationScope, root
+        )
+
+        val rightMostEnvironment = fieldEnvironments.lastOption match {
+          case Some((_ :AbstractSyntaxNode, e: Environment)) => e
+          case None => declarationScope
+        }
+
+        //  Methods live in an environment "to the right"
+        //  of all of the fields - that is, after they have
+        //  all been defined.
+        val methodEnvironment = new ScopeEnvironment(methodMapping, None, Seq.empty, rightMostEnvironment, Some(cd), linkedScopeReferences)
+
+        (
+          Map(cd -> methodEnvironment, n -> methodEnvironment)
+          ++ fieldEnvironments
+          ++ methodMapping.values.flatMap(traverse(_, methodEnvironment, root))
+          ++ (cd.superclass.toSeq ++ cd.modifiers.toSeq ++ cd.interfaces.toSeq).flatMap(traverse(_, methodEnvironment, root))
+        )
+      }
+
       case node: AbstractSyntaxNode => {
         val e = environmentFromNode(node, parent)
         Map(node -> e) ++ node.children.flatMap(traverse(_, e, root))
+      }
+    }
+  }
+
+  def scopeTreeFromFieldDeclarations(
+    statements: Seq[FieldDeclaration],
+    parent: Environment,
+    root: RootEnvironment
+  ): Seq[(AbstractSyntaxNode, Environment)] = {
+    statements.headOption match {
+      case None => Seq.empty[(AbstractSyntaxNode, Environment)]
+      case Some(fd: FieldDeclaration) => {
+        val fieldEnvironment = 
+          new ScopeEnvironment(Map(ExpressionNameLookup(fd.name) -> fd), None, Seq.empty, parent)
+        (
+          Seq((fd, fieldEnvironment)) ++ fd.children.flatMap(traverse(_, fieldEnvironment, root)).toSeq
+          ++ scopeTreeFromFieldDeclarations(statements.drop(1), fieldEnvironment, root)
+        )
       }
     }
   }
@@ -194,61 +287,6 @@ object EnvironmentBuilder {
         new ScopeEnvironment(locals, Some(packageScopeReference), importScopeReferences, parent)
       }
 
-      case cd: ClassDeclaration => {
-        val n: ClassBody = cd.body
-
-        val mapping: Map[EnvironmentLookup, Referenceable]
-          = n.declarations.foldLeft(Map.empty[EnvironmentLookup, Referenceable])({
-            case (map: Map[EnvironmentLookup, Referenceable], cd: ConstructorDeclaration) => {
-
-              //  TODO: We shouldn't just catch conflicting parameter /names/,
-              //  these should technically be different scopes for each param...
-              if (cd.parameters.map(_.name).toSet.size != cd.parameters.size) {
-                throw new SyntaxError("Duplicate parameter names in constructor.")
-              }
-
-              val key = ConstructorLookup(cd.name.value, cd.parameters.map(_.varType))
-              map.get(key) match {
-                case Some(_) => throw new SyntaxError("Duplicate constructor declaration for " + cd.name)
-                case None => map + (key -> cd)
-              }
-            }
-            case (map: Map[EnvironmentLookup, Referenceable], md: MethodDeclaration) => {
-
-              //  TODO: We shouldn't just catch conflicting parameter /names/,
-              //  these should technically be different scopes for each param...
-              if (md.parameters.map(_.name).toSet.size != md.parameters.size) {
-                throw new SyntaxError("Duplicate parameter names in constructor.")
-              }
-
-              val key = MethodLookup(md.name.value, md.parameters.map(_.varType))
-
-              map.get(key) match {
-                case Some(_) => throw new SyntaxError("Duplicate method declaration for " + md.name)
-                case None => map + (key -> md)
-              }
-            }
-            case (map: Map[EnvironmentLookup, Referenceable], fd: FieldDeclaration) => {
-              val key = ExpressionNameLookup(fd.name)
-              map.get(key) match {
-                case Some(_) => throw new SyntaxError("Duplicate field declaration for " + fd.name)
-                case None => map + (key -> fd)
-              }
-            }
-            case (map: Map[EnvironmentLookup, Referenceable], asn: AbstractSyntaxNode) => map
-          })
-
-        val linkedScopeReferences: Seq[EnvironmentLookup] = {
-          (cd.superclass.toSeq ++ cd.interfaces).flatMap {
-            case ClassType(tn: TypeName) => Some(TypeNameLookup(tn))
-            case InterfaceType(tn: TypeName) => Some(TypeNameLookup(tn))
-            case _ => None
-          }
-        }
-
-        new ScopeEnvironment(mapping, None, Seq.empty, parent, Some(cd), linkedScopeReferences)
-      }
-
       case n: InterfaceBody => {
         val mapping: Map[EnvironmentLookup, Referenceable]
           = n.declarations.foldLeft(Map.empty[EnvironmentLookup, Referenceable])({
@@ -268,7 +306,7 @@ object EnvironmentBuilder {
         val mapping = if (n.modifiers.contains(StaticKeyword)) {
           parameterMapping
         } else {
-          parent.node match {
+          parent.getEnclosingClassNode match {
             case Some(classDeclaration: ClassDeclaration) => {
               val thisExpression = QualifiedName(Seq(InputString("this"))).toExpressionName
               parameterMapping + (ExpressionNameLookup(thisExpression) -> classDeclaration)
@@ -283,7 +321,7 @@ object EnvironmentBuilder {
         if (f.modifiers.contains(StaticKeyword)) {
           parent
         } else {
-          parent.node match {
+          parent.getEnclosingClassNode match {
             case Some(classDeclaration: ClassDeclaration) => {
               val thisExpression = QualifiedName(Seq(InputString("this"))).toExpressionName
               val mapping: Map[EnvironmentLookup, Referenceable] = Map(ExpressionNameLookup(thisExpression) -> classDeclaration)

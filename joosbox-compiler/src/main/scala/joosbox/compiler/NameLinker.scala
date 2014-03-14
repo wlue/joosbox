@@ -111,7 +111,19 @@ object NameLinker {
 
   def check(node: AbstractSyntaxNode)(implicit mapping: EnvironmentMapping) {
     node match {
-      case p: Name => disambiguateName(p)(mapping.enclosingScopeOf(p).get)
+
+      //  TODO: Really nasty edge case for J1_fieldinit2.java
+      //  If we're in a FieldDeclaration and we assign to a name,
+      //  and that name does not exist (yet), we need to allow the
+      //  assignment anyways by looking up the referenced field anyways.
+      //  This should be done by picking out the ClassDeclaration, finding
+      //  the scope of the last ClassMemberDeclaration, and looking up
+      //  the assigned-to name in that scope.
+
+      case p: Name => disambiguateName(p)(mapping.enclosingScopeOf(p) match {
+        case Some(x) => x
+        case None => throw new SyntaxError("Enclosing scope of " + p + " not found.")
+      })
       case s: SimpleMethodInvocation => {
         val argTypes:Seq[Type] = s.args.flatMap {
           case x: StringLiteral => {
