@@ -101,7 +101,7 @@ object EnvironmentBuilder {
                 val env = new ScopeEnvironment(Map(key -> decl), None, Seq.empty, parent)
                 (
                   preDecls.flatMap(traverse(_, parent, root)).toMap
-                  ++ Map(decl -> env)
+                  ++ Map(decl -> env) ++ decl.children.flatMap(traverse(_, env, root)).toMap
                   ++ scopeTreeFromBlockStatements(decls.drop(1), env, root)
                 )
               }

@@ -48,7 +48,6 @@ object HierarchyChecker {
     InterfaceType,
     ClassType,
     Modifier,
-    SimpleName,
     QualifiedName,
     FinalKeyword,
     AbstractKeyword,

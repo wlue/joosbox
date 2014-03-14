@@ -65,7 +65,7 @@ object AbstractSyntaxNode {
     def niceName = value.value
     def isAmbiguous: Boolean = false
     def toSeq: Seq[InputString] = prefix match {
-      case Some(p: PackageName) => p.toSeq ++ Seq(value)
+      case Some(p: Name) => p.toSeq ++ Seq(value)
       case None => Seq(value)
     }
     def toQualifiedName: QualifiedName = QualifiedName(toSeq)
@@ -74,7 +74,7 @@ object AbstractSyntaxNode {
     def niceName = value.value
     def isAmbiguous: Boolean = false
     def toSeq: Seq[InputString] = prefix match {
-      case Some(p: PackageName) => p.toSeq ++ Seq(value)
+      case Some(p: Name) => p.toSeq ++ Seq(value)
       case None => Seq(value)
     }
     def toQualifiedName: QualifiedName = QualifiedName(toSeq)
@@ -85,6 +85,11 @@ object AbstractSyntaxNode {
       case Some(n: Name) => n.isAmbiguous
       case None => false
     }
+    def toSeq: Seq[InputString] = prefix match {
+      case Some(p: Name) => p.toSeq ++ Seq(value)
+      case None => Seq(value)
+    }
+    def toQualifiedName: QualifiedName = QualifiedName(toSeq)
   }
   case class MethodName(value: InputString, prefix: Option[Name] = None) extends Name {
     def niceName = value.value
@@ -92,6 +97,11 @@ object AbstractSyntaxNode {
       case Some(n: Name) => n.isAmbiguous
       case None => false
     }
+    def toSeq: Seq[InputString] = prefix match {
+      case Some(p: Name) => p.toSeq ++ Seq(value)
+      case None => Seq(value)
+    }
+    def toQualifiedName: QualifiedName = QualifiedName(toSeq)
   }
 
   //  Note we don't need PackageOrTypeName - Java seems to use it for nested classes.
@@ -101,6 +111,11 @@ object AbstractSyntaxNode {
   case class AmbiguousName(value: InputString, prefix: Option[Name] = None) extends Name {
     def niceName = value.value
     def isAmbiguous: Boolean = true
+    def toSeq: Seq[InputString] = prefix match {
+      case Some(p: Name) => p.toSeq ++ Seq(value)
+      case None => Seq(value)
+    }
+    def toQualifiedName: QualifiedName = QualifiedName(toSeq)
   }
 
   abstract class ClassBodyDeclaration(
@@ -263,13 +278,11 @@ object AbstractSyntaxNode {
   sealed trait Name extends PostfixExpression {
     def niceName: String
     def isAmbiguous: Boolean
-  }
-  case class SimpleName(value: InputString) extends Name {
-    def niceName: String = value.value
-    def isAmbiguous: Boolean = false
+    def toSeq: Seq[InputString]
   }
 
-  case class QualifiedName(value: Seq[InputString]) extends Name {
+  //  This no longer inherits from Name, as it's really just a helper atm.
+  case class QualifiedName(value: Seq[InputString]) extends AbstractSyntaxNode {
     def niceName: String = value.map(_.value).mkString(".")
     def isAmbiguous: Boolean = false
     def prefixesIncludingSelf: Seq[QualifiedName] = Seq(this) ++ prefixes
@@ -825,9 +838,11 @@ object AbstractSyntaxNode {
       }
 
       check_children(children.head) match {
+        //  UnaryExpression will give us an ExpressionName, but we want a TypeName
+        case y: ExpressionName => Seq(CastExpression(ClassOrInterfaceType(y.toQualifiedName.toTypeName)))
         case y: QualifiedName => Seq(CastExpression(ClassOrInterfaceType(y.toTypeName)))
         case y: PrimitiveType => Seq(CastExpression(y))
-        case _ => throw new SyntaxError("Casting with invalid cast type.")
+        case x => throw new SyntaxError("Casting with invalid cast type: " + x)
       }
     }
 
@@ -852,7 +867,10 @@ object AbstractSyntaxNode {
       Seq(num)
 
     case u: ParseNodes.UnaryExpression => {
-      val children: Seq[AbstractSyntaxNode] = u.children.flatMap(recursive(_))
+      val children = u.children.flatMap(recursive(_)).map(_ match {
+        case q: QualifiedName => q.toExpressionName
+        case a: AbstractSyntaxNode => a
+      })
       u.children match {
         case Seq(minus: ParseNodes.Minus, expr: ParseNodes.UnaryExpression) =>
           val parsed: Seq[AbstractSyntaxNode] = recursive(expr)
@@ -924,7 +942,6 @@ object AbstractSyntaxNode {
     case s: ParseNodes.SimpleName => Seq(QualifiedName(Seq(s.children(0).value.get)))
     case s: ParseNodes.QualifiedName =>
       Seq(QualifiedName(s.children.flatMap(recursive(_)).flatMap {
-        case n: SimpleName => Some(n.value)
         case n: Identifier => Some(n.value)
         case n: QualifiedName => n.value
         case _ => throw new SyntaxError("Qualified name contains non-identifiers.")
@@ -1025,14 +1042,20 @@ object AbstractSyntaxNode {
     }
 
     case r: ParseNodes.ReturnStatement => {
-      val children:Seq[AbstractSyntaxNode] = r.children.flatMap(recursive(_))
+      val children = r.children.flatMap(recursive(_)).map(_ match {
+        case q: QualifiedName => q.toExpressionName
+        case a: AbstractSyntaxNode => a
+      })
       val expression: Option[Expression] = children.collectFirst { case x: Expression => x }
       Seq(ReturnStatement(expression))
     }
 
 
     case e: ParseNodes.ConditionalOrExpression => {
-      val children = e.children.flatMap(recursive(_))
+      val children = e.children.flatMap(recursive(_)).map(_ match {
+        case q: QualifiedName => q.toExpressionName
+        case a: AbstractSyntaxNode => a
+      })
       e.children match {
         case Seq(e1: ParseNodes.ConditionalOrExpression, s: ParseNodes.LogicalOr, e2: ParseNodes.ConditionalAndExpression) => {
           children match {
@@ -1045,7 +1068,10 @@ object AbstractSyntaxNode {
     }
 
     case e: ParseNodes.ConditionalAndExpression => {
-      val children = e.children.flatMap(recursive(_))
+      val children = e.children.flatMap(recursive(_)).map(_ match {
+        case q: QualifiedName => q.toExpressionName
+        case a: AbstractSyntaxNode => a
+      })
       e.children match {
         case Seq(e1: ParseNodes.ConditionalAndExpression, s: ParseNodes.LogicalAnd, e2: ParseNodes.InclusiveOrExpression) => {
           children match {
@@ -1058,7 +1084,10 @@ object AbstractSyntaxNode {
     }
 
     case e: ParseNodes.InclusiveOrExpression => {
-      val children = e.children.flatMap(recursive(_))
+      val children = e.children.flatMap(recursive(_)).map(_ match {
+        case q: QualifiedName => q.toExpressionName
+        case a: AbstractSyntaxNode => a
+      })
       e.children match {
         case Seq(e1: ParseNodes.InclusiveOrExpression, s: ParseNodes.BinaryOr, e2: ParseNodes.ExclusiveOrExpression) => {
           children match {
@@ -1071,7 +1100,10 @@ object AbstractSyntaxNode {
     }
 
     case e: ParseNodes.ExclusiveOrExpression => {
-      val children = e.children.flatMap(recursive(_))
+      val children = e.children.flatMap(recursive(_)).map(_ match {
+        case q: QualifiedName => q.toExpressionName
+        case a: AbstractSyntaxNode => a
+      })
       e.children match {
         case Seq(e1: ParseNodes.ExclusiveOrExpression, s: ParseNodes.BinaryXor, e2: ParseNodes.AndExpression) => {
           children match {
@@ -1084,7 +1116,10 @@ object AbstractSyntaxNode {
     }
 
     case e: ParseNodes.AndExpression => {
-      val children = e.children.flatMap(recursive(_))
+      val children = e.children.flatMap(recursive(_)).map(_ match {
+        case q: QualifiedName => q.toExpressionName
+        case a: AbstractSyntaxNode => a
+      })
       e.children match {
         case Seq(e1: ParseNodes.AndExpression, s: ParseNodes.BinaryAnd, e2: ParseNodes.EqualityExpression) => {
           children match {
@@ -1097,7 +1132,10 @@ object AbstractSyntaxNode {
     }
 
     case e: ParseNodes.EqualityExpression => {
-      val children = e.children.flatMap(recursive(_))
+      val children = e.children.flatMap(recursive(_)).map(_ match {
+        case q: QualifiedName => q.toExpressionName
+        case a: AbstractSyntaxNode => a
+      })
       e.children match {
         case Seq(e1: ParseNodes.EqualityExpression, s: ParseNodes.Equal, e2: ParseNodes.RelationalExpression) => {
           children match {
@@ -1116,7 +1154,10 @@ object AbstractSyntaxNode {
     }
 
     case e: ParseNodes.RelationalExpression => {
-      val children = e.children.flatMap(recursive(_))
+      val children = e.children.flatMap(recursive(_)).map(_ match {
+        case q: QualifiedName => q.toExpressionName
+        case a: AbstractSyntaxNode => a
+      })
       e.children match {
         case Seq(e1: ParseNodes.RelationalExpression, s: ParseNodes.LessThan, e2: ParseNodes.AdditiveExpression) => {
           children match {
@@ -1153,7 +1194,10 @@ object AbstractSyntaxNode {
     }
 
     case e: ParseNodes.AdditiveExpression => {
-      val children = e.children.flatMap(recursive(_))
+      val children = e.children.flatMap(recursive(_)).map(_ match {
+        case q: QualifiedName => q.toExpressionName
+        case a: AbstractSyntaxNode => a
+      })
 
       e.children match {
         case Seq(e1: ParseNodes.AdditiveExpression, s: ParseNodes.Plus, e2: ParseNodes.MultiplicativeExpression) => {
@@ -1173,7 +1217,10 @@ object AbstractSyntaxNode {
     }
 
     case e: ParseNodes.MultiplicativeExpression => {
-      val children = e.children.flatMap(recursive(_))
+      val children = e.children.flatMap(recursive(_)).map(_ match {
+        case q: QualifiedName => q.toExpressionName
+        case a: AbstractSyntaxNode => a
+      })
       e.children match {
         case Seq(e1: ParseNodes.MultiplicativeExpression, s: ParseNodes.Star, e2: ParseNodes.UnaryExpression) => {
           children match {
