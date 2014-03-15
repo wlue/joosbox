@@ -104,7 +104,7 @@ object EnvironmentBuilder {
               }
 
               val key = MethodLookup(md.name.toQualifiedName, md.parameters.map(_.varType))
-              println("Inserting method lookup: " + key)
+//              println("Inserting method lookup: " + key)
 
               map.get(key) match {
                 case Some(_) => throw new SyntaxError("Duplicate method declaration for " + md.name)
