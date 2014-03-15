@@ -320,8 +320,10 @@ object TypeChecker {
             }
 
             val argTypes: Seq[Type] = resolvedTypesForArgs(args)
-            env.lookup(MethodLookup(QualifiedName(Seq(name.value)), argTypes)) match {
-              case None => throw new SyntaxError("Invoking " + name.niceName + " does not resolve.")
+            val lookup = MethodLookup(QualifiedName(Seq(name.value)), argTypes)
+            env.lookup(lookup) match {
+              case None =>
+                throw new SyntaxError("Invoking " + name.niceName + " does not resolve.")
               case Some(result) => result match {
                 case method: MethodDeclaration => Some(method.memberType)
                 case method: InterfaceMemberDeclaration => Some(method.memberType)

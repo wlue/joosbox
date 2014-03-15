@@ -365,16 +365,12 @@ object AbstractSyntaxNode {
   case object IntKeyword extends NumericType
   case object CharKeyword extends NumericType
 
-  class FormalParameter(
+  case class FormalParameter(
     val name: ExpressionName,
     val varType: Type
   ) extends AbstractSyntaxNode with Referenceable {
     override def children: List[AbstractSyntaxNode] = List(varType)
     override def toString: String = "FormalParameter(" + name + ", " + varType + ")"
-  }
-
-  object FormalParameter {
-    def apply(name: ExpressionName, varType: Type) = new FormalParameter(name, varType)
   }
 
   case class ArrayType(subtype: Type) extends ReferenceType {
@@ -412,7 +408,8 @@ object AbstractSyntaxNode {
 
     //  This was added so that we can disambiguate identical
     //  classes/interfaces that are declared in different files.
-    var parent: Option[CompilationUnit] = None
+    var parent: Option[CompilationUnit] = None,
+    var fullyQualifiedName: Option[TypeName] = None
   ) extends AbstractSyntaxNode with Referenceable {
     override def children: List[AbstractSyntaxNode] =
       modifiers.toList ++ interfaces.toList
