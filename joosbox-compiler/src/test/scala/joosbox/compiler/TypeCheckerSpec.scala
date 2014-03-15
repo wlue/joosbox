@@ -22,12 +22,12 @@ class FailTypeCheckerSpec extends Specification {
   }
 
   "Type Checker" should {
-      "J1_ArrayInterfaces.java" in {
-        val files = filesForTest("J1_ArrayInterfaces.java") ++ stdlibFilePaths
-        CompilerRunner.runTestable(files.toArray)// must not(throwA[Exception])
-        true
-      }
+    "J1_A_ConcatInStaticInvoke.java" in {
+      val files = filesForTest("J1_A_ConcatInStaticInvoke.java") ++ stdlibFilePaths
+      CompilerRunner.runTestable(files.toArray)// must not(throwA[Exception])
+      true
     }
+  }
 }
 
 class TypeCheckerSpec extends Specification {

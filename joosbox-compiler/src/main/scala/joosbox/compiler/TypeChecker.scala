@@ -21,6 +21,17 @@ object TypeChecker {
     Map.empty
   }
 
+  def resolveTypeName(name: TypeName, env: Environment)(implicit mapping: EnvironmentMapping): Option[Type] = {
+    env.lookup(TypeNameLookup(name)) match {
+      case None => throw new SyntaxError("TypeName " + name.niceName + " does not resolve to a type.")
+      case Some(result) => result match {
+        case _: ClassDeclaration => Some(ClassType(name))
+        case _: InterfaceDeclaration => Some(InterfaceType(name))
+        case _ => throw new SyntaxError("Name " + name.niceName + " does not resolve to a class or interface type.")
+      }
+    }
+  }
+
   def resolveExpressionName(name: ExpressionName, env: Environment)(implicit mapping: EnvironmentMapping): Option[Type] = {
     var tmpEnv = env
     if (!name.prefix.isEmpty) {
@@ -184,13 +195,9 @@ object TypeChecker {
       case FalseLiteral => Some(BooleanKeyword)
       case ThisKeyword =>
         val env = mapping.enclosingScopeOf(node).get
-        val thisExpression = QualifiedName(Seq(InputString("this"))).toExpressionName
-        env.lookup(ExpressionNameLookup(thisExpression)) match {
-          case Some(result) => result match {
-            case decl: ClassDeclaration => resolveType(decl.name)
-            case _ => throw new SyntaxError("this resolved to non-class declaration.")
-          }
-          case None => throw new SyntaxError("this could not be resolved.")
+        env.getEnclosingClassNode match {
+          case Some(declaration: ClassDeclaration) => resolveType(declaration.name)
+          case _ => throw new SyntaxError("this resolved to non-class declaration.")
         }
 
       case Num(value, _) => Some(IntKeyword)
@@ -208,12 +215,11 @@ object TypeChecker {
 
         case e: PostfixExpression => e match {
           case name: ExpressionName => {
-            var env = mapping.enclosingScopeOf(node).get
+            val env = mapping.enclosingScopeOf(node).get
             if (!name.prefix.isEmpty) {
-              val n = NameLinker.disambiguateName(name)(env)
-              n match {
-                case n:ExpressionName => resolveExpressionName(n, env)
-                case other => throw new SyntaxError("Expression name " + name.niceName + " disambiguates weird.")
+              NameLinker.disambiguateName(name)(env) match {
+                case n: ExpressionName => resolveExpressionName(n, env)
+                case _ => throw new SyntaxError("Expression name " + name.niceName + " disambiguates weird.")
               }
             } else {
               resolveExpressionName(name, env)
@@ -222,14 +228,7 @@ object TypeChecker {
 
           case name: TypeName => {
             val env = mapping.enclosingScopeOf(node).get
-            env.lookup(TypeNameLookup(name)) match {
-              case None => throw new SyntaxError("TypeName " + name.niceName + " does not resolve to a type.")
-              case Some(result) => result match {
-                case _: ClassDeclaration => Some(ClassType(name))
-                case _: InterfaceDeclaration => Some(InterfaceType(name))
-                case _ => throw new SyntaxError("Name " + name.niceName + " does not resolve to a class or interface type.")
-              }
-            }
+            resolveTypeName(name, env)
           }
 
           // TODO - I think these should be None, but not sure
@@ -277,7 +276,7 @@ object TypeChecker {
 
         case FieldAccess(ref, name) => {
           val env = mapping.enclosingScopeOf(node).get
-          val scope:Environment = resolvePrimaryAndFindScope(ref, env)
+          val scope: Environment = resolvePrimaryAndFindScope(ref, env)
           val fieldName: ExpressionName = ExpressionName(name)
 
           scope.lookup(ExpressionNameLookup(fieldName)) match {
@@ -298,22 +297,26 @@ object TypeChecker {
         case ArrayCreationPrimary(t, _) => Some(t)
         case ClassCreationPrimary(t, _) => Some(t)
 
-        case method : MethodInvocation => method match {
+        case method: MethodInvocation => method match {
           case SimpleMethodInvocation(name, args) => {
             var env = mapping.enclosingScopeOf(node).get
-            if (!name.prefix.isEmpty) {
-              val n = NameLinker.disambiguateName(name.prefix.get)(env)
-              val t: Option[Type] = resolveType(n)
-              env = t match {
-                case None => throw new SyntaxError("Couldn't resolve.")
+
+            val n = NameLinker.disambiguateName(name)(env).asInstanceOf[MethodName]
+            n.prefix.foreach { namePrefix =>
+              val typeOption: Option[Type] = namePrefix match {
+                case name: ExpressionName => resolveExpressionName(name, env)
+                case name: TypeName => resolveTypeName(name, env)
+                case _ => throw new SyntaxError("Invalid prefix for MethodName: " + namePrefix)
+              }
+
+              env = typeOption match {
                 case Some(ClassType(n)) =>
                   mapping.enclosingScopeOf(env.lookup(TypeNameLookup(n)).get).get
                 case Some(InterfaceType(n)) =>
                   mapping.enclosingScopeOf(env.lookup(TypeNameLookup(n)).get).get
                 case Some(ClassOrInterfaceType(n)) =>
                   mapping.enclosingScopeOf(env.lookup(TypeNameLookup(n)).get).get
-                case Some(_) =>
-                  throw new SyntaxError("Couldn't resolve correctly.")
+                case _ => throw new SyntaxError("Couldn't resolve type " + typeOption + ".")
               }
             }
 
@@ -347,17 +350,6 @@ object TypeChecker {
         case _ => None
       }
 
-      case statement: Statement => statement match {
-        case ReturnStatement(expr) =>
-          if (expr.isEmpty) {
-            Some(VoidKeyword)
-          } else {
-            resolveType(expr.get)
-          }
-        // Loops, ifs, etc. don't make sense to check for type 
-        case _ =>  None
-      }
-
       // Some nodes just don't make sense to every look/check for type
       case _ =>  None
     }
@@ -377,13 +369,23 @@ object TypeChecker {
   def check(node: AbstractSyntaxNode)(implicit mapping: EnvironmentMapping) {
     val env = mapping.enclosingScopeOf(node).get
     node match {
-      case e: AndExpression =>
-        TypeChecker.checkLogicalExpression(e.e1, e.e2)
-      case e: OrExpression =>
-        TypeChecker.checkLogicalExpression(e.e1, e.e2)
+      // Check that no bitwise operations occur.
+      case AndExpression(e1, e2) => TypeChecker.checkLogicalExpression(e1, e2)
+      case OrExpression(e1, e2) => TypeChecker.checkLogicalExpression(e1, e2)
+
+      // Check that the implicit this variable is not accessed in a static method or in the initializer of a static field.
+      case ThisKeyword => resolveType(node)
+
+      // Check that fields/methods accessed as static are actually static, and that fields/methods
+      // accessed as non-static are actually non-static.
+      case method: SimpleMethodInvocation => {
+        resolveType(method)
+      }
+
       case c: ClassCreationPrimary => {
         val className: TypeName = c.classType.name
         env.lookup(TypeNameLookup(className)) match {
+          // Check that no objects of abstract classes are created.
           case Some(klass: ClassDeclaration) => {
             if (klass.modifiers.contains(AbstractKeyword)) {
               throw new SyntaxError("Can't create instances of an abstract class.")
