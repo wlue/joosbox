@@ -1,9 +1,7 @@
 package joosbox.compiler
 
-import joosbox.parser.Parser
+import joosbox.parser.{ScopeEnvironment, Parser, AbstractSyntaxNode, EnvironmentBuilder}
 import joosbox.lexer.SyntaxError
-import joosbox.parser.AbstractSyntaxNode
-import joosbox.parser.EnvironmentBuilder
 
 import AbstractSyntaxNode.CompilationUnit
 
@@ -40,8 +38,18 @@ object CompilerRunner {
     val root = EnvironmentBuilder.build(nodes)
     TypeLinker.link(nodes, root)
     HierarchyChecker.link(nodes)
-    //mapping.validateEnvironments
+
+    nodes.foreach(enableScopeLinking(_))
+
     NameLinker.link(nodes)
     TypeChecker.link(nodes)
+  }
+
+  def enableScopeLinking(node: AbstractSyntaxNode): Unit = {
+    node.scope match {
+      case Some(scope: ScopeEnvironment) => scope.useLinkedScopes = true
+      case None => Unit
+    }
+    node.children.foreach(enableScopeLinking(_))
   }
 }
