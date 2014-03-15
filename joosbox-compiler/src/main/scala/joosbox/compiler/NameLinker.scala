@@ -148,6 +148,7 @@ object NameLinker {
 
       case m: MethodName => Unit
       case p: PackageName => Unit
+      case a: AmbiguousName => Unit
 
       case p: Name => TypeChecker.resolveType(p) match {
         case Some(_) => Unit
