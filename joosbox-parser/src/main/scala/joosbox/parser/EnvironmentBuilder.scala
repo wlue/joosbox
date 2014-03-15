@@ -1,15 +1,13 @@
-package joosbox.compiler
+package joosbox.parser
 
 import joosbox.lexer.{
   SyntaxError,
   InputString
 }
-
-import joosbox.parser.AbstractSyntaxNode
-import joosbox.parser.AbstractSyntaxNode._
+import AbstractSyntaxNode._
 
 object EnvironmentBuilder {
-  def build(nodes: Seq[CompilationUnit]): EnvironmentMapping = {
+  def build(nodes: Seq[CompilationUnit]): RootEnvironment = {
     val parent = new RootEnvironment(nodes)
     val astMapping:Seq[Map[AbstractSyntaxNode, Environment]] = nodes.map(traverse(_, parent, parent))
 
@@ -52,25 +50,29 @@ object EnvironmentBuilder {
       })
     })
 
-    new EnvironmentMapping(parent, mapping)
+    parent
   }
 
   def traverse(node: AbstractSyntaxNode, parent: Environment, root: RootEnvironment): Map[AbstractSyntaxNode, Environment] = {
-    node match {
+    val r = node match {
       //  Special case for Blocks - we need to unroll their contents and make nested scopes.
       case Block(seq: Seq[BlockStatement]) => {
 
         val e = new ScopeEnvironment(Map.empty, None, Seq.empty, parent)
         val scopetree = scopeTreeFromBlockStatements(seq, e, root)
+        if (node.scope == None) {
+          node.scope = Some(e)
+        }
+
         node.children.flatMap(traverse(_, e, root)).toMap ++ scopetree ++ Map(node -> e)
       }
 
       case cd: ClassDeclaration => {
         val linkedScopeReferences: Seq[EnvironmentLookup] = {
           (cd.superclass.toSeq ++ cd.interfaces).flatMap {
-            case ClassType(tn: TypeName) => Some(TypeNameLookup(tn))
-            case InterfaceType(tn: TypeName) => Some(TypeNameLookup(tn))
-            case _ => None  
+            case ClassType(tn: TypeName) => Some(TypeNameLookup(tn.toQualifiedName))
+            case InterfaceType(tn: TypeName) => Some(TypeNameLookup(tn.toQualifiedName))
+            case _ => None
           }
         }
 
@@ -87,7 +89,7 @@ object EnvironmentBuilder {
                 throw new SyntaxError("Duplicate parameter names in constructor.")
               }
 
-              val key = ConstructorLookup(cd.name.value, cd.parameters.map(_.varType))
+              val key = ConstructorLookup(cd.name.toQualifiedName, cd.parameters.map(_.varType))
               map.get(key) match {
                 case Some(_) => throw new SyntaxError("Duplicate constructor declaration for " + cd.name)
                 case None => map + (key -> cd)
@@ -101,7 +103,8 @@ object EnvironmentBuilder {
                 throw new SyntaxError("Duplicate parameter names in constructor.")
               }
 
-              val key = MethodLookup(md.name.value, md.parameters.map(_.varType))
+              val key = MethodLookup(md.name.toQualifiedName, md.parameters.map(_.varType))
+              println("Inserting method lookup: " + key)
 
               map.get(key) match {
                 case Some(_) => throw new SyntaxError("Duplicate method declaration for " + md.name)
@@ -131,7 +134,8 @@ object EnvironmentBuilder {
         //  of all of the fields - that is, after they have
         //  all been defined.
         val methodEnvironment = new ScopeEnvironment(methodMapping, None, Seq.empty, rightMostEnvironment, Some(cd), linkedScopeReferences)
-
+        cd.scope = Some(methodEnvironment)
+        n.scope = Some(methodEnvironment)
         (
           Map(cd -> methodEnvironment, n -> methodEnvironment)
           ++ fieldEnvironments
@@ -142,9 +146,16 @@ object EnvironmentBuilder {
 
       case node: AbstractSyntaxNode => {
         val e = environmentFromNode(node, parent)
+        if (node.scope == None) {
+          node.scope = Some(e)
+        }
         Map(node -> e) ++ node.children.flatMap(traverse(_, e, root))
       }
     }
+    if (node.scope == None) {
+      throw new SyntaxError("Node scope is None - this should never happen!")
+    }
+    r
   }
 
   def scopeTreeFromFieldDeclarations(
@@ -156,7 +167,10 @@ object EnvironmentBuilder {
       case None => Seq.empty[(AbstractSyntaxNode, Environment)]
       case Some(fd: FieldDeclaration) => {
         val fieldEnvironment = 
-          new ScopeEnvironment(Map(ExpressionNameLookup(fd.name) -> fd), None, Seq.empty, parent)
+          new ScopeEnvironment(Map(ExpressionNameLookup(fd.name.toQualifiedName) -> fd), None, Seq.empty, parent)
+        if (fd.scope == None) {
+          fd.scope = Some(fieldEnvironment)
+        }
         (
           Seq((fd, fieldEnvironment)) ++ fd.children.flatMap(traverse(_, fieldEnvironment, root)).toSeq
           ++ scopeTreeFromFieldDeclarations(statements.drop(1), fieldEnvironment, root)
@@ -182,7 +196,7 @@ object EnvironmentBuilder {
         decls.headOption match {
           case Some(decl: LocalVariableDeclaration) => {
             //  Declaration implicitly creates a new scope for itself and everything after it.
-            val key = ExpressionNameLookup(decl.name)
+            val key = ExpressionNameLookup(decl.name.toQualifiedName)
             parent.lookup(key) match {
               case Some(local: LocalVariableDeclaration)
                 => throw new SyntaxError("Redefinition of " + decl.name + " (previous definition: " + local + ")")
@@ -192,6 +206,9 @@ object EnvironmentBuilder {
                 => throw new SyntaxError("Redefinition of " + decl.name + " (conflicts with parameter: " + param + ")")
               case _ => {
                 val env = new ScopeEnvironment(Map(key -> decl), None, Seq.empty, parent)
+                if (decl.scope == None) {
+                  decl.scope = Some(env)
+                }
                 (
                   preDecls.flatMap(traverse(_, parent, root)).toMap
                   ++ Map(decl -> env) ++ decl.children.flatMap(traverse(_, env, root)).toMap
@@ -207,7 +224,7 @@ object EnvironmentBuilder {
             update: Option[StatementExpression],
             statement: Statement
           )) => {
-            val key = ExpressionNameLookup(decl.variableName)
+            val key = ExpressionNameLookup(decl.variableName.toQualifiedName)
             parent.lookup(key) match {
               case Some(local: LocalVariableDeclaration)
                 => throw new SyntaxError("Redefinition of " + decl.variableName + " (previous definition: " + local + ")")
@@ -217,6 +234,9 @@ object EnvironmentBuilder {
                 => throw new SyntaxError("Redefinition of " + decl.variableName + " (conflicts with parameter: " + param + ")")
               case _ => {
                 val env = new ScopeEnvironment(Map(key -> decl), None, Seq.empty, parent)
+                if (decl.scope == None) {
+                  decl.scope = Some(env)
+                }
                 (
                   Map(decl -> env) ++
                   (check.toSeq ++ update.toSeq ++ Seq(statement)).flatMap(traverse(_, env, root)).toMap
@@ -251,8 +271,8 @@ object EnvironmentBuilder {
           case i: SingleTypeImportDeclaration => {
             i.name match {
               case t: TypeName => {
-                parent.search(TypeNameLookup(t)) match {
-                  case Some(r: Referenceable) => Some(TypeNameLookup(TypeName(t.value)) -> r)
+                parent.search(TypeNameLookup(t.toQualifiedName)) match {
+                  case Some(r: Referenceable) => Some(TypeNameLookup(TypeName(t.value).toQualifiedName) -> r)
                   case None => throw new SyntaxError("Type import '" + i.name + "' not found in " + parent)
                 }
               }
@@ -262,7 +282,7 @@ object EnvironmentBuilder {
         }.toMap
 
         val locals: Map[EnvironmentLookup, Referenceable] = (
-          n.typeDeclaration.map(x => (TypeNameLookup(x.name), x)).toMap
+          n.typeDeclaration.map(x => (TypeNameLookup(x.name.toQualifiedName), x)).toMap
           ++ explicitImports
         )
 
@@ -284,60 +304,66 @@ object EnvironmentBuilder {
           Seq(PackageNameLookup(QualifiedName(Seq(InputString("java"), InputString("lang"))).toPackageName)) ++ imports
         }
 
-        new ScopeEnvironment(locals, Some(packageScopeReference), importScopeReferences, parent)
+        n.scope = Some(new ScopeEnvironment(locals, Some(packageScopeReference), importScopeReferences, parent))
+        n.scope.get
       }
 
       case n: InterfaceBody => {
         val mapping: Map[EnvironmentLookup, Referenceable]
           = n.declarations.foldLeft(Map.empty[EnvironmentLookup, Referenceable])({
             case (map: Map[EnvironmentLookup, Referenceable], md: InterfaceMemberDeclaration) => {
-              val key = MethodLookup(md.name, md.parameters.map(_.varType))
+              val key = MethodLookup(MethodName(md.name).toQualifiedName, md.parameters.map(_.varType))
               map.get(key) match {
                 case Some(_) => throw new SyntaxError("Duplicate method declaration for " + md.name)
                 case None => map + (key -> md)
               }
             }
           })
-        new ScopeEnvironment(mapping, None, Seq.empty, parent)
+        n.scope = Some(new ScopeEnvironment(mapping, None, Seq.empty, parent))
+        n.scope.get
       }
 
       case n: MethodDeclaration => {
-        val parameterMapping: Map[EnvironmentLookup, Referenceable] = n.parameters.map(fp => (ExpressionNameLookup(fp.name), fp)).toMap
+        val parameterMapping: Map[EnvironmentLookup, Referenceable]
+          = n.parameters.map(fp => (ExpressionNameLookup(fp.name.toQualifiedName), fp)).toMap
         val mapping = if (n.modifiers.contains(StaticKeyword)) {
           parameterMapping
         } else {
           parent.getEnclosingClassNode match {
             case Some(classDeclaration: ClassDeclaration) => {
               val thisExpression = QualifiedName(Seq(InputString("this"))).toExpressionName
-              parameterMapping + (ExpressionNameLookup(thisExpression) -> classDeclaration)
+              parameterMapping + (ExpressionNameLookup(thisExpression.toQualifiedName) -> classDeclaration)
             }
             case _ => parameterMapping
           }
         }
-        new ScopeEnvironment(mapping, None, Seq.empty, parent)
+        n.scope = Some(new ScopeEnvironment(mapping, None, Seq.empty, parent))
+        n.scope.get
       }
 
       case f: FieldDeclaration => {
-        if (f.modifiers.contains(StaticKeyword)) {
+        f.scope = Some(if (f.modifiers.contains(StaticKeyword)) {
           parent
         } else {
           parent.getEnclosingClassNode match {
             case Some(classDeclaration: ClassDeclaration) => {
               val thisExpression = QualifiedName(Seq(InputString("this"))).toExpressionName
-              val mapping: Map[EnvironmentLookup, Referenceable] = Map(ExpressionNameLookup(thisExpression) -> classDeclaration)
+              val mapping: Map[EnvironmentLookup, Referenceable] = Map(ExpressionNameLookup(thisExpression.toQualifiedName) -> classDeclaration)
               new ScopeEnvironment(mapping, None, Seq.empty, parent)
             }
             case _ => parent
           }
-        }
+        })
+        f.scope.get
       }
 
       case n: ConstructorDeclaration => {
-        val mapping: Map[EnvironmentLookup, Referenceable] = n.parameters.map(fp => (ExpressionNameLookup(fp.name), fp)).toMap
-        new ScopeEnvironment(mapping, None, Seq.empty, parent)
+        val mapping: Map[EnvironmentLookup, Referenceable] = n.parameters.map(fp => (ExpressionNameLookup(fp.name.toQualifiedName), fp)).toMap
+        n.scope = Some(new ScopeEnvironment(mapping, None, Seq.empty, parent))
+        n.scope.get
       }
 
-      case _ => parent
+      case n: AbstractSyntaxNode => parent
     }
   }
 }

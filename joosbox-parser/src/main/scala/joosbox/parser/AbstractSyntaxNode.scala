@@ -10,6 +10,7 @@ sealed trait AbstractSyntaxNode {
   def simpleString(indent: Int = 0): String = {
     (" " * indent) + this.getClass.getSimpleName + "\n" + children.map(_.simpleString(indent + 2)).mkString("")
   }
+  var scope: Option[Environment] = None
 }
 
 object AbstractSyntaxNode {
@@ -69,6 +70,10 @@ object AbstractSyntaxNode {
       case None => Seq(value)
     }
     def toQualifiedName: QualifiedName = QualifiedName(toSeq)
+    override def children: List[AbstractSyntaxNode] = prefix match {
+      case Some(n: Name) => List(n) ++ n.children
+      case None => List.empty[AbstractSyntaxNode]
+    }
   }
   case class TypeName(value: InputString, prefix: Option[PackageName] = None) extends Name {
     def niceName = value.value
@@ -78,6 +83,10 @@ object AbstractSyntaxNode {
       case None => Seq(value)
     }
     def toQualifiedName: QualifiedName = QualifiedName(toSeq)
+    override def children: List[AbstractSyntaxNode] = prefix match {
+      case Some(n: Name) => List(n) ++ n.children
+      case None => List.empty[AbstractSyntaxNode]
+    }
   }
   case class ExpressionName(value: InputString, prefix: Option[Name] = None) extends Name {
     def niceName = value.value
@@ -90,6 +99,10 @@ object AbstractSyntaxNode {
       case None => Seq(value)
     }
     def toQualifiedName: QualifiedName = QualifiedName(toSeq)
+    override def children: List[AbstractSyntaxNode] = prefix match {
+      case Some(n: Name) => List(n) ++ n.children
+      case None => List.empty[AbstractSyntaxNode]
+    }
   }
   case class MethodName(value: InputString, prefix: Option[Name] = None) extends Name {
     def niceName = value.value
@@ -102,12 +115,12 @@ object AbstractSyntaxNode {
       case None => Seq(value)
     }
     def toQualifiedName: QualifiedName = QualifiedName(toSeq)
+    override def children: List[AbstractSyntaxNode] = prefix match {
+      case Some(n: Name) => List(n) ++ n.children
+      case None => List.empty[AbstractSyntaxNode]
+    }
   }
 
-  //  Note we don't need PackageOrTypeName - Java seems to use it for nested classes.
-  /*case class PackageOrTypeName(value: InputString, prefix: Option[PackageOrTypeName]) extends Name {
-    def niceName = value.value
-  }*/
   case class AmbiguousName(value: InputString, prefix: Option[Name] = None) extends Name {
     def niceName = value.value
     def isAmbiguous: Boolean = true
@@ -116,6 +129,10 @@ object AbstractSyntaxNode {
       case None => Seq(value)
     }
     def toQualifiedName: QualifiedName = QualifiedName(toSeq)
+    override def children: List[AbstractSyntaxNode] = prefix match {
+      case Some(n: Name) => List(n) ++ n.children
+      case None => List.empty[AbstractSyntaxNode]
+    }
   }
 
   abstract class ClassBodyDeclaration(
@@ -348,11 +365,16 @@ object AbstractSyntaxNode {
   case object IntKeyword extends NumericType
   case object CharKeyword extends NumericType
 
-  case class FormalParameter(
+  class FormalParameter(
     val name: ExpressionName,
     val varType: Type
   ) extends AbstractSyntaxNode with Referenceable {
     override def children: List[AbstractSyntaxNode] = List(varType)
+    override def toString: String = "FormalParameter(" + name + ", " + varType + ")"
+  }
+
+  object FormalParameter {
+    def apply(name: ExpressionName, varType: Type) = new FormalParameter(name, varType)
   }
 
   case class ArrayType(subtype: Type) extends ReferenceType {

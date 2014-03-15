@@ -4,6 +4,8 @@ import joosbox.parser.AbstractSyntaxNode
 import joosbox.lexer.InputString
 import joosbox.lexer.SyntaxError
 
+import joosbox.parser._
+
 import AbstractSyntaxNode.CompilationUnit
 import AbstractSyntaxNode.Referenceable
 
@@ -11,18 +13,13 @@ import AbstractSyntaxNode.Referenceable
 object TypeChecker {
   import AbstractSyntaxNode._
 
-  def link(
-    units: Seq[CompilationUnit],
-    mapping: EnvironmentMapping
-  ): Map[Any, Referenceable] = {
-    units.foreach { unit =>
-      TypeChecker.check(unit)(mapping)
-    }
+  def link(units: Seq[CompilationUnit]): Map[Any, Referenceable] = {
+    units.foreach { unit => TypeChecker.check(unit) }
     Map.empty
   }
 
-  def resolveTypeName(name: TypeName, env: Environment)(implicit mapping: EnvironmentMapping): Option[Type] = {
-    env.lookup(TypeNameLookup(name)) match {
+  def resolveTypeName(name: TypeName, env: Environment): Option[Type] = {
+    env.lookup(TypeNameLookup(name.toQualifiedName)) match {
       case None => throw new SyntaxError("TypeName " + name.niceName + " does not resolve to a type.")
       case Some(result) => result match {
         case _: ClassDeclaration => Some(ClassType(name))
@@ -32,7 +29,7 @@ object TypeChecker {
     }
   }
 
-  def resolveExpressionName(name: ExpressionName, env: Environment)(implicit mapping: EnvironmentMapping): Option[Type] = {
+  def resolveExpressionName(name: ExpressionName, env: Environment): Option[Type] = {
     var tmpEnv = env
     if (!name.prefix.isEmpty) {
       val t:Option[Type] = name.prefix.get match {
@@ -44,32 +41,32 @@ object TypeChecker {
         case None => throw new SyntaxError("ExpressionName " + name.prefix.get.niceName + " does not resolve to a type.")
         case Some(result) => result match {
           case x: ClassOrInterfaceType => {
-            val xNode = env.lookup(TypeNameLookup(x.name)).get match {
+            val xNode = env.lookup(TypeNameLookup(x.name.toQualifiedName)).get match {
               case cd: ClassDeclaration => cd.body
               case id: InterfaceDeclaration => id.body
               case _ => throw new SyntaxError("Invalid declaration.")
             }
-            val xEnv = mapping.enclosingScopeOf(xNode).get
+            val xEnv = xNode.scope.get
             tmpEnv = xEnv
           }
 
           case c: ClassType => {
-            val cNode = env.lookup(TypeNameLookup(c.name)).get match {
+            val cNode = env.lookup(TypeNameLookup(c.name.toQualifiedName)).get match {
               case cd: ClassDeclaration => cd.body
               case id: InterfaceDeclaration => id.body
               case _ => throw new SyntaxError("Invalid declaration.")
             }
-            val cEnv = mapping.enclosingScopeOf(cNode).get
+            val cEnv = cNode.scope.get
             tmpEnv = cEnv
           }
 
           case i: InterfaceType => {
-            val iNode = env.lookup(TypeNameLookup(i.name)).get match {
+            val iNode = env.lookup(TypeNameLookup(i.name.toQualifiedName)).get match {
               case cd: ClassDeclaration => cd.body
               case id: InterfaceDeclaration => id.body
               case _ => throw new SyntaxError("Invalid declaration.")
             }
-            val iEnv = mapping.enclosingScopeOf(iNode).get
+            val iEnv = iNode.scope.get
             tmpEnv = iEnv
           }
 
@@ -86,7 +83,7 @@ object TypeChecker {
       }
     }
 
-    tmpEnv.lookup(ExpressionNameLookup(ExpressionName(name.value))) match {
+    tmpEnv.lookup(ExpressionNameLookup(ExpressionName(name.value).toQualifiedName)) match {
       case None => throw new SyntaxError("ExpressionName " + name.niceName + " does not resolve to a type.")
       case Some(result) => result match {
         case p: FormalParameter => Some(p.varType)
@@ -98,7 +95,7 @@ object TypeChecker {
     }
   }
 
-  def resolvedTypesForArgs(args: Seq[Expression])(implicit mapping: EnvironmentMapping): Seq[Type] = {
+  def resolvedTypesForArgs(args: Seq[Expression]): Seq[Type] = {
     args.map { arg =>
       resolveType(arg) match {
         case Some(argType) => argType
@@ -107,7 +104,7 @@ object TypeChecker {
     }
   }
 
-  def resolvePrimaryAndFindScope(ref: Primary, env: Environment)(implicit mapping: EnvironmentMapping) : Environment = {
+  def resolvePrimaryAndFindScope(ref:Primary, env:Environment) : Environment = {
     val primaryType: Option[Type] = resolveType(ref)
     if (primaryType.isEmpty) {
       throw new SyntaxError("Attempted access of unresolvable type.")
@@ -119,11 +116,11 @@ object TypeChecker {
       case _ => throw new SyntaxError("Can't perform access on non-class, non-interface type.")
     }
 
-    env.lookup(TypeNameLookup(typeName)) match {
+    env.lookup(TypeNameLookup(typeName.toQualifiedName)) match {
       case None => throw new SyntaxError("Name " + typeName.niceName + " does not resolve to a type.")
       case Some(result) => result match {
-        case c: ClassDeclaration => mapping.enclosingScopeOf(c.body).get
-        case i: InterfaceDeclaration => mapping.enclosingScopeOf(i.body).get
+        case c: ClassDeclaration => c.body.scope.get
+        case i: InterfaceDeclaration => i.body.scope.get
         case _ => throw new SyntaxError("Name " + typeName.niceName + " does not resolve to a class or interface type.")
       }
     }
@@ -187,14 +184,14 @@ object TypeChecker {
     case _ => tpe
   }
 
-  def resolveType(node: AbstractSyntaxNode)(implicit mapping: EnvironmentMapping): Option[Type] = {
+  def resolveType(node: AbstractSyntaxNode): Option[Type] = {
     node match {
       case t: Type => Some(t)
 
       case TrueLiteral => Some(BooleanKeyword)
       case FalseLiteral => Some(BooleanKeyword)
       case ThisKeyword =>
-        val env = mapping.enclosingScopeOf(node).get
+        val env = node.scope.get
         env.getEnclosingClassNode match {
           case Some(declaration: ClassDeclaration) => resolveType(declaration.name)
           case _ => throw new SyntaxError("this resolved to non-class declaration.")
@@ -215,7 +212,7 @@ object TypeChecker {
 
         case e: PostfixExpression => e match {
           case name: ExpressionName => {
-            val env = mapping.enclosingScopeOf(node).get
+            var env = node.scope.get
             if (!name.prefix.isEmpty) {
               NameLinker.disambiguateName(name)(env) match {
                 case n: ExpressionName => resolveExpressionName(n, env)
@@ -227,7 +224,7 @@ object TypeChecker {
           }
 
           case name: TypeName => {
-            val env = mapping.enclosingScopeOf(node).get
+            val env = node.scope.get
             resolveTypeName(name, env)
           }
 
@@ -275,11 +272,11 @@ object TypeChecker {
         case NegatedExpression(e1) => promotedTypeOption(resolveType(e1))
 
         case FieldAccess(ref, name) => {
-          val env = mapping.enclosingScopeOf(node).get
-          val scope: Environment = resolvePrimaryAndFindScope(ref, env)
+          val env = node.scope.get
+          val scope:Environment = resolvePrimaryAndFindScope(ref, env)
           val fieldName: ExpressionName = ExpressionName(name)
 
-          scope.lookup(ExpressionNameLookup(fieldName)) match {
+          scope.lookup(ExpressionNameLookup(fieldName.toQualifiedName)) match {
             case None => throw new SyntaxError("Accessing " + fieldName.niceName + " does not resolve.")
             case Some(result) => result match {
               case p: FormalParameter => Some(p.varType)
@@ -299,7 +296,7 @@ object TypeChecker {
 
         case method: MethodInvocation => method match {
           case SimpleMethodInvocation(name, args) => {
-            var env = mapping.enclosingScopeOf(node).get
+            var env = node.scope.get
 
             val n = NameLinker.disambiguateName(name)(env).asInstanceOf[MethodName]
             n.prefix.foreach { namePrefix =>
@@ -311,17 +308,17 @@ object TypeChecker {
 
               env = typeOption match {
                 case Some(ClassType(n)) =>
-                  mapping.enclosingScopeOf(env.lookup(TypeNameLookup(n)).get).get
+                  env.lookup(TypeNameLookup(n.toQualifiedName)).get.scope.get
                 case Some(InterfaceType(n)) =>
-                  mapping.enclosingScopeOf(env.lookup(TypeNameLookup(n)).get).get
+                  env.lookup(TypeNameLookup(n.toQualifiedName)).get.scope.get
                 case Some(ClassOrInterfaceType(n)) =>
-                  mapping.enclosingScopeOf(env.lookup(TypeNameLookup(n)).get).get
+                  env.lookup(TypeNameLookup(n.toQualifiedName)).get.scope.get
                 case _ => throw new SyntaxError("Couldn't resolve type " + typeOption + ".")
               }
             }
 
             val argTypes: Seq[Type] = resolvedTypesForArgs(args)
-            env.lookup(MethodLookup(name.value, argTypes)) match {
+            env.lookup(MethodLookup(QualifiedName(Seq(name.value)), argTypes)) match {
               case None => throw new SyntaxError("Invoking " + name.niceName + " does not resolve.")
               case Some(result) => result match {
                 case method: MethodDeclaration => Some(method.memberType)
@@ -333,10 +330,10 @@ object TypeChecker {
 
           case ComplexMethodInvocation(ref, name, args) => {
             val argTypes: Seq[Type] = resolvedTypesForArgs(args)
-            val env = mapping.enclosingScopeOf(node).get
+            val env = node.scope.get
             val scope:Environment = resolvePrimaryAndFindScope(ref, env)
 
-            scope.lookup(MethodLookup(name.value, argTypes)) match {
+            scope.lookup(MethodLookup(name.toQualifiedName, argTypes)) match {
               case None => throw new SyntaxError("Invoking complex" + name.niceName + " does not resolve.")
               case Some(result) => result match {
                 case method: MethodDeclaration => Some(method.memberType)
@@ -355,7 +352,7 @@ object TypeChecker {
     }
   }
 
-  def checkLogicalExpression(e1: Expression, e2: Expression)(implicit mapping: EnvironmentMapping) = {
+  def checkLogicalExpression(e1: Expression, e2: Expression) = {
     resolveType(e1) match {
       case Some(BooleanKeyword) => Unit
       case _ => throw new SyntaxError("Bitwise operators aren't supported.")
@@ -366,8 +363,8 @@ object TypeChecker {
     }
   }
 
-  def check(node: AbstractSyntaxNode)(implicit mapping: EnvironmentMapping) {
-    val env = mapping.enclosingScopeOf(node).get
+  def check(node: AbstractSyntaxNode) {
+    val env = node.scope.get
     node match {
       // Check that no bitwise operations occur.
       case AndExpression(e1, e2) => TypeChecker.checkLogicalExpression(e1, e2)
@@ -384,7 +381,7 @@ object TypeChecker {
 
       case c: ClassCreationPrimary => {
         val className: TypeName = c.classType.name
-        env.lookup(TypeNameLookup(className)) match {
+        env.lookup(TypeNameLookup(className.toQualifiedName)) match {
           // Check that no objects of abstract classes are created.
           case Some(klass: ClassDeclaration) => {
             if (klass.modifiers.contains(AbstractKeyword)) {

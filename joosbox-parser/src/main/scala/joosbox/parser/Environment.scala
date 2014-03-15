@@ -1,13 +1,11 @@
-package joosbox.compiler
+package joosbox.parser
 
 import joosbox.lexer.{
   InputString,
   SyntaxError
 }
 
-import joosbox.parser.AbstractSyntaxNode
-import joosbox.parser.AbstractSyntaxNode._
-
+import AbstractSyntaxNode._
 
 //  Looking up a package name does not return us a Referenceable,
 //  so let's not call it an EnvironmentLookup.
@@ -15,15 +13,17 @@ case class PackageNameLookup(name: PackageName)
 
 sealed trait EnvironmentLookup
 
-case class TypeNameLookup(name: TypeName) extends EnvironmentLookup
-case class ExpressionNameLookup(name: ExpressionName) extends EnvironmentLookup
-case class MethodLookup(name: InputString, params: Seq[Type]) extends EnvironmentLookup
-case class ConstructorLookup(name: InputString, params: Seq[Type]) extends EnvironmentLookup
+case class TypeNameLookup(name: QualifiedName) extends EnvironmentLookup
+case class ExpressionNameLookup(name: QualifiedName) extends EnvironmentLookup
+case class MethodLookup(name: QualifiedName, params: Seq[Type]) extends EnvironmentLookup
+case class ConstructorLookup(name: QualifiedName, params: Seq[Type]) extends EnvironmentLookup
 
 object EnvironmentLookup {
   def lookupFromName(name: Name) = name match {
-    case t: TypeName => TypeNameLookup(t)
-    case e: ExpressionName => ExpressionNameLookup(e)
+
+    //  Changing the input into a QualifiedName gets rid of the scope.
+    case t: TypeName => TypeNameLookup(t.toQualifiedName)
+    case e: ExpressionName => ExpressionNameLookup(e.toQualifiedName)
 
     case m: MethodName => throw new SyntaxError("MethodName lookups must include parameters.")
     case a: AmbiguousName => throw new SyntaxError("AmbiguousNames cannot be looked up.")
@@ -38,6 +38,7 @@ sealed trait Environment {
 
   def lookup(name: EnvironmentLookup): Option[Referenceable] = {
     // Recursively look up to each parent.
+    println("Looking up " + name + " in \n\t" + this)
     search(name) match {
       case Some(ref) => Some(ref)
       case None => parent.flatMap { env: Environment => env.lookup(name) }
@@ -80,18 +81,18 @@ class RootEnvironment(nodes: Seq[AbstractSyntaxNode.CompilationUnit]) extends En
   
   val node: Option[AbstractSyntaxNode] = None
 
-  val qualifiedNameMap: Map[TypeName, Referenceable] = {
-    nodes.foldLeft(Map.empty[TypeName, Referenceable]) {
-      case (map: Map[TypeName, Referenceable], cu: AbstractSyntaxNode.CompilationUnit) => {
+  val qualifiedNameMap: Map[QualifiedName, Referenceable] = {
+    nodes.foldLeft(Map.empty[QualifiedName, Referenceable]) {
+      case (map: Map[QualifiedName, Referenceable], cu: AbstractSyntaxNode.CompilationUnit) => {
         val declaration: Option[TypeDeclaration] = cu.typeDeclaration
         val mapping = cu.packageDeclaration match {
-          case Some(p: PackageDeclaration) => declaration.map(d => TypeName(d.name.value, Some(p.name)) -> d)
+          case Some(p: PackageDeclaration) => declaration.map(d => TypeName(d.name.value, Some(p.name)).toQualifiedName -> d)
 
-          case None => declaration.map(d => TypeName(d.name.value, Some(PackageName(InputString("")))) -> d)
+          case None => declaration.map(d => TypeName(d.name.value, Some(PackageName(InputString("")))).toQualifiedName -> d)
         }
 
         mapping match {
-          case Some((q: TypeName, t: TypeDeclaration)) => {
+          case Some((q: QualifiedName, t: TypeDeclaration)) => {
             map.get(q) match {
               case None => map + (q -> t)
               case Some(_) => throw new SyntaxError("Duplicate qualified name " + q)
@@ -106,7 +107,7 @@ class RootEnvironment(nodes: Seq[AbstractSyntaxNode.CompilationUnit]) extends En
 
   def search(name: EnvironmentLookup): Option[Referenceable] = {
     name match {
-      case TypeNameLookup(qn: TypeName) =>
+      case TypeNameLookup(qn: QualifiedName) =>
         qualifiedNameMap.get(qn)
 
       //  The root environment can only handle qualified name lookups.
@@ -141,8 +142,8 @@ class ScopeEnvironment(
 
   override def searchForMethodsWithName(name: InputString): Seq[MethodDeclaration] = {
     var searchScopes = locals.collect{
-      case (MethodLookup(methodName: InputString, _), method: MethodDeclaration)
-      if (methodName == name) => method
+      case (MethodLookup(qn: QualifiedName, _), method: MethodDeclaration)
+      if (qn.toMethodName.value == name) => method
     }.toSeq
     if (useLinkedScopes) {
       searchScopes = searchScopes ++ linkedScopes.flatMap(_.searchForMethodsWithName(name))

@@ -4,6 +4,8 @@ import joosbox.parser.AbstractSyntaxNode
 import joosbox.lexer.InputString
 import joosbox.lexer.SyntaxError
 
+import joosbox.parser._
+
 import AbstractSyntaxNode.CompilationUnit
 import AbstractSyntaxNode.Referenceable
 
@@ -65,11 +67,10 @@ object HierarchyChecker {
   }
 
   def link(
-    units: Seq[CompilationUnit],
-    mapping: EnvironmentMapping
+    units: Seq[CompilationUnit]
   ): Map[Any, Referenceable] = {
     units.foreach { unit =>
-      HierarchyChecker.check(unit)(mapping)
+      HierarchyChecker.check(unit)
     }
     Map.empty
   }
@@ -85,11 +86,11 @@ object HierarchyChecker {
         case Some(ClassDeclaration(name, body, mods, superklass, interfaces)) =>
           methodList = body.declarations.map {
             case m: MethodDeclaration =>
-              (MethodLookup(m.name.value, m.parameters.map(_.varType)), m)
+              (MethodLookup(m.name.toQualifiedName, m.parameters.map(_.varType)), m)
             case c: ConstructorDeclaration =>
-              (ConstructorLookup(name.value, c.parameters.map(_.varType)), c)
+              (ConstructorLookup(name.toQualifiedName, c.parameters.map(_.varType)), c)
             case f: FieldDeclaration =>
-              (ExpressionNameLookup(f.name), f)
+              (ExpressionNameLookup(f.name.toQualifiedName), f)
           }
           interfaces.foreach{
             case i : InterfaceType =>
@@ -110,15 +111,15 @@ object HierarchyChecker {
       }
     } else {
       // Implicit extends java.lang.Object
-      val implicitSuperclass = TypeNameLookup(QualifiedName(Seq(InputString("java"), InputString("lang"), InputString("Object"))).toTypeName)
+      val implicitSuperclass = TypeNameLookup(QualifiedName(Seq(InputString("java"), InputString("lang"), InputString("Object"))))
       val implicitRef = env.lookup(implicitSuperclass)
       implicitRef match {
         case Some(ClassDeclaration(name, superbody, _, _, _)) =>
           methodList = methodList ++ superbody.declarations.map {
             case m: MethodDeclaration =>
-              (MethodLookup(m.name.value, m.parameters.map(_.varType)), m)
+              (MethodLookup(m.name.toQualifiedName, m.parameters.map(_.varType)), m)
             case c: ConstructorDeclaration =>
-              (ConstructorLookup(name.value, c.parameters.map(_.varType)), c)
+              (ConstructorLookup(name.toQualifiedName, c.parameters.map(_.varType)), c)
           }
         case _ => Unit
       }
@@ -129,13 +130,13 @@ object HierarchyChecker {
   def checkInterfaceHierarchy(interface: InterfaceType, interfaceList: List[Seq[InputString]], env: Environment) : Seq[(EnvironmentLookup, AbstractSyntaxNode)]  = {
     var methodList : Seq[(EnvironmentLookup, AbstractSyntaxNode)] = Seq.empty
     var intList : List[Seq[InputString]] = interface.inputString :: interfaceList
-    val nameLookup : EnvironmentLookup = TypeNameLookup(interface.name)
+    val nameLookup : EnvironmentLookup = TypeNameLookup(interface.name.toQualifiedName)
     val ref = env.lookup(nameLookup)
     ref match {
       case Some(InterfaceDeclaration(_, body, _, interfaces)) =>
         methodList = body.declarations.map {
           case m: InterfaceMemberDeclaration =>
-            (MethodLookup(m.name, m.parameters.map(_.varType)), m)
+            (MethodLookup(AbstractSyntaxNode.MethodName(m.name).toQualifiedName, m.parameters.map(_.varType)), m)
         }
         if(!interfaces.isEmpty) {
           interfaces.foreach {
@@ -147,15 +148,15 @@ object HierarchyChecker {
           }
         } else {
             // Implicit extends java.lang.Object as interface
-            val implicitSuperinterface = TypeNameLookup(QualifiedName(Seq(InputString("java"), InputString("lang"), InputString("Object"))).toTypeName)
+            val implicitSuperinterface = TypeNameLookup(QualifiedName(Seq(InputString("java"), InputString("lang"), InputString("Object"))))
             val implicitRef = env.lookup(implicitSuperinterface)
             implicitRef match {
               case Some(ClassDeclaration(name, superbody, _, _, _)) =>
                 methodList = methodList ++ superbody.declarations.map {
                   case m: MethodDeclaration =>
-                    (MethodLookup(m.name.value, m.parameters.map(_.varType)), m)
+                    (MethodLookup(m.name.toQualifiedName, m.parameters.map(_.varType)), m)
                   case c: ConstructorDeclaration => //Appeasement
-                    (ConstructorLookup(name.value, c.parameters.map(_.varType)), c)
+                    (ConstructorLookup(name.toQualifiedName, c.parameters.map(_.varType)), c)
                 }
               case _ => Unit
             }
@@ -223,7 +224,7 @@ object HierarchyChecker {
       }
   }
 
-  def check(node: AbstractSyntaxNode)(implicit mapping: EnvironmentMapping) {
+  def check(node: AbstractSyntaxNode) {
     node match {
       case node: ClassDeclaration =>
         val name : TypeName = node.name
@@ -242,15 +243,15 @@ object HierarchyChecker {
                   throw new SyntaxError("Abstract methods must be defined in abstract classes/interfaces.")
                 }
               }
-              (MethodLookup(m.name.value, m.parameters.map(_.varType)), m)
+              (MethodLookup(m.name.toQualifiedName, m.parameters.map(_.varType)), m)
             case c: ConstructorDeclaration =>
-              (ConstructorLookup(name.value, c.parameters.map(_.varType)), c)
+              (ConstructorLookup(name.toQualifiedName, c.parameters.map(_.varType)), c)
             case f: FieldDeclaration =>
-              (ExpressionNameLookup(f.name), f)
+              (ExpressionNameLookup(f.name.toQualifiedName), f)
         }
 
-        val env = mapping.enclosingScopeOf(node).get
-        val classEnv = mapping.enclosingScopeOf(node.body).get
+        val env = node.scope.get
+        val classEnv = node.body.scope.get
 
         // Check extends hierarchy
         val implicitSuperclass = TypeNameLookup(
@@ -258,10 +259,10 @@ object HierarchyChecker {
             InputString("java"),
             InputString("lang"),
             InputString("Object")
-          )).toTypeName
+          ))
         )
         val implicitRef = env.lookup(implicitSuperclass).get
-        val ref = env.lookup(TypeNameLookup(name)).get 
+        val ref = env.lookup(TypeNameLookup(name.toQualifiedName)).get
         // If we are checking java.lang.Object, dont
         if (implicitRef != ref) {
           superDeclarations = HierarchyChecker.checkClassHierarchy(superclass, List(Seq(name.value)), env)
@@ -274,7 +275,7 @@ object HierarchyChecker {
             intDeclarations = intDeclarations ++ HierarchyChecker.checkInterfaceHierarchy(i, List(Seq()), env)
 
             // Below is just for checking 'duplicate' ints in implements list
-            val nameLookup : EnvironmentLookup = TypeNameLookup(i.name)
+            val nameLookup : EnvironmentLookup = TypeNameLookup(i.name.toQualifiedName)
             val ref = env.lookup(nameLookup)
             ref match {
               case Some(InterfaceDeclaration(_, intBody, mods, ints)) =>
@@ -345,15 +346,15 @@ object HierarchyChecker {
         val interfaces: Seq[InterfaceType] = node.interfaces
         val modifiers: Set[Modifier] = node.modifiers
 
-        val env = mapping.enclosingScopeOf(node).get
-        val interfaceEnv = mapping.enclosingScopeOf(node.body).get
+        val env = node.scope.get
+        val interfaceEnv = node.body.scope.get
 
         var declarations : Seq[(EnvironmentLookup, AbstractSyntaxNode)] = Seq.empty
         var intDeclarations : Seq[(EnvironmentLookup, AbstractSyntaxNode)] = Seq.empty
 
         declarations = node.body.declarations.map {
           case m: InterfaceMemberDeclaration =>
-            (MethodLookup(m.name, m.parameters.map(_.varType)), m)
+            (MethodLookup(AbstractSyntaxNode.MethodName(m.name).toQualifiedName, m.parameters.map(_.varType)), m)
         }
 
         intDeclarations = HierarchyChecker.checkInterfaceHierarchy(InterfaceType(name), List(Seq()), env)
@@ -362,7 +363,7 @@ object HierarchyChecker {
         var interfaceNodes : List[String] = List.empty[String]
         interfaces.foreach {
           case i : InterfaceType =>
-            val nameLookup : EnvironmentLookup = TypeNameLookup(i.name)
+            val nameLookup : EnvironmentLookup = TypeNameLookup(i.name.toQualifiedName)
             val ref = env.lookup(nameLookup)
             ref match {
               case Some(InterfaceDeclaration(_, intBody, mods, ints)) =>

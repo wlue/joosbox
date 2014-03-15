@@ -4,6 +4,10 @@ import joosbox.parser.AbstractSyntaxNode
 import joosbox.lexer.InputString
 import joosbox.lexer.SyntaxError
 
+import joosbox.parser.RootEnvironment
+import joosbox.parser.EnvironmentLookup
+import joosbox.parser.TypeNameLookup
+
 import AbstractSyntaxNode._
 
 /**
@@ -32,30 +36,24 @@ import AbstractSyntaxNode._
 */
 
 object TypeLinker {
-  def link(
-    units: Seq[CompilationUnit],
-    mapping: EnvironmentMapping
-  ): Map[Any, Referenceable] = {
-    units.foreach { unit =>
-      TypeLinker.check(unit)(mapping)
-    }
+  def link(units: Seq[CompilationUnit], root: RootEnvironment): Map[Any, Referenceable] = {
+    units.foreach { unit => TypeLinker.check(unit)(root) }
     Map.empty
   }
 
-  def check(node: AbstractSyntaxNode)(implicit mapping: EnvironmentMapping) {
+  def check(node: AbstractSyntaxNode)(implicit environment: RootEnvironment) {
     node match {
       case pkg: PackageDeclaration => {
         // Make sure the package does not resolve to a type.
 
         // Lookup the top level environment, and make sure the package and any 
         // of its prefixes does not resolve to a type.
-        val environment = mapping.environment
         val qualifiedName: QualifiedName = pkg.name.toQualifiedName
 
         qualifiedName.prefixesIncludingSelf.foreach { prefix =>
-          var lookupOption: Option[EnvironmentLookup] = prefix match {
+          val lookupOption: Option[EnvironmentLookup] = prefix match {
             case QualifiedName(Seq()) => None
-            case name: QualifiedName => Some(TypeNameLookup(name.toTypeName))
+            case name: QualifiedName => Some(TypeNameLookup(name))
           }
 
           for {
@@ -79,7 +77,7 @@ object TypeLinker {
                 SingleTypeImportDeclaration(firstName),
                 SingleTypeImportDeclaration(secondName)
               ) => {
-                var Seq(firstNameSeq: Seq[String], secondNameSeq: Seq[String]): Seq[Seq[String]] = Seq(firstName, secondName).map {
+                val Seq(firstNameSeq: Seq[String], secondNameSeq: Seq[String]): Seq[Seq[String]] = Seq(firstName, secondName).map {
                   case name: TypeName => name.toSeq.map(_.value)
                 }
 
@@ -96,7 +94,7 @@ object TypeLinker {
         }
 
         typeDeclaration.foreach { typeDeclaration =>
-          var className: TypeName = typeDeclaration match {
+          val className: TypeName = typeDeclaration match {
             case ClassDeclaration(name, _, _, _, _) => name
             case InterfaceDeclaration(name, _, _, _) => name
           }
@@ -136,9 +134,9 @@ object TypeLinker {
 
         for {
           name <- nameOption
-          environment <- mapping.enclosingScopeOf(ref)
+          environment <- ref.scope
         } {
-          var lookup: EnvironmentLookup = EnvironmentLookup.lookupFromName(name)
+          val lookup: EnvironmentLookup = EnvironmentLookup.lookupFromName(name)
           environment.lookup(lookup) match {
             case None => throw new SyntaxError("Could not look up type " + lookup + ". " + name)
             case _ => {
@@ -146,9 +144,9 @@ object TypeLinker {
                 // If a qualified name was found, then make sure no strict prefix resolves.
                 case typeName: TypeName => {
                   typeName.toQualifiedName.prefixes.foreach { prefix =>
-                    var lookupOption: Option[EnvironmentLookup] = prefix match {
+                    val lookupOption: Option[EnvironmentLookup] = prefix match {
                       case QualifiedName(Seq()) => None
-                      case name: QualifiedName => Some(TypeNameLookup(name.toTypeName))
+                      case name: QualifiedName => Some(TypeNameLookup(name))
                     }
 
                     for {

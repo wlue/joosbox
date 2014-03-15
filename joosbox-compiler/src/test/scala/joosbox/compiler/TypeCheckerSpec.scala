@@ -3,6 +3,9 @@ package joosbox.compiler.test
 import org.specs2.mutable._
 import joosbox.compiler._
 import java.io.File
+import joosbox.parser.ExpressionNameLookup
+import joosbox.parser.AbstractSyntaxNode.QualifiedName
+import joosbox.lexer.InputString
 
 class FailTypeCheckerSpec extends Specification {
   def getAllFiles(base: File): Array[File] = {
@@ -22,11 +25,26 @@ class FailTypeCheckerSpec extends Specification {
   }
 
   "Type Checker" should {
-    "J1_A_ConcatInStaticInvoke.java" in {
-      val files = filesForTest("J1_A_ConcatInStaticInvoke.java") ++ stdlibFilePaths
-      CompilerRunner.runTestable(files.toArray)// must not(throwA[Exception])
-      true
-    }
+      "environment equality" in {
+        val a = ExpressionNameLookup(QualifiedName(Seq(InputString("a", "abc", 123, 234))))
+        val b = ExpressionNameLookup(QualifiedName(Seq(InputString("a", "def", 345, 567))))
+        a mustEqual b
+      }
+
+      "environment map" in {
+
+        val a = ExpressionNameLookup(QualifiedName(Seq(InputString("a", "abc", 123, 234))))
+        val map = Map(a -> true)
+
+        val b = ExpressionNameLookup(QualifiedName(Seq(InputString("a", "def", 345, 567))))
+        map.get(b) must beEqualTo(Some(true))
+      }
+
+      "J1_ArrayInterfaces.java" in {
+        val files = filesForTest("J1_ArrayInterfaces.java") ++ stdlibFilePaths
+        CompilerRunner.runTestable(files.toArray)// must not(throwA[Exception])
+        true
+      }
   }
 }
 

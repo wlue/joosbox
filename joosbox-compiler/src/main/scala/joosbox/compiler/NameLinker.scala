@@ -4,16 +4,13 @@ import joosbox.parser.AbstractSyntaxNode
 import joosbox.lexer.InputString
 import joosbox.lexer.SyntaxError
 
+import joosbox.parser._
+
 import AbstractSyntaxNode._
 
 object NameLinker {
-  def link(
-    units: Seq[CompilationUnit],
-    mapping: EnvironmentMapping
-  ): Map[Any, Referenceable] = {
-    units.foreach { unit =>
-      NameLinker.check(unit)(mapping)
-    }
+  def link(units: Seq[CompilationUnit]): Map[Any, Referenceable] = {
+    units.foreach { unit => NameLinker.check(unit) }
     Map.empty
   }
 
@@ -44,7 +41,9 @@ object NameLinker {
                     A later step determines whether or not a package of that name 
                     actually exists.
                     */
-                    PackageName(identifier, Some(pn))
+                    val name = PackageName(identifier, Some(pn))
+                    name.scope = a.scope
+                    name
                   }
                   case Some(scopes: Seq[ScopeEnvironment]) => {
                     val resolvedType = scopes.flatMap(
@@ -52,18 +51,34 @@ object NameLinker {
                     ).headOption
 
                     resolvedType match {
-                      case Some(_) => TypeName(identifier, Some(pn))
+                      case Some(_) => {
+                        val name = TypeName(identifier, Some(pn))
+                        name.scope = a.scope
+                        name
+                      }
 
                       //  This PackageName may not exist, but the docs suggest that
                       //  this will be checked at a later stage. This might need checking
                       //  now.
-                      case None => PackageName(identifier, Some(pn))
+                      case None => {
+                        val name = PackageName(identifier, Some(pn))
+                        name.scope = a.scope
+                        name
+                      }
                     }
                   }
                 }
               }
-              case tn: TypeName => ExpressionName(identifier, Some(tn))
-              case en: ExpressionName => ExpressionName(identifier, Some(en))
+              case tn: TypeName => {
+                val name = ExpressionName(identifier, Some(tn))
+                name.scope = a.scope
+                name
+              }
+              case en: ExpressionName => {
+                val name = ExpressionName(identifier, Some(en))
+                name.scope = a.scope
+                name
+              }
               case _ => throw new SyntaxError(
                 "Name disambiguation of '" + an.niceName + "' returned unexpected results."
               )
@@ -78,13 +93,25 @@ object NameLinker {
             val identifier = a.value
 
             env.lookup(EnvironmentLookup.lookupFromName(ExpressionName(identifier))) match {
-              case Some(x) => ExpressionName(identifier)
+              case Some(x) => {
+                val name = ExpressionName(identifier)
+                name.scope = a.scope
+                name
+              }
               case None => {
                 env.lookup(EnvironmentLookup.lookupFromName(TypeName(identifier))) match {
-                  case Some(x) => TypeName(identifier)
+                  case Some(x) => {
+                    val name = TypeName(identifier)
+                    name.scope = a.scope
+                    name
+                  }
                   case None => {
                     env.packageScope(PackageNameLookup(PackageName(identifier))) match {
-                      case Some(_) => PackageName(identifier)
+                      case Some(_) => {
+                        val name = PackageName(identifier)
+                        name.scope = a.scope
+                        name
+                      }
                       case None => throw new SyntaxError("Unknown name " + identifier)
                     }
                   }
@@ -109,9 +136,8 @@ object NameLinker {
     }
   }
 
-  def check(node: AbstractSyntaxNode)(implicit mapping: EnvironmentMapping) {
+  def check(node: AbstractSyntaxNode) {
     node match {
-
       //  TODO: Really nasty edge case for J1_fieldinit2.java
       //  If we're in a FieldDeclaration and we assign to a name,
       //  and that name does not exist (yet), we need to allow the
@@ -120,35 +146,33 @@ object NameLinker {
       //  the scope of the last ClassMemberDeclaration, and looking up
       //  the assigned-to name in that scope.
 
-      case p: Name => disambiguateName(p)(mapping.enclosingScopeOf(p) match {
-        case Some(x) => x
-        case None => throw new SyntaxError("Enclosing scope of " + p + " not found.")
-      })
-      case s: SimpleMethodInvocation => {
-        val argTypes:Seq[Type] = s.args.flatMap {
-          case x: StringLiteral => {
-            Some(ClassType(QualifiedName("java.lang.String".split("\\.").map(InputString(_))).toTypeName))
-          }
-          case c: CastExpression => Some(c.targetType)
-          case _ => None
-        }.collect{case t: Type => t}
-        //println("Simple method invocation: " + s + "\nhas args: " + argTypes)
-      }
+      case m: MethodName => Unit
+      case p: PackageName => Unit
 
+      case p: Name => TypeChecker.resolveType(p) match {
+        case Some(_) => Unit
+        case None => throw new SyntaxError("Could not resolve name: " + p)
+      }
+      case s: SimpleMethodInvocation => TypeChecker.resolveType(s) match {
+        case Some(_) => Unit
+        case None => throw new SyntaxError("Could not resolve method: " + s)
+      }
       case _ => Unit
     }
 
     node.children.foreach { node => check(node) }
   }
 
-  def verifyNameExists(name: Name)(implicit mapping: EnvironmentMapping) {
-    if (name.isAmbiguous) {
-      //  println("Name is ambiguous, we need to resolve this first.")
-    } else {
-      mapping.enclosingScopeOf(name).get.lookup(EnvironmentLookup.lookupFromName(name)) match {
-        case None => throw new SyntaxError("Unknown name " + name)
-        case _ => Unit
-      }
+  def findMethodScope(name: Name, env: Environment): Option[Environment] = {
+    name match {
+      case MethodName(_, Some(prefix: Name)) => findMethodScope(prefix, env)
+      case MethodName(_, None) => Some(env)
+
+      case TypeName(_, Some(prefix: Name)) => findMethodScope(prefix, env)
+      case PackageName(_, Some(prefix: Name)) => findMethodScope(prefix, env)
+      case ExpressionName(_, Some(prefix: Name)) => findMethodScope(prefix, env)
+
+      case n: Name => env.lookup(EnvironmentLookup.lookupFromName(n)).get.scope
     }
   }
 }

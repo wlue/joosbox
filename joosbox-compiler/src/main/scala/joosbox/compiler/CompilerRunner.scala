@@ -3,6 +3,7 @@ package joosbox.compiler
 import joosbox.parser.Parser
 import joosbox.lexer.SyntaxError
 import joosbox.parser.AbstractSyntaxNode
+import joosbox.parser.EnvironmentBuilder
 
 import AbstractSyntaxNode.CompilationUnit
 
@@ -36,11 +37,11 @@ object CompilerRunner {
       Parser.Joos.parseFilename(filename)
     }
 
-    val mapping = EnvironmentBuilder.build(nodes)
-    TypeLinker.link(nodes, mapping)
-    HierarchyChecker.link(nodes, mapping)
-    mapping.validateEnvironments
-    NameLinker.link(nodes, mapping)
-    TypeChecker.link(nodes, mapping)
+    val root = EnvironmentBuilder.build(nodes)
+    TypeLinker.link(nodes, root)
+    HierarchyChecker.link(nodes)
+    //mapping.validateEnvironments
+    NameLinker.link(nodes)
+    TypeChecker.link(nodes)
   }
 }
