@@ -97,10 +97,56 @@ object TypeChecker {
     }
   }
 
-  def resolvedTypesForArgs(args: Seq[Expression]): Seq[Type] = {
+  def resolvedTypesForArgs(args: Seq[Expression], env:Environment): Seq[Type] = {
     args.map { arg =>
       resolveType(arg) match {
-        case Some(argType) => argType
+        case Some(argType) => argType match {
+          case c:ClassType =>
+            env.lookup(TypeNameLookup(c.name.toQualifiedName)).get match {
+              case decl: ClassDeclaration =>
+                ClassType(decl.fullyQualifiedName.get)
+              case _ => throw new SyntaxError("Bad fully qualified type.")
+            }
+          case i:InterfaceType =>
+            env.lookup(TypeNameLookup(i.name.toQualifiedName)).get match {
+              case decl: InterfaceDeclaration =>
+                InterfaceType(decl.fullyQualifiedName.get)
+              case _ => throw new SyntaxError("Bad fully qualified type.")
+            }
+          case ci:ClassOrInterfaceType =>
+            env.lookup(TypeNameLookup(ci.name.toQualifiedName)).get match {
+              case decl: ClassDeclaration =>
+                ClassType(decl.fullyQualifiedName.get)
+              case decl: InterfaceDeclaration =>
+                InterfaceType(decl.fullyQualifiedName.get)
+              case _ => throw new SyntaxError("Bad fully qualified type.")
+            }
+          case a:ArrayType =>
+            a.subtype match {
+              case c:ClassType =>
+                env.lookup(TypeNameLookup(c.name.toQualifiedName)).get match {
+                  case decl: ClassDeclaration =>
+                    ArrayType(ClassType(decl.fullyQualifiedName.get))
+                  case _ => throw new SyntaxError("Bad fully qualified type.")
+                }
+              case i:InterfaceType =>
+                env.lookup(TypeNameLookup(i.name.toQualifiedName)).get match {
+                  case decl: InterfaceDeclaration =>
+                    ArrayType(InterfaceType(decl.fullyQualifiedName.get))
+                  case _ => throw new SyntaxError("Bad fully qualified type.")
+                }
+              case ci:ClassOrInterfaceType =>
+                env.lookup(TypeNameLookup(ci.name.toQualifiedName)).get match {
+                  case decl: ClassDeclaration =>
+                    ArrayType(ClassType(decl.fullyQualifiedName.get))
+                  case decl: InterfaceDeclaration =>
+                    ArrayType(InterfaceType(decl.fullyQualifiedName.get))
+                  case _ => throw new SyntaxError("Bad fully qualified type.")
+                }
+              case _ => a
+            }
+          case _ => argType
+        }
         case None => throw new SyntaxError("Could not resolve type for argument \"" + arg + "\"")
       }
     }
@@ -319,7 +365,7 @@ object TypeChecker {
               }
             }
 
-            val argTypes: Seq[Type] = resolvedTypesForArgs(args)
+            val argTypes: Seq[Type] = resolvedTypesForArgs(args, env)
             val lookup = MethodLookup(QualifiedName(Seq(name.value)), argTypes)
             env.lookup(lookup) match {
               case None =>
@@ -333,8 +379,8 @@ object TypeChecker {
           }
 
           case ComplexMethodInvocation(ref, name, args) => {
-            val argTypes: Seq[Type] = resolvedTypesForArgs(args)
             val env = node.scope.get
+            val argTypes: Seq[Type] = resolvedTypesForArgs(args, env)
             val scope:Environment = resolvePrimaryAndFindScope(ref, env)
 
             scope.lookup(MethodLookup(name.toQualifiedName, argTypes)) match {
