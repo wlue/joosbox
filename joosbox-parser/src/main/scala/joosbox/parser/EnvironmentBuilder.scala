@@ -237,11 +237,13 @@ object EnvironmentBuilder {
                 if (decl.scope == None) {
                   decl.scope = Some(env)
                 }
-                (
-                  Map(decl -> env) ++
-                  (check.toSeq ++ update.toSeq ++ Seq(statement)).flatMap(traverse(_, env, root)).toMap
+                val r = (
+                  Map(decl -> env)
+                  ++ decl.children.flatMap(traverse(_, env, root)).toMap
+                  ++ (check.toSeq ++ update.toSeq ++ Seq(statement)).flatMap(traverse(_, env, root)).toMap
                   ++ scopeTreeFromBlockStatements(decls.drop(1), parent, root)
                 )
+                r
               }
             }
           }
