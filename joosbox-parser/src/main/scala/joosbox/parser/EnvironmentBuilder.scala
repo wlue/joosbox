@@ -117,7 +117,7 @@ object EnvironmentBuilder {
         })
 
         val fieldEnvironments = scopeTreeFromFieldDeclarations(
-          staticFields ++ instanceFields, declarationScope, root
+          staticFields ++ instanceFields, declarationScope, root, cd
         )
 
         val rightMostEnvironment = fieldEnvironments.lastOption match {
@@ -174,19 +174,20 @@ object EnvironmentBuilder {
   def scopeTreeFromFieldDeclarations(
     statements: Seq[FieldDeclaration],
     parent: Environment,
-    root: RootEnvironment
+    root: RootEnvironment,
+    classDeclaration: ClassDeclaration
   ): Seq[(AbstractSyntaxNode, Environment)] = {
     statements.headOption match {
       case None => Seq.empty[(AbstractSyntaxNode, Environment)]
       case Some(fd: FieldDeclaration) => {
         val fieldEnvironment = 
-          new ScopeEnvironment(Map(ExpressionNameLookup(fd.name.toQualifiedName) -> fd), None, Seq.empty, parent)
+          new ScopeEnvironment(Map(ExpressionNameLookup(fd.name.toQualifiedName) -> fd), None, Seq.empty, parent, Some(classDeclaration))
         if (fd.scope == None) {
           fd.scope = Some(fieldEnvironment)
         }
         (
           Seq((fd, fieldEnvironment)) ++ fd.children.flatMap(traverse(_, fieldEnvironment, root)).toSeq
-          ++ scopeTreeFromFieldDeclarations(statements.drop(1), fieldEnvironment, root)
+          ++ scopeTreeFromFieldDeclarations(statements.drop(1), fieldEnvironment, root, classDeclaration)
         )
       }
     }

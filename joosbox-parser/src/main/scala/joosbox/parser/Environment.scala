@@ -137,10 +137,10 @@ class RootEnvironment(nodes: Seq[AbstractSyntaxNode.CompilationUnit]) extends En
               throw new SyntaxError("Could not get fully qualified name's scope for " + t)
             }
           }
+          case _ => Unit
         }
       }
     }
-
   }
 
   override def packageScope(name: PackageNameLookup): Option[Seq[ScopeEnvironment]] = 
@@ -248,7 +248,7 @@ class ScopeEnvironment(
       case None => parent match {
         case Some(p: ScopeEnvironment) => p.parent match {
           case Some(gp: ScopeEnvironment) => gp.getEnclosingClassNode match {
-            case Some(_) => p.lookup(name)
+            case Some(_) => p.searchInClassOrInterfaceScope(name)
             case None => None
           }
           case _ => None
