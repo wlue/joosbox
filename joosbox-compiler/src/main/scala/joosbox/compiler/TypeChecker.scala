@@ -189,6 +189,10 @@ object TypeChecker {
     case (one: ReferenceType, two: ReferenceType) => true
     // Numeric types are always compatible with each other.
     case (one: NumericType, two: NumericType) => true
+    // Strings and anything else are compatible.
+    case (ClassType(TypeName(InputString("String", _, _, _), Some(PackageName(InputString("lang", _, _, _), Some(PackageName(InputString("java", _, _, _), None)))))), _: Type) => true
+    case (_: Type, ClassType(TypeName(InputString("String", _, _, _), Some(PackageName(InputString("lang", _, _, _), Some(PackageName(InputString("java", _, _, _), None))))))) => true
+
     case _ => false
   }
 
@@ -205,7 +209,10 @@ object TypeChecker {
           resolve
         }
       }
-      case _ => throw new SyntaxError("Type mismatch. (" + type1 + ") and (" + type2 + ")");
+      case (None, Some(t: ReferenceType)) => Some(t)
+      case (Some(t: ReferenceType), None) => Some(t)
+      case _ =>
+        throw new SyntaxError("Types " + type1 + " and " + type2 + " are not compatible.");
     }
   }
 
@@ -222,7 +229,8 @@ object TypeChecker {
           resolve
         }
       }
-      case _ => throw new SyntaxError("Type mismatch. (" + type1 + ") and (" + type2 + ")");
+      case _ =>
+        throw new SyntaxError("Types " + type1 + " and " + type2 + " are not identical.");
     }
   }
 
