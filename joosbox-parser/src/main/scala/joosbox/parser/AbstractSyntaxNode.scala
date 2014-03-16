@@ -496,7 +496,9 @@ object AbstractSyntaxNode {
     override def children: List[AbstractSyntaxNode] = statements.toList
   }
 
-  case class CastExpression(targetType: Type) extends Expression
+  case class CastExpression(targetType: Type, expr: Expression) extends Expression {
+    override def children: List[AbstractSyntaxNode] = List(targetType, expr)
+  }
 
   sealed trait Statement extends BlockStatement
   case object EmptyStatement extends Statement
@@ -823,46 +825,48 @@ object AbstractSyntaxNode {
     case m: ParseNodes.NativeKeyword => Seq(NativeKeyword)
 
     case c: ParseNodes.CastExpression => {
-      val children:Seq[AbstractSyntaxNode] = c.children.flatMap(recursive(_))
-
-      val check_children = new ((AbstractSyntaxNode) => AbstractSyntaxNode){
-          def apply(x:AbstractSyntaxNode):AbstractSyntaxNode = {
-            if(x.children.size > 1) {
-              throw new SyntaxError("Casting with invalid cast type.")
-            }
-
-            if (x.children.isEmpty) {
-              x
-            } else {
-              x.children.head match {
-                case y: Primary => {
-                  val expr = y.children.collectFirst { case e: Expression => e }
-                  if (!expr.isEmpty) {
-                    throw new SyntaxError("Casting with nested expressions is invalid.")
-                  }
-                  apply(x.children.head)
-                }
-                case _ => apply(x.children.head)
-              }
-            }
-          }
-        }
-
-      children.head match {
-        case y: FieldAccess => throw new SyntaxError("Field accesses cannot be cast to.")
-        case y: ParenthesizedExpression => throw new SyntaxError("Casts cannot be overly parenthesized.")
-        case y: SimpleMethodInvocation => throw new SyntaxError("Method invocations cannot be casted to.")
-        case y: ComplexMethodInvocation => throw new SyntaxError("Method invocations cannot be casted to.")
-        case _ => ;
+      val (castNode, expressionNodes) = c.children match {
+        case List(
+          _: ParseNodes.LeftParen, primitive: ParseNodes.PrimitiveType, _: ParseNodes.RightParen,
+          expr: ParseNodes.UnaryExpression
+        ) =>
+          (recursive(primitive).head, recursive(expr))
+        case List(
+          _: ParseNodes.LeftParen, primitive: ParseNodes.PrimitiveType, _: ParseNodes.Dims, _: ParseNodes.RightParen,
+          expr: ParseNodes.UnaryExpression
+        ) =>
+          val primitiveType: PrimitiveType = recursive(primitive).collectFirst { case t: PrimitiveType => t }.get
+          (ArrayType(primitiveType), recursive(expr))
+        case List(
+          _: ParseNodes.LeftParen, castExpr: ParseNodes.Expression, _: ParseNodes.RightParen,
+          expr: ParseNodes.UnaryExpressionNotPlusMinus
+        ) =>
+          val exprNode = recursive(castExpr).head
+          (exprNode, recursive(expr))
+        case List(
+          _: ParseNodes.LeftParen, name: ParseNodes.Name, _: ParseNodes.Dims, _: ParseNodes.RightParen,
+          expr: ParseNodes.UnaryExpressionNotPlusMinus
+        ) =>
+          val nameType: Type = recursive(name).collectFirst { case n: Type => n }.get
+          (ArrayType(nameType), recursive(expr))
+        case _ => throw new SyntaxError("Invalid cast expression parse: " + c)
       }
 
-      check_children(children.head) match {
-        //  UnaryExpression will give us an ExpressionName, but we want a TypeName
-        case y: ExpressionName => Seq(CastExpression(ClassOrInterfaceType(y.toQualifiedName.toTypeName)))
-        case y: QualifiedName => Seq(CastExpression(ClassOrInterfaceType(y.toTypeName)))
-        case y: PrimitiveType => Seq(CastExpression(y))
+      val cast: Type = castNode match {
+        // UnaryExpression will give us an ExpressionName, but we want a TypeName
+        case y: ExpressionName => ClassOrInterfaceType(y.toQualifiedName.toTypeName)
+        case y: QualifiedName => ClassOrInterfaceType(y.toTypeName)
+        case y: PrimitiveType => y
         case x => throw new SyntaxError("Casting with invalid cast type: " + x)
       }
+
+      val expression: Expression = expressionNodes.head match {
+        case name: QualifiedName => name.toExpressionName
+        case expr: Expression => expr
+        case other => throw new SyntaxError("Right hand side of cast is not an expression: " + other)
+      }
+
+      Seq(CastExpression(cast, expression))
     }
 
     case t: ParseNodes.ClassOrInterfaceType => {
@@ -880,16 +884,18 @@ object AbstractSyntaxNode {
       Seq(InterfaceType(child.name))
     }
 
-    case i: ParseNodes.Num =>
+    case i: ParseNodes.Num => {
       val input: InputString = i.value.get
       val num = Num(input.value, input)
       Seq(num)
+    }
 
     case u: ParseNodes.UnaryExpression => {
       val children = u.children.flatMap(recursive(_)).map(_ match {
         case q: QualifiedName => q.toExpressionName
         case a: AbstractSyntaxNode => a
       })
+
       u.children match {
         case Seq(minus: ParseNodes.Minus, expr: ParseNodes.UnaryExpression) =>
           val parsed: Seq[AbstractSyntaxNode] = recursive(expr)
