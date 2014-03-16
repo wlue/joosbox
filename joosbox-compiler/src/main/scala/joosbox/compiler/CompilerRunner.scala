@@ -39,10 +39,10 @@ object CompilerRunner {
     TypeLinker.link(nodes, root)
     HierarchyChecker.link(nodes)
 
-    // nodes.foreach(enableScopeLinking(_))
+    nodes.foreach(enableScopeLinking(_))
 
-    // NameLinker.link(nodes)
-    // TypeChecker.link(nodes)
+    NameLinker.link(nodes)
+    TypeChecker.link(nodes)
   }
 
   def enableScopeLinking(node: AbstractSyntaxNode): Unit = {
