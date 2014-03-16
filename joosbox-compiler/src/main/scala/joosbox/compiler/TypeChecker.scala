@@ -18,6 +18,44 @@ object TypeChecker {
     Map.empty
   }
 
+  def resolveMethodName(
+    ambiguousName: MethodName,
+    args: Seq[Expression],
+    env: Environment
+  ): Option[TypeMethodDeclaration] = {
+    val name: MethodName = NameLinker.disambiguateName(ambiguousName)(env).asInstanceOf[MethodName]
+
+    val updatedEnv: Environment = name.prefix.map { namePrefix =>
+      val typeOption: Option[Type] = namePrefix match {
+        case name: ExpressionName => resolveExpressionName(name, env)
+        case name: TypeName => resolveTypeName(name, env)
+        case _ => throw new SyntaxError("Invalid prefix for MethodName: " + namePrefix)
+      }
+
+      typeOption match {
+        case Some(ClassType(n)) =>
+          env.lookup(TypeNameLookup(n.toQualifiedName)).get.scope.get
+        case Some(InterfaceType(n)) =>
+          env.lookup(TypeNameLookup(n.toQualifiedName)).get.scope.get
+        case Some(ClassOrInterfaceType(n)) =>
+          env.lookup(TypeNameLookup(n.toQualifiedName)).get.scope.get
+        case _ => throw new SyntaxError("Couldn't resolve type " + typeOption + ".")
+      }
+    } getOrElse(env)
+
+    val argTypes: Seq[Type] = resolvedTypesForArgs(args, updatedEnv)
+    val lookup = MethodLookup(QualifiedName(Seq(name.value)), argTypes)
+
+    updatedEnv.lookup(lookup) match {
+      case Some(result) => result match {
+        case method: MethodDeclaration => Some(method)
+        case method: InterfaceMemberDeclaration => Some(method)
+        case _ => throw new SyntaxError("Found non-method " + result)
+      }
+      case _ => None
+    }
+  }
+
   def resolveTypeName(name: TypeName, env: Environment): Option[Type] = {
     env.lookup(TypeNameLookup(name.toQualifiedName)) match {
       case None => throw new SyntaxError("TypeName " + name.niceName + " does not resolve to a type.")
@@ -377,37 +415,10 @@ object TypeChecker {
 
         case method: MethodInvocation => method match {
           case SimpleMethodInvocation(ambiguousName, args) => {
-            var env = node.scope.get
-
-            val name: MethodName = NameLinker.disambiguateName(ambiguousName)(env).asInstanceOf[MethodName]
-            name.prefix.foreach { namePrefix =>
-              val typeOption: Option[Type] = namePrefix match {
-                case name: ExpressionName => resolveExpressionName(name, env)
-                case name: TypeName => resolveTypeName(name, env)
-                case _ => throw new SyntaxError("Invalid prefix for MethodName: " + namePrefix)
-              }
-
-              env = typeOption match {
-                case Some(ClassType(n)) =>
-                  env.lookup(TypeNameLookup(n.toQualifiedName)).get.scope.get
-                case Some(InterfaceType(n)) =>
-                  env.lookup(TypeNameLookup(n.toQualifiedName)).get.scope.get
-                case Some(ClassOrInterfaceType(n)) =>
-                  env.lookup(TypeNameLookup(n.toQualifiedName)).get.scope.get
-                case _ => throw new SyntaxError("Couldn't resolve type " + typeOption + ".")
-              }
-            }
-
-            val argTypes: Seq[Type] = resolvedTypesForArgs(args, env)
-            val lookup = MethodLookup(QualifiedName(Seq(name.value)), argTypes)
-            env.lookup(lookup) match {
-              case None =>
-                throw new SyntaxError("Invoking " + name.niceName + " does not resolve.")
-              case Some(result) => result match {
-                case method: MethodDeclaration => Some(method.memberType)
-                case method: InterfaceMemberDeclaration => Some(method.memberType)
-                case _ => throw new SyntaxError("Invoking non-method!!!")
-              }
+            val env = node.scope.get
+            resolveMethodName(ambiguousName, args, env) match {
+              case Some(method) => Some(method.memberType)
+              case None => throw new SyntaxError("Could not resolve method: " + ambiguousName)
             }
           }
 

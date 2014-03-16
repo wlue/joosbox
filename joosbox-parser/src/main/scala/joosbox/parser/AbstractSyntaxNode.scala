@@ -150,7 +150,7 @@ object AbstractSyntaxNode {
 
     parameters: Seq[FormalParameter] = Seq.empty[FormalParameter],
     body: Option[Block] = None
-  ) extends AbstractSyntaxNode with Referenceable {
+  ) extends AbstractSyntaxNode with TypeMethodDeclaration with Referenceable {
     override def children: List[AbstractSyntaxNode] =
       modifiers.toList ++ parameters.toList ++ body.toList ++ List(memberType)
   }
@@ -461,13 +461,19 @@ object AbstractSyntaxNode {
       modifiers.toList ++ parameters.toList ++ body.toList
   }
 
+  sealed trait TypeMethodDeclaration {
+    val modifiers: Set[Modifier]
+    val memberType: Type
+    val parameters: Seq[FormalParameter]
+  }
+
   case class MethodDeclaration(
     override val name: MethodName,
     modifiers: Set[Modifier] = Set.empty[Modifier],
     memberType: Type,
     parameters: Seq[FormalParameter] = Seq.empty[FormalParameter],
     body: Option[Block] = None
-  ) extends ClassMemberDeclaration(name, modifiers, memberType) with Referenceable {
+  ) extends ClassMemberDeclaration(name, modifiers, memberType) with TypeMethodDeclaration with Referenceable {
     override def children: List[AbstractSyntaxNode] =
       modifiers.toList ++ List(memberType) ++ parameters.toList ++ body.toList
   }
