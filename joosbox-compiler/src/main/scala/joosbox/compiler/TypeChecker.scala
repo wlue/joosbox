@@ -36,7 +36,6 @@ object TypeChecker {
         case n:ExpressionName => resolveExpressionName(n, env)
         case other => resolveType(other)
       }
-
       t match {
         case None =>
           throw new SyntaxError("ExpressionName " + name.prefix.get + " does not resolve to a type.")
@@ -192,7 +191,7 @@ object TypeChecker {
     case (one: ReferenceType, two: ReferenceType) => true
     // Numeric types are always compatible with each other.
     case (one: NumericType, two: NumericType) => true
-    // Strings and anything else are compatible.
+
     case (ClassType(TypeName(InputString("String", _, _, _), Some(PackageName(InputString("lang", _, _, _), Some(PackageName(InputString("java", _, _, _), None)))))), _: Type) => true
     case (_: Type, ClassType(TypeName(InputString("String", _, _, _), Some(PackageName(InputString("lang", _, _, _), Some(PackageName(InputString("java", _, _, _), None))))))) => true
 
@@ -203,9 +202,12 @@ object TypeChecker {
    * Compare two types. If they are compatible, return the type or the resolve type.
    * Otherwise, throw a type mismatch exception.
    */
-  def matchCompatibleType(type1: Option[Type], type2: Option[Type], resolve: Option[Type] = None): Option[Type] = {
+  def matchCompatibleType(type1: Option[Type], type2: Option[Type],
+                          resolve: Option[Type] = None,
+                          compatible:(Type,Type)=>Boolean = compatibleTypes
+                      ): Option[Type] = {
     (type1, type2) match {
-      case (Some(type1), Some(type2)) if compatibleTypes(type1, type2) => {
+      case (Some(type1), Some(type2)) if compatible(type1, type2) => {
         if (resolve.isEmpty) {
           Some(type1)
         } else {
@@ -257,6 +259,7 @@ object TypeChecker {
 
       case TrueLiteral => Some(BooleanKeyword)
       case FalseLiteral => Some(BooleanKeyword)
+      case NullLiteral => None
       case ThisKeyword =>
         val env = node.scope.get
         env.getEnclosingClassNode match {
@@ -274,7 +277,8 @@ object TypeChecker {
       case variable: ForVariableDeclaration => Some(variable.typeDeclaration)
 
       case expr: Expression => expr match {
-        case c: CastExpression => Some(c.targetType)
+        case c: CastExpression =>
+          Some(node.scope.get.asInstanceOf[ScopeEnvironment].fullyQualifyType(c.targetType))
         case ParenthesizedExpression(expression) => resolveType(expression)
 
         case e: PostfixExpression => e match {
@@ -358,7 +362,10 @@ object TypeChecker {
           }
         }
 
-        case SimpleArrayAccess(name, _) => resolveType(name)
+        case SimpleArrayAccess(name, _) => resolveType(name) match {
+          case Some(a : ArrayType) => Some(a.subtype)
+          case _ => throw new SyntaxError("Array access of non-array type expression.")
+        }
         case ComplexArrayAccess(ref, expr) => throw new SyntaxError("ComplexArrayAccess")
 
         case ArrayCreationPrimary(t, _) => Some(t)
@@ -416,6 +423,8 @@ object TypeChecker {
           }
         }
 
+        case Assignment(lhs, rhs) => resolveType(lhs)
+
         case _ => None
       }
 
@@ -435,6 +444,26 @@ object TypeChecker {
     }
   }
 
+  def validateAddExpression(e1: AddExpression) {
+    resolveType(e1) match {
+      case Some(ClassType(TypeName(InputString("String", _, _, _),
+                      Some(PackageName(InputString("lang", _, _, _),
+                      Some(PackageName(InputString("java", _, _, _), None))))))) =>
+                    Unit
+      case Some(t : ReferenceType) => throw new SyntaxError("Can't perform add operations on Reference Types")
+      case Some(_) => Unit
+      case None => throw new SyntaxError("Can't perform arithmetic operations on Null Types")
+    }
+  }
+
+  def validateArithmeticExpression(e1: ArithmeticExpression) = {
+    resolveType(e1) match {
+      case Some(_ : ReferenceType) => throw new SyntaxError("Can't perform arithmetic operations on Refernce Types")
+      case Some(_) => Unit
+      case None => throw new SyntaxError("Can't perform arithmetic operations on Null Types")
+    }
+  }
+
   def check(node: AbstractSyntaxNode) {
     val env = node.scope.get
     node match {
@@ -450,6 +479,12 @@ object TypeChecker {
       case method: SimpleMethodInvocation => {
         resolveType(method)
       }
+
+      case arithmetic: ArithmeticExpression => arithmetic match {
+        case a : AddExpression => TypeChecker.validateAddExpression(a)
+        case e => TypeChecker.validateArithmeticExpression(e)
+      }
+
 
       case c: ClassCreationPrimary => {
         val className: TypeName = c.classType.name
