@@ -450,22 +450,23 @@ object TypeChecker {
 
       case c: ClassCreationPrimary => {
         val className: TypeName = c.classType.name
-        env.lookup(TypeNameLookup(className.toQualifiedName)) match {
+        val classEnv: Environment = env.lookup(TypeNameLookup(className.toQualifiedName)) match {
           // Check that no objects of abstract classes are created.
           case Some(klass: ClassDeclaration) => {
             if (klass.modifiers.contains(AbstractKeyword)) {
               throw new SyntaxError("Can't create instances of an abstract class.")
             }
+
+            klass.scope.get
           }
-          case _ => {}
+          case _ => throw new SyntaxError("Could not find a class declaration: " + className.niceName);
         }
-        /*
-        val types: Seq[Type] = resolvedTypesForArgs(c.args)
-        val lookup: EnvironmentLookup = ConstructorLookup(className.value, types)
-        if (env.lookup(lookup).isEmpty) {
-          throw new SyntaxError("Can't find constructor matching arguments: " + className.niceName + "(" + types.mkString(",") + ")")
+
+        val types: Seq[Type] = resolvedTypesForArgs(c.args, env)
+        val lookup: EnvironmentLookup = ConstructorLookup(className.toQualifiedName, types)
+        if (classEnv.lookup(lookup).isEmpty) {
+          throw new SyntaxError("Can't find constructor matching arguments: " + className + "(" + types.mkString(",") + ")")
         }
-        */
       }
       case _ => {}
     }
