@@ -38,7 +38,7 @@ object TypeChecker {
       }
 
       t match {
-        case None => throw new SyntaxError("ExpressionName " + name.prefix.get.niceName + " does not resolve to a type.")
+        case None => throw new SyntaxError("ExpressionName " + name.prefix.get + " does not resolve to a type.")
         case Some(result) => result match {
           case x: ClassOrInterfaceType => {
             val xNode = env.lookup(TypeNameLookup(x.name.toQualifiedName)).get match {
