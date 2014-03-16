@@ -132,6 +132,23 @@ object EnvironmentBuilder {
         cd.scope = Some(methodEnvironment)
         n.scope = Some(methodEnvironment)
         cd.name.scope = Some(parent)
+
+        // Assignment to other fields within field initializers should ignore ordering of fields.
+        (staticFields ++ instanceFields).foreach(f => {
+          f.expression match {
+            case Some(ex: Expression) => {
+              def flattenTree(n: AbstractSyntaxNode): Seq[AbstractSyntaxNode] = Seq(n) ++ n.children.flatMap(flattenTree)
+              flattenTree(ex).foreach {
+                case Assignment(lhs: ExpressionName, rhs: AbstractSyntaxNode) => {
+                  lhs.scope = Some(rightMostEnvironment)
+                }
+                case _ => Unit
+              }
+            }
+            case None => Unit
+          }
+        })
+
         (
           Map(cd -> methodEnvironment, n -> methodEnvironment)
           ++ fieldEnvironments
