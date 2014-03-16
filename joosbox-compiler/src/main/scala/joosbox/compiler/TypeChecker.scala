@@ -463,9 +463,9 @@ object TypeChecker {
         }
 
         val types: Seq[Type] = resolvedTypesForArgs(c.args, env)
-        val lookup: EnvironmentLookup = ConstructorLookup(className.toQualifiedName, types)
+        val lookup: EnvironmentLookup = ConstructorLookup(QualifiedName(Seq(className.value)), types)
         if (classEnv.lookup(lookup).isEmpty) {
-          throw new SyntaxError("Can't find constructor matching arguments: " + className + "(" + types.mkString(",") + ")")
+          throw new SyntaxError("Can't find constructor matching arguments: " + className.niceName + "(" + types.mkString(",") + ")")
         }
       }
       case _ => {}

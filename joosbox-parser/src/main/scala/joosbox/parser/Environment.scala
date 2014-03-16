@@ -266,20 +266,32 @@ class ScopeEnvironment(
 
         //  TODO
         //  For speed (if you want) store the key in the map again.
-        if (name.isInstanceOf[MethodLookup]) {
-          val ml = name.asInstanceOf[MethodLookup]
-          val fullyQualifiedTypes:Seq[Type] = ml.params.map(fullyQualifyType)
-
-          val result = locals.collectFirst {
-            case (MethodLookup(name: QualifiedName, params: Seq[Type]), r: Referenceable)
-              if ml.name == name && params.map(fullyQualifyType) == fullyQualifiedTypes => r
-          }
-          result match {
-            case None => Unit
-            case Some(r: Referenceable) => {
-              return Some(r)
+        name match {
+          case ml: MethodLookup =>
+            val fullyQualifiedTypes: Seq[Type] = ml.params.map(fullyQualifyType)
+            val result = locals.collectFirst {
+              case (MethodLookup(name: QualifiedName, params: Seq[Type]), r: Referenceable)
+                if ml.name == name && params.map(fullyQualifyType) == fullyQualifiedTypes => r
             }
-          }
+            result match {
+              case None => Unit
+              case Some(r: Referenceable) => {
+                return Some(r)
+              }
+            }
+          case cl: ConstructorLookup =>
+            val fullyQualifiedTypes: Seq[Type] = cl.params.map(fullyQualifyType)
+            val result = locals.collectFirst {
+              case (ConstructorLookup(name: QualifiedName, params: Seq[Type]), r: Referenceable)
+                if cl.name == name && params.map(fullyQualifyType) == fullyQualifiedTypes => r
+            }
+            result match {
+              case None => Unit
+              case Some(r: Referenceable) => {
+                return Some(r)
+              }
+            }
+          case _ => {}
         }
 
         val packageResolved: Option[Referenceable]
