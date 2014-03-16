@@ -847,7 +847,11 @@ object AbstractSyntaxNode {
           _: ParseNodes.LeftParen, name: ParseNodes.Name, _: ParseNodes.Dims, _: ParseNodes.RightParen,
           expr: ParseNodes.UnaryExpressionNotPlusMinus
         ) =>
-          val nameType: Type = recursive(name).collectFirst { case n: Type => n }.get
+          val nameType: Type = recursive(name).head match {
+            case name: QualifiedName => ClassOrInterfaceType(name.toTypeName)
+            case x => throw new SyntaxError("Casting with invalid cast type: " + x)
+          }
+
           (ArrayType(nameType), recursive(expr))
         case _ => throw new SyntaxError("Invalid cast expression parse: " + c)
       }
@@ -857,6 +861,7 @@ object AbstractSyntaxNode {
         case y: ExpressionName => ClassOrInterfaceType(y.toQualifiedName.toTypeName)
         case y: QualifiedName => ClassOrInterfaceType(y.toTypeName)
         case y: PrimitiveType => y
+        case arr: ArrayType => arr
         case x => throw new SyntaxError("Casting with invalid cast type: " + x)
       }
 
