@@ -312,7 +312,7 @@ class ScopeEnvironment(
               case Some(x) => Some(x)
               case None => {
                 if (useLinkedScopes) {
-                  linkedScopes.toStream.flatMap(_.lookup(name)).headOption match {
+                  linkedScopes.toStream.flatMap(_.search(name)).headOption match {
                     case Some(r: Referenceable) => {
                       Some(r)
                     }

@@ -87,7 +87,7 @@ object TypeChecker {
     val lookup = ExpressionNameLookup(ExpressionName(name.value).toQualifiedName)
     tmpEnv.lookup(lookup) match {
       case None =>
-        throw new SyntaxError("ExpressionName " + name.niceName + " does not resolve to a type.")
+        throw new SyntaxError("ExpressionName " + name + " does not resolve to a type.")
       case Some(result) => result match {
         case p: FormalParameter => Some(p.varType)
         case f: FieldDeclaration => Some(f.memberType)
@@ -174,11 +174,13 @@ object TypeChecker {
     }
 
     env.lookup(TypeNameLookup(typeName.toQualifiedName)) match {
-      case None => throw new SyntaxError("Name " + typeName.niceName + " does not resolve to a type.")
+      case None =>
+        throw new SyntaxError("Name " + typeName.niceName + " does not resolve to a type.")
       case Some(result) => result match {
         case c: ClassDeclaration => c.body.scope.get
         case i: InterfaceDeclaration => i.body.scope.get
-        case _ => throw new SyntaxError("Name " + typeName.niceName + " does not resolve to a class or interface type.")
+        case _ =>
+          throw new SyntaxError("Name " + typeName.niceName + " does not resolve to a class or interface type.")
       }
     }
   }
