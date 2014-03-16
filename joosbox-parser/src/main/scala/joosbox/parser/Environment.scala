@@ -240,6 +240,20 @@ class ScopeEnvironment(
     result
   }
 
+  //  Stop searching when our parent's getEnclosingClassNode returns None, as we don't want to return the type.
+  def searchInClassOrInterfaceScope(name: EnvironmentLookup): Option[Referenceable] = {
+    search(name) match {
+      case Some(ref) => Some(ref)
+      case None => parent match {
+        case Some(p: ScopeEnvironment) => p.getEnclosingClassNode match {
+          case Some(_) => p.lookup(name)
+          case None => None
+        }
+        case None => None
+      }
+    }
+  }
+
   def search(name: EnvironmentLookup): Option[Referenceable] = {
     locals.get(name) match {
       case Some(r: Referenceable) =>
@@ -312,7 +326,7 @@ class ScopeEnvironment(
               case Some(x) => Some(x)
               case None => {
                 if (useLinkedScopes) {
-                  linkedScopes.toStream.flatMap(_.search(name)).headOption match {
+                  linkedScopes.toStream.flatMap(_.searchInClassOrInterfaceScope(name)).headOption match {
                     case Some(r: Referenceable) => {
                       Some(r)
                     }
