@@ -363,20 +363,24 @@ object TypeChecker {
         }
 
         case SimpleArrayAccess(name, _) => resolveType(name) match {
-          case Some(a : ArrayType) => Some(a.subtype)
+          case Some(ArrayType(subtype)) => Some(subtype)
           case _ => throw new SyntaxError("Array access of non-array type expression.")
         }
-        case ComplexArrayAccess(ref, expr) => throw new SyntaxError("ComplexArrayAccess")
+
+        case ComplexArrayAccess(ref, expr) => resolveType(ref) match {
+          case Some(ArrayType(subtype)) => Some(subtype)
+          case _ => throw new SyntaxError("Expression " + ref + " is not an array.")
+        }
 
         case ArrayCreationPrimary(t, _) => Some(t)
         case ClassCreationPrimary(t, _) => Some(t)
 
         case method: MethodInvocation => method match {
-          case SimpleMethodInvocation(name, args) => {
+          case SimpleMethodInvocation(ambiguousName, args) => {
             var env = node.scope.get
 
-            val n = NameLinker.disambiguateName(name)(env).asInstanceOf[MethodName]
-            n.prefix.foreach { namePrefix =>
+            val name: MethodName = NameLinker.disambiguateName(ambiguousName)(env).asInstanceOf[MethodName]
+            name.prefix.foreach { namePrefix =>
               val typeOption: Option[Type] = namePrefix match {
                 case name: ExpressionName => resolveExpressionName(name, env)
                 case name: TypeName => resolveTypeName(name, env)
