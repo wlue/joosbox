@@ -130,7 +130,9 @@ object TypeChecker {
         case f: FieldDeclaration => Some(f.memberType)
         case v: LocalVariableDeclaration => Some(v.memberType)
         case v: ForVariableDeclaration => Some(v.typeDeclaration)
-        case _ => throw new SyntaxError("Could not resolve type of expression.");
+        case c: ClassDeclaration => Some(ClassType(c.name))
+        case x =>
+          throw new SyntaxError("Could not resolve type of expression: " + x);
       }
     }
   }
@@ -299,11 +301,7 @@ object TypeChecker {
       case FalseLiteral() => Some(BooleanKeyword())
       case NullLiteral() => None
       case ThisKeyword() =>
-        val env = node.scope.get
-        env.getEnclosingClassNode match {
-          case Some(declaration: ClassDeclaration) => resolveType(declaration.name)
-          case _ => throw new SyntaxError("this resolved to non-class declaration.")
-        }
+        resolveExpressionName(ExpressionName(InputString("this")), node.scope.get)
 
       case Num(value, _) => Some(IntKeyword())
       case _: CharLiteral => Some(CharKeyword())

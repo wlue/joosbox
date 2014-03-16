@@ -150,6 +150,12 @@ object NameLinker {
       case p: PackageName => Unit
       case a: AmbiguousName => Unit
 
+      case t: ThisKeyword =>
+        TypeChecker.resolveType(t) match {
+        case Some(_) => Unit
+        case None => throw new SyntaxError("Could not resolve 'this' keyword: " + t + " (is it called from a static context?)")
+      }
+
       case p: Name => TypeChecker.resolveType(p) match {
         case Some(_) => Unit
         case None => throw new SyntaxError("Could not resolve name: " + p)

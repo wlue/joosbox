@@ -182,13 +182,23 @@ object EnvironmentBuilder {
       case Some(fd: FieldDeclaration) => {
         val fieldEnvironment = 
           new ScopeEnvironment(Map(ExpressionNameLookup(fd.name.toQualifiedName) -> fd), None, Seq.empty, parent, Some(classDeclaration))
+
         if (fd.scope == None) {
           fd.scope = Some(fieldEnvironment)
         }
 
+        val rhsMap: Map[EnvironmentLookup, Referenceable]
+          = if (fd.modifiers.collectFirst{case StaticKeyword() => true}.isEmpty) {
+          Map(ExpressionNameLookup(QualifiedName(Seq(InputString("this")))) -> classDeclaration)
+        } else {
+          Map.empty[EnvironmentLookup, Referenceable]
+        }
+        val rhsEnvironment =
+          new ScopeEnvironment(rhsMap, None, Seq.empty, parent, Some(classDeclaration))
+
         //  Children of this declaration should have their RHS environments set to
         //  something distinct, but need not be returned.
-        fd.children.foreach(traverse(_, parent, root))
+        fd.children.foreach(traverse(_, rhsEnvironment, root))
 
         (
           Seq((fd, fieldEnvironment))
@@ -360,6 +370,20 @@ object EnvironmentBuilder {
         }
         n.scope = Some(new ScopeEnvironment(mapping, None, Seq.empty, parent))
         n.scope.get
+      }
+
+      case c: ConstructorDeclaration => {
+        val parameterMapping: Map[EnvironmentLookup, Referenceable]
+        = c.parameters.map(fp => (ExpressionNameLookup(fp.name.toQualifiedName), fp)).toMap
+        val mapping = parent.getEnclosingClassNode match {
+          case Some(classDeclaration: ClassDeclaration) => {
+            val thisExpression = QualifiedName(Seq(InputString("this"))).toExpressionName
+            parameterMapping + (ExpressionNameLookup(thisExpression.toQualifiedName) -> classDeclaration)
+          }
+          case _ => parameterMapping
+        }
+        c.scope = Some(new ScopeEnvironment(mapping, None, Seq.empty, parent))
+        c.scope.get
       }
 
       case f: FieldDeclaration => {
