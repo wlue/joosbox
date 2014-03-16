@@ -185,8 +185,13 @@ object EnvironmentBuilder {
         if (fd.scope == None) {
           fd.scope = Some(fieldEnvironment)
         }
+
+        //  Children of this declaration should have their RHS environments set to
+        //  something distinct, but need not be returned.
+        fd.children.foreach(traverse(_, parent, root))
+
         (
-          Seq((fd, fieldEnvironment)) ++ fd.children.flatMap(traverse(_, fieldEnvironment, root)).toSeq
+          Seq((fd, fieldEnvironment))
           ++ scopeTreeFromFieldDeclarations(statements.drop(1), fieldEnvironment, root, classDeclaration)
         )
       }
