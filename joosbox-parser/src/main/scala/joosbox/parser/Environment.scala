@@ -240,16 +240,20 @@ class ScopeEnvironment(
     result
   }
 
-  //  Stop searching when our parent's getEnclosingClassNode returns None, as we don't want to return the type.
+  // Stop searching when our grandparent's getEnclosingClassNode returns None,
+  // as we don't want to return the ClassType or InterfaceType.
   def searchInClassOrInterfaceScope(name: EnvironmentLookup): Option[Referenceable] = {
     search(name) match {
       case Some(ref) => Some(ref)
       case None => parent match {
-        case Some(p: ScopeEnvironment) => p.getEnclosingClassNode match {
-          case Some(_) => p.lookup(name)
-          case None => None
+        case Some(p: ScopeEnvironment) => p.parent match {
+          case Some(gp: ScopeEnvironment) => gp.getEnclosingClassNode match {
+            case Some(_) => p.lookup(name)
+            case None => None
+          }
+          case _ => None
         }
-        case None => None
+        case _ => None
       }
     }
   }
