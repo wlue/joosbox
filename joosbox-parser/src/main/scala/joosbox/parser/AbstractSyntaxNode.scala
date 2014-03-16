@@ -23,9 +23,9 @@ object AbstractSyntaxNode {
   sealed trait Literal extends Expression
   case class CharLiteral(value: InputString) extends Literal
   case class StringLiteral(value: InputString) extends Literal
-  case object NullLiteral extends Literal
-  case object TrueLiteral extends Literal
-  case object FalseLiteral extends Literal
+  case class NullLiteral() extends Literal
+  case class TrueLiteral() extends Literal
+  case class FalseLiteral() extends Literal
 
   case class Num(value: String, input: InputString) extends Literal {
     def negated: Num = value.headOption match {
@@ -265,7 +265,7 @@ object AbstractSyntaxNode {
     override def children: List[AbstractSyntaxNode] = List(primary, expr)
   }
 
-  case object ThisKeyword extends Expression
+  case class ThisKeyword() extends Expression
 
   case class ArrayCreationPrimary(varType: Type, dimExpr: Expression) extends Expression {
     override def children: List[AbstractSyntaxNode] = List(varType, dimExpr)
@@ -354,16 +354,16 @@ object AbstractSyntaxNode {
 
   sealed trait PrimitiveType extends Type
   sealed trait ReferenceType extends Type
-  case object VoidKeyword extends Type
+  case class VoidKeyword() extends Type
 
-  case object BooleanKeyword extends PrimitiveType
+  case class BooleanKeyword() extends PrimitiveType
 
   sealed trait NumericType extends PrimitiveType
 
-  case object ByteKeyword extends NumericType
-  case object ShortKeyword extends NumericType
-  case object IntKeyword extends NumericType
-  case object CharKeyword extends NumericType
+  case class ByteKeyword() extends NumericType
+  case class ShortKeyword() extends NumericType
+  case class IntKeyword() extends NumericType
+  case class CharKeyword() extends NumericType
 
   case class FormalParameter(
     val name: ExpressionName,
@@ -392,14 +392,14 @@ object AbstractSyntaxNode {
 
   sealed trait AccessModifier extends Modifier
   sealed trait NonAccessModifier extends Modifier
-  case object StaticKeyword extends NonAccessModifier
+  case class StaticKeyword() extends NonAccessModifier
 
-  case object PublicKeyword extends AccessModifier
-  case object ProtectedKeyword extends AccessModifier
+  case class PublicKeyword() extends AccessModifier
+  case class ProtectedKeyword() extends AccessModifier
 
-  case object AbstractKeyword extends NonAccessModifier
-  case object FinalKeyword extends NonAccessModifier
-  case object NativeKeyword extends NonAccessModifier
+  case class AbstractKeyword() extends NonAccessModifier
+  case class FinalKeyword() extends NonAccessModifier
+  case class NativeKeyword() extends NonAccessModifier
 
   sealed abstract class TypeDeclaration(
     val name: TypeName,
@@ -507,7 +507,7 @@ object AbstractSyntaxNode {
   }
 
   sealed trait Statement extends BlockStatement
-  case object EmptyStatement extends Statement
+  case class EmptyStatement() extends Statement
 
   sealed trait ForInit extends AbstractSyntaxNode
   sealed trait StatementExpression extends Statement with ForInit with Expression
@@ -618,11 +618,11 @@ object AbstractSyntaxNode {
       val body: ClassBody = children.collectFirst { case x: ClassBody => x }.get
 
       //  Enforce "A class cannot be both abstract and final."
-      if (modifiers.contains(AbstractKeyword) && modifiers.contains(FinalKeyword)) {
+      if (modifiers.collectFirst{case AbstractKeyword() => true}.isDefined && modifiers.collectFirst{case FinalKeyword() => true}.isDefined) {
         throw new SyntaxError("Class " + name.value + " cannot be both abstract and final.")
       }
       // Enforce: No package private classes
-      if (!modifiers.contains(PublicKeyword) && !modifiers.contains(ProtectedKeyword)) {
+      if (modifiers.collectFirst{case PublicKeyword() => true}.isEmpty && modifiers.collectFirst{case ProtectedKeyword() => true}.isEmpty) {
         throw new SyntaxError("Class " + name.value + " cannot be package private.")
       }
 
@@ -646,7 +646,7 @@ object AbstractSyntaxNode {
       val body:InterfaceBody = children.collectFirst { case x: InterfaceBody => x }.get
 
       // Enforce: No package private interface
-      if (!modifiers.contains(PublicKeyword) && !modifiers.contains(ProtectedKeyword)) {
+      if (modifiers.collectFirst{case PublicKeyword() => true}.isEmpty && modifiers.collectFirst{case ProtectedKeyword() => true}.isEmpty) {
         throw new SyntaxError("Interface " + name.value + " cannot be package private.")
       }
 
@@ -676,20 +676,20 @@ object AbstractSyntaxNode {
       // }
 
       // Enforce: No package private methods
-      if (!modifiers.contains(PublicKeyword) && !modifiers.contains(ProtectedKeyword)) {
+      if (modifiers.collectFirst{case PublicKeyword() => true}.isEmpty && modifiers.collectFirst{case ProtectedKeyword() => true}.isEmpty) {
         throw new SyntaxError("Constructor " + name.value + " cannot be package private.")
       }
 
       // Enforce: A constructor can't be abstract, static, nor final.
-      if (modifiers.contains(AbstractKeyword)) {
+      if (modifiers.collectFirst{case AbstractKeyword() => true}.isDefined) {
         throw new SyntaxError("Constructor " + name.value + " cannot be abstract.")
       }
 
-      if (modifiers.contains(StaticKeyword)) {
+      if (modifiers.collectFirst{case StaticKeyword() => true}.isDefined) {
         throw new SyntaxError("Constructor " + name.value + " cannot be static.")
       }
 
-      if (modifiers.contains(FinalKeyword)) {
+      if (modifiers.collectFirst{case FinalKeyword() => true}.isDefined) {
         throw new SyntaxError("Constructor " + name.value + " cannot be final.")
       }
 
@@ -716,29 +716,29 @@ object AbstractSyntaxNode {
       val body: Option[Block] = children.collectFirst { case x:Block => x }
 
       // Enforce: No package private methods
-      if (!modifiers.contains(PublicKeyword) && !modifiers.contains(ProtectedKeyword)) {
+      if (!modifiers.collectFirst{case PublicKeyword() => true}.isDefined && !modifiers.collectFirst{case ProtectedKeyword() => true}.isDefined) {
         throw new SyntaxError("Method " + name.niceName + " cannot be package private.")
       }
 
       // Enforce: A static method cannot be final.
-      if (modifiers.contains(StaticKeyword) && modifiers.contains(FinalKeyword)) {
+      if (modifiers.collectFirst{case StaticKeyword() => true}.isDefined && modifiers.collectFirst{case FinalKeyword() => true}.isDefined) {
         throw new SyntaxError("Method " + name.niceName + " cannot be both static and final.")
       }
 
       // Enforce: A native method must be static.
-      if (modifiers.contains(NativeKeyword) && !modifiers.contains(StaticKeyword)) {
+      if (modifiers.collectFirst{case NativeKeyword() => true}.isDefined && !modifiers.collectFirst{case StaticKeyword() => true}.isDefined) {
         throw new SyntaxError("Method " + name.niceName + " is native so it must be static.")
       }
 
       //Enforce: An abstract method cannot be static or final.
-      if (modifiers.contains(AbstractKeyword)) {
-        if (modifiers.contains(StaticKeyword) || modifiers.contains(FinalKeyword)) {
+      if (modifiers.collectFirst{case AbstractKeyword() => true}.isDefined) {
+        if (modifiers.collectFirst{case StaticKeyword() => true}.isDefined || modifiers.collectFirst{case FinalKeyword() => true}.isDefined) {
           throw new SyntaxError("Method " + name.niceName + " is abstract so it cant be static or final.")
         }
       }
 
       // Enforce: A method has a body if and only if it is neither abstract nor native.
-      if (modifiers.contains(NativeKeyword) || modifiers.contains(AbstractKeyword)) {
+      if (modifiers.collectFirst{case NativeKeyword() => true}.isDefined || modifiers.collectFirst{case AbstractKeyword() => true}.isDefined) {
         if (!body.isEmpty) {
           throw new SyntaxError("Method " + name.niceName + " cannot have a body.")
         }
@@ -764,24 +764,24 @@ object AbstractSyntaxNode {
       val expression: Option[Expression] = children.collectFirst { case x: Expression => x }
 
       // Enforce: A final field must have an initializer.
-      if (modifiers.contains(FinalKeyword)) {
+      if (modifiers.collectFirst{case FinalKeyword() => true}.isDefined) {
         if (expression.isEmpty) {
           throw new SyntaxError("Field " + name.niceName + " is final so it must have an initializer.")
         }
       }
 
       // Enfore: A field can not be package private
-      if (!modifiers.contains(PublicKeyword) && !modifiers.contains(ProtectedKeyword)) {
+      if (!modifiers.collectFirst{case PublicKeyword() => true}.isDefined && !modifiers.collectFirst{case ProtectedKeyword() => true}.isDefined) {
         throw new SyntaxError("Field " + name.niceName + " cannot be package private.")
       }
 
       // Enforce: A field can not be abstract
-      if (modifiers.contains(AbstractKeyword)) {
+      if (modifiers.collectFirst{case AbstractKeyword() => true}.isDefined) {
         throw new SyntaxError("Field " + name.niceName + " cannot be abstract.")
       }
 
       // Enforce: A field can not be native
-      if (modifiers.contains(NativeKeyword)) {
+      if (modifiers.collectFirst{case NativeKeyword() => true}.isDefined) {
         throw new SyntaxError("Field " + name.niceName + " cannot be native.")
       }
 
@@ -797,7 +797,7 @@ object AbstractSyntaxNode {
       val body: Option[Block] = children.collectFirst { case x: Block => x }
 
       // Enforce: An interface method cannot be static or final.
-      if (modifiers.contains(StaticKeyword) || modifiers.contains(FinalKeyword)) {
+      if (modifiers.collectFirst{case StaticKeyword() => true}.isDefined || modifiers.collectFirst{case FinalKeyword() => true}.isDefined) {
         throw new SyntaxError("Interface method " + name.value + " cannot be static or final.")
       }
 
@@ -823,12 +823,12 @@ object AbstractSyntaxNode {
       Seq(InterfaceBody(children.collect { case x: InterfaceMemberDeclaration => x }))
     }
 
-    case m: ParseNodes.StaticKeyword => Seq(StaticKeyword)
-    case m: ParseNodes.PublicKeyword => Seq(PublicKeyword)
-    case m: ParseNodes.ProtectedKeyword => Seq(ProtectedKeyword)
-    case m: ParseNodes.AbstractKeyword => Seq(AbstractKeyword)
-    case m: ParseNodes.FinalKeyword => Seq(FinalKeyword)
-    case m: ParseNodes.NativeKeyword => Seq(NativeKeyword)
+    case m: ParseNodes.StaticKeyword => Seq(StaticKeyword())
+    case m: ParseNodes.PublicKeyword => Seq(PublicKeyword())
+    case m: ParseNodes.ProtectedKeyword => Seq(ProtectedKeyword())
+    case m: ParseNodes.AbstractKeyword => Seq(AbstractKeyword())
+    case m: ParseNodes.FinalKeyword => Seq(FinalKeyword())
+    case m: ParseNodes.NativeKeyword => Seq(NativeKeyword())
 
     case c: ParseNodes.CastExpression => {
       val (castNode, expressionNodes) = c.children match {
@@ -945,16 +945,16 @@ object AbstractSyntaxNode {
       }
     }
 
-    case t: ParseNodes.TrueLiteral => Seq(TrueLiteral)
-    case t: ParseNodes.FalseLiteral => Seq(FalseLiteral)
-    case n: ParseNodes.NullLiteral => Seq(NullLiteral)
+    case t: ParseNodes.TrueLiteral => Seq(TrueLiteral())
+    case t: ParseNodes.FalseLiteral => Seq(FalseLiteral())
+    case n: ParseNodes.NullLiteral => Seq(NullLiteral())
 
-    case t: ParseNodes.ByteKeyword => Seq(ByteKeyword)
-    case t: ParseNodes.ShortKeyword => Seq(ShortKeyword)
-    case t: ParseNodes.IntKeyword => Seq(IntKeyword)
-    case t: ParseNodes.CharKeyword => Seq(CharKeyword)
-    case v: ParseNodes.VoidKeyword => Seq(VoidKeyword)
-    case b: ParseNodes.BooleanKeyword => Seq(BooleanKeyword)
+    case t: ParseNodes.ByteKeyword => Seq(ByteKeyword())
+    case t: ParseNodes.ShortKeyword => Seq(ShortKeyword())
+    case t: ParseNodes.IntKeyword => Seq(IntKeyword())
+    case t: ParseNodes.CharKeyword => Seq(CharKeyword())
+    case v: ParseNodes.VoidKeyword => Seq(VoidKeyword())
+    case b: ParseNodes.BooleanKeyword => Seq(BooleanKeyword())
     case a: ParseNodes.ArrayType => {
       val children:Seq[AbstractSyntaxNode] = a.children.flatMap(recursive(_))
       children.headOption match {
@@ -1332,7 +1332,7 @@ object AbstractSyntaxNode {
     case ParseNodes.PrimaryNoNewArray(List(lp: ParseNodes.LeftParen, content: ParseNode, rp: ParseNodes.RightParen), _) =>
       Seq(ParenthesizedExpression(content.children.flatMap(recursive(_)).collectFirst {case x: Expression => x}.get))
 
-    case t: ParseNodes.ThisKeyword => Seq(ThisKeyword)
+    case t: ParseNodes.ThisKeyword => Seq(ThisKeyword())
 
     case p: ParseNodes.StatementExpression => {
       val children: Seq[AbstractSyntaxNode] = p.children.flatMap(recursive(_))

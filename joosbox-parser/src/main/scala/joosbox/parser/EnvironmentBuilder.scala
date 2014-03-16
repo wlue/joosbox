@@ -110,10 +110,10 @@ object EnvironmentBuilder {
           })
 
         val staticFields:Seq[FieldDeclaration] = n.declarations.collect({
-          case f: FieldDeclaration if f.modifiers.contains(StaticKeyword) => f
+          case f: FieldDeclaration if f.modifiers.collectFirst{case StaticKeyword() => true}.isDefined => f
         })
         val instanceFields:Seq[FieldDeclaration] = n.declarations.collect({
-          case f: FieldDeclaration if !f.modifiers.contains(StaticKeyword) => f
+          case f: FieldDeclaration if !f.modifiers.collectFirst{case StaticKeyword() => true}.isDefined => f
         })
 
         val fieldEnvironments = scopeTreeFromFieldDeclarations(
@@ -342,7 +342,7 @@ object EnvironmentBuilder {
       case n: MethodDeclaration => {
         val parameterMapping: Map[EnvironmentLookup, Referenceable]
           = n.parameters.map(fp => (ExpressionNameLookup(fp.name.toQualifiedName), fp)).toMap
-        val mapping = if (n.modifiers.contains(StaticKeyword)) {
+        val mapping = if (n.modifiers.collectFirst{case StaticKeyword() => true}.isDefined) {
           parameterMapping
         } else {
           parent.getEnclosingClassNode match {
@@ -358,7 +358,7 @@ object EnvironmentBuilder {
       }
 
       case f: FieldDeclaration => {
-        f.scope = Some(if (f.modifiers.contains(StaticKeyword)) {
+        f.scope = Some(if (f.modifiers.collectFirst{case StaticKeyword() => true}.isDefined) {
           parent
         } else {
           parent.getEnclosingClassNode match {

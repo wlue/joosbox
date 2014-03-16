@@ -100,7 +100,7 @@ object HierarchyChecker {
             if (klassList.contains(superklass.get.inputString)) {
               throw new SyntaxError("Class hierarchy must be acyclic.")
             }
-            if (mods.contains(FinalKeyword)) {
+            if (mods.collectFirst{case FinalKeyword() => true}.isDefined) {
               throw new SyntaxError("A class must not extend a final class.")
             }
             methodList = methodList ++ HierarchyChecker.checkClassHierarchy(superklass, klassList, env)
@@ -175,21 +175,21 @@ object HierarchyChecker {
   }
 
   def checkMethodOverrideModifiers(base:Set[Modifier], extended:Set[Modifier]) = {
-    if (extended.contains(FinalKeyword)) {
+    if (extended.collectFirst{case FinalKeyword() => true}.isDefined) {
       throw new SyntaxError("A method must not replace a final method.")
     }
-    if (extended.contains(StaticKeyword)) {
-      if (!base.contains(StaticKeyword)) {
+    if (extended.collectFirst{case StaticKeyword() => true}.isDefined) {
+      if (!base.collectFirst{case StaticKeyword() => true}.isDefined) {
         throw new SyntaxError("A nonstatic method must not replace a static method.")
       }
     }
-    if (!extended.contains(StaticKeyword)) {
-      if (base.contains(StaticKeyword)) {
+    if (!extended.collectFirst{case StaticKeyword() => true}.isDefined) {
+      if (base.collectFirst{case StaticKeyword() => true}.isDefined) {
         throw new SyntaxError("A static method must not replace an instance method.")
       }
     }
-    if (extended.contains(PublicKeyword)) {
-      if (base.contains(ProtectedKeyword)) {
+    if (extended.collectFirst{case PublicKeyword() => true}.isDefined) {
+      if (base.collectFirst{case ProtectedKeyword() => true}.isDefined) {
         throw new SyntaxError("A protected method must not replace a public method.")
       }
     }
@@ -217,8 +217,8 @@ object HierarchyChecker {
           }
         case _ => Unit
       }
-      if (superModifiers.contains(AbstractKeyword)) {
-        if (!modifiers.contains(AbstractKeyword) && !implemented) {
+      if (superModifiers.collectFirst{case AbstractKeyword() => true}.isDefined) {
+        if (!modifiers.collectFirst{case AbstractKeyword() => true}.isDefined && !implemented) {
           throw new SyntaxError("Extending classes with abstract methods must either be an abstract class or implement the method.")
         }
       }
@@ -238,8 +238,8 @@ object HierarchyChecker {
         // Check class declarations
         declarations = node.body.declarations.map {
             case m: MethodDeclaration =>
-              if (m.modifiers.contains(AbstractKeyword)) {
-                if (!modifiers.contains(AbstractKeyword)) {
+              if (m.modifiers.collectFirst{case AbstractKeyword() => true}.isDefined) {
+                if (!modifiers.collectFirst{case AbstractKeyword() => true}.isDefined) {
                   throw new SyntaxError("Abstract methods must be defined in abstract classes/interfaces.")
                 }
               }
@@ -302,7 +302,7 @@ object HierarchyChecker {
                 modifiers,
                 memberLookup,
                 intMember.memberType,
-                intMember.modifiers ++ Set(AbstractKeyword))
+                intMember.modifiers ++ Set(AbstractKeyword()))
 
           case _ => Unit
         }
@@ -316,7 +316,7 @@ object HierarchyChecker {
                 modifiers,
                 memberLookup,
                 intMember.memberType,
-                intMember.modifiers ++ Set(AbstractKeyword))
+                intMember.modifiers ++ Set(AbstractKeyword()))
 
           case _ => Unit
         }
@@ -380,14 +380,14 @@ object HierarchyChecker {
           case (methodLookup : MethodLookup, method : InterfaceMemberDeclaration) =>
             checkSuperMethodForClassOrInterface(
               declarations,
-              modifiers ++ Set(AbstractKeyword),
+              modifiers ++ Set(AbstractKeyword()),
               methodLookup,
               method.memberType,
               method.modifiers)
           case (methodLookup : MethodLookup, method : MethodDeclaration) =>
             checkSuperMethodForClassOrInterface(
               declarations,
-              modifiers ++ Set(AbstractKeyword),
+              modifiers ++ Set(AbstractKeyword()),
               methodLookup,
               method.memberType,
               method.modifiers)

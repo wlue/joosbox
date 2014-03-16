@@ -110,7 +110,7 @@ object TypeChecker {
 
           case a: ArrayType => {
             if (name.value == InputString("length")) {
-              return Some(IntKeyword)
+              return Some(IntKeyword())
             } else {
               throw new SyntaxError("Only valid array field is length.")
             }
@@ -285,9 +285,9 @@ object TypeChecker {
    */
   def promotedType(tpe: Type): Type = tpe match {
     // Numeric promotion. Byte, Char, and Short get promoted to Int.
-    case ShortKeyword => IntKeyword
-    case ByteKeyword => IntKeyword
-    case CharKeyword => IntKeyword
+    case ShortKeyword() => IntKeyword()
+    case ByteKeyword() => IntKeyword()
+    case CharKeyword() => IntKeyword()
     case _ => tpe
   }
 
@@ -295,18 +295,18 @@ object TypeChecker {
     node match {
       case t: Type => Some(t)
 
-      case TrueLiteral => Some(BooleanKeyword)
-      case FalseLiteral => Some(BooleanKeyword)
-      case NullLiteral => None
-      case ThisKeyword =>
+      case TrueLiteral() => Some(BooleanKeyword())
+      case FalseLiteral() => Some(BooleanKeyword())
+      case NullLiteral() => None
+      case ThisKeyword() =>
         val env = node.scope.get
         env.getEnclosingClassNode match {
           case Some(declaration: ClassDeclaration) => resolveType(declaration.name)
           case _ => throw new SyntaxError("this resolved to non-class declaration.")
         }
 
-      case Num(value, _) => Some(IntKeyword)
-      case _: CharLiteral => Some(CharKeyword)
+      case Num(value, _) => Some(IntKeyword())
+      case _: CharLiteral => Some(CharKeyword())
       case _: StringLiteral => Some(ClassType(QualifiedName("java.lang.String".split("\\.").map(InputString(_))).toTypeName))
 
       case param: FormalParameter => Some(param.varType)
@@ -347,26 +347,26 @@ object TypeChecker {
 
         case conditional: ConditionalExpression => conditional match {
           // Eager boolean is supported, bitwise are not
-          case OrExpression(_, _) => Some(BooleanKeyword)
-          case AndExpression(_, _) => Some(BooleanKeyword)
+          case OrExpression(_, _) => Some(BooleanKeyword())
+          case AndExpression(_, _) => Some(BooleanKeyword())
           // Binary expression are supported
-          case BinOrExpression(_, _) => Some(BooleanKeyword)
-          case BinXorExpression(_, _) => Some(BooleanKeyword)
-          case BinAndExpression(_, _) => Some(BooleanKeyword)
+          case BinOrExpression(_, _) => Some(BooleanKeyword())
+          case BinXorExpression(_, _) => Some(BooleanKeyword())
+          case BinAndExpression(_, _) => Some(BooleanKeyword())
         }
 
         case relational: RelationalExpression => relational match {
-          case EqualExpression(e1, e2)        => matchCompatibleType(resolveType(e1), resolveType(e2), Some(BooleanKeyword))
-          case NotEqualExpression(e1, e2)     => matchCompatibleType(resolveType(e1), resolveType(e2), Some(BooleanKeyword))
-          case LessThanExpression(e1, e2)     => matchCompatibleType(resolveType(e1), resolveType(e2), Some(BooleanKeyword))
-          case LessEqualExpression(e1, e2)    => matchCompatibleType(resolveType(e1), resolveType(e2), Some(BooleanKeyword))
-          case GreaterThanExpression(e1, e2)  => matchCompatibleType(resolveType(e1), resolveType(e2), Some(BooleanKeyword))
-          case GreaterEqualExpression(e1, e2) => matchCompatibleType(resolveType(e1), resolveType(e2), Some(BooleanKeyword))
+          case EqualExpression(e1, e2)        => matchCompatibleType(resolveType(e1), resolveType(e2), Some(BooleanKeyword()))
+          case NotEqualExpression(e1, e2)     => matchCompatibleType(resolveType(e1), resolveType(e2), Some(BooleanKeyword()))
+          case LessThanExpression(e1, e2)     => matchCompatibleType(resolveType(e1), resolveType(e2), Some(BooleanKeyword()))
+          case LessEqualExpression(e1, e2)    => matchCompatibleType(resolveType(e1), resolveType(e2), Some(BooleanKeyword()))
+          case GreaterThanExpression(e1, e2)  => matchCompatibleType(resolveType(e1), resolveType(e2), Some(BooleanKeyword()))
+          case GreaterEqualExpression(e1, e2) => matchCompatibleType(resolveType(e1), resolveType(e2), Some(BooleanKeyword()))
           case InstanceOfExpression(expr, reference) => {
             (expr, reference) match {
-              case (NullLiteral, _: ReferenceType) => Some(BooleanKeyword)
+              case (NullLiteral(), _: ReferenceType) => Some(BooleanKeyword())
               case (expr, reference) => (resolveType(expr), reference) match {
-                case (Some(_: ReferenceType), _: ReferenceType) => Some(BooleanKeyword)
+                case (Some(_: ReferenceType), _: ReferenceType) => Some(BooleanKeyword())
                 case (left, _) => throw new SyntaxError("Left hand side of \"instanceOf\" is not a reference: " + left)
               }
             }
@@ -389,7 +389,8 @@ object TypeChecker {
           val fieldName: ExpressionName = ExpressionName(name)
 
           scope.lookup(ExpressionNameLookup(fieldName.toQualifiedName)) match {
-            case None => throw new SyntaxError("Accessing " + fieldName.niceName + " does not resolve.")
+            case None =>
+              throw new SyntaxError("Accessing " + fieldName.niceName + " does not resolve.")
             case Some(result) => result match {
               case p: FormalParameter => Some(p.varType)
               case f: FieldDeclaration => Some(f.memberType)
@@ -450,11 +451,11 @@ object TypeChecker {
 
   def checkLogicalExpression(e1: Expression, e2: Expression) = {
     resolveType(e1) match {
-      case Some(BooleanKeyword) => Unit
+      case Some(BooleanKeyword()) => Unit
       case _ => throw new SyntaxError("Bitwise operators aren't supported.")
     }
     resolveType(e2) match {
-      case Some(BooleanKeyword) => Unit
+      case Some(BooleanKeyword()) => Unit
       case _ => throw new SyntaxError("Bitwise operators aren't supported.")
     }
   }
@@ -487,7 +488,7 @@ object TypeChecker {
       case OrExpression(e1, e2) => TypeChecker.checkLogicalExpression(e1, e2)
 
       // Check that the implicit this variable is not accessed in a static method or in the initializer of a static field.
-      case ThisKeyword => resolveType(node)
+      case ThisKeyword() => resolveType(node)
 
       // Check that fields/methods accessed as static are actually static, and that fields/methods
       // accessed as non-static are actually non-static.
@@ -506,7 +507,7 @@ object TypeChecker {
         val classEnv: Environment = env.lookup(TypeNameLookup(className.toQualifiedName)) match {
           // Check that no objects of abstract classes are created.
           case Some(klass: ClassDeclaration) => {
-            if (klass.modifiers.contains(AbstractKeyword)) {
+            if (klass.modifiers.collectFirst{case AbstractKeyword() => true}.isDefined) {
               throw new SyntaxError("Can't create instances of an abstract class.")
             }
 
