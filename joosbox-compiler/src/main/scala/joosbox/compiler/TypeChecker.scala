@@ -161,7 +161,9 @@ object TypeChecker {
     val typeName: TypeName = primaryType.get match {
       case c: ClassType => c.name
       case i: InterfaceType => i.name
-      case _ => throw new SyntaxError("Can't perform access on non-class, non-interface type.")
+      case ct: ClassOrInterfaceType => ct.name
+      case x =>
+        throw new SyntaxError("Can't perform access on non-class, non-interface type: " + x)
     }
 
     env.lookup(TypeNameLookup(typeName.toQualifiedName)) match {

@@ -5,6 +5,7 @@ import joosbox.lexer.{
   InputString
 }
 import AbstractSyntaxNode._
+import joosbox.parser.ParseNodes.VoidKeyword
 
 object EnvironmentBuilder {
   def build(nodes: Seq[CompilationUnit]): RootEnvironment = {
