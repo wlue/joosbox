@@ -321,9 +321,12 @@ object TypeChecker {
           case GreaterThanExpression(e1, e2)  => matchCompatibleType(resolveType(e1), resolveType(e2), Some(BooleanKeyword))
           case GreaterEqualExpression(e1, e2) => matchCompatibleType(resolveType(e1), resolveType(e2), Some(BooleanKeyword))
           case InstanceOfExpression(expr, reference) => {
-            (resolveType(expr), reference) match {
-              case (Some(_: ReferenceType), _: ReferenceType) => Some(BooleanKeyword)
-              case (left, _) => throw new SyntaxError("Left hand side of \"instanceOf\" is not a reference: " + left)
+            (expr, reference) match {
+              case (NullLiteral, _: ReferenceType) => Some(BooleanKeyword)
+              case (expr, reference) => (resolveType(expr), reference) match {
+                case (Some(_: ReferenceType), _: ReferenceType) => Some(BooleanKeyword)
+                case (left, _) => throw new SyntaxError("Left hand side of \"instanceOf\" is not a reference: " + left)
+              }
             }
           }
         }
