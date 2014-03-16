@@ -51,6 +51,8 @@ object EnvironmentBuilder {
       })
     })
 
+    parent.resolveFullyQualifiedNames()
+
     parent
   }
 
@@ -137,6 +139,7 @@ object EnvironmentBuilder {
         val methodEnvironment = new ScopeEnvironment(methodMapping, None, Seq.empty, rightMostEnvironment, Some(cd), linkedScopeReferences)
         cd.scope = Some(methodEnvironment)
         n.scope = Some(methodEnvironment)
+        cd.name.scope = Some(parent)
         (
           Map(cd -> methodEnvironment, n -> methodEnvironment)
           ++ fieldEnvironments

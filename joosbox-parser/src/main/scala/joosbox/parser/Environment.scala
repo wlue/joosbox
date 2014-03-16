@@ -93,7 +93,9 @@ class RootEnvironment(nodes: Seq[AbstractSyntaxNode.CompilationUnit]) extends En
 
         mapping match {
           case Some((q: QualifiedName, t: TypeDeclaration)) => {
-            t.fullyQualifiedName = Some(q.toTypeName)
+            val fqn: TypeName = q.toTypeName
+            fqn.scope = t.scope
+            t.fullyQualifiedName = Some(fqn)
             map.get(q) match {
               case None => map + (q -> t)
               case Some(_) => throw new SyntaxError("Duplicate qualified name " + q)
@@ -114,6 +116,31 @@ class RootEnvironment(nodes: Seq[AbstractSyntaxNode.CompilationUnit]) extends En
       //  The root environment can only handle qualified name lookups.
       case _ => None
     }
+  }
+
+  def resolveFullyQualifiedNames() = {
+    nodes.foreach {
+      case (cu: AbstractSyntaxNode.CompilationUnit) => {
+        val declaration: Option[TypeDeclaration] = cu.typeDeclaration
+        val mapping = cu.packageDeclaration match {
+          case Some(p: PackageDeclaration) => declaration.map(d => TypeName(d.name.value, Some(p.name)).toQualifiedName -> d)
+
+          case None => declaration.map(d => TypeName(d.name.value, Some(PackageName(InputString("")))).toQualifiedName -> d)
+        }
+
+        mapping match {
+          case Some((q: QualifiedName, t: TypeDeclaration)) => {
+            val fqn: TypeName = q.toTypeName
+            fqn.scope = t.scope
+            t.fullyQualifiedName = Some(fqn)
+            if (t.fullyQualifiedName.get.scope == None) {
+              throw new SyntaxError("Could not get fully qualified name's scope for " + t)
+            }
+          }
+        }
+      }
+    }
+
   }
 
   override def packageScope(name: PackageNameLookup): Option[Seq[ScopeEnvironment]] = 
@@ -173,40 +200,44 @@ class ScopeEnvironment(
     }
   }
 
-  def fullyQualifyType(t: Type): Type = t match {
-    case p: PrimitiveType => p
-    case c: ClassType => {
-      lookup(TypeNameLookup(c.name.toQualifiedName)) match {
-        case Some(c: ClassDeclaration) => c.fullyQualifiedName match {
-          case Some(fqn: TypeName) => ClassType(fqn)
-          case None => throw new SyntaxError("Class " + c.name.niceName + " is missing its fully qualified name.")
+  def fullyQualifyType(t: Type): Type = {
+    val result = t match {
+      case p: PrimitiveType => p
+      case c: ClassType => {
+        lookup(TypeNameLookup(c.name.toQualifiedName)) match {
+          case Some(c: ClassDeclaration) => c.fullyQualifiedName match {
+            case Some(fqn: TypeName) => ClassType(fqn)
+            case None => throw new SyntaxError("Class " + c.name.niceName + " is missing its fully qualified name.")
+          }
+          case _ => throw new SyntaxError("Could not fully-qualify class type: " + c.name.niceName)
         }
-        case _ => throw new SyntaxError("Could not fully-qualify class type: " + c.name.niceName)
       }
-    }
-    case c: InterfaceType => {
-      lookup(TypeNameLookup(c.name.toQualifiedName)) match {
-        case Some(c: InterfaceDeclaration) => c.fullyQualifiedName match {
-          case Some(fqn: TypeName) => InterfaceType(fqn)
-          case None => throw new SyntaxError("Interface " + c.name.niceName + " is missing its fully qualified name.")
+      case c: InterfaceType => {
+        lookup(TypeNameLookup(c.name.toQualifiedName)) match {
+          case Some(c: InterfaceDeclaration) => c.fullyQualifiedName match {
+            case Some(fqn: TypeName) => InterfaceType(fqn)
+            case None => throw new SyntaxError("Interface " + c.name.niceName + " is missing its fully qualified name.")
+          }
+          case _ => throw new SyntaxError("Could not fully-qualify interface type: " + c.name.niceName)
         }
-        case _ => throw new SyntaxError("Could not fully-qualify interface type: " + c.name.niceName)
       }
-    }
-    case c: ClassOrInterfaceType => {
-      lookup(TypeNameLookup(c.name.toQualifiedName)) match {
-        case Some(c: ClassDeclaration) => c.fullyQualifiedName match {
-          case Some(fqn: TypeName) => ClassType(fqn)
-          case None => throw new SyntaxError("Class " + c.name.niceName + " is missing its fully qualified name.")
+      case c: ClassOrInterfaceType => {
+        lookup(TypeNameLookup(c.name.toQualifiedName)) match {
+          case Some(c: ClassDeclaration) => c.fullyQualifiedName match {
+            case Some(fqn: TypeName) => ClassType(fqn)
+            case None => throw new SyntaxError("Class " + c.name.niceName + " is missing its fully qualified name.")
+          }
+          case Some(c: InterfaceDeclaration) => c.fullyQualifiedName match {
+            case Some(fqn: TypeName) => InterfaceType(fqn)
+            case None => throw new SyntaxError("Interface " + c.name.niceName + " is missing its fully qualified name.")
+          }
+          case _ => throw new SyntaxError("Could not fully-qualify class or interface type: " + c.name.niceName)
         }
-        case Some(c: InterfaceDeclaration) => c.fullyQualifiedName match {
-          case Some(fqn: TypeName) => InterfaceType(fqn)
-          case None => throw new SyntaxError("Interface " + c.name.niceName + " is missing its fully qualified name.")
-        }
-        case _ => throw new SyntaxError("Could not fully-qualify class or interface type: " + c.name.niceName)
       }
+      case a: ArrayType => ArrayType(fullyQualifyType(a.subtype))
     }
-    case a: ArrayType => ArrayType(fullyQualifyType(a.subtype))
+    result.scope = t.scope
+    result
   }
 
   def search(name: EnvironmentLookup): Option[Referenceable] = {
@@ -218,18 +249,12 @@ class ScopeEnvironment(
       //  Note that wildcard imports are pretty much just additional package scopes, except
       //  for the fact that package scopes are higher priority than wildcard imports.
       case None => {
-        //  TODO
-        //  If we've got a MethodLookup, then fully-qualify all of the types
-        //  in the MethodLookup's arguments. Then, iterate through all the
-        //  keys of the locals map, fully qualify the MethodLookup of each
-        //  key and compare them with the current MethodLookup.
-        //  For speed (if you want) store the key in the map again.
 
+        //  TODO
+        //  For speed (if you want) store the key in the map again.
         if (name.isInstanceOf[MethodLookup]) {
           val ml = name.asInstanceOf[MethodLookup]
-          println("\n\nNon qualified types of failing method lookup:\n" + ml.params)
           val fullyQualifiedTypes:Seq[Type] = ml.params.map(fullyQualifyType)
-          println("Fully qualified types of failing method lookup:\n" + fullyQualifiedTypes + "\n\n")
 
           val result = locals.collectFirst {
             case (MethodLookup(name: QualifiedName, params: Seq[Type]), r: Referenceable)
@@ -237,7 +262,9 @@ class ScopeEnvironment(
           }
           result match {
             case None => Unit
-            case Some(r: Referenceable) => return Some(r)
+            case Some(r: Referenceable) => {
+              return Some(r)
+            }
           }
         }
 
