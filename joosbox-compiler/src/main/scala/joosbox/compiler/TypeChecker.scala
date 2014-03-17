@@ -486,9 +486,14 @@ object TypeChecker {
         case (Some(ByteKeyword()), Some(IntKeyword())) => throw new SyntaxError("Int type is not assignable to byte type.")
         case (Some(CharKeyword()), Some(IntKeyword())) => throw new SyntaxError("Int type is not assignable to char type.")
         case (Some(CharKeyword()), Some(ByteKeyword())) => throw new SyntaxError("Byte type is not assignable to char type.")
+        case (Some(IntKeyword()), Some(BooleanKeyword())) => throw new SyntaxError("Boolean type is not assignable to int type.")
+        case (Some(BooleanKeyword()), Some(IntKeyword())) => throw new SyntaxError("Int type is not assignable to boolean type.")
 
         case (Some(ArrayType(ByteKeyword())), Some(ArrayType(IntKeyword()))) => throw new SyntaxError("Int[] type is not assignable to byte[] type.")
+        case (Some(_: PrimitiveType), Some(_: ArrayType)) => throw new SyntaxError("Array type is not assignable to primitive type.")
         case (Some(ArrayType(t)), Some(p: PrimitiveType)) => throw new SyntaxError("Primitive type is not assignable to array type.")
+        case (Some(_: PrimitiveType), None) => throw new SyntaxError("Null is not assignable to primitive type.")
+        case (_, Some(VoidKeyword())) => throw new SyntaxError("Void return type is not assignable to anything.")
 
         case (Some(ArrayType(t1)), Some(ArrayType(t2))) => {
           //  TODO: Do hierarchy checking in here to see if the array types are assignable.
