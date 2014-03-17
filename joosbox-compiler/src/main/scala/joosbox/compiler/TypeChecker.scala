@@ -380,6 +380,7 @@ object TypeChecker {
         }
 
         case NegatedExpression(e1) => promotedTypeOption(resolveType(e1))
+        case _: LogicalNotExpression => Some(BooleanKeyword())
 
         case FieldAccess(ref, name) => {
           val env = node.scope.get
@@ -492,7 +493,8 @@ object TypeChecker {
         case (Some(ArrayType(ByteKeyword())), Some(ArrayType(IntKeyword()))) => throw new SyntaxError("Int[] type is not assignable to byte[] type.")
         case (Some(_: PrimitiveType), Some(_: ArrayType)) => throw new SyntaxError("Array type is not assignable to primitive type.")
         case (Some(ArrayType(t)), Some(p: PrimitiveType)) => throw new SyntaxError("Primitive type is not assignable to array type.")
-        case (Some(_: PrimitiveType), None) => throw new SyntaxError("Null is not assignable to primitive type.")
+        case (Some(_: PrimitiveType), None) =>
+          throw new SyntaxError("Null is not assignable to primitive type.")
         case (_, Some(VoidKeyword())) => throw new SyntaxError("Void return type is not assignable to anything.")
 
         case (Some(ArrayType(t1)), Some(ArrayType(t2))) => {
@@ -618,7 +620,7 @@ object TypeChecker {
       }
       */
 
-      case NegatedExpression(e1) if promotedTypeOption(resolveType(e1)) != Some(BooleanKeyword()) =>
+      case LogicalNotExpression(e1) if promotedTypeOption(resolveType(e1)) != Some(BooleanKeyword()) =>
         throw new SyntaxError("Complement operator (!) must be invoked on booleans only.")
 
       case relational: RelationalExpression => {

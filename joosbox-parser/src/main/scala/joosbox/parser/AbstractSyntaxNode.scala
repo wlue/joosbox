@@ -254,6 +254,9 @@ object AbstractSyntaxNode {
   case class NegatedExpression(expr: Expression) extends Expression {
     override def children: List[AbstractSyntaxNode] = List(expr)
   }
+  case class LogicalNotExpression(expr: Expression) extends Expression {
+    override def children: List[AbstractSyntaxNode] = List(expr)
+  }
 
   case class FieldAccess(primary: Primary, name: InputString) extends Expression {
     override def children: List[AbstractSyntaxNode] = List(primary)
@@ -936,6 +939,33 @@ object AbstractSyntaxNode {
               case _ => parsed match {
                 case Seq(expr: Expression) => Seq(NegatedExpression(expr))
                 case _ => throw new SyntaxError("Negated unary expression is malformed: " + parsed)
+              }
+            }
+          }
+        case _ => children
+      }
+    }
+
+    case u: ParseNodes.UnaryExpressionNotPlusMinus => {
+      val children = u.children.flatMap(recursive(_)).map(_ match {
+        case q: QualifiedName => q.toExpressionName
+        case a: AbstractSyntaxNode => a
+      })
+
+      u.children match {
+        case Seq(minus: ParseNodes.LogicalNot, expr: ParseNodes.UnaryExpression) =>
+          val child: Seq[AbstractSyntaxNode] = recursive(expr)
+          if (child.isEmpty) {
+            val expression = children.collectFirst { case x: Expression => x }.get
+            Seq(LogicalNotExpression(expression))
+          } else {
+            child.head match {
+              case expr: Expression => Seq(LogicalNotExpression(expr))
+
+              //  If we can't find a Expression, back up and try to parse.
+              case _ => child match {
+                case Seq(expr: Expression) => Seq(LogicalNotExpression(expr))
+                case _ => throw new SyntaxError("Complemented unary expression is malformed: " + child)
               }
             }
           }
