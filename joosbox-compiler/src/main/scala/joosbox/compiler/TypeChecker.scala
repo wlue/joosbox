@@ -501,6 +501,11 @@ object TypeChecker {
       case Assignment(lhs: AbstractSyntaxNode, rhs: AbstractSyntaxNode) =>
         validateTypeConvertability(resolveType(lhs), resolveType(rhs))
 
+      case LocalVariableDeclaration(_, lhs: Type, Some(rhs: Expression)) =>
+        validateTypeConvertability(Some(lhs), resolveType(rhs))
+
+      case FieldDeclaration(_, _, lhs: Type, Some(rhs: Expression)) =>
+        validateTypeConvertability(Some(lhs), resolveType(rhs))
 
       // Check that fields/methods accessed as static are actually static, and that fields/methods
       // accessed as non-static are actually non-static.
