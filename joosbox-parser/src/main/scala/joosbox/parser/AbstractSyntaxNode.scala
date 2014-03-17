@@ -298,6 +298,10 @@ object AbstractSyntaxNode {
     def toSeq: Seq[InputString]
   }
 
+  case object CommonNames {
+    lazy val JavaLangObject = QualifiedName(Seq(InputString("java"), InputString("lang"), InputString("Object")))
+  }
+
   //  This no longer inherits from Name, as it's really just a helper atm.
   case class QualifiedName(value: Seq[InputString]) extends AbstractSyntaxNode {
     def niceName: String = value.map(_.value).mkString(".")

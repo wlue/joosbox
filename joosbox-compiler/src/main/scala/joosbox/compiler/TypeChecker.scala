@@ -313,8 +313,6 @@ object TypeChecker {
       case variable: ForVariableDeclaration => Some(variable.typeDeclaration)
 
       case expr: Expression => expr match {
-        case _: EqualExpression => Some(BooleanKeyword())
-
         case c: CastExpression =>
           Some(node.scope.get.asInstanceOf[ScopeEnvironment].fullyQualifyType(c.targetType))
         case ParenthesizedExpression(expression) => resolveType(expression)
@@ -356,8 +354,8 @@ object TypeChecker {
         }
 
         case relational: RelationalExpression => relational match {
-          case EqualExpression(e1, e2)        => matchCompatibleType(resolveType(e1), resolveType(e2), Some(BooleanKeyword()))
-          case NotEqualExpression(e1, e2)     => matchCompatibleType(resolveType(e1), resolveType(e2), Some(BooleanKeyword()))
+          case EqualExpression(e1, e2)        => Some(BooleanKeyword())
+          case NotEqualExpression(e1, e2)     => Some(BooleanKeyword())
           case LessThanExpression(e1, e2)     => matchCompatibleType(resolveType(e1), resolveType(e2), Some(BooleanKeyword()))
           case LessEqualExpression(e1, e2)    => matchCompatibleType(resolveType(e1), resolveType(e2), Some(BooleanKeyword()))
           case GreaterThanExpression(e1, e2)  => matchCompatibleType(resolveType(e1), resolveType(e2), Some(BooleanKeyword()))
@@ -487,7 +485,6 @@ object TypeChecker {
         case (Some(ByteKeyword()), Some(CharKeyword())) => throw new SyntaxError("Char type is not assignable to byte type.")
         case (Some(ByteKeyword()), Some(IntKeyword())) => throw new SyntaxError("Int type is not assignable to byte type.")
         case (Some(CharKeyword()), Some(IntKeyword())) => throw new SyntaxError("Int type is not assignable to char type.")
-        case (Some(CharKeyword()), Some(IntKeyword())) => throw new SyntaxError("Int type is not assignable to char type.")
         case (Some(CharKeyword()), Some(ByteKeyword())) => throw new SyntaxError("Byte type is not assignable to char type.")
 
         case (Some(ArrayType(ByteKeyword())), Some(ArrayType(IntKeyword()))) => throw new SyntaxError("Int[] type is not assignable to byte[] type.")
@@ -498,8 +495,36 @@ object TypeChecker {
           Unit
         }
 
+        // Object arrays are themselves objects, so this is only okay if we're assigning to java.lang.Object.
+        case (Some(c: ClassType), Some(ArrayType(a))) if c.name.toQualifiedName != CommonNames.JavaLangObject =>
+          throw new SyntaxError("Custom classes cannot be assigned to from arrays.")
+
         //  Thanks to the case above, this ReferenceType will never be an ArrayType.
         case (Some(ArrayType(_)), Some(_: ReferenceType)) => throw new SyntaxError("Single object is not assignable to array.")
+        case _ => Unit
+      }
+    }
+  }
+
+  def validateTypeCastability(to: Option[Type], from: Option[Type]) {
+    if (to != from) {
+      (to, from) match {
+        case (Some(ArrayType(ByteKeyword())), Some(ArrayType(IntKeyword()))) => throw new SyntaxError("Int[] type is not castable to byte[] type.")
+        case (Some(ArrayType(t)), Some(p: PrimitiveType)) => throw new SyntaxError("Primitive type is not castable to array type.")
+
+        case (Some(ArrayType(t1)), Some(ArrayType(t2))) => {
+          //  TODO: Do hierarchy checking in here to see if the array types are assignable.
+          Unit
+        }
+
+        // Object arrays are themselves objects, so this is only okay if we're casting to java.lang.Object.
+        case (Some(c: ClassType), Some(ArrayType(a))) if c.name.toQualifiedName != CommonNames.JavaLangObject =>
+          throw new SyntaxError("Arrays cannot be casted to custom classes.")
+
+        //  Thanks to the case above, this ReferenceType will never be an ArrayType.
+        case (Some(ArrayType(_)), Some(c: ClassType)) if c.name.toQualifiedName != CommonNames.JavaLangObject =>
+          throw new SyntaxError("Custom classes cannot be casted to arrays.")
+
         case _ => Unit
       }
     }
@@ -529,6 +554,9 @@ object TypeChecker {
 
       case WhileStatement(clause: Expression, _) if resolveType(clause) != Some(BooleanKeyword()) =>
         throw new SyntaxError("Clause of While statement must be a boolean.")
+
+      case CastExpression(lhs: Type, rhs: Expression) =>
+        validateTypeCastability(Some(lhs), resolveType(rhs))
 
       case EqualExpression(e1: Expression, e2: Expression) => {
         try {
