@@ -584,6 +584,14 @@ object TypeChecker {
         }
       }
 
+      case ComplexMethodInvocation(ref, name, args) => {
+        val scope : Environment = resolvePrimaryAndFindScope(ref, env)
+        resolveMethodName(name, args, scope) match {
+          case None => throw new SyntaxError("Could not resolve method: " + name)
+          case _ => {}
+        }
+      }
+
         /*
       case method: MethodDeclaration => {
         val recursiveInvocations = new (AbstractSyntaxNode => Seq[MethodInvocation]) {
