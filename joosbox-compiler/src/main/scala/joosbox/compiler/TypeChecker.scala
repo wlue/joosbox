@@ -609,7 +609,11 @@ object TypeChecker {
         case (Some(a: ClassOrInterfaceType), Some(b: InterfaceType)) if !validateSubtypeRelationship(a, b)
           => throw new SyntaxError("Types are not convertible: " + a.fullyQualified + " and " + b.fullyQualified)
 
-        case _ => Unit
+
+        case (Some(VoidKeyword()), _)
+          => throw new SyntaxError("Type cannot be converted to void.")
+        case x
+          => Unit
       }
     }
   }
@@ -688,6 +692,11 @@ object TypeChecker {
 
       case WhileStatement(clause: Expression, _) if resolveType(clause) != Some(BooleanKeyword()) =>
         throw new SyntaxError("Clause of While statement must be a boolean.")
+
+      case ReturnStatement(Some(e: Expression))  => resolveType(e) match {
+         case Some(VoidKeyword()) => throw new SyntaxError("Cannot return something of type void: " + e)
+         case _ => Unit
+       }
 
       case CastExpression(lhs: Type, rhs: Expression) =>
         validateTypeCastability(Some(lhs), resolveType(rhs))
