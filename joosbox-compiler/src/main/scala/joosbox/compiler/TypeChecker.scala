@@ -642,6 +642,13 @@ object TypeChecker {
           throw new SyntaxError("Can't find constructor matching arguments: " + className.niceName + "(" + types.mkString(",") + ")")
         }
       }
+      case a: ArrayCreationPrimary => {
+        val expr : Expression = a.dimExpr
+        expr match {
+          case _ : NullLiteral => throw new SyntaxError("Array index must have numeric type.")
+          case _ => Unit
+        }
+      }
       case f: ForStatement => {
         if (!f.check.isEmpty) {
           resolveType(f.check.get) match {
