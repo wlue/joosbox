@@ -479,6 +479,15 @@ object TypeChecker {
     }
   }
 
+  def validateTypeConvertability(to: Option[Type], from: Option[Type]) {
+    if (to != from) {
+      (to, from) match {
+        case (Some(ByteKeyword()), Some(CharKeyword())) => throw new SyntaxError("Char type is not assignable to byte type.")
+        case _ => Unit
+      }
+    }
+  }
+
   def check(node: AbstractSyntaxNode) {
     val env = node.scope.get
     node match {
@@ -488,6 +497,10 @@ object TypeChecker {
 
       // Check that the implicit this variable is not accessed in a static method or in the initializer of a static field.
       case ThisKeyword() => resolveType(node)
+
+      case Assignment(lhs: AbstractSyntaxNode, rhs: AbstractSyntaxNode) =>
+        validateTypeConvertability(resolveType(lhs), resolveType(rhs))
+
 
       // Check that fields/methods accessed as static are actually static, and that fields/methods
       // accessed as non-static are actually non-static.
