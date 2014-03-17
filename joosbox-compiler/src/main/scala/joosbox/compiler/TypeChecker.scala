@@ -570,19 +570,57 @@ object TypeChecker {
 
       // Check that fields/methods accessed as static are actually static, and that fields/methods
       // accessed as non-static are actually non-static.
-      case method: SimpleMethodInvocation => {
-        resolveType(method)
+      case SimpleMethodInvocation(name, args) => {
+        resolveMethodName(name, args, env) match {
+          case None => throw new SyntaxError("Could not resolve method: " + name)
+          case _ => {}
+        }
       }
+
+        /*
+      case method: MethodDeclaration => {
+        val recursiveInvocations = new (AbstractSyntaxNode => Seq[MethodInvocation]) {
+          def apply(node: AbstractSyntaxNode): List[MethodInvocation] = {
+            node.children.flatMap {
+              case k: MethodInvocation => List(k)
+              case other => apply(other)
+            }
+          }
+        }
+
+        val invocations: List[AbstractSyntaxNode] = recursiveInvocations(method)
+        invocations.foreach {
+          case invocation: SimpleMethodInvocation => {
+            val env = invocation.scope.get
+            resolveMethodName(invocation.name, invocation.args, env) match {
+              case None => throw new SyntaxError("Could not resolve method: " + invocation.name)
+              case Some(invokedMethod) => {
+                val Seq(invokedName, methodName) = Seq(invokedMethod, method).map {
+                  case m: MethodDeclaration => m.name.niceName
+                  case m: InterfaceMemberDeclaration => m.name.value
+                }
+
+                if (method.modifiers.contains(StaticKeyword) && !invokedMethod.modifiers.contains(StaticKeyword)) {
+                  throw new Exception("Calling non-static method " + invokedName + " from static method " + methodName)
+                } else if (!method.modifiers.contains(StaticKeyword) && invokedMethod.modifiers.contains(StaticKeyword)) {
+                  throw new Exception("Calling static method " + invokedName + " from non-static method " + methodName )
+                }
+              }
+            }
+          }
+          case method: ComplexMethodInvocation => {}
+        }
+      }
+      */
 
       case relational: RelationalExpression => {
         resolveType(relational)
       }
 
       case arithmetic: ArithmeticExpression => arithmetic match {
-        case a : AddExpression => TypeChecker.validateAddExpression(a)
+        case a: AddExpression => TypeChecker.validateAddExpression(a)
         case e => TypeChecker.validateArithmeticExpression(e)
       }
-
 
       case c: ClassCreationPrimary => {
         val className: TypeName = c.classType.name
