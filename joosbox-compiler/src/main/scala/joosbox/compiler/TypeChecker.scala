@@ -648,10 +648,9 @@ object TypeChecker {
         }
       }
       case a: ArrayCreationPrimary => {
-        val expr : Expression = a.dimExpr
-        expr match {
-          case _ : NullLiteral => throw new SyntaxError("Array index must have numeric type.")
-          case _ => Unit
+        resolveType(a.dimExpr) match {
+          case  Some(_:NumericType) => Unit
+          case _ => throw new SyntaxError("Array index must have numeric type.")
         }
       }
       case f: ForStatement => {
