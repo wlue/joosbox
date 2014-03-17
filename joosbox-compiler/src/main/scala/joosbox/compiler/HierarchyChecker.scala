@@ -245,6 +245,9 @@ object HierarchyChecker {
               }
               (MethodLookup(m.name.toQualifiedName, m.parameters.map(_.varType)), m)
             case c: ConstructorDeclaration =>
+              if (c.name.value != name.value) {
+                throw new SyntaxError("Constructor must be the same name as class name.")
+              }
               (ConstructorLookup(name.toQualifiedName, c.parameters.map(_.varType)), c)
             case f: FieldDeclaration =>
               (ExpressionNameLookup(f.name.toQualifiedName), f)

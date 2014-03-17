@@ -673,12 +673,6 @@ object AbstractSyntaxNode {
       val parameters: Seq[FormalParameter] = children.collect { case x: FormalParameter => x }
       val body: Option[Block] = children.collectFirst { case x: Block => x }
 
-      // TODO: Check if identifier is the same as class name. This doesn't work.
-      // val containingClass: ClassDeclaration = previousNodes.collectFirst { case x: ClassDeclaration => x }.get
-      // if (!containingClass.name.value.equals(name.value)) {
-      //   throw new SyntaxError("Constructor must be the same name as class name: " + containingClass.name.value)
-      // }
-
       // Enforce: No package private methods
       if (modifiers.collectFirst{case PublicKeyword() => true}.isEmpty && modifiers.collectFirst{case ProtectedKeyword() => true}.isEmpty) {
         throw new SyntaxError("Constructor " + name.value + " cannot be package private.")
