@@ -495,6 +495,10 @@ object TypeChecker {
         resolveType(method)
       }
 
+      case relational: RelationalExpression => {
+        resolveType(relational)
+      }
+
       case arithmetic: ArithmeticExpression => arithmetic match {
         case a : AddExpression => TypeChecker.validateAddExpression(a)
         case e => TypeChecker.validateArithmeticExpression(e)
