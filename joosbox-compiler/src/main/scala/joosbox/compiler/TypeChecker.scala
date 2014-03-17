@@ -483,6 +483,17 @@ object TypeChecker {
     if (to != from) {
       (to, from) match {
         case (Some(ByteKeyword()), Some(CharKeyword())) => throw new SyntaxError("Char type is not assignable to byte type.")
+        case (Some(ByteKeyword()), Some(IntKeyword())) => throw new SyntaxError("Int type is not assignable to byte type.")
+        case (Some(ArrayType(ByteKeyword())), Some(ArrayType(IntKeyword()))) => throw new SyntaxError("Int[] type is not assignable to byte[] type.")
+        case (Some(ArrayType(t)), Some(p: PrimitiveType)) => throw new SyntaxError("Primitive type is not assignable to array type.")
+
+        case (Some(ArrayType(t1)), Some(ArrayType(t2))) => {
+          //  TODO: Do hierarchy checking in here to see if the array types are assignable.
+          Unit
+        }
+
+        //  Thanks to the case above, this ReferenceType will never be an ArrayType.
+        case (Some(ArrayType(_)), Some(_: ReferenceType)) => throw new SyntaxError("Single object is not assignable to array.")
         case _ => Unit
       }
     }
