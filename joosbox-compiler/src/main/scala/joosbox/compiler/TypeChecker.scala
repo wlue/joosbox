@@ -313,6 +313,8 @@ object TypeChecker {
       case variable: ForVariableDeclaration => Some(variable.typeDeclaration)
 
       case expr: Expression => expr match {
+        case _: EqualExpression => Some(BooleanKeyword())
+
         case c: CastExpression =>
           Some(node.scope.get.asInstanceOf[ScopeEnvironment].fullyQualifyType(c.targetType))
         case ParenthesizedExpression(expression) => resolveType(expression)
@@ -484,6 +486,10 @@ object TypeChecker {
       (to, from) match {
         case (Some(ByteKeyword()), Some(CharKeyword())) => throw new SyntaxError("Char type is not assignable to byte type.")
         case (Some(ByteKeyword()), Some(IntKeyword())) => throw new SyntaxError("Int type is not assignable to byte type.")
+        case (Some(CharKeyword()), Some(IntKeyword())) => throw new SyntaxError("Int type is not assignable to char type.")
+        case (Some(CharKeyword()), Some(IntKeyword())) => throw new SyntaxError("Int type is not assignable to char type.")
+        case (Some(CharKeyword()), Some(ByteKeyword())) => throw new SyntaxError("Byte type is not assignable to char type.")
+
         case (Some(ArrayType(ByteKeyword())), Some(ArrayType(IntKeyword()))) => throw new SyntaxError("Int[] type is not assignable to byte[] type.")
         case (Some(ArrayType(t)), Some(p: PrimitiveType)) => throw new SyntaxError("Primitive type is not assignable to array type.")
 
@@ -517,6 +523,22 @@ object TypeChecker {
 
       case FieldDeclaration(_, _, lhs: Type, Some(rhs: Expression)) =>
         validateTypeConvertability(Some(lhs), resolveType(rhs))
+
+      case IfStatement(clause: Expression, _, _) if resolveType(clause) != Some(BooleanKeyword()) =>
+        throw new SyntaxError("Clause of If statement must be a boolean.")
+
+      case WhileStatement(clause: Expression, _) if resolveType(clause) != Some(BooleanKeyword()) =>
+        throw new SyntaxError("Clause of While statement must be a boolean.")
+
+      case EqualExpression(e1: Expression, e2: Expression) => {
+        try {
+          validateTypeConvertability(resolveType(e1), resolveType(e2))
+        } catch {
+          case _: SyntaxError => {
+            validateTypeConvertability(resolveType(e2), resolveType(e1))
+          }
+        }
+      }
 
       // Check that fields/methods accessed as static are actually static, and that fields/methods
       // accessed as non-static are actually non-static.
