@@ -593,7 +593,6 @@ object TypeChecker {
         }
       }
 
-        /*
       case method: MethodDeclaration => {
         val recursiveInvocations = new (AbstractSyntaxNode => Seq[MethodInvocation]) {
           def apply(node: AbstractSyntaxNode): List[MethodInvocation] = {
@@ -615,19 +614,12 @@ object TypeChecker {
                   case m: MethodDeclaration => m.name.niceName
                   case m: InterfaceMemberDeclaration => m.name.value
                 }
-
-                if (method.modifiers.contains(StaticKeyword) && !invokedMethod.modifiers.contains(StaticKeyword)) {
-                  throw new Exception("Calling non-static method " + invokedName + " from static method " + methodName)
-                } else if (!method.modifiers.contains(StaticKeyword) && invokedMethod.modifiers.contains(StaticKeyword)) {
-                  throw new Exception("Calling static method " + invokedName + " from non-static method " + methodName )
-                }
               }
             }
           }
           case method: ComplexMethodInvocation => {}
         }
       }
-      */
 
       case LogicalNotExpression(e1) if promotedTypeOption(resolveType(e1)) != Some(BooleanKeyword()) =>
         throw new SyntaxError("Complement operator (!) must be invoked on booleans only.")
