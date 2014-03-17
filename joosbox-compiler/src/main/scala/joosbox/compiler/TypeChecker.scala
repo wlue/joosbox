@@ -427,7 +427,8 @@ object TypeChecker {
             val scope:Environment = resolvePrimaryAndFindScope(ref, env)
 
             scope.lookup(MethodLookup(name.toQualifiedName, argTypes)) match {
-              case None => throw new SyntaxError("Invoking complex" + name.niceName + " does not resolve.")
+              case None =>
+                throw new SyntaxError("Invoking complex" + name.niceName + " does not resolve.")
               case Some(result) => result match {
                 case method: MethodDeclaration => Some(method.memberType)
                 case method: InterfaceMemberDeclaration => Some(method.memberType)

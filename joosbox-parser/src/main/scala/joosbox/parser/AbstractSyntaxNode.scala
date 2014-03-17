@@ -1377,7 +1377,7 @@ object AbstractSyntaxNode {
         }
         case Seq(p: ParseNodes.Primary, d: ParseNodes.Dot, i: ParseNodes.Identifier, l: ParseNodes.LeftParen, e: ParseNodes.ArgumentList, r: ParseNodes.RightParen) => {
           val primary: Primary = children.collectFirst { case x: Primary => x }.get
-          val args: Seq[Expression] = children.collect { case x: Expression => x }
+          val args: Seq[Expression] = e.children.flatMap(recursive).collect { case x: Expression => x }
           val name: MethodName = children.collectFirst {
             case x: QualifiedName => x.toMethodName
             case x: Identifier => MethodName(x.value)
