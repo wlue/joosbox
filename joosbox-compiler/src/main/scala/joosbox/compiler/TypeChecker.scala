@@ -205,13 +205,16 @@ object TypeChecker {
     }
   }
 
-  def resolvePrimaryAndFindScope(ref:Primary, env:Environment) : Environment = {
+  def resolvePrimary(ref:Primary, env:Environment) : Type = {
     val primaryType: Option[Type] = resolveType(ref)
     if (primaryType.isEmpty) {
       throw new SyntaxError("Attempted access of unresolvable type.")
     }
+    primaryType.get
+  }
 
-    val typeName: TypeName = primaryType.get match {
+  def resolvePrimaryAndFindScope(ref:Primary, env:Environment) : Environment = {
+    val typeName: TypeName = resolvePrimary(ref, env) match {
       case c: ClassType => c.name
       case i: InterfaceType => i.name
       case ct: ClassOrInterfaceType => ct.name
@@ -392,20 +395,22 @@ object TypeChecker {
 
         case FieldAccess(ref, name) => {
           val env = node.scope.get
+          val refType : Type = resolvePrimary(ref, env)
           val scope:Environment = resolvePrimaryAndFindScope(ref, env)
           val fieldName: ExpressionName = ExpressionName(name)
 
-          scope.lookup(ExpressionNameLookup(fieldName.toQualifiedName)) match {
-            case None =>
-              throw new SyntaxError("Accessing " + fieldName.niceName + " does not resolve.")
-            case Some(result) => result match {
-              case p: FormalParameter => Some(p.varType)
-              case f: FieldDeclaration => Some(f.memberType)
-              case v: LocalVariableDeclaration => Some(v.memberType)
-              case v: ForVariableDeclaration => Some(v.typeDeclaration)
-              case _ => throw new SyntaxError("Accessing non-field!!!")
-            }
+          // Check validity of field access for arrays
+          refType match {
+            case a : ArrayType => 
+              if (fieldName.value == InputString("length")) {
+                return Some(IntKeyword())
+              } else {
+                throw new SyntaxError("Only valid array field is length.")
+              }
+            case _ => Unit 
           }
+
+          resolveExpressionName(fieldName, scope)
         }
 
         case SimpleArrayAccess(name, _) => resolveType(name) match {
