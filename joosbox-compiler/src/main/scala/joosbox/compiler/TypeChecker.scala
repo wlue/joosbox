@@ -409,7 +409,7 @@ object TypeChecker {
           case _ => throw new SyntaxError("Expression " + ref + " is not an array.")
         }
 
-        case ArrayCreationPrimary(t, _) => Some(t)
+        case ArrayCreationPrimary(t, _) => Some(ArrayType(t))
         case ClassCreationPrimary(t, _) => Some(t)
 
         case method: MethodInvocation => method match {
