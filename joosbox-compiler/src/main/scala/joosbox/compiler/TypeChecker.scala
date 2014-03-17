@@ -502,7 +502,8 @@ object TypeChecker {
             } else {
               subclass.superclass match {
                 case Some(subsupertype: ClassType) => validateSubtypeRelationship(supertype, subtype)
-                case None => false
+                case None
+                  => false
               }
             }
           }
@@ -514,13 +515,18 @@ object TypeChecker {
         case Some(superclass: ClassDeclaration) => subtype.node match {
           case Some(subclass: ClassDeclaration) => {
             subclass.superclass match {
-              case Some(subsuperclass: ClassType) => subsuperclass.node == superclass
-              case None => false
+              case Some(subsuperclass: ClassType) => subsuperclass.node match {
+                case Some(x) => x == superclass
+                case None => false
+              }
+              case None
+                => false
             }
           }
 
           //  Interfaces cannot inherit from classes.
-          case Some(subinterface: InterfaceDeclaration) => false
+          case Some(subinterface: InterfaceDeclaration)
+            => false
         }
 
         case None => throw new SyntaxError("Could not resolve supertype: " + supertype)
