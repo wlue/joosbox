@@ -515,6 +515,10 @@ object TypeChecker {
 
         //  Thanks to the case above, this ReferenceType will never be an ArrayType.
         case (Some(ArrayType(_)), Some(_: ReferenceType)) => throw new SyntaxError("Single object is not assignable to array.")
+
+        //  If we're here, a != b.
+        case (Some(a: ReferenceType), Some(b: ReferenceType)) => throw new SyntaxError("Types are not convertible: " + a + " and " + b)
+
         case _ => Unit
       }
     }
