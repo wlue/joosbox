@@ -63,7 +63,7 @@ object TypeChecker {
     t
   }
 
-  def resolveTypeName(name: TypeName, env: Environment): Option[Type] = {
+  def resolveTypeName(name: TypeName, env: Environment): Option[ReferenceNonArrayType] = {
     env.lookup(TypeNameLookup(name.toQualifiedName)) match {
       case None => throw new SyntaxError("TypeName " + name.niceName + " does not resolve to a type.")
       case Some(result) => result match {
@@ -215,6 +215,7 @@ object TypeChecker {
       case c: ClassType => c.name
       case i: InterfaceType => i.name
       case ct: ClassOrInterfaceType => ct.name
+      case at: ArrayType => CommonNames.JavaLangObject.toTypeName
       case x =>
         throw new SyntaxError("Can't perform access on non-class, non-interface type: " + x)
     }
@@ -301,7 +302,7 @@ object TypeChecker {
   }
 
   def resolveType(node: AbstractSyntaxNode): Option[Type] = {
-    node match {
+    val result = node match {
       case t: Type => Some(t)
 
       case TrueLiteral() => Some(BooleanKeyword())
@@ -424,7 +425,15 @@ object TypeChecker {
           case SimpleMethodInvocation(ambiguousName, args) => {
             val env = node.scope.get
             resolveMethodName(ambiguousName, args, env) match {
-              case Some(method) => Some(method.memberType)
+              case Some(method) => method.memberType match {
+                case r: ReferenceNonArrayType => resolveTypeName(r.name, r.scope.get)
+                case ArrayType(r: ReferenceNonArrayType) => Some(withScope(ArrayType(resolveTypeName(r.name, r.scope.get).get), r.scope))
+                case ArrayType(_: PrimitiveType) => Some(method.memberType)
+                case p: PrimitiveType => Some(p)
+                case VoidKeyword() => Some(VoidKeyword())
+                case _ =>
+                  throw new SyntaxError("Could not match type of simple method invocation: " + node)
+              }
               case None => throw new SyntaxError("Could not resolve method: " + ambiguousName)
             }
           }
@@ -453,6 +462,14 @@ object TypeChecker {
 
       // Some nodes just don't make sense to every look/check for type
       case _ =>  None
+    }
+
+    //  Fully qualify everything we can.
+    result match {
+      case Some(c: ClassType) => Some(withScope(c.fullyQualified, c.scope))
+      case Some(c: InterfaceType) => Some(withScope(c.fullyQualified, c.scope))
+      case Some(c: ClassOrInterfaceType) => Some(withScope(c.fullyQualified, c.scope))
+      case _ => result
     }
   }
 
@@ -621,6 +638,31 @@ object TypeChecker {
     }
   }
 
+  def getReturnStatementType(s: BlockStatement): Option[Type] = s match {
+    case Block(statements) => statements.lastOption match {
+      case Some(bs: BlockStatement) => getReturnStatementType(bs)
+      case None => Some(VoidKeyword())
+    }
+    case ReturnStatement(None) => Some(VoidKeyword())
+    case ReturnStatement(Some(e: Expression)) => resolveType(e)
+    case IfStatement(_, trueCase: Statement, None) => getReturnStatementType(trueCase)
+    case IfStatement(_, trueCase: Statement, Some(falseCase: Statement)) => {
+      val trueReturn = getReturnStatementType(trueCase)
+      val falseReturn = getReturnStatementType(falseCase)
+      if (trueReturn != falseReturn) {
+        throw new SyntaxError("Two branches of if statement do not return the same type: " + s)
+      } else {
+        trueReturn
+      }
+    }
+
+    //  TODO: We could potentially do some A4 checks here.
+    case ForStatement(_, _, _, s: Statement) => getReturnStatementType(s)
+    case WhileStatement(_, s: Statement) => getReturnStatementType(s)
+
+    case _ => Some(VoidKeyword())
+  }
+
   def check(node: AbstractSyntaxNode) {
     val env = node.scope.get
     node match {
@@ -656,6 +698,20 @@ object TypeChecker {
         } catch {
           case _: SyntaxError => {
             validateTypeConvertability(resolveType(e2), resolveType(e1))
+          }
+        }
+      }
+
+      // Validate return types of methods.
+      case MethodDeclaration(name: MethodName, _, returnType: Type, _, Some(b: Block)) => {
+        b.statements.lastOption match {
+          case Some(b: BlockStatement) => {
+            validateTypeConvertability(Some(returnType), getReturnStatementType(b))
+          }
+          case _ => {
+            if (returnType != VoidKeyword()) {
+              throw new SyntaxError("Method must return " + returnType + ": " +  name)
+            }
           }
         }
       }

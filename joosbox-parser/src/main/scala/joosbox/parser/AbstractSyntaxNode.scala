@@ -419,7 +419,7 @@ object AbstractSyntaxNode {
 
   case class ArrayType(subtype: Type) extends ReferenceType {
     override def children: List[AbstractSyntaxNode] = List(subtype)
-    def fullyQualified: ReferenceType = (scope orElse subtype.scope) match {
+    def fullyQualified: ArrayType = (scope orElse subtype.scope) match {
       case Some(s: ScopeEnvironment) => s.fullyQualifyType(this).asInstanceOf[ArrayType]
       case _ =>
         throw new SyntaxError("Failed to fully qualify type: " + this)
@@ -436,7 +436,7 @@ object AbstractSyntaxNode {
   case class ClassType(name: TypeName) extends ReferenceNonArrayType {
     override def children: List[AbstractSyntaxNode] = List(name)
     def inputString: Seq[InputString] = name.toSeq
-    def fullyQualified: ReferenceType = (scope orElse name.scope) match {
+    def fullyQualified: ClassType = (scope orElse name.scope) match {
       case Some(s: ScopeEnvironment) => s.fullyQualifyType(this).asInstanceOf[ClassType]
       case _ =>
         throw new SyntaxError("Failed to fully qualify type: " + this)
@@ -445,7 +445,7 @@ object AbstractSyntaxNode {
   case class InterfaceType(name: TypeName) extends ReferenceNonArrayType {
     override def children: List[AbstractSyntaxNode] = List(name)
     def inputString: Seq[InputString] = name.toSeq
-    def fullyQualified: ReferenceType = (scope orElse name.scope) match {
+    def fullyQualified: InterfaceType = (scope orElse name.scope) match {
       case Some(s: ScopeEnvironment) => s.fullyQualifyType(this).asInstanceOf[InterfaceType]
       case _ =>
         throw new SyntaxError("Failed to fully qualify type: " + this)
