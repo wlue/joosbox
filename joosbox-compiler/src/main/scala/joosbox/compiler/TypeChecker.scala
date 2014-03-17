@@ -576,6 +576,15 @@ object TypeChecker {
           throw new SyntaxError("Can't find constructor matching arguments: " + className.niceName + "(" + types.mkString(",") + ")")
         }
       }
+      case f: ForStatement => {
+        if (!f.check.isEmpty) {
+          resolveType(f.check.get) match {
+            case Some(BooleanKeyword()) => Unit
+            case e => throw new SyntaxError("Check statement of for loop must be of type bool.")
+          }
+        }
+      }
+
       case _ => {}
     }
     node.children.foreach { node => check(node) }

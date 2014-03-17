@@ -1039,12 +1039,17 @@ object AbstractSyntaxNode {
     }
 
     case f: ParseNodes.ForStatement => {
-      val children:Seq[AbstractSyntaxNode] = f.children.flatMap(recursive(_))
+      val tokens : Seq[Seq[ParseNode]] = f.children.foldLeft(Seq(Seq.empty[ParseNode])) {
+        (acc, i) =>
+          i match {
+            case ParseNodes.Semicolon(_,_) => acc :+ Seq.empty
+            case _ => acc.init :+ (acc.last :+ i)
+          }
+      }
+      val init: Option[ForInit] = tokens(0).flatMap(recursive).collectFirst { case x: ForInit => x }
+      val check: Option[Expression] = tokens(1).flatMap(recursive).collectFirst { case x: Expression => x}
 
-      val init: Option[ForInit] = children.collectFirst { case x: ForInit => x }
-      val check: Option[Expression] = children.collectFirst { case x: Expression => x }
-
-      var statements: Seq[Statement] = children.collect { case x: Statement => x }
+      var statements: Seq[Statement] = tokens(2).flatMap(recursive).collect { case x: Statement => x }
       val update: Option[StatementExpression] = statements.collectFirst { case x: StatementExpression => x }
       if (!update.isEmpty) {
         statements = statements diff List(update.get)
@@ -1054,11 +1059,23 @@ object AbstractSyntaxNode {
     }
 
     case f: ParseNodes.ForStatementNoShortIf => {
-      val children:Seq[AbstractSyntaxNode] = f.children.flatMap(recursive(_))
-      val init: Option[ForInit] = children.collectFirst { case x: ForInit => x }
-      val check: Option[Expression] = children.collectFirst { case x: Expression => x }
-      val update: Option[StatementExpression] = children.collectFirst { case x: StatementExpression => x }
-      val statement: Statement = children.collectFirst { case x: Statement => x }.get
+      val tokens : Seq[Seq[ParseNode]] = f.children.foldLeft(Seq(Seq.empty[ParseNode])) {
+        (acc, i) =>
+          i match {
+            case ParseNodes.Semicolon(_,_) => acc :+ Seq.empty
+            case _ => acc.init :+ (acc.last :+ i)
+          }
+      }
+      val init: Option[ForInit] = tokens(0).flatMap(recursive).collectFirst { case x: ForInit => x }
+      val check: Option[Expression] = tokens(1).flatMap(recursive).collectFirst { case x: Expression => x}
+
+      var statements: Seq[Statement] = tokens(2).flatMap(recursive).collect { case x: Statement => x }
+      val update: Option[StatementExpression] = statements.collectFirst { case x: StatementExpression => x }
+      if (!update.isEmpty) {
+        statements = statements diff List(update.get)
+      }
+
+      val statement: Statement = statements.collectFirst { case x: Statement => x }.get
       Seq(ForStatement(init, check, update, statement))
     }
 
