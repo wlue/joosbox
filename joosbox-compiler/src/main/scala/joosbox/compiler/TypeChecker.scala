@@ -490,7 +490,10 @@ object TypeChecker {
         case (Some(IntKeyword()), Some(BooleanKeyword())) => throw new SyntaxError("Boolean type is not assignable to int type.")
         case (Some(BooleanKeyword()), Some(IntKeyword())) => throw new SyntaxError("Int type is not assignable to boolean type.")
 
+        //  TODO: Can we *ever* assign from a PrimitiveType array to another PrimitiveType array?
         case (Some(ArrayType(ByteKeyword())), Some(ArrayType(IntKeyword()))) => throw new SyntaxError("Int[] type is not assignable to byte[] type.")
+        case (Some(ArrayType(IntKeyword())), Some(ArrayType(ByteKeyword()))) => throw new SyntaxError("Byte[] type is not assignable to int[] type.")
+
         case (Some(_: PrimitiveType), Some(_: ArrayType)) => throw new SyntaxError("Array type is not assignable to primitive type.")
         case (Some(ArrayType(t)), Some(p: PrimitiveType)) => throw new SyntaxError("Primitive type is not assignable to array type.")
         case (Some(_: PrimitiveType), None) =>
@@ -503,8 +506,12 @@ object TypeChecker {
         }
 
         // Object arrays are themselves objects, so this is only okay if we're assigning to java.lang.Object.
-        case (Some(c: ClassType), Some(ArrayType(a))) if c.name.toQualifiedName != CommonNames.JavaLangObject =>
-          throw new SyntaxError("Custom classes cannot be assigned to from arrays.")
+        case (Some(c: ClassType), Some(ArrayType(a))) if !CommonNames.doesAcceptArrayAssignment(c)
+            => throw new SyntaxError("Custom classes cannot be assigned to from arrays.")
+        case (Some(c: ClassOrInterfaceType), Some(ArrayType(a))) if !CommonNames.doesAcceptArrayAssignment(c)
+            => throw new SyntaxError("Custom classes or interfaces cannot be assigned to from arrays.")
+        case (Some(c: InterfaceType), Some(ArrayType(a))) if !CommonNames.doesAcceptArrayAssignment(c)
+          => throw new SyntaxError("Custom interfaces cannot be assigned to from arrays.")
 
         //  Thanks to the case above, this ReferenceType will never be an ArrayType.
         case (Some(ArrayType(_)), Some(_: ReferenceType)) => throw new SyntaxError("Single object is not assignable to array.")

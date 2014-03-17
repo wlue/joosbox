@@ -303,6 +303,27 @@ object AbstractSyntaxNode {
 
   case object CommonNames {
     lazy val JavaLangObject = QualifiedName(Seq(InputString("java"), InputString("lang"), InputString("Object")))
+    lazy val JavaLangCloneable = QualifiedName(Seq(InputString("java"), InputString("lang"), InputString("Cloneable")))
+    lazy val JavaIOSerializable = QualifiedName(Seq(InputString("java"), InputString("io"), InputString("Serializable")))
+
+    //  one of: java.lang.Object, java.lang.Cloneable, java.io.Serializable
+    def doesAcceptArrayAssignment(r: ReferenceType): Boolean = {
+      (r match {
+        case c: ClassType => Some(c.fullyQualified.name.toQualifiedName)
+        case ci: ClassOrInterfaceType => ci.fullyQualified match {
+          case c: ClassType => Some(c.fullyQualified.name.toQualifiedName)
+          case i: InterfaceType => Some(i.fullyQualified.name.toQualifiedName)
+          case _ => throw new SyntaxError("Array assignment check resulted in non-class or interface type.")
+        }
+        case i: InterfaceType => Some(i.fullyQualified.name.toQualifiedName)
+        case _ => None
+      }) match {
+        case Some(JavaLangObject)
+           | Some(JavaLangCloneable)
+           | Some(JavaIOSerializable) => true
+        case _ => false
+      }
+    }
   }
 
   //  This no longer inherits from Name, as it's really just a helper atm.
@@ -382,17 +403,21 @@ object AbstractSyntaxNode {
 
   case class ArrayType(subtype: Type) extends ReferenceType {
     override def children: List[AbstractSyntaxNode] = List(subtype)
+    def fullyQualified: ArrayType = scope.get.asInstanceOf[ScopeEnvironment].fullyQualifyType(this).asInstanceOf[ArrayType]
   }
   case class ClassOrInterfaceType(name: TypeName) extends ReferenceType {
     override def children: List[AbstractSyntaxNode] = List(name)
+    def fullyQualified: ReferenceType = scope.get.asInstanceOf[ScopeEnvironment].fullyQualifyType(this).asInstanceOf[ReferenceType]
   }
   case class ClassType(name: TypeName) extends ReferenceType {
     override def children: List[AbstractSyntaxNode] = List(name)
     def inputString: Seq[InputString] = name.toSeq
+    def fullyQualified: ClassType = scope.get.asInstanceOf[ScopeEnvironment].fullyQualifyType(this).asInstanceOf[ClassType]
   }
   case class InterfaceType(name: TypeName) extends ReferenceType {
     override def children: List[AbstractSyntaxNode] = List(name)
     def inputString: Seq[InputString] = name.toSeq
+    def fullyQualified: InterfaceType = scope.get.asInstanceOf[ScopeEnvironment].fullyQualifyType(this).asInstanceOf[InterfaceType]
   }
 
   sealed trait Modifier extends AbstractSyntaxNode
