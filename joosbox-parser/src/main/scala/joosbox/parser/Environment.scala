@@ -202,6 +202,7 @@ class ScopeEnvironment(
 
   def fullyQualifyType(t: Type): Type = {
     val result = t match {
+      case v: VoidKeyword => v
       case p: PrimitiveType => p
       case c: ClassType => {
         lookup(TypeNameLookup(c.name.toQualifiedName)) match {

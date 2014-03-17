@@ -56,12 +56,19 @@ object TypeChecker {
     }
   }
 
+  def withScope[T <: Type](t: T, s: Option[Environment]): T = {
+    if (t.scope == None) {
+      t.scope = s
+    }
+    t
+  }
+
   def resolveTypeName(name: TypeName, env: Environment): Option[Type] = {
     env.lookup(TypeNameLookup(name.toQualifiedName)) match {
       case None => throw new SyntaxError("TypeName " + name.niceName + " does not resolve to a type.")
       case Some(result) => result match {
-        case _: ClassDeclaration => Some(ClassType(name))
-        case _: InterfaceDeclaration => Some(InterfaceType(name))
+        case _: ClassDeclaration => Some(withScope(ClassType(name), name.scope))
+        case _: InterfaceDeclaration => Some(withScope(InterfaceType(name), name.scope))
         case _ => throw new SyntaxError("Name " + name.niceName + " does not resolve to a class or interface type.")
       }
     }
@@ -130,7 +137,7 @@ object TypeChecker {
         case f: FieldDeclaration => Some(f.memberType)
         case v: LocalVariableDeclaration => Some(v.memberType)
         case v: ForVariableDeclaration => Some(v.typeDeclaration)
-        case c: ClassDeclaration => Some(ClassType(c.name))
+        case c: ClassDeclaration => Some(withScope(ClassType(c.name), name.scope))
         case x =>
           throw new SyntaxError("Could not resolve type of expression: " + x);
       }
@@ -145,21 +152,21 @@ object TypeChecker {
             case c:ClassType =>
               env.lookup(TypeNameLookup(c.name.toQualifiedName)).get match {
                 case decl: ClassDeclaration =>
-                  ClassType(decl.fullyQualifiedName.get)
+                  withScope(ClassType(decl.fullyQualifiedName.get), Some(env))
                 case _ => throw new SyntaxError("Bad fully qualified type.")
               }
             case i:InterfaceType =>
               env.lookup(TypeNameLookup(i.name.toQualifiedName)).get match {
                 case decl: InterfaceDeclaration =>
-                  InterfaceType(decl.fullyQualifiedName.get)
+                  withScope(InterfaceType(decl.fullyQualifiedName.get), Some(env))
                 case _ => throw new SyntaxError("Bad fully qualified type.")
               }
             case ci:ClassOrInterfaceType =>
               env.lookup(TypeNameLookup(ci.name.toQualifiedName)).get match {
                 case decl: ClassDeclaration =>
-                  ClassType(decl.fullyQualifiedName.get)
+                  withScope(ClassType(decl.fullyQualifiedName.get), Some(env))
                 case decl: InterfaceDeclaration =>
-                  InterfaceType(decl.fullyQualifiedName.get)
+                  withScope(InterfaceType(decl.fullyQualifiedName.get), Some(env))
                 case _ => throw new SyntaxError("Bad fully qualified type.")
               }
             case a:ArrayType =>
@@ -167,21 +174,21 @@ object TypeChecker {
                 case c:ClassType =>
                   env.lookup(TypeNameLookup(c.name.toQualifiedName)).get match {
                     case decl: ClassDeclaration =>
-                      ArrayType(ClassType(decl.fullyQualifiedName.get))
+                      withScope(ArrayType(withScope(ClassType(decl.fullyQualifiedName.get), Some(env))), Some(env))
                     case _ => throw new SyntaxError("Bad fully qualified type.")
                   }
                 case i:InterfaceType =>
                   env.lookup(TypeNameLookup(i.name.toQualifiedName)).get match {
                     case decl: InterfaceDeclaration =>
-                      ArrayType(InterfaceType(decl.fullyQualifiedName.get))
+                      withScope(ArrayType(withScope(InterfaceType(decl.fullyQualifiedName.get), Some(env))), Some(env))
                     case _ => throw new SyntaxError("Bad fully qualified type.")
                   }
                 case ci:ClassOrInterfaceType =>
                   env.lookup(TypeNameLookup(ci.name.toQualifiedName)).get match {
                     case decl: ClassDeclaration =>
-                      ArrayType(ClassType(decl.fullyQualifiedName.get))
+                      withScope(ArrayType(withScope(ClassType(decl.fullyQualifiedName.get), Some(env))), Some(env))
                     case decl: InterfaceDeclaration =>
-                      ArrayType(InterfaceType(decl.fullyQualifiedName.get))
+                      withScope(ArrayType(withScope(InterfaceType(decl.fullyQualifiedName.get), Some(env))), Some(env))
                     case _ => throw new SyntaxError("Bad fully qualified type.")
                   }
                 case _ => a
@@ -305,7 +312,7 @@ object TypeChecker {
 
       case Num(value, _) => Some(IntKeyword())
       case _: CharLiteral => Some(CharKeyword())
-      case _: StringLiteral => Some(ClassType(QualifiedName("java.lang.String".split("\\.").map(InputString(_))).toTypeName))
+      case _: StringLiteral => Some(withScope(ClassType(QualifiedName("java.lang.String".split("\\.").map(InputString(_))).toTypeName), node.scope))
 
       case param: FormalParameter => Some(param.varType)
       case field: FieldDeclaration => Some(field.memberType)
@@ -480,6 +487,47 @@ object TypeChecker {
     }
   }
 
+  //  supertype = to, subtype = from - we don't allow implicit upcasting
+  def validateSubtypeRelationship(supertype: ReferenceNonArrayType, subtype: ReferenceNonArrayType): Boolean = {
+    if (supertype.fullyQualifiedName == CommonNames.JavaLangObject) {
+      true
+    } else if (supertype.fullyQualified == subtype.fullyQualified) {
+      true
+    } else {
+      supertype.node match {
+        case Some(interface: InterfaceDeclaration) => subtype.node match {
+          case Some(subclass: ClassDeclaration) => {
+            if (subclass.interfaces.map(_.node).contains(interface)) {
+              true
+            } else {
+              subclass.superclass match {
+                case Some(subsupertype: ClassType) => validateSubtypeRelationship(supertype, subtype)
+                case None => false
+              }
+            }
+          }
+
+          case Some(subinterface: InterfaceDeclaration) =>
+            subinterface.interfaces.map(_.node).contains(interface)
+        }
+
+        case Some(superclass: ClassDeclaration) => subtype.node match {
+          case Some(subclass: ClassDeclaration) => {
+            subclass.superclass match {
+              case Some(subsuperclass: ClassType) => subsuperclass.node == superclass
+              case None => false
+            }
+          }
+
+          //  Interfaces cannot inherit from classes.
+          case Some(subinterface: InterfaceDeclaration) => false
+        }
+
+        case None => throw new SyntaxError("Could not resolve supertype: " + supertype)
+      }
+    }
+  }
+
   def validateTypeConvertability(to: Option[Type], from: Option[Type]) {
     if (to != from) {
       (to, from) match {
@@ -514,10 +562,29 @@ object TypeChecker {
           => throw new SyntaxError("Custom interfaces cannot be assigned to from arrays.")
 
         //  Thanks to the case above, this ReferenceType will never be an ArrayType.
-        case (Some(ArrayType(_)), Some(_: ReferenceType)) => throw new SyntaxError("Single object is not assignable to array.")
+        case (Some(ArrayType(_)), Some(_: ReferenceType))
+          => throw new SyntaxError("Single object is not assignable to array.")
 
-        //  If we're here, a != b.
-        case (Some(a: ReferenceType), Some(b: ReferenceType)) => throw new SyntaxError("Types are not convertible: " + a + " and " + b)
+        case (Some(a: ClassType), Some(b: ClassType)) if !validateSubtypeRelationship(a, b)
+          => throw new SyntaxError("Types are not convertible: " + a.fullyQualified + " and " + b.fullyQualified)
+
+        //  TODO: The following two cases should check the interface hierarchy.
+        case (Some(a: ClassType), Some(b: InterfaceType)) if !validateSubtypeRelationship(a, b)
+          => throw new SyntaxError("Types are not convertible: " + a.fullyQualified + " and " + b.fullyQualified)
+        case (Some(a: InterfaceType), Some(b: ClassType)) if !validateSubtypeRelationship(a, b)
+          => throw new SyntaxError("Types are not convertible: " + a.fullyQualified + " and " + b.fullyQualified)
+
+        case (Some(a: ClassType), Some(b: ClassOrInterfaceType)) if !validateSubtypeRelationship(a, b)
+          => throw new SyntaxError("Types are not convertible: " + a.fullyQualified + " and " + b.fullyQualified)
+
+        case (Some(a: ClassOrInterfaceType), Some(b: ClassType)) if !validateSubtypeRelationship(a, b)
+          => throw new SyntaxError("Types are not convertible: " + a.fullyQualified + " and " + b.fullyQualified)
+
+        case (Some(a: InterfaceType), Some(b: ClassOrInterfaceType)) if !validateSubtypeRelationship(a, b)
+          => throw new SyntaxError("Types are not convertible: " + a.fullyQualified + " and " + b.fullyQualified)
+
+        case (Some(a: ClassOrInterfaceType), Some(b: InterfaceType)) if !validateSubtypeRelationship(a, b)
+          => throw new SyntaxError("Types are not convertible: " + a.fullyQualified + " and " + b.fullyQualified)
 
         case _ => Unit
       }

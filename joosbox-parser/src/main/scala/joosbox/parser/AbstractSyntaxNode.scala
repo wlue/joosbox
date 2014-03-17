@@ -309,13 +309,13 @@ object AbstractSyntaxNode {
     //  one of: java.lang.Object, java.lang.Cloneable, java.io.Serializable
     def doesAcceptArrayAssignment(r: ReferenceType): Boolean = {
       (r match {
-        case c: ClassType => Some(c.fullyQualified.name.toQualifiedName)
+        case c: ClassType => Some(c.fullyQualified.asInstanceOf[ClassType].name.toQualifiedName)
         case ci: ClassOrInterfaceType => ci.fullyQualified match {
-          case c: ClassType => Some(c.fullyQualified.name.toQualifiedName)
-          case i: InterfaceType => Some(i.fullyQualified.name.toQualifiedName)
+          case c: ClassType => Some(c.fullyQualified.asInstanceOf[ClassType].name.toQualifiedName)
+          case i: InterfaceType => Some(i.fullyQualified.asInstanceOf[InterfaceType].name.toQualifiedName)
           case _ => throw new SyntaxError("Array assignment check resulted in non-class or interface type.")
         }
-        case i: InterfaceType => Some(i.fullyQualified.name.toQualifiedName)
+        case i: InterfaceType => Some(i.fullyQualified.asInstanceOf[InterfaceType].name.toQualifiedName)
         case _ => None
       }) match {
         case Some(JavaLangObject)
@@ -324,6 +324,8 @@ object AbstractSyntaxNode {
         case _ => false
       }
     }
+
+
   }
 
   //  This no longer inherits from Name, as it's really just a helper atm.
@@ -381,7 +383,16 @@ object AbstractSyntaxNode {
   }
 
   sealed trait PrimitiveType extends Type
-  sealed trait ReferenceType extends Type
+  sealed trait ReferenceType extends Type {
+    def fullyQualified: ReferenceType
+  }
+  sealed trait ReferenceNonArrayType extends ReferenceType {
+    def name: TypeName
+    def fullyQualifiedName: QualifiedName = fullyQualified.asInstanceOf[ReferenceNonArrayType].name.toQualifiedName
+    def node: Option[TypeDeclaration] =
+      scope.get.lookup(EnvironmentLookup.lookupFromName(name)).asInstanceOf[Option[TypeDeclaration]]
+  }
+
   case class VoidKeyword() extends Type
 
   case class BooleanKeyword() extends PrimitiveType
@@ -403,21 +414,37 @@ object AbstractSyntaxNode {
 
   case class ArrayType(subtype: Type) extends ReferenceType {
     override def children: List[AbstractSyntaxNode] = List(subtype)
-    def fullyQualified: ArrayType = scope.get.asInstanceOf[ScopeEnvironment].fullyQualifyType(this).asInstanceOf[ArrayType]
+    def fullyQualified: ReferenceType = (scope orElse subtype.scope) match {
+      case Some(s: ScopeEnvironment) => s.fullyQualifyType(this).asInstanceOf[ArrayType]
+      case _ =>
+        throw new SyntaxError("Failed to fully qualify type: " + this)
+    }
   }
-  case class ClassOrInterfaceType(name: TypeName) extends ReferenceType {
+  case class ClassOrInterfaceType(name: TypeName) extends ReferenceNonArrayType {
     override def children: List[AbstractSyntaxNode] = List(name)
-    def fullyQualified: ReferenceType = scope.get.asInstanceOf[ScopeEnvironment].fullyQualifyType(this).asInstanceOf[ReferenceType]
+    def fullyQualified: ReferenceType = (scope orElse name.scope) match {
+      case Some(s: ScopeEnvironment) => s.fullyQualifyType(this).asInstanceOf[ReferenceType]
+      case _ =>
+        throw new SyntaxError("Failed to fully qualify type: " + this)
+    }
   }
-  case class ClassType(name: TypeName) extends ReferenceType {
+  case class ClassType(name: TypeName) extends ReferenceNonArrayType {
     override def children: List[AbstractSyntaxNode] = List(name)
     def inputString: Seq[InputString] = name.toSeq
-    def fullyQualified: ClassType = scope.get.asInstanceOf[ScopeEnvironment].fullyQualifyType(this).asInstanceOf[ClassType]
+    def fullyQualified: ReferenceType = (scope orElse name.scope) match {
+      case Some(s: ScopeEnvironment) => s.fullyQualifyType(this).asInstanceOf[ClassType]
+      case _ =>
+        throw new SyntaxError("Failed to fully qualify type: " + this)
+    }
   }
-  case class InterfaceType(name: TypeName) extends ReferenceType {
+  case class InterfaceType(name: TypeName) extends ReferenceNonArrayType {
     override def children: List[AbstractSyntaxNode] = List(name)
     def inputString: Seq[InputString] = name.toSeq
-    def fullyQualified: InterfaceType = scope.get.asInstanceOf[ScopeEnvironment].fullyQualifyType(this).asInstanceOf[InterfaceType]
+    def fullyQualified: ReferenceType = (scope orElse name.scope) match {
+      case Some(s: ScopeEnvironment) => s.fullyQualifyType(this).asInstanceOf[InterfaceType]
+      case _ =>
+        throw new SyntaxError("Failed to fully qualify type: " + this)
+    }
   }
 
   sealed trait Modifier extends AbstractSyntaxNode

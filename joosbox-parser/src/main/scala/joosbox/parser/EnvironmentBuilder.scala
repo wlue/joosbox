@@ -402,12 +402,6 @@ object EnvironmentBuilder {
         f.scope.get
       }
 
-      case n: ConstructorDeclaration => {
-        val mapping: Map[EnvironmentLookup, Referenceable] = n.parameters.map(fp => (ExpressionNameLookup(fp.name.toQualifiedName), fp)).toMap
-        n.scope = Some(new ScopeEnvironment(mapping, None, Seq.empty, parent))
-        n.scope.get
-      }
-
       case n: AbstractSyntaxNode => parent
     }
   }
