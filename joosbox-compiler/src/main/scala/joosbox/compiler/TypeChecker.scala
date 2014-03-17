@@ -618,6 +618,9 @@ object TypeChecker {
       }
       */
 
+      case NegatedExpression(e1) if promotedTypeOption(resolveType(e1)) != Some(BooleanKeyword()) =>
+        throw new SyntaxError("Complement operator (!) must be invoked on booleans only.")
+
       case relational: RelationalExpression => {
         resolveType(relational)
       }
