@@ -390,7 +390,12 @@ object AbstractSyntaxNode {
     def name: TypeName
     def fullyQualifiedName: QualifiedName = fullyQualified.asInstanceOf[ReferenceNonArrayType].name.toQualifiedName
     def node: Option[TypeDeclaration] =
-      scope.get.lookup(EnvironmentLookup.lookupFromName(name)).asInstanceOf[Option[TypeDeclaration]]
+      scope match {
+        case Some(env: ScopeEnvironment)
+          => env.lookup(EnvironmentLookup.lookupFromName(name)).asInstanceOf[Option[TypeDeclaration]]
+        case _
+          => throw new SyntaxError("Could not fetch node for type " + this)
+      }
   }
 
   case class VoidKeyword() extends Type

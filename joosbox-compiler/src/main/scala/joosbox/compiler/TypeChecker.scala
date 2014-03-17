@@ -56,7 +56,7 @@ object TypeChecker {
     }
   }
 
-  def withScope[T <: Type](t: T, s: Option[Environment]): T = {
+  def withScope[T <: AbstractSyntaxNode](t: T, s: Option[Environment]): T = {
     if (t.scope == None) {
       t.scope = s
     }
@@ -308,7 +308,7 @@ object TypeChecker {
       case FalseLiteral() => Some(BooleanKeyword())
       case NullLiteral() => None
       case ThisKeyword() =>
-        resolveExpressionName(ExpressionName(InputString("this")), node.scope.get)
+        resolveExpressionName(withScope(ExpressionName(InputString("this")), node.scope), node.scope.get)
 
       case Num(value, _) => Some(IntKeyword())
       case _: CharLiteral => Some(CharKeyword())
