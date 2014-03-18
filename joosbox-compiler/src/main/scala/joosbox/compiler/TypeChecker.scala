@@ -716,7 +716,7 @@ object TypeChecker {
       case ReturnStatement(Some(e: Expression))  => resolveType(e) match {
          case Some(VoidKeyword()) => throw new SyntaxError("Cannot return something of type void: " + e)
          case _ => Unit
-       }
+      }
 
       case CastExpression(lhs: Type, rhs: Expression) =>
         validateTypeCastability(Some(lhs), resolveType(rhs))
@@ -728,22 +728,6 @@ object TypeChecker {
           case _: SyntaxError => {
             validateTypeComparability(resolveType(e2), resolveType(e1))
           }
-        }
-      }
-
-      // Validate return types of methods.
-      case MethodDeclaration(name: MethodName, _, returnType: Type, _, Some(b: Block)) => {
-        b.statements.lastOption match {
-          case Some(b: BlockStatement) => validateReturnStatementType(b, returnType)
-          case _ => Unit
-        }
-      }
-
-      // Validate that no constructor returns anything.
-      case ConstructorDeclaration(name: MethodName, _, _, Some(b: Block)) => {
-        b.statements.lastOption match {
-          case Some(b: BlockStatement) => validateReturnStatementType(b, VoidKeyword())
-          case _ => Unit
         }
       }
 
@@ -764,8 +748,55 @@ object TypeChecker {
         }
       }
 
+      // Validate that no constructor returns anything.
+      case ConstructorDeclaration(name: MethodName, _, _, Some(b: Block)) => {
+        b.statements.lastOption match {
+          case Some(b: BlockStatement) => validateReturnStatementType(b, VoidKeyword())
+          case _ => Unit
+        }
+      }
+
       case method: MethodDeclaration => {
-        val recursiveInvocations = new (AbstractSyntaxNode => Seq[MethodInvocation]) {
+        // Check to see if method returns the proper type.
+        method.body.foreach { b =>
+          b.statements.lastOption match {
+            case Some(b: BlockStatement) => validateReturnStatementType(b, method.memberType)
+            case _ => Unit
+          }
+        }
+
+        val expressionNameSearch = new (AbstractSyntaxNode => List[ExpressionName]) {
+          def apply(node: AbstractSyntaxNode): List[ExpressionName] = {
+            node.children.flatMap {
+              case k: ExpressionName => List(k)
+              case other => apply(other)
+            }
+          }
+        }
+
+        val expressionNames = expressionNameSearch(method)
+        expressionNames.foreach { name => name match {
+          case ExpressionName(_, None) => {
+            val lookup = ExpressionNameLookup(name.toQualifiedName)
+            name.scope.get.lookup(lookup) match {
+              case None => throw new SyntaxError("ExpressionName " + name + " does not resolve to a type.")
+              case Some(result) => result match {
+                case f: FieldDeclaration => {
+                  if (method.isStatic && !f.isStatic) {
+                    throw new SyntaxError("Non-static field " + f.name + " being referenced in static method " + method.niceName)
+                  } else if (!method.isStatic && f.isStatic) {
+                    throw new SyntaxError("Static field " + f.name + " being referenced in non-static method " + method.niceName)
+                  }
+                }
+                case _ => {}
+              }
+            }
+          }
+          case _ => {}
+        }}
+
+        // Search for invalid method invocations.
+        val methodInvocationSearch = new (AbstractSyntaxNode => List[MethodInvocation]) {
           def apply(node: AbstractSyntaxNode): List[MethodInvocation] = {
             node.children.flatMap {
               case k: MethodInvocation => List(k)
@@ -774,21 +805,37 @@ object TypeChecker {
           }
         }
 
-        val invocations: List[AbstractSyntaxNode] = recursiveInvocations(method)
+        val invocations: List[AbstractSyntaxNode] = methodInvocationSearch(node)
         invocations.foreach {
+          case invocation: ComplexMethodInvocation => {
+            val complexType: Type = resolvePrimary(invocation.primary, env)
+          }
           case invocation: SimpleMethodInvocation => {
             val env = invocation.scope.get
-            resolveMethodName(invocation.name, invocation.args, env) match {
-              case None => throw new SyntaxError("Could not resolve method: " + invocation.name)
-              case Some(invokedMethod) => {
-                val Seq(invokedName, methodName) = Seq(invokedMethod, method).map {
-                  case m: MethodDeclaration => m.name.niceName
-                  case m: InterfaceMemberDeclaration => m.name.value
+
+            // If the invocation is implicitly on this class (ie. staticMethod()), then check to see if the
+            // method is also static.
+            if (invocation.name.prefix.isEmpty) {
+              resolveMethodName(invocation.name, invocation.args, env) match {
+                case None => throw new SyntaxError("Could not resolve method: " + invocation.name)
+                case Some(invokedMethod: TypeMethodDeclaration) => {
+                  if (method.isStatic && !invokedMethod.isStatic) {
+                    throw new SyntaxError("Non-static method " + invokedMethod.niceName +
+                      " called within static method " + method.niceName)
+                  } else if (!method.isStatic && invokedMethod.isStatic) {
+                    throw new SyntaxError("Static method " + invokedMethod.niceName +
+                      " called within non-static method " + method.niceName)
+                  }
+                }
+              }
+            } else {
+              resolveMethodName(invocation.name, invocation.args, env) match {
+                case None => throw new SyntaxError("Could not resolve method: " + invocation.name)
+                case Some(invokedMethod: TypeMethodDeclaration) => {
                 }
               }
             }
           }
-          case method: ComplexMethodInvocation => {}
         }
       }
 
@@ -844,3 +891,4 @@ object TypeChecker {
     node.children.foreach { node => check(node) }
   }
 }
+
