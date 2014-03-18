@@ -14,7 +14,7 @@ object ReachabilityChecker {
   import AbstractSyntaxNode._
 
   def link(units: Seq[CompilationUnit]): Map[Any, Referenceable] = {
-    units.foreach { unit => ReachabilityChecker.check(unit) }
+    units.foreach { unit => ReachabilityChecker.check(unit, None) }
     Map.empty
   }
 
@@ -292,12 +292,25 @@ object ReachabilityChecker {
     }
   }
 
-  def check(node: AbstractSyntaxNode) : Unit = {
+  def check(node: AbstractSyntaxNode, parent: Option[AbstractSyntaxNode]) : Unit = {
+    def takeAfter[A](elem: A, seq:Seq[A]) : Seq[A] = {
+      seq.slice(seq.indexOf(elem), seq.indexOf(seq.last))
+    }
+
+    var siblings : Seq[AbstractSyntaxNode] = Seq.empty[AbstractSyntaxNode]
+    if (!parent.isEmpty) {
+      siblings = takeAfter(node, parent.get.children)
+    }
+
     node match {
         case w : WhileStatement =>
           resolveConstantValue(w.clause)
           w.clause.constantValue match {
               case Some(ConstantBool("false")) => throw new SyntaxError("Unreachable body of while-loop statement.")
+              case Some(ConstantBool("true")) =>
+                if (!siblings.isEmpty) {
+                  throw new SyntaxError("Unreachable statements after while-loop statement.")
+                }
               case _ => Unit
           }
         case f : ForStatement =>
@@ -311,6 +324,6 @@ object ReachabilityChecker {
         case _ => Unit
     }
 
-    node.children.foreach { node => check(node) }
+    node.children.foreach { child => check(child, Some(node)) }
   }
 }
