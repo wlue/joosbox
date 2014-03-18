@@ -294,11 +294,11 @@ object ReachabilityChecker {
 
   def check(node: AbstractSyntaxNode, parent: Option[AbstractSyntaxNode]) : Unit = {
     def takeAfter[A](elem: A, seq:Seq[A]) : Seq[A] = {
-      seq.slice(seq.indexOf(elem), seq.indexOf(seq.last))
+      seq.drop(seq.indexOf(elem) + 1)
     }
 
     var siblings : Seq[AbstractSyntaxNode] = Seq.empty[AbstractSyntaxNode]
-    if (!parent.isEmpty) {
+    if (!parent.isEmpty && parent.get.isInstanceOf[Block]) {
       siblings = takeAfter(node, parent.get.children)
     }
 
@@ -320,6 +320,10 @@ object ReachabilityChecker {
                 case Some(ConstantBool("false")) => throw new SyntaxError("Unreachable body of for-loop statement.")
                 case _ => Unit
             }
+          }
+        case r : ReturnStatement =>
+          if(!siblings.isEmpty) {
+            throw new SyntaxError("Unreachable statements after return statement.")
           }
         case _ => Unit
     }
