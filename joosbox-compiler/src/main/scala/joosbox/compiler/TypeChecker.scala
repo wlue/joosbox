@@ -243,8 +243,8 @@ object TypeChecker {
     // Numeric types are always compatible with each other.
     case (one: NumericType, two: NumericType) => true
 
-    case (ClassType(TypeName(InputString("String", _, _, _), Some(PackageName(InputString("lang", _, _, _), Some(PackageName(InputString("java", _, _, _), None)))))), _: Type) => true
-    case (_: Type, ClassType(TypeName(InputString("String", _, _, _), Some(PackageName(InputString("lang", _, _, _), Some(PackageName(InputString("java", _, _, _), None))))))) => true
+    case (ClassType(n), _: Type) if n.toQualifiedName == CommonNames.JavaLangString => true
+    case (_: Type, ClassType(n)) if n.toQualifiedName == CommonNames.JavaLangString => true
 
     case _ => false
   }
@@ -258,12 +258,16 @@ object TypeChecker {
                           compatible:(Type,Type)=>Boolean = compatibleTypes
                       ): Option[Type] = {
     (type1, type2) match {
+      case (Some(type1: ClassType), Some(type2))
+        if compatible(type1, type2) && type1.name.toQualifiedName == CommonNames.JavaLangString
+          => Some(type1)
+
+      case (Some(type1), Some(type2: ClassType))
+        if compatible(type1, type2) && type2.name.toQualifiedName == CommonNames.JavaLangString
+          => Some(type2)
+
       case (Some(type1), Some(type2)) if compatible(type1, type2) => {
-        if (resolve.isEmpty) {
-          Some(type1)
-        } else {
-          resolve
-        }
+        resolve orElse Some(type1)
       }
       case (None, Some(t: ReferenceType)) => Some(t)
       case (Some(t: ReferenceType), None) => Some(t)

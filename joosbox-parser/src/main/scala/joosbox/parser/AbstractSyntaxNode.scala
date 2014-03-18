@@ -319,6 +319,7 @@ object AbstractSyntaxNode {
 
   case object CommonNames {
     lazy val JavaLangObject = QualifiedName(Seq(InputString("java"), InputString("lang"), InputString("Object")))
+    lazy val JavaLangString = QualifiedName(Seq(InputString("java"), InputString("lang"), InputString("String")))
     lazy val JavaLangCloneable = QualifiedName(Seq(InputString("java"), InputString("lang"), InputString("Cloneable")))
     lazy val JavaIOSerializable = QualifiedName(Seq(InputString("java"), InputString("io"), InputString("Serializable")))
 
