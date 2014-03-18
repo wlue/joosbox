@@ -37,6 +37,10 @@ object ReachabilityChecker {
             }
 
             // Expressions that need constant folding
+            case e: ParenthesizedExpression => {
+              resolveConstantValue(e.expr)
+              e.expr.constantValue
+            }
             case c: CastExpression => {
               val castType : Option[Type] = TypeChecker.resolveType(c)
               resolveConstantValue(c.expr)
