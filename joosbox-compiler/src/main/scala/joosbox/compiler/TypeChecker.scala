@@ -671,29 +671,17 @@ object TypeChecker {
     }
   }
 
-  def getReturnStatementType(s: BlockStatement): Option[Type] = s match {
-    case Block(statements) => statements.lastOption match {
-      case Some(bs: BlockStatement) => getReturnStatementType(bs)
-      case None => Some(VoidKeyword())
+  def validateReturnStatementType(s: BlockStatement, t: Type): Unit = s match {
+    case Block(statements) => statements.foreach {
+      case bs: BlockStatement => validateReturnStatementType(bs, t)
     }
-    case ReturnStatement(None) => Some(VoidKeyword())
-    case ReturnStatement(Some(e: Expression)) => resolveType(e)
-    case IfStatement(_, trueCase: Statement, None) => getReturnStatementType(trueCase)
-    case IfStatement(_, trueCase: Statement, Some(falseCase: Statement)) => {
-      val trueReturn = getReturnStatementType(trueCase)
-      val falseReturn = getReturnStatementType(falseCase)
-      if (trueReturn != falseReturn) {
-        throw new SyntaxError("Two branches of if statement do not return the same type: " + s)
-      } else {
-        trueReturn
+    case ReturnStatement(None) =>
+      if (t != VoidKeyword()) {
+        throw new SyntaxError("Invalid return type for method; got void expected non-void.")
       }
-    }
-
-    //  TODO: We could potentially do some A4 checks here.
-    case ForStatement(_, _, _, s: Statement) => getReturnStatementType(s)
-    case WhileStatement(_, s: Statement) => getReturnStatementType(s)
-
-    case _ => Some(VoidKeyword())
+    case ReturnStatement(Some(e: Expression)) =>
+      validateTypeConvertability(Some(t), resolveType(e))
+    case _ => Unit
   }
 
   def check(node: AbstractSyntaxNode) {
@@ -746,14 +734,8 @@ object TypeChecker {
       // Validate return types of methods.
       case MethodDeclaration(name: MethodName, _, returnType: Type, _, Some(b: Block)) => {
         b.statements.lastOption match {
-          case Some(b: BlockStatement) => {
-            validateTypeConvertability(Some(returnType), getReturnStatementType(b))
-          }
-          case _ => {
-            if (returnType != VoidKeyword()) {
-              throw new SyntaxError("Method must return " + returnType + ": " +  name)
-            }
-          }
+          case Some(b: BlockStatement) => validateReturnStatementType(b, returnType)
+          case _ => Unit
         }
       }
 
