@@ -43,6 +43,8 @@ object CompilerRunner {
 
     NameLinker.link(nodes)
     TypeChecker.link(nodes)
+
+    ReachabilityChecker.link(nodes)
   }
 
   def enableScopeLinking(node: AbstractSyntaxNode): Unit = {
