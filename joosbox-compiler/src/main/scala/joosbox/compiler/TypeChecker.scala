@@ -556,25 +556,48 @@ object TypeChecker {
     }
   }
 
+  def validateTypeComparability(to: Option[Type], from: Option[Type]) {
+    if (to == Some(VoidKeyword()) && from == Some(VoidKeyword())) {
+      throw new SyntaxError("Void types cannot be compared.")
+    } else {
+      validateTypeConvertability(to, from)
+    }
+  }
+
   def validateTypeConvertability(to: Option[Type], from: Option[Type]) {
     if (to != from) {
       (to, from) match {
-        case (Some(ByteKeyword()), Some(CharKeyword())) => throw new SyntaxError("Char type is not assignable to byte type.")
-        case (Some(ByteKeyword()), Some(IntKeyword())) => throw new SyntaxError("Int type is not assignable to byte type.")
-        case (Some(CharKeyword()), Some(IntKeyword())) => throw new SyntaxError("Int type is not assignable to char type.")
-        case (Some(CharKeyword()), Some(ByteKeyword())) => throw new SyntaxError("Byte type is not assignable to char type.")
-        case (Some(IntKeyword()), Some(BooleanKeyword())) => throw new SyntaxError("Boolean type is not assignable to int type.")
-        case (Some(BooleanKeyword()), Some(IntKeyword())) => throw new SyntaxError("Int type is not assignable to boolean type.")
+        case (Some(VoidKeyword()), Some(x))
+          => throw new SyntaxError("Type cannot be converted to void: " + x)
+
+        case (Some(VoidKeyword()), None)
+          => throw new SyntaxError("Type cannot be converted to void from statement with no type.")
+
+        case (Some(_: ShortKeyword), Some(_: ByteKeyword)) => Unit
+        case (Some(_: ByteKeyword), Some(_: ShortKeyword)) => Unit
+        case (Some(_: IntKeyword), Some(_: ByteKeyword)) => Unit
+        case (Some(_: IntKeyword), Some(_: CharKeyword)) => Unit
+        case (Some(_: IntKeyword), Some(_: ShortKeyword)) => Unit
+
+
+        //  Except for the cases above, primitives are not convertible.
+        case (Some(_: PrimitiveType), Some(_: PrimitiveType)) => throw new SyntaxError("Types not convertible: " + to + " from " + from)
+
+        case (Some(c: ReferenceType), Some(x: PrimitiveType))
+          => throw new SyntaxError("Primitive type " + x + " is not convertible to reference type.")
 
         //  TODO: Can we *ever* assign from a PrimitiveType array to another PrimitiveType array?
-        case (Some(ArrayType(ByteKeyword())), Some(ArrayType(IntKeyword()))) => throw new SyntaxError("Int[] type is not assignable to byte[] type.")
-        case (Some(ArrayType(IntKeyword())), Some(ArrayType(ByteKeyword()))) => throw new SyntaxError("Byte[] type is not assignable to int[] type.")
+        case (Some(ArrayType(ByteKeyword())), Some(ArrayType(IntKeyword()))) => throw new SyntaxError("Int[] type is not convertible to byte[] type.")
+        case (Some(ArrayType(IntKeyword())), Some(ArrayType(ByteKeyword()))) => throw new SyntaxError("Byte[] type is not convertible to int[] type.")
 
-        case (Some(_: PrimitiveType), Some(_: ArrayType)) => throw new SyntaxError("Array type is not assignable to primitive type.")
-        case (Some(ArrayType(t)), Some(p: PrimitiveType)) => throw new SyntaxError("Primitive type is not assignable to array type.")
+        case (Some(_: PrimitiveType), Some(_: ArrayType)) => throw new SyntaxError("Array type is not convertible to primitive type.")
+        case (Some(ArrayType(t)), Some(p: PrimitiveType)) => throw new SyntaxError("Primitive type is not convertible to array type.")
         case (Some(_: PrimitiveType), None) =>
-          throw new SyntaxError("Null is not assignable to primitive type.")
-        case (_, Some(VoidKeyword())) => throw new SyntaxError("Void return type is not assignable to anything.")
+          throw new SyntaxError("Null is not convertible to primitive type.")
+        case (_, Some(VoidKeyword())) => throw new SyntaxError("Void return type is not convertible to anything.")
+
+        //  Except for the cases above, primitives are not convertible.
+        case (Some(_: PrimitiveType), Some(_: ReferenceType)) => throw new SyntaxError("Reference type is not convertible to primitive: " + from + " from " + to)
 
         case (Some(ArrayType(t1)), Some(ArrayType(t2))) => {
           //  TODO: Do hierarchy checking in here to see if the array types are assignable.
@@ -583,11 +606,11 @@ object TypeChecker {
 
         // Object arrays are themselves objects, so this is only okay if we're assigning to java.lang.Object.
         case (Some(c: ClassType), Some(ArrayType(a))) if !CommonNames.doesAcceptArrayAssignment(c)
-            => throw new SyntaxError("Custom classes cannot be assigned to from arrays.")
+            => throw new SyntaxError("Custom classes cannot be converted to from arrays.")
         case (Some(c: ClassOrInterfaceType), Some(ArrayType(a))) if !CommonNames.doesAcceptArrayAssignment(c)
-            => throw new SyntaxError("Custom classes or interfaces cannot be assigned to from arrays.")
+            => throw new SyntaxError("Custom classes or interfaces cannot be converted to from arrays.")
         case (Some(c: InterfaceType), Some(ArrayType(a))) if !CommonNames.doesAcceptArrayAssignment(c)
-          => throw new SyntaxError("Custom interfaces cannot be assigned to from arrays.")
+          => throw new SyntaxError("Custom interfaces cannot be converted to from arrays.")
 
         //  Thanks to the case above, this ReferenceType will never be an ArrayType.
         case (Some(ArrayType(_)), Some(_: ReferenceType))
@@ -614,9 +637,6 @@ object TypeChecker {
         case (Some(a: ClassOrInterfaceType), Some(b: InterfaceType)) if !validateSubtypeRelationship(a, b)
           => throw new SyntaxError("Types are not convertible: " + a.fullyQualified + " and " + b.fullyQualified)
 
-
-        case (Some(VoidKeyword()), _)
-          => throw new SyntaxError("Type cannot be converted to void.")
         case x
           => Unit
       }
@@ -711,10 +731,10 @@ object TypeChecker {
 
       case EqualExpression(e1: Expression, e2: Expression) => {
         try {
-          validateTypeConvertability(resolveType(e1), resolveType(e2))
+          validateTypeComparability(resolveType(e1), resolveType(e2))
         } catch {
           case _: SyntaxError => {
-            validateTypeConvertability(resolveType(e2), resolveType(e1))
+            validateTypeComparability(resolveType(e2), resolveType(e1))
           }
         }
       }
@@ -730,6 +750,18 @@ object TypeChecker {
               throw new SyntaxError("Method must return " + returnType + ": " +  name)
             }
           }
+        }
+      }
+
+      // Validate that no constructor returns anything.
+      case ConstructorDeclaration(name: MethodName, _, _, Some(b: Block)) => {
+        b.statements.lastOption match {
+          case Some(b: BlockStatement) => {
+            if (Some(VoidKeyword()) != getReturnStatementType(b)) {
+              throw new SyntaxError("Constructor must return void: " +  name)
+            }
+          }
+          case _ => Unit
         }
       }
 
