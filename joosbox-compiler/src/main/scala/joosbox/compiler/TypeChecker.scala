@@ -742,11 +742,7 @@ object TypeChecker {
       // Validate that no constructor returns anything.
       case ConstructorDeclaration(name: MethodName, _, _, Some(b: Block)) => {
         b.statements.lastOption match {
-          case Some(b: BlockStatement) => {
-            if (Some(VoidKeyword()) != getReturnStatementType(b)) {
-              throw new SyntaxError("Constructor must return void: " +  name)
-            }
-          }
+          case Some(b: BlockStatement) => validateReturnStatementType(b, VoidKeyword())
           case _ => Unit
         }
       }
