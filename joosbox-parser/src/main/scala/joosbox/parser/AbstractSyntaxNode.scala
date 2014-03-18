@@ -583,8 +583,8 @@ object AbstractSyntaxNode {
   case class IfStatement(clause: Expression, trueCase: Statement, elseCase: Option[Statement] = None) extends Statement  {
     override def children: List[AbstractSyntaxNode] = List(clause) ++ List(trueCase) ++ elseCase.toList
   }
-  case class WhileStatement(clause: Expression, body: Statement) extends Statement {
-    override def children: List[AbstractSyntaxNode] = List(clause) ++ List(body)
+  case class WhileStatement(clause: Expression, body: Option[Statement]) extends Statement {
+    override def children: List[AbstractSyntaxNode] = List(clause) ++ body.toList
   }
 
   case class ForVariableDeclaration(typeDeclaration: Type,
@@ -1120,7 +1120,8 @@ object AbstractSyntaxNode {
 
     case w: ParseNodes.WhileStatement => {
       val children:Seq[AbstractSyntaxNode] = w.children.flatMap(recursive(_))
-      Seq(WhileStatement(children(0).asInstanceOf[Expression], children(1).asInstanceOf[Statement]))
+      val body:Option[Statement] = children.collect { case x: Statement => x}.headOption
+      Seq(WhileStatement(children(0).asInstanceOf[Expression], body))
     }
 
     case f: ParseNodes.ForStatement => {
