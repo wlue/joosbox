@@ -478,7 +478,7 @@ object TypeChecker {
     }
   }
 
-  def checkBinaryExpression(e1: Expression, e2: Expression) = {
+  def checkBooleanExpression(e1: Expression, e2: Expression) = {
     resolveType(e1) match {
       case Some(BooleanKeyword()) => Unit
       case _ => throw new SyntaxError("Bitwise operators aren't supported.")
@@ -676,9 +676,12 @@ object TypeChecker {
     val env = node.scope.get
     node match {
       // Check that no bitwise operations occur.
-      case BinAndExpression(e1, e2) => TypeChecker.checkBinaryExpression(e1, e2)
-      case BinOrExpression(e1, e2) => TypeChecker.checkBinaryExpression(e1, e2)
-      case BinXorExpression(e1, e2) => TypeChecker.checkBinaryExpression(e1, e2)
+      case AndExpression(e1, e2) => TypeChecker.checkBooleanExpression(e1, e2)
+      case OrExpression(e1, e2) => TypeChecker.checkBooleanExpression(e1, e2)
+      // Check that no bitwise operations occur.
+      case BinAndExpression(e1, e2) => TypeChecker.checkBooleanExpression(e1, e2)
+      case BinOrExpression(e1, e2) => TypeChecker.checkBooleanExpression(e1, e2)
+      case BinXorExpression(e1, e2) => TypeChecker.checkBooleanExpression(e1, e2)
 
       // Check that the implicit this variable is not accessed in a static method or in the initializer of a static field.
       case ThisKeyword() => resolveType(node)

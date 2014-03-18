@@ -11,9 +11,19 @@ sealed trait AbstractSyntaxNode {
     (" " * indent) + this.getClass.getSimpleName + "\n" + children.map(_.simpleString(indent + 2)).mkString("")
   }
   var scope: Option[Environment] = None
+  var constantValue : Option[AbstractSyntaxNode.ConstantValue] = None
 }
 
 object AbstractSyntaxNode {
+
+  sealed trait ConstantValue extends AbstractSyntaxNode {
+    def value : String
+  }
+  case class ConstantString(value: String) extends ConstantValue
+  case class ConstantChar(value: String) extends ConstantValue
+  case class ConstantBool(value: String) extends ConstantValue
+  case class ConstantNum(value: String) extends ConstantValue
+  case class ConstantNull(value: String) extends ConstantValue
 
   /**
    * AST nodes that can be referenced as a name.
@@ -194,7 +204,10 @@ object AbstractSyntaxNode {
 
   sealed trait PostfixExpression extends Expression
 
-  sealed trait ConditionalExpression extends Expression
+  sealed trait ConditionalExpression extends Expression {
+    def e1 : Expression
+    def e2 : Expression
+  }
   case class OrExpression(e1: Expression, e2: Expression) extends ConditionalExpression {
     override def children: List[AbstractSyntaxNode] = List(e1) ++ List(e2)
   }
@@ -234,7 +247,10 @@ object AbstractSyntaxNode {
     override def children: List[AbstractSyntaxNode] = List(e) ++ List(t)
   }
 
-  sealed trait ArithmeticExpression extends Expression
+  sealed trait ArithmeticExpression extends Expression {
+    def e1 : Expression
+    def e2 : Expression
+  }
   case class AddExpression(e1: Expression, e2: Expression) extends ArithmeticExpression {
     override def children: List[AbstractSyntaxNode] = List(e1) ++ List(e2)
   }
