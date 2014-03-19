@@ -281,13 +281,60 @@ object ReachabilityChecker {
                 }
               }
             }
-            /* TODO:
-             *  Simple names that refer to final variables whose initializers are constant expressions
-             *
-             *  Qualified names of the form TypeName . Identifier that refer to final variables whose initializers are
-             *  constant expressions
-             *
-             */
+            case e : ExpressionName => {
+              var env : Environment = e.scope.get
+              if (!e.prefix.isEmpty) {
+                val name : ExpressionName = NameLinker.disambiguateName(e)(env).asInstanceOf[ExpressionName]
+                val t:Option[Type] = name.prefix.get match {
+                  case n:ExpressionName => TypeChecker.resolveExpressionName(n, env)
+                  case other => TypeChecker.resolveType(other)
+                }
+                t match {
+                  case Some(x:ClassOrInterfaceType) => {
+                      val c = env.lookup(TypeNameLookup(x.name.toQualifiedName)).get match {
+                        case cd: ClassDeclaration => cd.body
+                        case id: InterfaceDeclaration => id.body
+                        case _ => throw new SyntaxError("Invalid declaration.")
+                      }
+                      env = c.scope.get
+                    }
+                  case Some(x:ClassType) => {
+                      val c = env.lookup(TypeNameLookup(x.name.toQualifiedName)).get match {
+                        case cd: ClassDeclaration => cd.body
+                        case id: InterfaceDeclaration => id.body
+                        case _ => throw new SyntaxError("Invalid declaration.")
+                      }
+                      env = c.scope.get
+                    }
+
+                  case Some(x:InterfaceType) => {
+                      val i = env.lookup(TypeNameLookup(x.name.toQualifiedName)).get match {
+                        case cd: ClassDeclaration => cd.body
+                        case id: InterfaceDeclaration => id.body
+                        case _ => throw new SyntaxError("Invalid declaration.")
+                      }
+                      env = i.scope.get
+                    }
+                  case _ => Unit
+                }
+              }
+
+              if (env == e.scope.get) {
+                None
+              } else {
+                val lookup = ExpressionNameLookup(ExpressionName(e.value).toQualifiedName)
+                env.lookup(lookup) match {
+                  case Some(f:FieldDeclaration) =>
+                    if (f.modifiers.contains(FinalKeyword())) {
+                      resolveConstantValue(f.expression.get)
+                      f.expression.get.constantValue
+                    } else {
+                      None
+                    }
+                  case _ => None
+                }
+              }
+            }
             case _ => None
           }
         }
