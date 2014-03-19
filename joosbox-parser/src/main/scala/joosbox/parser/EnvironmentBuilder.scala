@@ -217,8 +217,13 @@ object EnvironmentBuilder {
     statements.headOption match {
       case None => Seq.empty[(AbstractSyntaxNode, Environment)]
       case Some(fd: FieldDeclaration) => {
-        val fieldEnvironment = 
-          new ScopeEnvironment(Map(ExpressionNameLookup(fd.name.toQualifiedName) -> fd), None, Seq.empty, parent, classDeclaration)
+        val fieldLookup = ExpressionNameLookup(fd.name.toQualifiedName)
+        if (parent.lookup(fieldLookup).isDefined) {
+          throw new SyntaxError("Duplicate definition of field: " + fd.name)
+        }
+
+        val fieldEnvironment =
+          new ScopeEnvironment(Map(fieldLookup -> fd), None, Seq.empty, parent, classDeclaration)
 
         if (fd.scope == None) {
           fd.scope = Some(fieldEnvironment)
