@@ -604,8 +604,8 @@ object AbstractSyntaxNode {
     override def children: List[AbstractSyntaxNode] = expression.toList
   }
 
-  case class IfStatement(clause: Expression, trueCase: Statement, elseCase: Option[Statement] = None) extends Statement  {
-    override def children: List[AbstractSyntaxNode] = List(clause) ++ List(trueCase) ++ elseCase.toList
+  case class IfStatement(clause: Expression, trueCase: Option[Statement], elseCase: Option[Statement] = None) extends Statement  {
+    override def children: List[AbstractSyntaxNode] = List(clause) ++ trueCase.toList ++ elseCase.toList
   }
   case class WhileStatement(clause: Expression, body: Option[Statement]) extends Statement {
     override def children: List[AbstractSyntaxNode] = List(clause) ++ body.toList
@@ -1123,13 +1123,14 @@ object AbstractSyntaxNode {
 
     case i: ParseNodes.IfThenStatement => {
       val children:Seq[AbstractSyntaxNode] = i.children.flatMap(recursive(_))
-      Seq(IfStatement(children(0).asInstanceOf[Expression], children(1).asInstanceOf[Statement]))
+      val thenCase:Option[Statement] = children.collect { case x: Statement => x}.headOption
+      Seq(IfStatement(children(0).asInstanceOf[Expression], thenCase))
     }
 
     case i: ParseNodes.IfThenElseStatement => {
       val children:Seq[AbstractSyntaxNode] = i.children.flatMap(recursive(_))
       val clauses:Seq[Statement] = children.collect { case x: Statement => x }
-      val ifClause:Statement = clauses.head
+      val ifClause:Option[Statement] = clauses.headOption
       val elseClause:Option[Statement] = clauses.drop(1).headOption
       Seq(IfStatement(children(0).asInstanceOf[Expression], ifClause, elseClause))
     }
@@ -1137,7 +1138,7 @@ object AbstractSyntaxNode {
     case i: ParseNodes.IfThenElseStatementNoShortIf => {
       val children:Seq[AbstractSyntaxNode] = i.children.flatMap(recursive(_))
       val clauses:Seq[Statement] = children.collect { case x: Statement => x }
-      val ifClause:Statement = clauses.head
+      val ifClause:Option[Statement] = clauses.headOption
       val elseClause:Option[Statement] = clauses.drop(1).headOption
       Seq(IfStatement(children(0).asInstanceOf[Expression], ifClause, elseClause))
     }
