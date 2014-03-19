@@ -343,7 +343,64 @@ object ReachabilityChecker {
     }
   }
 
+  def validateMethodReturns(method: MethodDeclaration) : Unit = {
+    if (!method.body.isEmpty && method.memberType != VoidKeyword()) {
+      val statements : Seq[BlockStatement] = method.body.get.statements
+      if (statements.isEmpty) {
+          throw new SyntaxError("Missing return for method.")
+      } else {
+        if (!guaranteesReturns(statements.last)) {
+          throw new SyntaxError("Missing return for method.")
+        }
+      }
+    }
+  }
+
+  def guaranteesReturns(statement: BlockStatement) : Boolean = {
+    statement match {
+        case r:ReturnStatement => true
+        case w:WhileStatement =>
+          if (w.clause.constantValue == Some(ConstantBool("true"))) {
+            // Never look at internals of internal loop.
+            // Assume that a return exists in here
+            true
+          } else {
+            // Either clause is constant false or we sometimes may enter it
+            // In either case a return isn't sufficient
+            false
+          }
+        case f:ForStatement =>
+          if (!f.check.isEmpty && f.check.get.constantValue == Some(ConstantBool("true"))) {
+            // Never look at internals of internal loop.
+            // Assume that a return exists in here
+            true
+          } else {
+            // Either check is constant false or we sometimes may enter it
+            // In either case a return isn't sufficient
+            false
+          }
+        case i:IfStatement =>
+          if (i.trueCase.isEmpty || i.elseCase.isEmpty) {
+            // There is a branch or two of logic that doesn't end in a return
+            false
+          } else {
+            guaranteesReturns(i.trueCase.get) && guaranteesReturns(i.elseCase.get)
+          }
+        case b:Block =>
+          val statements : Seq[BlockStatement] = b.statements
+          if (statements.isEmpty) {
+            false
+          } else {
+            guaranteesReturns(statements.last)
+          }
+        case _ =>
+          false
+      }
+  }
+
   def check(node: AbstractSyntaxNode, parent: Option[AbstractSyntaxNode]) : Unit = {
+    node.children.foreach { child => check(child, Some(node)) }
+
     def takeAfter[A](elem: A, seq:Seq[A]) : Seq[A] = {
       seq.drop(seq.indexOf(elem) + 1)
     }
@@ -372,13 +429,22 @@ object ReachabilityChecker {
                 case _ => Unit
             }
           }
+        case i : IfStatement =>
+          if (!i.trueCase.isEmpty && !i.elseCase.isEmpty) {
+            if (guaranteesReturns(i.trueCase.get) && guaranteesReturns(i.elseCase.get)) {
+              if(!siblings.isEmpty) {
+                throw new SyntaxError("Unreachable statements after if statement.")
+              }
+            }
+          }
+
+        case m: MethodDeclaration =>
+          validateMethodReturns(m)
         case r : ReturnStatement =>
           if(!siblings.isEmpty) {
             throw new SyntaxError("Unreachable statements after return statement.")
           }
         case _ => Unit
     }
-
-    node.children.foreach { child => check(child, Some(node)) }
   }
 }
