@@ -523,7 +523,11 @@ object TypeChecker {
       supertype.node match {
         case Some(interface: InterfaceDeclaration) => subtype.node match {
           case Some(subclass: ClassDeclaration) => {
-            if (subclass.interfaces.map(_.node).contains(interface)) {
+            if (subclass.interfaces.flatMap(_.node).contains(interface)) {
+              true
+
+              //  Do any of our interfaces implement the supertype?
+            } else if (subclass.interfaces.toStream.map(validateSubtypeRelationship(supertype, _)).collectFirst{ case true => true }.getOrElse(false)) {
               true
             } else {
               subclass.superclass match {
@@ -535,7 +539,7 @@ object TypeChecker {
           }
 
           case Some(subinterface: InterfaceDeclaration) =>
-            subinterface.interfaces.map(_.node).contains(interface)
+            subinterface.interfaces.flatMap(_.node).contains(interface)
         }
 
         case Some(superclass: ClassDeclaration) => subtype.node match {
@@ -621,7 +625,6 @@ object TypeChecker {
         case (Some(a: ClassType), Some(b: ClassType)) if !validateSubtypeRelationship(a, b)
           => throw new SyntaxError("Types are not convertible: " + a.fullyQualified + " and " + b.fullyQualified)
 
-        //  TODO: The following two cases should check the interface hierarchy.
         case (Some(a: ClassType), Some(b: InterfaceType)) if !validateSubtypeRelationship(a, b)
           => throw new SyntaxError("Types are not convertible: " + a.fullyQualified + " and " + b.fullyQualified)
         case (Some(a: InterfaceType), Some(b: ClassType)) if !validateSubtypeRelationship(a, b)
