@@ -447,6 +447,11 @@ object TypeChecker {
           case SimpleMethodInvocation(ambiguousName, args) => {
             val env = node.scope.get
             resolveMethodName(ambiguousName, args, env) match {
+
+              //  We can't call a static method without naming the class.
+              case Some(method) if method.isStatic && ambiguousName.prefix.isEmpty =>
+                throw new SyntaxError("Static method cannot be called without class name: " + ambiguousName)
+
               case Some(method) => method.memberType match {
                 case r: ReferenceNonArrayType => resolveTypeName(r.name, r.scope.get)
                 case ArrayType(r: ReferenceNonArrayType) => Some(withScope(ArrayType(resolveTypeName(r.name, r.scope.get).get), r.scope))
