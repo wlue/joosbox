@@ -753,7 +753,7 @@ object AbstractSyntaxNode {
     }
 
     case c: ParseNodes.ConstructorDeclaration => {
-      val children: Seq[AbstractSyntaxNode] = c.children.flatMap(recursive(_))
+      val children: Seq[AbstractSyntaxNode] = c.children.flatMap(recursive)
 
       val name: MethodName = children.collectFirst { case x: QualifiedName => x.toMethodName }.get
       val modifiers: Set[Modifier] = children.collect { case x: Modifier => x }.toSet

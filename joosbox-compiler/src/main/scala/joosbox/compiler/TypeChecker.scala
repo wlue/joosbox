@@ -55,7 +55,8 @@ object TypeChecker {
       case Some(result) => result match {
         case method: MethodDeclaration => Some(method)
         case method: InterfaceMemberDeclaration => Some(method)
-        case _ => throw new SyntaxError("Found non-method " + result)
+        case _ =>
+          throw new SyntaxError("Found non-method " + result)
       }
       case _ => {
         /* Hierarchy:
@@ -72,7 +73,8 @@ object TypeChecker {
           case Some(c: ClassDeclaration) => c.scope.get.lookup(lookup) match {
             case Some(method: MethodDeclaration) => Some(method)
             case Some(method: InterfaceMemberDeclaration) => Some(method)
-            case x => throw new SyntaxError("Found non-method: " + x)
+            case x =>
+              throw new SyntaxError("Found non-method: " + x)
           }
           case _ => throw new SyntaxError("Could not find java.lang.Object!")
         }
@@ -796,11 +798,40 @@ object TypeChecker {
         }
       }
 
-      // Validate that no constructor returns anything.
+      // Validate that no constructor returns anything, and that the super constructor
+      // with no arguments always exists.
       case ConstructorDeclaration(name: MethodName, _, _, Some(b: Block)) => {
         b.statements.lastOption match {
           case Some(b: BlockStatement) => validateReturnStatementType(b, VoidKeyword())
           case _ => Unit
+        }
+
+        node.scope.get.getEnclosingClassNode match {
+          case Some(c: ClassDeclaration) => {
+            c.superclass match {
+              case Some(st: ClassType) => {
+                st.node match {
+                  case Some(superclass: ClassDeclaration) => {
+                    val defaultSuperConstructorLookup
+                      = ConstructorLookup(superclass.name.toQualifiedName, Seq.empty[Type])
+                    superclass.scope.get.lookup(defaultSuperConstructorLookup) match {
+
+                      //  A super constructor exists with no arguments. We good.
+                      case Some(_) => Unit
+
+                      case None =>
+                        throw new SyntaxError("No argument-free super constructor found for class: " + c.name.niceName)
+                    }
+                  }
+                  case None
+                    => throw new SyntaxError("Could not find superclass node from constructor: " + node)
+                }
+              }
+              case None => Unit
+            }
+          }
+          case _
+            => throw new SyntaxError("Could not find ClassDeclaration from constructor to validate super constructor: " + node)
         }
       }
 
