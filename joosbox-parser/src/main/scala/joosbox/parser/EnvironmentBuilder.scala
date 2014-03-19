@@ -76,7 +76,7 @@ object EnvironmentBuilder {
             case ClassType(tn: TypeName) => Some(TypeNameLookup(tn.toQualifiedName))
             case InterfaceType(tn: TypeName) => Some(TypeNameLookup(tn.toQualifiedName))
             case _ => None
-          }
+          } ++ Seq(TypeNameLookup(CommonNames.JavaLangObject))
         }
 
         val declarationScope = new ScopeEnvironment(Map.empty, None, Seq.empty, parent, Some(cd), linkedScopeReferences)
@@ -162,7 +162,7 @@ object EnvironmentBuilder {
           cd.interfaces.flatMap {
             case InterfaceType(tn: TypeName) => Some(TypeNameLookup(tn.toQualifiedName))
             case _ => None
-          }
+          } ++ Seq(TypeNameLookup(CommonNames.JavaLangObject))
         }
 
         val n: InterfaceBody = cd.body

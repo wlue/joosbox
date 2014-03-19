@@ -58,27 +58,7 @@ object TypeChecker {
         case _ =>
           throw new SyntaxError("Found non-method " + result)
       }
-      case _ => {
-        /* Hierarchy:
-         * JLS 9.2:
-         * If an interface has no direct superinterfaces, then the interface implicitly
-         * declares a public abstract member method m with signature s, return type r,
-         * and throws clause t corresponding to each public instance method m with
-         * signature s, return type r, and throws clause t declared in Object,
-         * unless a method with the same signature, same return type, and a compatible
-         * throws clause is explicitly declared by the interface.
-         */
-        //  Basically, if we can't find a method, look it up on java.Lang.Object instead.
-        env.lookup(TypeNameLookup(CommonNames.JavaLangObject)) match {
-          case Some(c: ClassDeclaration) => c.scope.get.lookup(lookup) match {
-            case Some(method: MethodDeclaration) => Some(method)
-            case Some(method: InterfaceMemberDeclaration) => Some(method)
-            case x =>
-              throw new SyntaxError("Found non-method: " + x)
-          }
-          case _ => throw new SyntaxError("Could not find java.lang.Object!")
-        }
-      }
+      case _ => None
     }
   }
 
@@ -488,7 +468,7 @@ object TypeChecker {
 
             scope.lookup(MethodLookup(name.toQualifiedName, argTypes)) match {
               case None =>
-                throw new SyntaxError("Invoking complex" + name.niceName + " does not resolve.")
+                throw new SyntaxError("Invoking complex method " + name + " does not resolve.")
               case Some(result) => result match {
                 case method: MethodDeclaration => Some(method.memberType)
                 case method: InterfaceMemberDeclaration => Some(method.memberType)

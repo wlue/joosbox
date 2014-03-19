@@ -701,10 +701,10 @@ object AbstractSyntaxNode {
 
     case c: ParseNodes.ClassDeclaration => {
       val children: Seq[AbstractSyntaxNode] = c.children.flatMap(recursive(_))
-      val name: Identifier = children.collectFirst { case x: Identifier => x }.get
+      val name: TypeName = TypeName(children.collectFirst { case x: Identifier => x }.get.value)
 
       val modifiers: Set[Modifier] = children.collect { case x: Modifier => x }.toSet
-      var superclass: Option[ClassType] = children.collectFirst { case x: ClassType => x }
+      val superclass: Option[ClassType] = children.collectFirst { case x: ClassType => x }
       val interfaces: Seq[InterfaceType] = children.collect { case x: InterfaceType => x }.toSeq
       val body: ClassBody = children.collectFirst { case x: ClassBody => x }.get
 
@@ -725,7 +725,7 @@ object AbstractSyntaxNode {
         }
       }
 
-      Seq(ClassDeclaration(TypeName(name.value), body, modifiers, superclass, interfaces))
+      Seq(ClassDeclaration(name, body, modifiers, superclass, interfaces))
     }
 
     case c: ParseNodes.InterfaceDeclaration => {

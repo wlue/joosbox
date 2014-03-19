@@ -192,7 +192,11 @@ class ScopeEnvironment(
   var linkedScopes: Seq[ScopeEnvironment] = Seq.empty[ScopeEnvironment]
   def linkScopesWithMapping(mapping: Map[AbstractSyntaxNode, Environment]): Unit = {
     if (linkedScopes.size == 0 && linkedScopeReferences.size > 0) {
-      linkedScopes = linkedScopeReferences.flatMap(lookup(_)).flatMap(mapping.get(_)).collect{case c: ScopeEnvironment => c}
+      linkedScopes =
+        linkedScopeReferences
+        .flatMap(lookup)
+        .flatMap(mapping.get(_))
+        .collect{case c: ScopeEnvironment => c}
     }
     parent match {
       case Some(s: ScopeEnvironment) => s.linkScopesWithMapping(mapping)
@@ -343,11 +347,15 @@ class ScopeEnvironment(
               case Some(x) => Some(x)
               case None => {
                 if (useLinkedScopes) {
-                  linkedScopes.toStream.flatMap(_.searchInClassOrInterfaceScope(name)).headOption match {
-                    case Some(r: Referenceable) => {
-                      Some(r)
-                    }
-                    case None => None
+                  linkedScopes
+                    .filter(_ != this)
+                    .toStream
+                    .flatMap(_.searchInClassOrInterfaceScope(name))
+                    .headOption match {
+                      case Some(r: Referenceable) => {
+                        Some(r)
+                      }
+                      case None => None
                   }
                 } else {
                   None
