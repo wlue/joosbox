@@ -91,8 +91,8 @@ object NameLinker {
           // If the AmbiguousName is a simple name, consisting of a single Identifier:
           case None => {
             val identifier = a.value
-
-            env.lookup(EnvironmentLookup.lookupFromName(ExpressionName(identifier))) match {
+            val expressionLookup = EnvironmentLookup.lookupFromName(ExpressionName(identifier))
+            env.lookup(expressionLookup) match {
               case Some(x) => {
                 val name = ExpressionName(identifier)
                 name.scope = a.scope
@@ -100,7 +100,24 @@ object NameLinker {
               }
               case None => {
                 env.lookup(EnvironmentLookup.lookupFromName(TypeName(identifier))) match {
-                  case Some(x) => {
+                  //  To ensure that this name is not semantically ambiguous
+                  //  in the local scope of a class or interface, look up the
+                  //  name again from the point of view of Class or Interface
+                  //  body, which has all fields in scope.
+                  //  If there is a hit for the lookup, then throw an error,
+                  //  as this name is ambiguous.
+                  case Some(c: ClassDeclaration) => {
+                    if (c.body.scope.get.lookup(expressionLookup) != None) {
+                      throw new SyntaxError("Name is semantically ambiguous: " + a)
+                    }
+                    val name = TypeName(identifier)
+                    name.scope = a.scope
+                    name
+                  }
+                  case Some(i: InterfaceDeclaration) => {
+                    if (i.body.scope.get.lookup(expressionLookup) != None) {
+                      throw new SyntaxError("Name is semantically ambiguous: " + a)
+                    }
                     val name = TypeName(identifier)
                     name.scope = a.scope
                     name
