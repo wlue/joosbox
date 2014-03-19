@@ -310,7 +310,10 @@ object AbstractSyntaxNode {
     override def children: List[AbstractSyntaxNode] = List(primary) ++ args.toList
   }
 
-  sealed trait Type extends AbstractSyntaxNode
+  sealed trait Type extends AbstractSyntaxNode {
+    var writeable: Boolean = true
+  }
+
   sealed trait Name extends PostfixExpression {
     def niceName: String
     def isAmbiguous: Boolean
@@ -850,6 +853,7 @@ object AbstractSyntaxNode {
         if (expression.isEmpty) {
           throw new SyntaxError("Field " + name.niceName + " is final so it must have an initializer.")
         }
+        memberType.writeable = false
       }
 
       // Enfore: A field can not be package private

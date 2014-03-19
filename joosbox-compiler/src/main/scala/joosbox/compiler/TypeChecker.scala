@@ -117,7 +117,10 @@ object TypeChecker {
 
           case a: ArrayType => {
             if (name.value == InputString("length")) {
-              return Some(IntKeyword())
+              //  Length is a final field, so it writeable must be set to false.
+              val intType = IntKeyword()
+              intType.writeable = false
+              return Some(intType)
             } else {
               throw new SyntaxError("Only valid array field is length.")
             }
@@ -705,8 +708,15 @@ object TypeChecker {
       // Check that the implicit this variable is not accessed in a static method or in the initializer of a static field.
       case ThisKeyword() => resolveType(node)
 
-      case Assignment(lhs: AbstractSyntaxNode, rhs: AbstractSyntaxNode) =>
-        validateTypeConvertability(resolveType(lhs), resolveType(rhs))
+      case Assignment(lhs: AbstractSyntaxNode, rhs: AbstractSyntaxNode) => {
+        val lType = resolveType(lhs)
+        lType match {
+          case Some(t: Type) if !t.writeable => throw new SyntaxError("Cannot assign to final field: " + lhs)
+          case _ => Unit
+        }
+        validateTypeConvertability(lType, resolveType(rhs))
+      }
+
 
       case LocalVariableDeclaration(_, lhs: Type, Some(rhs: Expression)) =>
         validateTypeConvertability(Some(lhs), resolveType(rhs))
