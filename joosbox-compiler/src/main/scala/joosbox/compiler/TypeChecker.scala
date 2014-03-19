@@ -53,8 +53,17 @@ object TypeChecker {
 
     updatedEnv.lookup(lookup) match {
       case Some(result) => result match {
-        case method: MethodDeclaration => Some(method)
-        case method: InterfaceMemberDeclaration => Some(method)
+        case method: TypeMethodDeclaration => if (method.isStatic) {
+          name.prefix match {
+            case Some(_: ExpressionName) => throw new SyntaxError("Cannot access static method from instance context: " + name)
+            case _ => Some(method)
+          }
+        } else {
+          name.prefix match {
+            case Some(_: TypeName) => throw new SyntaxError("Cannot access instance method from static context: " + name)
+            case _ => Some(method)
+          }
+        }
         case _ =>
           throw new SyntaxError("Found non-method " + result)
       }
