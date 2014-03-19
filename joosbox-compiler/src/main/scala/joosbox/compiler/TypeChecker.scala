@@ -753,7 +753,7 @@ object TypeChecker {
       }
 
 
-      case LocalVariableDeclaration(_, lhs: Type, Some(rhs: Expression)) =>
+      case LocalVariableDeclaration(_, lhs: Type, rhs: Expression) =>
         validateTypeConvertability(Some(lhs), resolveType(rhs))
 
       case FieldDeclaration(_, _, lhs: Type, Some(rhs: Expression)) =>

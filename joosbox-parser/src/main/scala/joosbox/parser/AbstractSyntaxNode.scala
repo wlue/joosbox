@@ -584,9 +584,9 @@ object AbstractSyntaxNode {
   case class LocalVariableDeclaration(
     name: ExpressionName,
     memberType: Type,
-    expression: Option[Expression] = None
+    expression: Expression
   ) extends BlockStatement with Referenceable {
-    override def children: List[AbstractSyntaxNode] = List(memberType) ++ expression.toList
+    override def children: List[AbstractSyntaxNode] = List(memberType) ++ List(expression)
   }
 
   case class Block(statements: Seq[BlockStatement] = Seq.empty[BlockStatement]) extends Statement {
@@ -616,8 +616,8 @@ object AbstractSyntaxNode {
 
   case class ForVariableDeclaration(typeDeclaration: Type,
                                     variableName: ExpressionName,
-                                    expression: Option[Expression] = None) extends ForInit with Referenceable {
-    override def children: List[AbstractSyntaxNode] = List(typeDeclaration, variableName) ++ expression.toList
+                                    expression: Expression) extends ForInit with Referenceable {
+    override def children: List[AbstractSyntaxNode] = List(typeDeclaration, variableName, expression)
   }
   case class ForStatement(init: Option[ForInit],
                           check: Option[Expression],
@@ -1123,7 +1123,7 @@ object AbstractSyntaxNode {
 
       val name:Identifier = children.collectFirst { case x: Identifier => x }.get
       val memberType:Type = children.collectFirst { case x: Type => x }.get
-      val expression:Option[Expression] = children.collectFirst { case x:Expression => x }
+      val expression:Expression = children.collectFirst { case x:Expression => x }.get
 
       Seq(LocalVariableDeclaration(ExpressionName(name.value), memberType, expression))
     }
@@ -1204,7 +1204,7 @@ object AbstractSyntaxNode {
 
           val memberType: Type = t.children.flatMap(recursive(_)).collectFirst { case x: Type => x }.get
           val name: Identifier = vChildren.collectFirst { case x: Identifier => x }.get
-          val expression: Option[Expression] = vChildren.collectFirst { case x: Expression => x }
+          val expression: Expression = vChildren.collectFirst { case x: Expression => x }.get
 
           Seq(ForVariableDeclaration(memberType, ExpressionName(name.value), expression))
         }

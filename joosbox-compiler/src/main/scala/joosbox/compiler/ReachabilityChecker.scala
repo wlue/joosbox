@@ -647,31 +647,11 @@ object ReachabilityChecker {
           }
 
         case v: LocalVariableDeclaration =>
-          if (v.expression.isEmpty) {
-            var result:Option[Boolean] = None
-            siblings.foreach { sibling =>
-              val temp:Option[Boolean] = guaranteesDefiniteAssignmentBeforeUse(v.name, sibling)
-              temp match {
-                case Some(true) => result = Some(true)
-                case Some(false) =>
-                  if (result != Some(true)) {
-                    result = temp
-                  }
-                case None => Unit
-              }
-            }
-            result match {
-              case Some(true) => Unit
-              case Some(false) => throw new SyntaxError("Variable used before it is assigned.")
-              case None => Unit
-            }
-          } else {
-            val result:Option[Boolean] = guaranteesDefiniteAssignmentBeforeUse(v.name, v.expression.get)
-            result match {
-              case Some(true) => Unit
-              case Some(false) => throw new SyntaxError("Variable used in its own assignment.")
-              case None => Unit
-            }
+          val result:Option[Boolean] = guaranteesDefiniteAssignmentBeforeUse(v.name, v.expression)
+          result match {
+            case Some(true) => Unit
+            case Some(false) => throw new SyntaxError("Variable used in its own assignment.")
+            case None => Unit
           }
 
         case _ => resolveConstantValue(node)
