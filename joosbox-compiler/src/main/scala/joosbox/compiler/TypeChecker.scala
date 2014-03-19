@@ -669,17 +669,19 @@ object TypeChecker {
     }
   }
 
-  def validateReturnStatementType(s: BlockStatement, t: Type): Unit = s match {
-    case Block(statements) => statements.foreach {
-      case bs: BlockStatement => validateReturnStatementType(bs, t)
-    }
-    case ReturnStatement(None) =>
-      if (t != VoidKeyword()) {
-        throw new SyntaxError("Invalid return type for method; got void expected non-void.")
+  def validateReturnStatementType(s: BlockStatement, t: Type): Unit = {
+    s match {
+      case Block(statements) => statements.foreach {
+        case bs: BlockStatement => validateReturnStatementType(bs, t)
       }
-    case ReturnStatement(Some(e: Expression)) =>
-      validateTypeConvertability(Some(t), resolveType(e))
-    case _ => Unit
+      case ReturnStatement(None) =>
+        if (t != VoidKeyword()) {
+          throw new SyntaxError("Invalid return type for method; got void expected non-void.")
+        }
+      case ReturnStatement(Some(e: Expression)) =>
+        validateTypeConvertability(Some(t), resolveType(e))
+      case _ => Unit
+    }
   }
 
   def check(node: AbstractSyntaxNode) {
@@ -755,13 +757,17 @@ object TypeChecker {
       }
 
       case method: MethodDeclaration => {
-        // Check to see if method returns the proper type.
-        method.body.foreach { b =>
-          b.statements.lastOption match {
-            case Some(b: BlockStatement) => validateReturnStatementType(b, method.memberType)
-            case _ => Unit
+        val returnStatementSearch = new (AbstractSyntaxNode => List[ReturnStatement]) {
+          def apply(node: AbstractSyntaxNode): List[ReturnStatement] = {
+            node.children.flatMap {
+              case k: ReturnStatement => List(k)
+              case other => apply(other)
+            }
           }
         }
+
+        // Check to see if method returns the proper type.
+        returnStatementSearch(method).foreach(validateReturnStatementType(_, method.memberType))
 
         val expressionNameSearch = new (AbstractSyntaxNode => List[ExpressionName]) {
           def apply(node: AbstractSyntaxNode): List[ExpressionName] = {
