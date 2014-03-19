@@ -442,6 +442,42 @@ object ReachabilityChecker {
         result
       }
 
+      case w:WhileStatement =>
+        var result:Option[Boolean] = None
+        w.children.foreach { child =>
+          val temp:Option[Boolean] = guaranteesDefiniteAssignmentBeforeUse(name, child)
+          temp match {
+            case Some(true) => Unit // names defined in loop scopes are not definitely assigned elsewhere
+            case Some(false) => result = temp
+            case None => Unit
+          }
+        }
+        result
+
+      case f:ForStatement =>
+        var result:Option[Boolean] = None
+        f.children.foreach { child =>
+          val temp:Option[Boolean] = guaranteesDefiniteAssignmentBeforeUse(name, child)
+          temp match {
+            case Some(true) => Unit // names defined in loop scopes are not definitely assigned elsewhere
+            case Some(false) => result = temp
+            case None => Unit
+          }
+        }
+        result
+
+      case i:IfStatement =>
+        var result:Option[Boolean] = None
+        i.children.foreach { child =>
+          val temp:Option[Boolean] = guaranteesDefiniteAssignmentBeforeUse(name, child)
+          temp match {
+            case Some(true) => Unit // names defined in if scopes are not definitely assigned elsewhere
+            case Some(false) => result = temp
+            case None => Unit
+          }
+        }
+        result
+
       case n:ExpressionName =>
         if (n == name) {
           Some(false)
