@@ -243,8 +243,12 @@ object TypeChecker {
     // Numeric types are always compatible with each other.
     case (one: NumericType, two: NumericType) => true
 
-    case (ClassType(n), _: Type) if n.toQualifiedName == CommonNames.JavaLangString => true
-    case (_: Type, ClassType(n)) if n.toQualifiedName == CommonNames.JavaLangString => true
+    case (ClassType(n), y: Type)
+      if n.toQualifiedName == CommonNames.JavaLangString
+        && y != VoidKeyword()  => true
+    case (y: Type, ClassType(n))
+      if n.toQualifiedName == CommonNames.JavaLangString
+        && y != VoidKeyword() => true
 
     case _ => false
   }
