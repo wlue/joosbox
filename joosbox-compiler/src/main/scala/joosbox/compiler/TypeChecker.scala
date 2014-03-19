@@ -25,6 +25,7 @@ object TypeChecker {
   ): Option[TypeMethodDeclaration] = {
     val name: MethodName = NameLinker.disambiguateName(ambiguousName)(env).asInstanceOf[MethodName]
 
+
     val updatedEnv: Environment = name.prefix.map { namePrefix =>
       val typeOption: Option[Type] = namePrefix match {
         case name: ExpressionName => resolveExpressionName(name, env)
@@ -37,8 +38,12 @@ object TypeChecker {
           env.lookup(TypeNameLookup(n.toQualifiedName)).get.scope.get
         case Some(InterfaceType(n)) =>
           env.lookup(TypeNameLookup(n.toQualifiedName)).get.scope.get
-        case Some(ClassOrInterfaceType(n)) =>
-          env.lookup(TypeNameLookup(n.toQualifiedName)).get.scope.get
+        case Some(ClassOrInterfaceType(n)) => {
+          val l = TypeNameLookup(n.toQualifiedName)
+          val result = env.lookup(l)
+          result.get.scope.get
+        }
+
         case _ => throw new SyntaxError("Couldn't resolve type " + typeOption + ".")
       }
     } getOrElse(env)
@@ -52,7 +57,26 @@ object TypeChecker {
         case method: InterfaceMemberDeclaration => Some(method)
         case _ => throw new SyntaxError("Found non-method " + result)
       }
-      case _ => None
+      case _ => {
+        /* Hierarchy:
+         * JLS 9.2:
+         * If an interface has no direct superinterfaces, then the interface implicitly
+         * declares a public abstract member method m with signature s, return type r,
+         * and throws clause t corresponding to each public instance method m with
+         * signature s, return type r, and throws clause t declared in Object,
+         * unless a method with the same signature, same return type, and a compatible
+         * throws clause is explicitly declared by the interface.
+         */
+        //  Basically, if we can't find a method, look it up on java.Lang.Object instead.
+        env.lookup(TypeNameLookup(CommonNames.JavaLangObject)) match {
+          case Some(c: ClassDeclaration) => c.scope.get.lookup(lookup) match {
+            case Some(method: MethodDeclaration) => Some(method)
+            case Some(method: InterfaceMemberDeclaration) => Some(method)
+            case x => throw new SyntaxError("Found non-method: " + x)
+          }
+          case _ => throw new SyntaxError("Could not find java.lang.Object!")
+        }
+      }
     }
   }
 
@@ -450,7 +474,8 @@ object TypeChecker {
                 case _ =>
                   throw new SyntaxError("Could not match type of simple method invocation: " + node)
               }
-              case None => throw new SyntaxError("Could not resolve method: " + ambiguousName)
+              case None =>
+                throw new SyntaxError("Could not resolve method: " + ambiguousName)
             }
           }
 
@@ -695,7 +720,11 @@ object TypeChecker {
   }
 
   def check(node: AbstractSyntaxNode) {
-    val env = node.scope.get
+    val env = node.scope match {
+      case Some(x) => x
+      case None =>
+        throw new SyntaxError("Node has no scope: " + node)
+    }
     node match {
       // Check that no bitwise operations occur.
       case AndExpression(e1, e2) => TypeChecker.checkBooleanExpression(e1, e2)
@@ -752,7 +781,8 @@ object TypeChecker {
       // accessed as non-static are actually non-static.
       case SimpleMethodInvocation(name, args) => {
         resolveMethodName(name, args, env) match {
-          case None => throw new SyntaxError("Could not resolve method: " + name)
+          case None =>
+            throw new SyntaxError("Could not resolve method: " + name)
           case _ => {}
         }
       }
@@ -760,7 +790,8 @@ object TypeChecker {
       case ComplexMethodInvocation(ref, name, args) => {
         val scope : Environment = resolvePrimaryAndFindScope(ref, env)
         resolveMethodName(name, args, scope) match {
-          case None => throw new SyntaxError("Could not resolve method: " + name)
+          case None =>
+            throw new SyntaxError("Could not resolve method: " + name)
           case _ => {}
         }
       }
@@ -838,7 +869,8 @@ object TypeChecker {
             // method is also static.
             if (invocation.name.prefix.isEmpty) {
               resolveMethodName(invocation.name, invocation.args, env) match {
-                case None => throw new SyntaxError("Could not resolve method: " + invocation.name)
+                case None =>
+                  throw new SyntaxError("Could not resolve method: " + invocation.name)
                 case Some(invokedMethod: TypeMethodDeclaration) => {
                   if (method.isStatic && !invokedMethod.isStatic) {
                     throw new SyntaxError("Non-static method " + invokedMethod.niceName +
@@ -851,7 +883,8 @@ object TypeChecker {
               }
             } else {
               resolveMethodName(invocation.name, invocation.args, env) match {
-                case None => throw new SyntaxError("Could not resolve method: " + invocation.name)
+                case None =>
+                  throw new SyntaxError("Could not resolve method: " + invocation.name)
                 case Some(invokedMethod: TypeMethodDeclaration) => {
                 }
               }

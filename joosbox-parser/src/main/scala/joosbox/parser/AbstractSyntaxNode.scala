@@ -153,7 +153,7 @@ object AbstractSyntaxNode {
   }
 
   case class InterfaceMemberDeclaration(
-    name: InputString,
+    name: MethodName,
     modifiers: Set[Modifier] = Set.empty[Modifier],
     memberType: Type,
     parameters: Seq[FormalParameter] = Seq.empty[FormalParameter],
@@ -162,7 +162,7 @@ object AbstractSyntaxNode {
     override def children: List[AbstractSyntaxNode] =
       modifiers.toList ++ parameters.toList ++ body.toList ++ List(memberType)
 
-    override def niceName: String = name.value
+    override def niceName: String = name.niceName
   }
 
   case class ClassBody(
@@ -876,7 +876,10 @@ object AbstractSyntaxNode {
 
     case c: ParseNodes.InterfaceMemberDeclaration => {
       val children: Seq[AbstractSyntaxNode] = c.children.flatMap(recursive(_))
-      val name: Identifier = children.collectFirst { case x: Identifier => x }.get
+      val name: MethodName = children
+        .collectFirst { case x: Identifier => x }
+        .map { identifier: Identifier => MethodName(identifier.value) }
+        .get
       val modifiers: Set[Modifier] = children.collect { case x: Modifier => x }.toSet
       val memberType: Type = children.collectFirst { case x: Type => x }.get
       val parameters: Seq[FormalParameter] = children.collect { case x: FormalParameter => x }
@@ -887,7 +890,7 @@ object AbstractSyntaxNode {
         throw new SyntaxError("Interface method " + name.value + " cannot be static or final.")
       }
 
-      Seq(InterfaceMemberDeclaration(name.value, modifiers, memberType, parameters, body))
+      Seq(InterfaceMemberDeclaration(name, modifiers, memberType, parameters, body))
     }
 
     case i: ParseNodes.Identifier => Seq(Identifier(i.value.get))

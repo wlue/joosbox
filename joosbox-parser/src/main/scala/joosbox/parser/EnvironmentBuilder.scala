@@ -117,7 +117,7 @@ object EnvironmentBuilder {
         })
 
         val fieldEnvironments = scopeTreeFromFieldDeclarations(
-          staticFields ++ instanceFields, declarationScope, root, cd
+          staticFields ++ instanceFields, declarationScope, root, Some(cd)
         )
 
         val rightMostEnvironment = fieldEnvironments.lastOption match {
@@ -157,6 +157,43 @@ object EnvironmentBuilder {
         )
       }
 
+      case cd: InterfaceDeclaration => {
+        val linkedScopeReferences: Seq[EnvironmentLookup] = {
+          cd.interfaces.flatMap {
+            case InterfaceType(tn: TypeName) => Some(TypeNameLookup(tn.toQualifiedName))
+            case _ => None
+          }
+        }
+
+        val n: InterfaceBody = cd.body
+
+        val methodMapping: Map[EnvironmentLookup, Referenceable]
+        = n.declarations.foldLeft(Map.empty[EnvironmentLookup, Referenceable])({
+          case (map: Map[EnvironmentLookup, Referenceable], md: InterfaceMemberDeclaration) => {
+            if (md.parameters.map(_.name).toSet.size != md.parameters.size) {
+              throw new SyntaxError("Duplicate parameter names in constructor.")
+            }
+
+            val key = MethodLookup(md.name.toQualifiedName, md.parameters.map(_.varType))
+            map.get(key) match {
+              case Some(_) => throw new SyntaxError("Duplicate interface member declaration for " + md.name)
+              case None => map + (key -> md)
+            }
+          }
+        })
+
+        val methodEnvironment = new ScopeEnvironment(methodMapping, None, Seq.empty, parent, Some(cd), linkedScopeReferences)
+        cd.scope = Some(methodEnvironment)
+        n.scope = Some(methodEnvironment)
+        cd.name.scope = Some(parent)
+
+        (
+          Map(cd -> methodEnvironment, n -> methodEnvironment)
+            ++ methodMapping.values.flatMap(traverse(_, methodEnvironment, root))
+            ++ (cd.modifiers.toSeq ++ cd.interfaces.toSeq).flatMap(traverse(_, methodEnvironment, root))
+          )
+      }
+
       case node: AbstractSyntaxNode => {
         val e = environmentFromNode(node, parent)
         if (node.scope == None) {
@@ -175,26 +212,26 @@ object EnvironmentBuilder {
     statements: Seq[FieldDeclaration],
     parent: Environment,
     root: RootEnvironment,
-    classDeclaration: ClassDeclaration
+    classDeclaration: Option[ClassDeclaration]
   ): Seq[(AbstractSyntaxNode, Environment)] = {
     statements.headOption match {
       case None => Seq.empty[(AbstractSyntaxNode, Environment)]
       case Some(fd: FieldDeclaration) => {
         val fieldEnvironment = 
-          new ScopeEnvironment(Map(ExpressionNameLookup(fd.name.toQualifiedName) -> fd), None, Seq.empty, parent, Some(classDeclaration))
+          new ScopeEnvironment(Map(ExpressionNameLookup(fd.name.toQualifiedName) -> fd), None, Seq.empty, parent, classDeclaration)
 
         if (fd.scope == None) {
           fd.scope = Some(fieldEnvironment)
         }
 
         val rhsMap: Map[EnvironmentLookup, Referenceable]
-          = if (fd.modifiers.collectFirst{case StaticKeyword() => true}.isEmpty) {
-          Map(ExpressionNameLookup(QualifiedName(Seq(InputString("this")))) -> classDeclaration)
+          = if (fd.modifiers.collectFirst{case StaticKeyword() => true}.isEmpty && classDeclaration.isDefined) {
+          Map(ExpressionNameLookup(QualifiedName(Seq(InputString("this")))) -> classDeclaration.get)
         } else {
           Map.empty[EnvironmentLookup, Referenceable]
         }
         val rhsEnvironment =
-          new ScopeEnvironment(rhsMap, None, Seq.empty, parent, Some(classDeclaration))
+          new ScopeEnvironment(rhsMap, None, Seq.empty, parent, classDeclaration)
 
         //  Children of this declaration should have their RHS environments set to
         //  something distinct, but need not be returned.
@@ -298,7 +335,7 @@ object EnvironmentBuilder {
         //      All * imports.
 
         //  All single type imports should be fully qualified.
-        val explicitImports: Map[TypeNameLookup, Referenceable] = n.importDeclarations.flatMap {
+        val explicitImports: Map[EnvironmentLookup, Referenceable] = n.importDeclarations.flatMap {
           case i: SingleTypeImportDeclaration => {
             i.name match {
               case t: TypeName => {
@@ -336,21 +373,6 @@ object EnvironmentBuilder {
         }
 
         n.scope = Some(new ScopeEnvironment(locals, Some(packageScopeReference), importScopeReferences, parent))
-        n.scope.get
-      }
-
-      case n: InterfaceBody => {
-        val mapping: Map[EnvironmentLookup, Referenceable]
-          = n.declarations.foldLeft(Map.empty[EnvironmentLookup, Referenceable])({
-            case (map: Map[EnvironmentLookup, Referenceable], md: InterfaceMemberDeclaration) => {
-              val key = MethodLookup(MethodName(md.name).toQualifiedName, md.parameters.map(_.varType))
-              map.get(key) match {
-                case Some(_) => throw new SyntaxError("Duplicate method declaration for " + md.name)
-                case None => map + (key -> md)
-              }
-            }
-          })
-        n.scope = Some(new ScopeEnvironment(mapping, None, Seq.empty, parent))
         n.scope.get
       }
 

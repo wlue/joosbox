@@ -136,7 +136,7 @@ object HierarchyChecker {
       case Some(InterfaceDeclaration(_, body, _, interfaces)) =>
         methodList = body.declarations.map {
           case m: InterfaceMemberDeclaration =>
-            (MethodLookup(AbstractSyntaxNode.MethodName(m.name).toQualifiedName, m.parameters.map(_.varType)), m)
+            (MethodLookup(m.name.toQualifiedName, m.parameters.map(_.varType)), m)
         }
         if(!interfaces.isEmpty) {
           interfaces.foreach {
@@ -357,7 +357,7 @@ object HierarchyChecker {
 
         declarations = node.body.declarations.map {
           case m: InterfaceMemberDeclaration =>
-            (MethodLookup(AbstractSyntaxNode.MethodName(m.name).toQualifiedName, m.parameters.map(_.varType)), m)
+            (MethodLookup(m.name.toQualifiedName, m.parameters.map(_.varType)), m)
         }
 
         intDeclarations = HierarchyChecker.checkInterfaceHierarchy(InterfaceType(name), List(Seq()), env)
