@@ -398,6 +398,129 @@ object ReachabilityChecker {
       }
   }
 
+  def guaranteesDefiniteAssignmentBeforeUse(name:ExpressionName, node:AbstractSyntaxNode): Option[Boolean] = {
+    node match {
+      case n:ExpressionName =>
+        if (n == name) {
+          Some(false)
+        } else {
+          None
+        }
+      case f:FieldAccess =>
+        val p:Option[Boolean] = guaranteesDefiniteAssignmentBeforeUse(name, f.primary)
+        if (p != None) {
+          p
+        } else {
+          if (f.name == name.value) {
+            Some(false)
+          } else {
+            None
+          }
+        }
+      case a:SimpleArrayAccess =>
+        val e:Option[Boolean] = guaranteesDefiniteAssignmentBeforeUse(name, a.expr)
+        if (e == None) {
+          if (a.name == name) {
+              Some(false)
+          } else {
+            None
+          }
+        } else {
+          Some(false)
+        }
+      case a:ComplexArrayAccess =>
+        val p:Option[Boolean] = guaranteesDefiniteAssignmentBeforeUse(name, a.primary)
+        val e:Option[Boolean] = guaranteesDefiniteAssignmentBeforeUse(name, a.expr)
+        if (e == None) {
+          if (p == None) {
+            None
+          } else {
+            Some(false)
+          }
+        } else {
+          Some(false)
+        }
+
+
+      case a:Assignment =>
+        val l:Option[Boolean] = guaranteesDefiniteAssignmentBeforeUse(name, a.leftHandSide)
+        val r:Option[Boolean] = guaranteesDefiniteAssignmentBeforeUse(name, a.rightHandSide)
+        a.leftHandSide match {
+          case _:ExpressionName =>
+           if (l == Some(false)) {
+              if (r == None) {
+                Some(true)
+              } else {
+                Some(false)
+              }
+            } else {
+              r
+            }
+          case f:FieldAccess =>
+            val p:Option[Boolean] = guaranteesDefiniteAssignmentBeforeUse(name, f.primary)
+            if (p == None) {
+              if (f.name == name.value) {
+                if (r == None) {
+                  Some(true)
+                } else {
+                  Some(false)
+                }
+              } else {
+                r
+              }
+            } else {
+              Some(false)
+            }
+          case ar:SimpleArrayAccess =>
+            val e:Option[Boolean] = guaranteesDefiniteAssignmentBeforeUse(name, ar.expr)
+            if (e == None) {
+              if (ar.name == name) {
+                if (r == None) {
+                  Some(false)
+                } else {
+                  Some(false)
+                }
+              } else {
+                r
+              }
+            } else {
+              Some(false)
+            }
+          case ar:ComplexArrayAccess =>
+            val p:Option[Boolean] = guaranteesDefiniteAssignmentBeforeUse(name, ar.primary)
+            val e:Option[Boolean] = guaranteesDefiniteAssignmentBeforeUse(name, ar.expr)
+            if (e == None) {
+              if (p == Some(false)) {
+                if (r == None) {
+                  Some(false)
+                } else {
+                  Some(false)
+                }
+              } else {
+                r
+              }
+            } else {
+              Some(false)
+            }
+          case _ => None
+        }
+      case _ =>
+        var result:Option[Boolean] = None
+        node.children.foreach { child =>
+          val temp:Option[Boolean] = guaranteesDefiniteAssignmentBeforeUse(name, child)
+          temp match {
+            case Some(true) => result = Some(true)
+            case Some(false) =>
+              if (result != Some(true)) {
+                result = temp
+              }
+            case None => Unit
+          }
+        }
+        result
+    }
+  }
+
   def check(node: AbstractSyntaxNode, parent: Option[AbstractSyntaxNode]) : Unit = {
     node.children.foreach { child => check(child, Some(node)) }
 
@@ -444,7 +567,36 @@ object ReachabilityChecker {
           if(!siblings.isEmpty) {
             throw new SyntaxError("Unreachable statements after return statement.")
           }
-        case _ => Unit
+
+        case v: LocalVariableDeclaration =>
+          if (v.expression.isEmpty) {
+            var result:Option[Boolean] = None
+            siblings.foreach { sibling =>
+              val temp:Option[Boolean] = guaranteesDefiniteAssignmentBeforeUse(v.name, sibling)
+              temp match {
+                case Some(true) => result = Some(true)
+                case Some(false) =>
+                  if (result != Some(true)) {
+                    result = temp
+                  }
+                case None => Unit
+              }
+            }
+            result match {
+              case Some(true) => Unit
+              case Some(false) => throw new SyntaxError("Variable used before it is assigned.")
+              case None => Unit
+            }
+          } else {
+            val result:Option[Boolean] = guaranteesDefiniteAssignmentBeforeUse(v.name, v.expression.get)
+            result match {
+              case Some(true) => Unit
+              case Some(false) => throw new SyntaxError("Variable used in its own assignment.")
+              case None => Unit
+            }
+          }
+
+        case _ => resolveConstantValue(node)
     }
   }
 }
