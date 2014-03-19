@@ -400,6 +400,48 @@ object ReachabilityChecker {
 
   def guaranteesDefiniteAssignmentBeforeUse(name:ExpressionName, node:AbstractSyntaxNode): Option[Boolean] = {
     node match {
+      case c : ConditionalExpression => {
+        var result:Option[Boolean] = None
+        resolveConstantValue(c.e1)
+        if (c.e1.constantValue.isEmpty) {
+          result = guaranteesDefiniteAssignmentBeforeUse(name, c.e1)
+        } else {
+          c match {
+            case _:OrExpression =>
+              if (c.e1.constantValue.get.value.toBoolean) {
+                result = None
+              } else {
+                result = guaranteesDefiniteAssignmentBeforeUse(name, c.e2)
+              }
+            case _:AndExpression =>
+              if (!c.e1.constantValue.get.value.toBoolean) {
+                result = None
+              } else {
+                result = guaranteesDefiniteAssignmentBeforeUse(name, c.e2)
+              }
+            case _:BinOrExpression =>
+              if (c.e1.constantValue.get.value.toBoolean) {
+                result = None
+              } else {
+                result = guaranteesDefiniteAssignmentBeforeUse(name, c.e2)
+              }
+            case _:BinAndExpression =>
+              if (!c.e1.constantValue.get.value.toBoolean) {
+                result = None
+              } else {
+                result = guaranteesDefiniteAssignmentBeforeUse(name, c.e2)
+              }
+            case _:BinXorExpression =>
+              result = guaranteesDefiniteAssignmentBeforeUse(name, c.e1)
+              result match {
+                case Some(_) => Unit
+                case None => result = guaranteesDefiniteAssignmentBeforeUse(name, c.e2)
+              }
+          }
+        }
+        result
+      }
+
       case n:ExpressionName =>
         if (n == name) {
           Some(false)
