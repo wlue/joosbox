@@ -143,7 +143,17 @@ object TypeChecker {
         throw new SyntaxError("ExpressionName " + name + " does not resolve to a type.")
       case Some(result) => result match {
         case p: FormalParameter => Some(p.varType)
-        case f: FieldDeclaration => Some(f.memberType)
+        case f: FieldDeclaration => if (f.isStatic) {
+          name.prefix match {
+            case Some(_: ExpressionName) => throw new SyntaxError("Cannot access static field from instance context: " + name)
+            case _ => Some(f.memberType)
+          }
+        } else {
+          name.prefix match {
+            case Some(_: TypeName) => throw new SyntaxError("Cannot access instance field from static context: " + name)
+            case _ => Some(f.memberType)
+          }
+        }
         case v: LocalVariableDeclaration => Some(v.memberType)
         case v: ForVariableDeclaration => Some(v.typeDeclaration)
         case c: ClassDeclaration => Some(withScope(ClassType(c.name), name.scope))
