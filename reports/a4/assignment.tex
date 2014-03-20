@@ -262,6 +262,17 @@ handled appropriately in a {\tt case} statement.
 
   \subsection{Type Checker}
 
+  Like the Name Linker, Joosbox performs a recursive traversal of the abstract
+  syntax tree to check for the validity of AST nodes. This code is implemented
+  inside of the {\tt TypeChecker} object, and is responsible for two things: the
+  type checking recursion, and a type resolving function. These two methods are
+  implemented as {\tt check} and {\tt resolveType}.
+
+  The responsibility of the type resolving function {\tt resolveType()} is to be
+  able to return a concrete type of certain AST nodes, such as a method
+  invocation, or a generic expression. While it resolves the types, it validates
+  type rules, such as ensuring object instances do not invoke static fields.
+
 
   \subsection{Reachability Checker}
 
