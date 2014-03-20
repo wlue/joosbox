@@ -59,6 +59,31 @@
   \clearpage
   \section{Introduction}
 
+  Our Joos1W compiler, named {\em Joosbox}, currently performs the following
+  operations on all programs passed in on the command line:
+
+  \begin{itemize}
+    \item Scanning
+    \item Parsing
+    \item Weeding
+    \item Name Resolution
+    \item Hierarchy Checking
+    \item Type Checking
+    \item Static Analysis
+  \end{itemize}
+
+  When passed a valid Joos1W program, Joosbox will print nothing on standard
+  error or standard output, and will return a {\tt 0} return code. Upon
+  parsing an invalid Joos1W program, Joosbox will output diagnostic
+  information (including line number and character index of invalid tokens, if
+  available) to the standard error stream. Joosbox will then return {\tt 42}.
+
+  Joosbox is implemented in Scala, and makes use of only four libraries ---
+  the Scala standard library, the {\tt SBT} built tool, the {\tt Specs2}
+  testing framework, and Apache Commons Lang. This document outlines the
+  design of Joosbox, enumerates the significant challenges encountered during
+  its construction, and describes our group's testing process.
+
   \section{Design}
 
   \section{Challenges}
