@@ -626,8 +626,13 @@ object StaticAnalysisChecker {
         if (!f.check.isEmpty) {
           resolveConstantValue(f.check.get)
           f.check.get.constantValue match {
-              case Some(ConstantBool("false")) => throw new SyntaxError("Unreachable body of for-loop statement.")
-              case _ => Unit
+              case Some(ConstantBool("false")) =>
+                throw new SyntaxError("Unreachable body of for-loop statement.")
+              case Some(ConstantBool("true")) =>
+                if (codeFollows) {
+                  throw new SyntaxError("Unreachable statements after for-loop statement.")
+                }
+                case _ => Unit
           }
         }
       case i : IfStatement =>
