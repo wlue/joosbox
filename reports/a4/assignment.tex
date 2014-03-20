@@ -66,8 +66,10 @@
     \item Scanning
     \item Parsing
     \item Weeding
-    \item Name Resolution
+    \item Environment Building
+    \item Type Linking
     \item Hierarchy Checking
+    \item Name Resolution
     \item Type Checking
     \item Static Analysis
   \end{itemize}
@@ -85,6 +87,161 @@
   its construction, and describes our group's testing process.
 
   \section{Design}
+
+  Each major component of Joosbox is implemented as a separate Scala singleton
+  object, with no state but numerous methods for traversing the Joos abstract
+  syntax tree and performing operations on it. Joosbox's abstract syntax tree
+  data types and construction methods did not change significantly from their
+  original implementation in assignment 1, although numerous abstract syntax
+  nodes were corrected or expanded to have additional methods useful for later
+  stages of the program.
+
+  In Scala, each abstract syntax node is implemented as a {\tt case class},
+  with the constructor arguments to each node being its direct children.
+  For instance, the following code describes the case class used for
+  compilation units in a Joos program:
+
+  \begin{verbatim}
+case class CompilationUnit(
+  packageDeclaration: Option[PackageDeclaration] = None,
+  importDeclarations: Seq[ImportDeclaration] = Seq.empty[ImportDeclaration],
+  typeDeclaration: Option[TypeDeclaration] = None
+) extends AbstractSyntaxNode {
+  override def children: List[AbstractSyntaxNode] =
+    packageDeclaration.toList ++ importDeclarations.toList ++ typeDeclaration.toList
+}
+  \end{verbatim}
+
+  Each case class member of this {\tt AbstractSyntaxNode} is explicit about
+  its purpose and its type, which allows us to use Scala's powerful type
+  system to manipulate and traverse the structure of each program without
+  having to write overly verbose code.
+
+  \subsection{Environment Building}
+
+  To allow Joosbox to effectively manage the concept of scope while parsing
+  Joos programs, we implemented an environment building step after our
+  compiler creates an abstract syntax tree. This step, implemented as the {\tt
+  EnvironmentBuilder} object, traverses the abstract syntax tree by means of a
+  recursive Scala function. Each time a node is reached that could create a
+  new scope, this function would match the node and create this scope,
+  consisting of a mapping between a name and an abstract syntax node. New
+  scopes were created for each  of the following node types:
+
+  \begin{itemize}
+    \item {\tt CompilationUnit}
+    \item {\tt ClassDeclaration}
+    \item {\tt MethodDeclaration}
+    \item {\tt ConstructorDeclaration}
+    \item {\tt FieldDeclaration} (and its initializer)
+    \item {\tt Block}
+    \item {\tt LocalVariableDeclaration}
+  \end{itemize}
+
+  Figure~\ref{fig:environments} shows a graphical illustration of the nested
+  scopes created by Joosbox during this phase.
+
+  \begin{figure}[h!]
+    \caption{The nested scopes created by Joosbox's {\tt EnvironmentBuilder}.}
+    \centering
+    \begin{center}
+      \makebox[\textwidth]{\includegraphics[width=\textwidth]{environments.png}}
+    \end{center}
+    \label{fig:environments}
+  \end{figure}
+
+  Once this recursive environment building step is complete, each node has its
+  own local scope variable assigned to the scope that it resides in. By
+  directly mapping nodes to their enclosing environment, performing checks to
+  see what other nodes are ``in scope'' becomes simple. For instance, looking up
+  an expression named {\tt foo} in the local scope can be as easy as:
+
+  \begin{verbatim}
+    node.scope.get.lookup(ExpressionNameLookup(ExpressionName("foo")))
+    // -> returns an Option[AbstractSyntaxNode]
+  \end{verbatim}
+
+  This call to {\tt lookup} uses the hierarchical nature of the scope tree
+  to bubble up each request all the way to the root node. If any expression
+  named {\tt foo} is visible from the node's scope, then it will be returned ---
+  however, types or methods named {\tt foo} will not. This separation of
+  {\tt ExpressionName}, {\tt TypeName}, and so on was accomplished by
+  encoding the type (expression, type, etc.) of each entry in each scope's mapping with
+  Scala's type system. Each scope contains a map defined as such:
+
+  \begin{verbatim}
+    val locals: Map[EnvironmentLookup, Referenceable]
+  \end{verbatim}
+
+  In the above mapping, {\tt EnvironmentLookup} is a sealed Scala trait, not a concrete
+  class, which means that every kind of lookup must be one of:
+
+  \begin{itemize}
+    \item {\tt TypeNameLookup}
+    \item {\tt ExpressionNameLookup}
+    \item {\tt MethodLookup}
+    \item {\tt ConstructorLookup}
+  \end{itemize}
+
+  The use of a sealed trait here helps the Scala compiler ensure that every
+time a lookup is   dereferenced, every possible resulting concrete subclass is
+handled appropriately in a {\tt case} statement.
+
+  
+  In addition to each node having a scope, Joosbox also has the concept of a
+  {\tt RootEnvironment} --- a scope not associated with any abstract syntax
+  node directly, but at the root of the scope tree, which responds to queries
+  that were not found by any sub-scope. The {\tt RootEnvironment} contains
+  special information, including a map of all fully-qualified names to types
+  and a map of all package names to package-local scopes, used for performing
+  lookups as required by the Joos specification. For instance, the use of a
+  map containing every fully-qualified {\tt TypeName} ensures that if a type
+  exists, any call to {\tt lookup()} that type will bubble up to the root
+  environment and match its fully qualified name if necessary, regardless of
+  it was imported into a given compilation unit or if it is in the same
+  package as its reference. Additionally, the map of all package names to
+  package-local scopes is useful at the root of the scope tree to help provide
+  visibility  between different {\tt CompilationUnit} instances in the same
+  program. If two compilation units are in the same package (including the
+  default package) then their members are visible to eachother. As an example,
+  all {\tt lookup()} requests from file {\tt foo.java} in package {\tt Package}
+  that are unsuccessful will end up in the {\tt RootEnvironment}, which then
+  forwards these requests on to perform {\tt lookup()} calls in the scope of
+  every other compilation unit in package {\tt Package}.
+
+
+  Finally, each scope built by the {\tt EnvironmentBuilder} contains zero or
+  more ``linked'' scopes. Linked scopes are searched only if lookups in the
+  local scope and parent scopes fail. This system is used to link subclasses
+  with the scopes of their superclasses or interfaces without requiring any
+  special knowledge. The standard system of finding nodes visible to the local
+  scope can be used to find members of a superclass that are not overridden
+  by the current class, to find fields declared in superclasses,
+  and so on. This system is implemented in three stages:
+
+  \begin{itemize}
+    \item First, while each scope is being built for a class or interface
+    declaration, the names of the class or interface's superclass or inherited
+    interfaces are saved in the scope object. At this stage, not all of the
+    scopes have been implemented, so performing a lookup for the superclass
+    may not resolve its abstract syntax node.
+
+    \item Second, after all scopes have been built, each scope is visited to
+    resolve the names of its linked scopes (superclasses and inherited interfaces)
+    and direct references to its linked scopes are saved within the object.
+
+    \item At lookup time, if a given lookup query has failed to resolve in
+    the local scope or parent scope (recursively) then the linked scopes are
+    queried, in the order they were specified in the program, in an attempt
+    to resolve the query.
+  \end{itemize}
+
+  \subsection{Name Linker \& Resolver}
+
+  
+
+  \subsection{Type Checker}
+  \subsection{Reachability Checker}
 
   \section{Challenges}
 
