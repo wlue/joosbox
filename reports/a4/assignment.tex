@@ -261,10 +261,38 @@ handled appropriately in a {\tt case} statement.
   meaning of no expression is ambiguous.
 
   \subsection{Type Checker}
+
+
   \subsection{Reachability Checker}
 
   \section{Challenges}
 
   \section{Testing}
+
+  Similarly to our approach to testing assignment 1, we used {\tt Specs2}, a
+  Scala specifications and testing library, to test Joosbox. We ran our tests
+  using {\tt sbt} or IntelliJ, an integrated development environment for Scala
+  (among other languages).
+
+  As before, we used TDD (test-driven development) to develop Joosbox. For
+  each main task we wrote, we started by writing passing and failing tests to
+  verify the validity of the portion of the program we were working on. We
+  again imported the Marmoset tests for assignments 2 through 4 into our local
+  test suite, parsed each test to determine if it was a passing or failing
+  test, and generated a Specs2 unit test for each Marmoset test. This
+  substantially increased our development speed, as this integrated our
+  regular unit testing strategy with the Marmoset tests, and also avoided
+  needing to upload a zip file to Marmoset after every code iteration.
+
+  In addition, some of our team members began to use IntelliJ for development
+  during A3 and A4, which allowed us to run individual Marmoset tests at will
+  through Specs2. This resulted in a very streamlined development process. A
+  list of failing tests was produced by IntelliJ every time the project was
+  built, and any one of these tests could be isolated and run extremely
+  quickly. Error messages would be linked back to lines of code in our
+  project, and the built-in IntelliJ Scala debugger allowed us to step through
+  the code in failing tests, inspect variable state (including the abstract
+  syntax tree and scope trees) and diagnose issues that were causing test
+  failures.
 
 \end{document}
