@@ -10,11 +10,11 @@ import AbstractSyntaxNode.CompilationUnit
 import AbstractSyntaxNode.Referenceable
 
 
-object ReachabilityChecker {
+object StaticAnalysisChecker {
   import AbstractSyntaxNode._
 
   def link(units: Seq[CompilationUnit]): Map[Any, Referenceable] = {
-    units.foreach { unit => ReachabilityChecker.check(unit, None) }
+    units.foreach { unit => StaticAnalysisChecker.check(unit, None) }
     Map.empty
   }
 
@@ -398,6 +398,16 @@ object ReachabilityChecker {
       }
   }
 
+  def validateAssignment(variable: LocalVariableDeclaration) : Unit = {
+    val result:Option[Boolean] = guaranteesDefiniteAssignmentBeforeUse(variable.name, variable.expression)
+    result match {
+      case Some(true) => Unit
+      case Some(false) => throw new SyntaxError("Variable used in its own assignment.")
+      case None => Unit
+    }
+  }
+
+
   def guaranteesDefiniteAssignmentBeforeUse(name:ExpressionName, node:AbstractSyntaxNode): Option[Boolean] = {
     node match {
       case c : ConditionalExpression => {
@@ -599,6 +609,45 @@ object ReachabilityChecker {
     }
   }
 
+  def validateReachability(node: AbstractSyntaxNode, codeFollows:Boolean): Unit = {
+    node match {
+      case w : WhileStatement =>
+        resolveConstantValue(w.clause)
+        w.clause.constantValue match {
+            case Some(ConstantBool("false")) =>
+              throw new SyntaxError("Unreachable body of while-loop statement.")
+            case Some(ConstantBool("true")) =>
+              if (codeFollows) {
+                throw new SyntaxError("Unreachable statements after while-loop statement.")
+              }
+            case _ => Unit
+        }
+      case f : ForStatement =>
+        if (!f.check.isEmpty) {
+          resolveConstantValue(f.check.get)
+          f.check.get.constantValue match {
+              case Some(ConstantBool("false")) => throw new SyntaxError("Unreachable body of for-loop statement.")
+              case _ => Unit
+          }
+        }
+      case i : IfStatement =>
+        if (!i.trueCase.isEmpty && !i.elseCase.isEmpty) {
+          if (guaranteesReturns(i.trueCase.get) && guaranteesReturns(i.elseCase.get)) {
+            if(codeFollows) {
+              throw new SyntaxError("Unreachable statements after if statement.")
+            }
+          }
+        }
+
+      case r : ReturnStatement =>
+        if(codeFollows) {
+          throw new SyntaxError("Unreachable statements after return statement.")
+        }
+
+      case _ => Unit
+    }
+  }
+
   def check(node: AbstractSyntaxNode, parent: Option[AbstractSyntaxNode]) : Unit = {
     node.children.foreach { child => check(child, Some(node)) }
 
@@ -612,47 +661,14 @@ object ReachabilityChecker {
     }
 
     node match {
-        case w : WhileStatement =>
-          resolveConstantValue(w.clause)
-          w.clause.constantValue match {
-              case Some(ConstantBool("false")) => throw new SyntaxError("Unreachable body of while-loop statement.")
-              case Some(ConstantBool("true")) =>
-                if (!siblings.isEmpty) {
-                  throw new SyntaxError("Unreachable statements after while-loop statement.")
-                }
-              case _ => Unit
-          }
-        case f : ForStatement =>
-          if (!f.check.isEmpty) {
-            resolveConstantValue(f.check.get)
-            f.check.get.constantValue match {
-                case Some(ConstantBool("false")) => throw new SyntaxError("Unreachable body of for-loop statement.")
-                case _ => Unit
-            }
-          }
-        case i : IfStatement =>
-          if (!i.trueCase.isEmpty && !i.elseCase.isEmpty) {
-            if (guaranteesReturns(i.trueCase.get) && guaranteesReturns(i.elseCase.get)) {
-              if(!siblings.isEmpty) {
-                throw new SyntaxError("Unreachable statements after if statement.")
-              }
-            }
-          }
+        case w : WhileStatement => validateReachability(w, !siblings.isEmpty)
+        case f : ForStatement => validateReachability(f, !siblings.isEmpty)
+        case i : IfStatement => validateReachability(i, !siblings.isEmpty)
+        case r : ReturnStatement => validateReachability(r, !siblings.isEmpty)
 
-        case m: MethodDeclaration =>
-          validateMethodReturns(m)
-        case r : ReturnStatement =>
-          if(!siblings.isEmpty) {
-            throw new SyntaxError("Unreachable statements after return statement.")
-          }
+        case m: MethodDeclaration => validateMethodReturns(m)
 
-        case v: LocalVariableDeclaration =>
-          val result:Option[Boolean] = guaranteesDefiniteAssignmentBeforeUse(v.name, v.expression)
-          result match {
-            case Some(true) => Unit
-            case Some(false) => throw new SyntaxError("Variable used in its own assignment.")
-            case None => Unit
-          }
+        case v: LocalVariableDeclaration => validateAssignment(v)
 
         case _ => resolveConstantValue(node)
     }

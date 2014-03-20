@@ -7,7 +7,7 @@ import joosbox.parser.ExpressionNameLookup
 import joosbox.parser.AbstractSyntaxNode.QualifiedName
 import joosbox.lexer.InputString
 
-class ReachabilityCheckerSpec extends Specification {
+class StaticAnalysisCheckerSpec extends Specification {
 
   def getAllFiles(base: File): Array[File] = {
     base.listFiles.filter(_.getName.endsWith(".java")) ++ base.listFiles.filter(_.isDirectory).flatMap(getAllFiles)
