@@ -238,7 +238,27 @@ handled appropriately in a {\tt case} statement.
 
   \subsection{Name Linker \& Resolver}
 
-  
+  After the environment building step, linking names to their uses is
+  relatively trivial. The initial name linker built for Joosbox simply
+  traversed the abstract syntax tree and performed a recursive lookup for each
+  name it found, starting in the scope where the name was found. After finding
+  that much of this logic needed to be duplicated for the type checking step
+  later in the compiler's operation, a decision was made to move nearly all of
+  this logic into the type checker and to merely call {\tt
+  TypeChecker.resolveType(\_)} on every {\tt Name} instance found in the tree.
+  If the type checker can not resolve the type of a given node, then its names
+  can not be linked, and an error is thrown.
+
+  The name linker does implement another useful method: {\tt
+  disambiguateName}, which takes any {\tt Name} instance (an expression name,
+  type name, method name, or ambiguous name) and returns the same name, but
+  fully disambiguated. This method performs the appropriate name
+  disambiguation algorithm, as specified in the Java Language Specification
+  5.0 \S 6.5. Any prefix of a {\tt Name} which is ambiguous is disambiguated,
+  and any failure to resolve part of a name in this function will throw an
+  error indicating so. This method is called on demand when a name must be
+  disambiguated, and is used in the type checking stage to ensure that the
+  meaning of no expression is ambiguous.
 
   \subsection{Type Checker}
   \subsection{Reachability Checker}
