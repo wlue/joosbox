@@ -274,9 +274,92 @@ handled appropriately in a {\tt case} statement.
   type rules, such as ensuring object instances do not invoke static fields.
 
 
-  \subsection{Reachability Checker}
+  \subsection{Static Analysis Checker}
+
+  Joosbox performs static analysis using a Static Analysis Checker. Like other
+  aspects of the Joosbox compiler, the {\tt StaticAnalysisChecker} is engaged 
+  while performing a recursive traversal of the abstract syntax tree. This
+  checker is responsible for guaranteeing for the validity of three things: the
+  marking of any unreachable code, the determination of whether method
+  declarations have proper returns in all control flows, and the definite
+  assignment of variables before use. These checks are performed in the
+  following method {\tt validateMethodReturns},
+  {\tt validateAssignment}, and {\tt validateReachability}
+  which all rely on the {\tt resolveConstantValue} which it also defines.
+
+  The {\tt resolveConstantValue} method performs constant expression folding as
+  defined in  Java Language Specification 5.0 \S 15.27, and mutates a
+  constantValue property on the abstract syntax node that is the parameter to
+  the method. For performing constant expression folding, we created an abstract
+  {\tt ConstantValue} object which has five valid subtypes: {\tt ConstantString},
+  {\tt ConstantChar}, {\tt ConstantBool}, {\tt ConstantNum}, {\tt ConstantNull}.
+  Each constant value has a string value, that when combined with the subtype of
+  the constant value can be used to unwrap the value into its correct value in
+  Scala. For example, with an instance c of {\tt ConstantBool}, we can do
+  {\tt c.value.toBoolean} and get back either {\tt true} or {\tt false}. This
+  design allows us to unwrap the constant value of a node to perform arithmetic,
+  concatentation, and boolean operation with it in order to determine the
+  constant value of a parent node of an expression. When performing constant
+  expression folding the {\tt TypeChecker.resolveType} method was useful in some
+  cases for determing what subtype of {\tt ConstantValue} should be created for
+  the expression, if any.
+
+  The {\tt validateMethodReturns} method of {\tt StaticAnalysisChecker} is run
+  on all {\tt MethodDeclaration} nodes, and guarantees that the method returns
+  correctly in all cases. All non-interesting cases such as methods with empty
+  bodies or void return types are handled in the obvious ways. The method runs
+  by recursively diving into some nodes, until we find return statements or
+  infinte loops. As per Java Language Specification 5.0 \S 14.19 which states
+  that the compiler needs to give ``special treatment of while, do, and for
+  statements whose condition expression has the constant value true, the values
+  of expressions are not taken into account in the flow analysis''.
+
+  The {\tt validateReachability} method performs static analysis to enforce that
+  there is no unreachable code which is contained in a loop that never executes
+  or follows an infinite loop, return statement, or an if-then-else block that
+  always returns. This is done by using {\tt resolveConstantValue} on the
+  condition clause of a loop, and enforcing logic if it returns in a
+  {\tt ConstantBoolean} value. In the case where it is
+  {\tt ConstantBoolean(true)}, any code that follows is deemed unreachable, and
+  in the case where it is {\tt ConstantBoolean(false)} any contained code is
+  deemed unreachable. The case of checking reachability after return statements
+  is done in the straightforward manner of marking any code that direcly follows
+  a return statement to be unreachable. Similarily, if we find that all branches
+  of an if statement result in a return statement, any code that follows after
+  the return statement is unreachable.
+
+  The cases of the internals of infinite loops as well as internals of if
+  statement are handled specially, as per the Java Language Specification.
+  Internals infinite loops are not considered in flow analysis as per
+  JLS 5.0 \S 14.19 cited above. Furthermore, that section of JLS specifies that
+  if-statements need to be treated carefully specifically to support conditional
+  compilation in regards to run-time flags.
+
+  The {\tt validateAssignment} method has the simple purpose of needing to
+  enforce that a variable is not used in its own initializer. No further checks
+  were needed in this method as the structure of our abstract syntax tree nodes
+  enforced that each local variabled had an initializer specified
 
   \section{Challenges}
+
+
+  One of the challenges we overcame for this section of compiler construction,
+  was simple mistakes when encoding our abstract syntax tree. While this type of
+  problem is one that sufficient testing would have caught during abstract
+  syntax tree design, it is also the case that Java and by extension Joos1W
+  requires a massive amount of tests to sufficiently cover all aspects of
+  abstract syntax tree design.
+
+  One such example of a mistake when designing abstract syntax tree nodes was
+  that we misencoded the {\tt VariableDeclaration} node to allow for an optional
+  initializer assignment. This specific example ultimately lead to confusion
+  around what we needed to implemented for the static analysis section of
+  assignment 4. As such {\tt StaticAnalysisChecker.validateAssignment}
+  was designed originally to handle full definite-assignment analysis for
+  variable declarations enforcing that a variable is never used before being
+  initialized. When we realized our mistake in supporting uninitialized variable
+  declarators, that {\tt validateAssignment} code was refactored to support only
+  the case of restricting variable use in its own initializer.
 
   \section{Testing}
 
