@@ -236,6 +236,40 @@ handled appropriately in a {\tt case} statement.
     to resolve the query.
   \end{itemize}
 
+  \subsection{Type Linker}
+
+  \subsection{Hierarchy Checker}
+
+  The hierarchy enforcement performed in Joosbox is done by the
+  {\tt HierarchyChecker}. This part of Joosbox is responsible for computing the
+  inheritance relationships for classes and interfaces and by extension their
+  methods and fields. Furthermore, it is the role of the {\tt HierarchyChecker}
+  to enforce conformance of the hierarchy to various hierarchical rules put
+  forth by the Java Language Specification.
+
+  The {\tt HiearachyChecker} works by constructing the {\tt contains} set for
+  each class or interface. This includes all field and method declarations local
+  to the class or interface, as well as all fields and methods local to
+  superclasses and superinterfaces. In constructing the {\tt contains} set the
+  {\tt HierarchyChecker} also verifies that that hierarchy for a given class is
+  acyclic. That is, in a full extends hierarchy no two class or interface names
+  could resolve to the same declaration node in the abstract syntax tree. This
+  section of logic, also was responsible for adding the implicit
+  {\tt java.lang.Object} superclass or superinterface to the extends list if the
+  list was otherwise empty or unspecified.
+
+  With the {\tt contains} set of classes constructed, the {\tt HierarchyChecker}
+  checks that the code follows a variety of rules including make sure that local
+  methods do not replace final methods, methods do not replace methods with
+  different return types, abstract methods are either implemented or located in
+  an abstract class, and many more
+
+  Another responsibility of the hierarchy checker is to ensure that there are no
+  duplicate references to interfaces in either a class' implements list or a
+  interface's extends list. This was done by resolving each type name in each
+  list and checking that no two name resolved to and thus referenced the same
+  {\tt InterfaceDeclaration} node.
+
   \subsection{Name Linker \& Resolver}
 
   After the environment building step, linking names to their uses is
@@ -343,22 +377,33 @@ handled appropriately in a {\tt case} statement.
   \section{Challenges}
 
 
-  One of the challenges we overcame for this section of compiler construction,
-  was simple mistakes when encoding our abstract syntax tree. While this type of
+  One of the challenges that was faced in environment building was performing
+  lookup operations in linked scopes. Linked scopes were defined as being
+  associated scopes that should be looked in if nothing is found in the local
+  scope, such as for superclass and superinterface lookup. The issue that was
+  faced with linked scopes was that Joosbox needed to perform lookups in order
+  to do hierarchy checking, but hierarchy checking was needed to ensure that
+  linked scopes were not cyclic. The solution that was chosen was to perform
+  hierarchy checking with a limited lookup functionality that did not use
+  linked scopes, such that the cyclic validity of the hierarchy could be
+  enforced before using linked scopes.
+
+  One of the challenges was overcome for this section of compiler construction,
+  was simple mistakes when encoding the abstract syntax tree. While this type of
   problem is one that sufficient testing would have caught during abstract
   syntax tree design, it is also the case that Java and by extension Joos1W
   requires a massive amount of tests to sufficiently cover all aspects of
   abstract syntax tree design.
 
   One such example of a mistake when designing abstract syntax tree nodes was
-  that we mis-encoded the {\tt VariableDeclaration} node to allow for an optional
+  that the {\tt VariableDeclaration} node was misencoded to allow for an optional
   initializer assignment. This specific example ultimately lead to confusion
-  around what we needed to implemented for the static analysis section of
+  around what was needed to be implemented for the static analysis section of
   assignment 4. As such {\tt StaticAnalysisChecker.validateAssignment}
   was designed originally to handle full definite-assignment analysis for
   variable declarations enforcing that a variable is never used before being
-  initialized. When we realized our mistake in supporting uninitialized variable
-  declarators, that {\tt validateAssignment} code was refactored to support only
+  initialized. When the mistake that uninitialized variable declarators were
+  supported, the {\tt validateAssignment} code was refactored to support only
   the case of restricting variable use in its own initializer.
 
   \section{Testing}
