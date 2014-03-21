@@ -32,7 +32,7 @@
 \newcommand{\assignmentnumber}{2-4}
 \newcommand{\course}{CS 444: Compiler Construction}
 \newcommand{\term}{Winter 2014}
-\newcommand{\project}{Labs \assignmentnumber: Name Resolution, Type Checking, Static Analysis}
+\newcommand{\project}{Labs \assignmentnumber: Name Resolution, Hierarchy Checking, Type Checking, Static Analysis}
 \newcommand{\name}{wlue, cktaylor, psobot}
 \newcommand{\wenhao}{wlue(20349659) - Lue, Wen-Hao (wlue@uwaterloo.ca)}
 \newcommand{\chris}{cktaylor(20338058) - Taylor, Chris (cktaylor@uwaterloo.ca)}
@@ -237,6 +237,11 @@ handled appropriately in a {\tt case} statement.
   \end{itemize}
 
   \subsection{Type Linker}
+
+  Joosbox enforces that each reference resolves to a declaration (either class,
+  package, or interface) in the environment. This stage of the compiler is
+  fairly straightforward and is mainly responsible for checking that single
+  type imports and import-on-demands are formed correctly.
 
   \subsection{Hierarchy Checker}
 
