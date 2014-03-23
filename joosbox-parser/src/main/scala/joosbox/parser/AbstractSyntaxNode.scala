@@ -59,6 +59,10 @@ object AbstractSyntaxNode {
   ) extends AbstractSyntaxNode {
     override def children: List[AbstractSyntaxNode] =
       packageDeclaration.toList ++ importDeclarations.toList ++ typeDeclaration.toList
+    def assemblyFileName: String = typeDeclaration match {
+      case Some(t) => t.fullyQualifiedName.get.toQualifiedName.value.map(_.value).mkString("")
+      case None => ""
+    }
   }
 
   case class PackageDeclaration(name: PackageName) extends AbstractSyntaxNode

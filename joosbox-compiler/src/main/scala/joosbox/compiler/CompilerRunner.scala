@@ -45,6 +45,14 @@ object CompilerRunner {
     TypeChecker.link(nodes)
 
     StaticAnalysisChecker.link(nodes)
+
+    CodeGenerator.generateAssembly(nodes).foreach{
+      case (fileName: String, assembly: String) => {
+        val f = new java.io.File("output/" + fileName + ".s")
+        val p = new java.io.PrintWriter(f)
+        try { p.write(assembly) } finally { p.close() }
+      }
+    }
   }
 
   def enableScopeLinking(node: AbstractSyntaxNode): Unit = {
@@ -52,6 +60,6 @@ object CompilerRunner {
       case Some(scope: ScopeEnvironment) => scope.useLinkedScopes = true
       case _ => Unit
     }
-    node.children.foreach(enableScopeLinking(_))
+    node.children.foreach(enableScopeLinking)
   }
 }
