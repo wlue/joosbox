@@ -1,5 +1,6 @@
 #!/bin/bash
-
+set -e
+cd ..
 mkdir -p output
 rm main
 rm output/*.o
