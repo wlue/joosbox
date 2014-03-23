@@ -34,3 +34,8 @@ joosc
 *.toc
 *.pyg
 cs444.iml
+
+# codegen
+output/*
+main
+.vagrant

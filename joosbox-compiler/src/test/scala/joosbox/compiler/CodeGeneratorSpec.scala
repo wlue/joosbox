@@ -32,6 +32,9 @@ class CodeGeneratorSpec extends Specification {
     }
   }
 
+  /*
+    Run one code generation test on Mac OS X.
+   */
   def runTest(name: String, isCustom: Boolean = false): Unit = {
     //  Delete "main" output file.
     val main = new File("main")
