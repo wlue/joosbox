@@ -197,6 +197,7 @@ object HierarchyChecker {
 
   def checkSuperMethodForClassOrInterface(
     declarations:Seq[(EnvironmentLookup, AbstractSyntaxNode)],
+    otherDeclarations:Seq[(EnvironmentLookup, AbstractSyntaxNode)],
     modifiers:Set[Modifier],
     superLookup:MethodLookup,
     superType:Type,
@@ -214,6 +215,25 @@ object HierarchyChecker {
             implemented = true
             checkMethodOverrideReturnType(method.memberType, superType)
             checkMethodOverrideModifiers(method.modifiers, superModifiers)
+          }
+        case _ => Unit
+      }
+      (otherDeclarations).foreach {
+        case (methodLookup : MethodLookup, method : MethodDeclaration) =>
+          if (superLookup == methodLookup) {
+            implemented = true
+            checkMethodOverrideReturnType(method.memberType, superType)
+            if (!method.modifiers.collectFirst{case AbstractKeyword() => true}.isDefined) {
+              checkMethodOverrideModifiers(method.modifiers, superModifiers)
+            }
+          }
+        case (methodLookup : MethodLookup, method: InterfaceMemberDeclaration) =>
+          if (superLookup == methodLookup) {
+            implemented = true
+            checkMethodOverrideReturnType(method.memberType, superType)
+            if (!method.modifiers.collectFirst{case AbstractKeyword() => true}.isDefined) {
+              checkMethodOverrideModifiers(method.modifiers, superModifiers)
+            }
           }
         case _ => Unit
       }
@@ -295,6 +315,7 @@ object HierarchyChecker {
           case (methodLookup : MethodLookup, method : MethodDeclaration) =>
             HierarchyChecker.checkSuperMethodForClassOrInterface(
                 declarations,
+                Seq.empty,
                 modifiers,
                 methodLookup,
                 method.memberType,
@@ -302,6 +323,7 @@ object HierarchyChecker {
           case (memberLookup : MethodLookup, intMember : InterfaceMemberDeclaration) =>
             HierarchyChecker.checkSuperMethodForClassOrInterface(
                 declarations,
+                Seq.empty,
                 modifiers,
                 memberLookup,
                 intMember.memberType,
@@ -315,7 +337,8 @@ object HierarchyChecker {
         intDeclarations.foreach {
           case (memberLookup : MethodLookup, intMember : InterfaceMemberDeclaration) =>
             HierarchyChecker.checkSuperMethodForClassOrInterface(
-                declarations ++ superDeclarations,
+                declarations,
+                superDeclarations,
                 modifiers,
                 memberLookup,
                 intMember.memberType,
@@ -383,6 +406,7 @@ object HierarchyChecker {
           case (methodLookup : MethodLookup, method : InterfaceMemberDeclaration) =>
             checkSuperMethodForClassOrInterface(
               declarations,
+              Seq.empty,
               modifiers ++ Set(AbstractKeyword()),
               methodLookup,
               method.memberType,
@@ -390,6 +414,7 @@ object HierarchyChecker {
           case (methodLookup : MethodLookup, method : MethodDeclaration) =>
             checkSuperMethodForClassOrInterface(
               declarations,
+              Seq.empty,
               modifiers ++ Set(AbstractKeyword()),
               methodLookup,
               method.memberType,
