@@ -4,7 +4,12 @@ import socket
 import sys
 import os
 
-cwd = "/vagrant/linux" if "vagrant" in socket.gethostname() else (os.getcwd() + "/linux")
+if "vagrant" in socket.gethostname():
+    cwd = "/vagrant/linux"
+elif os.uname()[0] == "Darwin":
+    cwd = (os.getcwd() + "/mac")
+else:
+    cwd = (os.getcwd() + "/linux")
 tests = [
     (
         ["joosbox-compiler/src/test/resources/custom-tests/compiler_return_1.java"],
