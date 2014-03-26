@@ -53,6 +53,19 @@ Test a particular spec in `joosbox-lexer`.
 
     sbt "joosbox-lexer/test-only joosbox.lexer.test.NFASpec"
 
+Test code generation on your local Mac:
+
+    python ./mac/run_a5_tests.py
+
+...or if you want the codegen tests to run fully without stopping on failure:
+
+    python ./mac/run_a5_tests.py continue
+
+Test code generation on a single test your local Mac:
+
+    python ./mac/run_codegen_test_local.sh <joos file> <joos file> ... 
+
+
 Running
 =======
 

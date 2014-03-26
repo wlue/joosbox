@@ -4,9 +4,11 @@ import socket
 import sys
 import os
 
+on_mac = os.uname()[0] == "Darwin"
+
 if "vagrant" in socket.gethostname():
     cwd = "/vagrant/linux"
-elif os.uname()[0] == "Darwin":
+elif on_mac:
     cwd = (os.getcwd() + "/mac")
 else:
     cwd = (os.getcwd() + "/linux")
@@ -466,7 +468,7 @@ tests = [
 
 def single_test(files, expected_output, expected_return):
     p = subprocess.Popen(
-        ['./run_codegen_test.sh'] + files,
+        ['./run_codegen_test%s.sh' % ("_local" if on_mac else "")] + files,
         stdin=subprocess.PIPE, stdout=subprocess.PIPE,
         cwd=cwd
     )

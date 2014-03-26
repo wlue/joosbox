@@ -1,6 +1,8 @@
 #!/bin/bash
 
 set -e
+cd ..
+
 mkdir -p output
 rm -f main
 rm -f output/*.s output/*.o
@@ -13,3 +15,4 @@ do
 done
 gcc -e _start -Wl,-no_pie -m32 -o main output/*.o
 ./main
+
