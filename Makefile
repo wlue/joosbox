@@ -5,7 +5,7 @@ JAVA_OPT=-Xss10m
 
 all: joosc
 
-$(JAR):
+$(JAR): $(wildcard */*/*/*/*/*/*.scala)
 	sbt "joosbox-compiler/assembly"
 
 joosc: $(JAR)

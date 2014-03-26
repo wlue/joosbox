@@ -10,6 +10,8 @@ sealed trait AbstractSyntaxNode {
   def simpleString(indent: Int = 0): String = {
     (" " * indent) + this.getClass.getSimpleName + "\n" + children.map(_.simpleString(indent + 2)).mkString("")
   }
+  def symbolName: String = (List(this.getClass.getSimpleName) ++ children.map(_.symbolName)).mkString("_")
+
   var scope: Option[Environment] = None
   var constantValue : Option[AbstractSyntaxNode.ConstantValue] = None
 }
@@ -31,11 +33,21 @@ object AbstractSyntaxNode {
   sealed trait Referenceable extends AbstractSyntaxNode
 
   sealed trait Literal extends Expression
-  case class CharLiteral(value: InputString) extends Literal
-  case class StringLiteral(value: InputString) extends Literal
-  case class NullLiteral() extends Literal
-  case class TrueLiteral() extends Literal
-  case class FalseLiteral() extends Literal
+  case class CharLiteral(value: InputString) extends Literal {
+    override def symbolName: String = "char"
+  }
+  case class StringLiteral(value: InputString) extends Literal {
+    override def symbolName: String = "string"
+  }
+  case class NullLiteral() extends Literal {
+    override def symbolName: String = "null"
+  }
+  case class TrueLiteral() extends Literal {
+    override def symbolName: String = "true"
+  }
+  case class FalseLiteral() extends Literal {
+    override def symbolName: String = "false"
+  }
 
   case class Num(value: String, input: InputString) extends Literal {
     def negated: Num = value.headOption match {
@@ -422,16 +434,28 @@ object AbstractSyntaxNode {
       }
   }
 
-  case class VoidKeyword() extends Type
+  case class VoidKeyword() extends Type {
+    override def symbolName: String = "void"
+  }
 
-  case class BooleanKeyword() extends PrimitiveType
+  case class BooleanKeyword() extends PrimitiveType {
+    override def symbolName: String = "bool"
+  }
 
   sealed trait NumericType extends PrimitiveType
 
-  case class ByteKeyword() extends NumericType
-  case class ShortKeyword() extends NumericType
-  case class IntKeyword() extends NumericType
-  case class CharKeyword() extends NumericType
+  case class ByteKeyword() extends NumericType {
+    override def symbolName: String = "byte"
+  }
+  case class ShortKeyword() extends NumericType {
+    override def symbolName: String = "short"
+  }
+  case class IntKeyword() extends NumericType {
+    override def symbolName: String = "int"
+  }
+  case class CharKeyword() extends NumericType {
+    override def symbolName: String = "char"
+  }
 
   case class FormalParameter(
     val name: ExpressionName,
@@ -456,6 +480,7 @@ object AbstractSyntaxNode {
       case _ =>
         throw new SyntaxError("Failed to fully qualify type: " + this)
     }
+    override def symbolName: String = name.niceName
   }
   case class ClassType(name: TypeName) extends ReferenceNonArrayType {
     override def children: List[AbstractSyntaxNode] = List(name)
@@ -465,6 +490,7 @@ object AbstractSyntaxNode {
       case _ =>
         throw new SyntaxError("Failed to fully qualify type: " + this)
     }
+    override def symbolName: String = name.niceName
   }
   case class InterfaceType(name: TypeName) extends ReferenceNonArrayType {
     override def children: List[AbstractSyntaxNode] = List(name)
@@ -474,6 +500,7 @@ object AbstractSyntaxNode {
       case _ =>
         throw new SyntaxError("Failed to fully qualify type: " + this)
     }
+    override def symbolName: String = name.niceName
   }
 
   sealed trait Modifier extends AbstractSyntaxNode
@@ -569,6 +596,14 @@ object AbstractSyntaxNode {
       modifiers.toList ++ List(memberType) ++ parameters.toList ++ body.toList
 
     override def niceName: String = name.niceName
+    override def symbolName: String = {
+      (
+        scope.get.getEnclosingClassNode.get.asInstanceOf[ClassDeclaration].name.niceName
+        + "__"
+        + name.niceName
+        + parameters.map(_.varType.symbolName).mkString("_")
+      ).replaceAll("""^\s+(?m)""", "")
+    }
   }
 
   case class FieldDeclaration(

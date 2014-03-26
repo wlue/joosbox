@@ -1,10 +1,14 @@
 #!/usr/bin/env python
 import subprocess
+import socket
+import sys
+import os
 
+cwd = "/vagrant/linux" if "vagrant" in socket.gethostname() else (os.getcwd() + "/linux")
 tests = [
     (
         ["joosbox-compiler/src/test/resources/custom-tests/compiler_return_1.java"],
-        "", 1
+        "", 2
     ),
     (
         ["joosbox-compiler/src/test/resources/marmoset-tests/a5/J1_01.java"],
@@ -459,10 +463,11 @@ def single_test(files, expected_output, expected_return):
     p = subprocess.Popen(
         ['./run_codegen_test.sh'] + files,
         stdin=subprocess.PIPE, stdout=subprocess.PIPE,
-        cwd="/vagrant/linux"
+        cwd=cwd
     )
     stdout, stderr = p.communicate()
     retval = p.returncode
+    print "Test returned: %d" % retval
     if expected_return != retval:
         raise ValueError(
             "Test %s failed:\n\tExpected returncode: %d\n\tGot returncode: %d"
@@ -475,17 +480,22 @@ def single_test(files, expected_output, expected_return):
         )
 
 
-def run():
+def run(cont=False):
+    print "Running tests in directory: %s" % cwd
     passed = 0
     run = 0
     print "Starting test run (%d tests)..." % (len(tests))
     for test in tests:
         try:
+            print "Running test: %s" % test[0][0]
             single_test(*test)
             print "Test '%s' passed." % test[0][0]
             passed += 1
         except ValueError as e:
+            print "Test '%s' failed." % test[0][0]
             print e
+            if not cont:
+                break
         except KeyboardInterrupt:
             break
         finally:
@@ -497,4 +507,4 @@ def run():
         )
 
 if __name__ == "__main__":
-    run()
+    run(len(sys.argv) > 1 and sys.argv[1] == "continue")
