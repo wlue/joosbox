@@ -1,7 +1,7 @@
 package joosbox.compiler
 
+import joosbox.parser.{AbstractSyntaxNode, ScopeEnvironment, MethodLookup}
 import joosbox.parser.AbstractSyntaxNode._
-import joosbox.parser.{ScopeEnvironment, MethodLookup}
 import joosbox.lexer.{SyntaxError, InputString}
 
 /**
@@ -51,7 +51,7 @@ _start:
     (
       first ++
       Map("initFields" -> generateInitFields(units)) ++
-      units.map(cu => cu.assemblyFileName -> generateAssemblyForClass(cu))
+      units.map(cu => cu.assemblyFileName -> generateAssemblyForNode(cu))
     ).toMap
   }
 
@@ -64,22 +64,37 @@ initFields:
     """.stripMargin
   }
 
-  def generateAssemblyForClass(cu: CompilationUnit): String = {
-    val methods: Seq[MethodDeclaration] = cu.typeDeclaration match {
-      case Some(cd: ClassDeclaration) => {
-        cd.body.declarations.collect { case c: MethodDeclaration => c }
+  def generateAssemblyForNode(n: AbstractSyntaxNode, indent: Integer = 0): String = n match {
+    case md: MethodDeclaration => {
+      val symbolName = md.symbolName
+      val body: String = md.body match {
+        case Some(b: Block) => generateAssemblyForNode(b, indent + 1)
+        case None => ("  " * indent) + "ret\n"
       }
-      case _ => Seq.empty[MethodDeclaration]
+
+      (
+        ("  " * indent) + s"global $symbolName\n" +
+        ("  " * indent) + s"$symbolName:\n" + body
+      )
+    }
+    case b: Block => {
+      b.statements.map(generateAssemblyForNode(_, indent + 1)).filter{_ != ""}.mkString("\n")
     }
 
-    methods.map(m => {
-      val symbolName = m.symbolName
-      s"""
-global $symbolName
-$symbolName:
-  mov eax, 99
-  ret
-      """.stripMargin
-    }).mkString("\n")
+    case r: ReturnStatement => {
+      //  TODO: This is just for testing.
+      r.expression match {
+        case Some(n: Num) => {
+          val numval = n.value
+          ("  " * indent) + s"mov eax, $numval\n" + ("  " * indent) + "ret\n"
+        }
+
+        case None => ("  " * indent) + "ret\n"
+
+        //  TODO: handle this case, this is just super late night testing.
+        case _ => ("  " * indent) + "ret\n"
+      }
+    }
+    case x => x.children.map(generateAssemblyForNode(_, indent + 1)).filter{_ != ""}.mkString("\n")
   }
 }

@@ -13,6 +13,4 @@ for x in output/*.s
 do
   nasm -O1 -f macho -g -F null $x -o output/$(basename $x).o
 done
-gcc -e _start -Wl,-no_pie -m32 -o main output/*.o
-./main
-
+gcc -Wl,-no_pie -m32 -o main output/*.o -Wl,-e,_start

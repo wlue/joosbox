@@ -469,11 +469,18 @@ tests = [
 def single_test(files, expected_output, expected_return):
     p = subprocess.Popen(
         ['./run_codegen_test%s.sh' % ("_local" if on_mac else "")] + files,
-        stdin=subprocess.PIPE, stdout=subprocess.PIPE,
-        cwd=cwd
+        stdout=subprocess.PIPE, cwd=cwd
     )
     stdout, stderr = p.communicate()
     retval = p.returncode
+
+    if retval != 0:
+        raise ValueError("Compilation return error %d:\n%s" % (retval, stdout))
+
+    p = subprocess.Popen(['../main'], stdout=subprocess.PIPE, cwd=cwd)
+    stdout, stderr = p.communicate()
+    retval = p.returncode
+
     print "Test returned: %d" % retval
     if expected_return != retval:
         raise ValueError(

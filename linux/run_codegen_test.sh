@@ -11,4 +11,3 @@ do
   nasm -O1 -f elf -g -F dwarf $x -o output/$(basename $x).o
 done
 ld -melf_i386 -o main output/*.o
-./main
