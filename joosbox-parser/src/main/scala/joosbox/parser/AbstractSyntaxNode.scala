@@ -542,6 +542,9 @@ object AbstractSyntaxNode {
       List(body) ++ superclass.toList ++ modifiers.toList ++ interfaces.toList
 
     override def parentOption: Option[AbstractSyntaxNode] = parent
+    override def symbolName: String = "class_" + name.niceName
+
+    def runtimeTag: Int = hashCode
   }
 
   case class InterfaceDeclaration(

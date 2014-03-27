@@ -65,6 +65,22 @@ initFields:
   }
 
   def generateAssemblyForNode(n: AbstractSyntaxNode, indent: Integer = 0): String = n match {
+    case cd: ClassDeclaration => {
+      //  Generate vtable for this class
+      val symbolName = cd.symbolName
+      val runtimeTag = cd.runtimeTag.toHexString
+      s"""
+SECTION .data
+; beginning of vtable for $symbolName
+vtable_$symbolName:
+  dd 0x$runtimeTag  ; class tag for $symbolName
+
+
+; end of vtable for $symbolName
+SECTION .text
+""" + cd.children.map(generateAssemblyForNode(_)).filter{_ != ""}.mkString("\n")
+    }
+
     case md: MethodDeclaration => {
       val symbolName = md.symbolName
       val body: String = md.body match {
