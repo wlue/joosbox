@@ -115,13 +115,13 @@ SECTION .text
   }
 
 
-  def pushMethodArguments(m:MethodInvocation) : Seq[String] = {
+  def pushArguments(node:AbstractSyntaxNode) : Seq[String] = {
     var args : Seq[Expression] = Seq.empty
-    m match {
-      case s: SimpleMethodInvocation =>
-        args = s.args
-      case c: ComplexMethodInvocation =>
-        args = c.args
+    node match {
+      case smi: SimpleMethodInvocation => args = smi.args
+      case cmi: ComplexMethodInvocation => args = cmi.args
+      case ccp: ClassCreationPrimary => args = ccp.args
+      case _ => Unit
     }
 
     // Go right-to-left for method parameters
