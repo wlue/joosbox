@@ -1,4 +1,8 @@
+USE32
+
 section .text
+
+extern _malloc
 
 ; This is just for Mac OS compilation woes
 extern _start
@@ -7,29 +11,43 @@ _main:
     call _start
     ret
 
-extern _malloc
-
 ; Allocates eax bytes of memory. Pointer to allocated memory returned in eax.
     global __malloc
 __malloc:
-    push eax     ; number of bytes to allocate
-    sub esp, 4   ; align the stack
-    call _malloc
-    add esp, 8   ; reset the stack
-    cmp eax, 0   ; on error, exit with code 22
+    push ebp
+    mov ebp, esp       ; save the stack
+
+    ;   Ensure that we use a 16-bit aligned stack
+    and esp, 0xFFFFFFF0
+
+    ;   Push a bunch of stuff onto the stack...
+    push dword eax ; number of bytes to allocate
+    push dword 0   ; nothing!
+    push dword 0   ; nothing, this is just padding
+    push dword 0   ; absolutely nothing
+
+    call _malloc   ; memory, please
+
+    cmp eax, 0     ; if error, exit with code 22
     jne ok
     mov eax, 22
     call __debexit
 ok:
+    mov esp, ebp
+    pop ebp
     ret
 
 ; Debugging exit: ends the process, returning the value of
 ; eax as the exit code.
     global __debexit
 __debexit:
-    push eax     ; exit code is stored in eax
-    sub esp, 4   ; align the stack
-    mov eax, 1   ; sys_exit system call
+    ;   Ensure that we use a 16-bit aligned stack
+    and esp, 0xFFFFFFF0
+
+    push dword eax ; exit code
+    push dword 0   ; pad the stack
+    
+    mov eax, 0x1   ; exit
     int 0x80
 
 ; Exceptional exit: ends the process with exit code 13.
@@ -43,17 +61,25 @@ __exception:
 ; Outputs the low-order byte of eax to standard output.
     global NATIVEjava.io.OutputStream.nativeWrite
 NATIVEjava.io.OutputStream.nativeWrite:
+    push ebp
+    mov ebp, esp   ; save the stack pointer
+    
+    ;   Ensure that we use a 16-bit aligned stack
+    and esp, 0xFFFFFFF0
+
     mov [char], al ; save the low order byte in memory
 
     push 1         ; number of bytes to write
     push char      ; address of characters to start printing
     push 1         ; stdout
-    sub esp, 4     ; align stack to 16 byte boundary
-
+    push 0         ; align args to 16 byte boundary
+    
     mov eax, 4     ; sys_write system call
     int 0x80
-    add esp, 16    ; reset stack
     mov eax, 0     ; return 0
+    
+    mov esp, ebp   ; reset the stack pointer
+    pop ebp
     ret
 
 section .data
