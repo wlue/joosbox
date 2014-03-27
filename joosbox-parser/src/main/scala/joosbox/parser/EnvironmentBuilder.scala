@@ -377,7 +377,7 @@ object EnvironmentBuilder {
           Seq(PackageNameLookup(QualifiedName(Seq(InputString("java"), InputString("lang"))).toPackageName)) ++ imports
         }
 
-        n.scope = Some(new ScopeEnvironment(locals, Some(packageScopeReference), importScopeReferences, parent))
+        n.scope = Some(new ScopeEnvironment(locals, Some(packageScopeReference), importScopeReferences, parent, Some(n)))
         n.scope.get
       }
 

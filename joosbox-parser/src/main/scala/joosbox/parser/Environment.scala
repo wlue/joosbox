@@ -64,11 +64,19 @@ sealed trait Environment {
 
   def getEnclosingClassNode: Option[AbstractSyntaxNode] = None
 
+  def getEnclosingCompilationUnit: Option[AbstractSyntaxNode] = None
+
   /**
    * Get the package scope from the parent. Only the root should respond to this.
    */
   def packageScope(name: PackageNameLookup): Option[Seq[ScopeEnvironment]] = parent match {
     case Some(p: Environment) => p.packageScope(name)
+    case _ => None
+  }
+
+  def compilationScope: Option[Environment] = parent match {
+    case Some(root: RootEnvironment) => Some(root)
+    case Some(env: Environment) => env.compilationScope
     case _ => None
   }
 }
@@ -180,11 +188,19 @@ class ScopeEnvironment(
   }
 
   override def getEnclosingClassNode: Option[AbstractSyntaxNode] = node match {
-    case None => parent match {
+    case Some(a: ClassDeclaration) => Some(a)
+    case _ => parent match {
       case None => None
       case Some(s) => s.getEnclosingClassNode
     }
-    case Some(a) => Some(a)
+  }
+
+  override def getEnclosingCompilationUnit: Option[AbstractSyntaxNode] = node match {
+    case Some(a: CompilationUnit) => Some(a)
+    case _ => parent match {
+      case None => None
+      case Some(s) => s.getEnclosingCompilationUnit
+    }
   }
 
   //  This is not very scala-y or functional, but we need this to link class

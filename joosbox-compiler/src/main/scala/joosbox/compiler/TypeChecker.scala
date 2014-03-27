@@ -787,17 +787,17 @@ object TypeChecker {
       // accessed as non-static are actually non-static.
       case SimpleMethodInvocation(name, args) => {
         resolveMethodName(name, args, env) match {
-          case None =>
-            throw new SyntaxError("Could not resolve method: " + name)
-          case _ => {}
+          case None => throw new SyntaxError("Could not resolve method: " + name)
+          case Some(method: TypeMethodDeclaration) => {
+            env.compilationScope
+          }
         }
       }
 
       case ComplexMethodInvocation(ref, name, args) => {
         val scope : Environment = resolvePrimaryAndFindScope(ref, env)
         resolveMethodName(name, args, scope) match {
-          case None =>
-            throw new SyntaxError("Could not resolve method: " + name)
+          case None => throw new SyntaxError("Could not resolve method: " + name)
           case _ => {}
         }
       }
