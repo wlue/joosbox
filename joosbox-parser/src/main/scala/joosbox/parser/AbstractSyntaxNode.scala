@@ -14,6 +14,7 @@ sealed trait AbstractSyntaxNode {
 
   var scope: Option[Environment] = None
   var constantValue : Option[AbstractSyntaxNode.ConstantValue] = None
+  var slot: Integer = 0
 }
 
 object AbstractSyntaxNode {

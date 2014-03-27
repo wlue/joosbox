@@ -113,4 +113,27 @@ SECTION .text
     }
     case x => x.children.map(generateAssemblyForNode(_, indent + 1)).filter{_ != ""}.mkString("\n")
   }
+
+
+  def pushMethodArguments(m:MethodInvocation) : Seq[String] = {
+    var args : Seq[Expression] = Seq.empty
+    m match {
+      case s: SimpleMethodInvocation =>
+        args = s.args
+      case c: ComplexMethodInvocation =>
+        args = c.args
+    }
+
+    // Go right-to-left for method parameters
+    // TODO: Implicit this parameter
+    args.reverse.map({ a => pushToStackSlot(allocateStackSlot(a.slot)) })
+  }
+
+  def allocateStackSlot(offset:Integer) : String = {
+    s"dword [ebp - " + (offset * 4) + "]"
+  }
+
+  def pushToStackSlot(location:String) : String = {
+    s"push " + location
+  }
 }
