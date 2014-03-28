@@ -12,6 +12,22 @@ object CodeGenerator {
   lazy val preamble: String =
     scala.io.Source.fromFile("joosbox-compiler/src/test/resources/stdlib/defines.s").mkString
 
+  def generateSingleAssembly(units: Seq[CompilationUnit]): String = {
+    preamble + generateAssembly(units).map({
+      case (f: String, d: String) => {
+        s"""
+
+; ====================
+; BEGINNING OF FILE $f
+$d
+; END OF FILE $f
+; ====================
+
+        """
+      }
+    }).mkString("\n")
+  }
+
   /*
     Returns a map of class names to strings, for storage in files by the caller.
    */
@@ -30,10 +46,7 @@ object CodeGenerator {
         }
 
         val entryMethodSymbol = method.symbolName
-        val asm = preamble + s"""
-extern initFields
-extern $entryMethodSymbol
-
+        val asm = s"""
 global _start
 _start:
   call initFields
@@ -49,9 +62,9 @@ _start:
     }
     (
       first ++
-      Map("initFields" -> (preamble + generateInitFields(units))) ++
-      units.map(cu => cu.assemblyFileName -> (preamble + generateAssemblyForNode(cu)(Some(cu), None)))
-    ).toMap
+      Map("initFields" -> generateInitFields(units)) ++
+      units.map(cu => cu.assemblyFileName -> generateAssemblyForNode(cu)(Some(cu), None))
+    )
   }
 
   def generateInitFields(units: Seq[CompilationUnit]): String = {
@@ -78,10 +91,6 @@ initFields:
         val instanceOfEntries = cd.instanceOfList.map(x => s"InstanceOfEntry($x)").mkString("\n")
         val methodsForVtable = cd.methodsForVtable
 
-        val requiredImports = methodsForVtable.filter{_.scope.get.getEnclosingClassNode.get != cd}.map(
-          x => s"extern ${x.symbolName}"
-        ).mkString("\n")
-
         val requiredClassTags = methodsForVtable
           .filter{_.scope.get.getEnclosingClassNode.get != cd}
           .map(_.scope.get.getEnclosingClassNode.get.asInstanceOf[ClassDeclaration])
@@ -94,7 +103,6 @@ initFields:
         ).mkString("\n")
 
         s"""
-$requiredImports
 $requiredClassTags
 
 SECTION .data
@@ -125,7 +133,6 @@ SECTION .text
         }
 
         (
-          ("  " * indent) + s"global $symbolName\n" +
           ("  " * indent) + s"$symbolName:\n" + body
         )
       }
