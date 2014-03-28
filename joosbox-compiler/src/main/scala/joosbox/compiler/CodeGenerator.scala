@@ -141,10 +141,10 @@ SECTION .text
         val env = m.scope.get
         val an = m.name
         TypeChecker.resolveMethodName(an, m.args, env) match {
-          case Some(declaration: MethodDeclaration) =>{
+          case Some(declaration: MethodDeclaration) => {
             val symbolName: String = declaration.symbolName
             val classSymbolName: String = declaration.scope.get.getEnclosingClassNode.get.symbolName
-            if (declaration.isStatic) {
+            val call: String = if (declaration.isStatic) {
               (
                 ("  " * indent) + s"call $symbolName\n"
               )
@@ -157,6 +157,8 @@ SECTION .text
 """
               )
             }
+
+            pushArguments(m).mkString("\n") + call
           }
           case None =>
             throw new SyntaxError("Could not resolve method: " + an)
@@ -179,53 +181,51 @@ SECTION .text
 
     mov esp, ebp   ; reset the stack pointer
     pop ebp
-    ret
   """
       }
 
       case r: ReturnStatement => {
-        //  TODO: This is just for testing.
-        r.expression match {
-          case Some(n: Num) => {
-            val numval = n.value
-            ("  " * indent) + s"mov eax, $numval\n" + ("  " * indent) + """
+        val epilogue = ("  " * indent) + """
     mov esp, ebp   ; reset the stack pointer
     pop ebp
     ret
 """
-          }
-
-          case None => ("  " * indent) + """
-    mov esp, ebp   ; reset the stack pointer
-    pop ebp
-    ret
-"""
-
-          //  TODO: handle this case, this is just super late night testing.
-          case _ => ("  " * indent) + """
-    mov esp, ebp   ; reset the stack pointer
-    pop ebp
-    ret
-"""
+        val expr = r.expression match {
+          case Some(e: Expression) => generateAssemblyForNode(e, indent + 1) + "\npop eax\n"
+          case None => ""
         }
+        expr + epilogue
       }
+
+      case n: Num => s"push ${n.value}\n"
+      case AddExpression(e1, e2) => (
+        generateAssemblyForNode(e1, indent + 1)
+        + generateAssemblyForNode(e2, indent + 1)
+        + """
+pop eax
+pop ebx
+add eax, ebx
+push eax
+        """
+      )
+
       case x => x.children.map(generateAssemblyForNode(_, indent + 1)).filter{_ != ""}.mkString("\n")
     }
+
     s"""
-; begin asm for node ${n.getClass.getSimpleName} ${n.hashCode}
+; begin asm for node ${n.getClass.getSimpleName} 0x${n.hashCode.toHexString}
 $asm
-; end asm for node ${n.getClass.getSimpleName} ${n.hashCode}
+; end asm for node ${n.getClass.getSimpleName} 0x${n.hashCode.toHexString}
     """
   }
 
 
   def pushArguments(node:AbstractSyntaxNode) : Seq[String] = {
-    var args : Seq[Expression] = Seq.empty
-    node match {
-      case smi: SimpleMethodInvocation => args = smi.args
-      case cmi: ComplexMethodInvocation => args = cmi.args
-      case ccp: ClassCreationPrimary => args = ccp.args
-      case _ => Unit
+    var args : Seq[Expression] = node match {
+      case smi: SimpleMethodInvocation => smi.args
+      case cmi: ComplexMethodInvocation => cmi.args
+      case ccp: ClassCreationPrimary => ccp.args
+      case x => throw new SyntaxError("Cannot push arguments for node type without arguments: " + x)
     }
 
     // Go right-to-left for method parameters
@@ -233,11 +233,6 @@ $asm
     args.reverse.map({ a => pushToStackSlot(allocateStackSlot(a.slot)) })
   }
 
-  def allocateStackSlot(offset:Integer) : String = {
-    s"dword [ebp - " + (offset * 4) + "]"
-  }
-
-  def pushToStackSlot(location:String) : String = {
-    s"push " + location
-  }
+  def allocateStackSlot(offset:Integer) : String = s"dword [ebp - ${offset * 4}]"
+  def pushToStackSlot(location:String) : String = s"push $location\n"
 }
