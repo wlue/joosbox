@@ -514,14 +514,24 @@ object AbstractSyntaxNode {
 
   sealed trait AccessModifier extends Modifier
   sealed trait NonAccessModifier extends Modifier
-  case class StaticKeyword() extends NonAccessModifier
+  case class StaticKeyword() extends NonAccessModifier {
+    override def symbolName: String = "static"
+  }
 
-  case class PublicKeyword() extends AccessModifier
-  case class ProtectedKeyword() extends AccessModifier
+  case class PublicKeyword() extends AccessModifier {
+    override def symbolName: String = "public"
+  }
+  case class ProtectedKeyword() extends AccessModifier {
+    override def symbolName: String = "protected"
+  }
 
   case class AbstractKeyword() extends NonAccessModifier
-  case class FinalKeyword() extends NonAccessModifier
-  case class NativeKeyword() extends NonAccessModifier
+  case class FinalKeyword() extends NonAccessModifier {
+    override def symbolName: String = "final"
+  }
+  case class NativeKeyword() extends NonAccessModifier {
+    override def symbolName: String = "native"
+  }
 
   sealed abstract class TypeDeclaration(
     val name: TypeName,
@@ -706,6 +716,7 @@ object AbstractSyntaxNode {
         + "__"
         + name.niceName
         + parameters.map(_.varType.symbolName).mkString("_")
+        + "_" + modifiers.map(_.symbolName).mkString("_")
       ).replaceAll("""^\s+(?m)""", "")
     }
   }

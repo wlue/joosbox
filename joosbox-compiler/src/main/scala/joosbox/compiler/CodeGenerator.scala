@@ -50,7 +50,7 @@ _start:
     (
       first ++
       Map("initFields" -> (preamble + generateInitFields(units))) ++
-      units.map(cu => cu.assemblyFileName -> (preamble + generateAssemblyForNode(cu)))
+      units.map(cu => cu.assemblyFileName -> (preamble + generateAssemblyForNode(cu)(Some(cu), None)))
     ).toMap
   }
 
@@ -63,30 +63,37 @@ initFields:
     """.stripMargin
   }
 
-  def generateAssemblyForNode(n: AbstractSyntaxNode, indent: Integer = 0): String = n match {
-    case cd: ClassDeclaration => {
-      //  Generate vtable for this class
-      val symbolName = cd.symbolName
-      val runtimeTag = cd.runtimeTag.toHexString
-      val instanceOfEntries = cd.instanceOfList.map(x => s"InstanceOfEntry($x)").mkString("\n")
-      val methodsForVtable = cd.methodsForVtable
+  def generateAssemblyForNode(
+    n: AbstractSyntaxNode,
+    indent: Integer = 0
+  )(
+    implicit parentCompilationUnit: Option[CompilationUnit],
+    parentClassDeclaration: Option[ClassDeclaration]
+  ): String = {
+    val asm = n match {
+      case cd: ClassDeclaration => {
+        //  Generate vtable for this class
+        val symbolName = cd.symbolName
+        val runtimeTag = cd.runtimeTag.toHexString
+        val instanceOfEntries = cd.instanceOfList.map(x => s"InstanceOfEntry($x)").mkString("\n")
+        val methodsForVtable = cd.methodsForVtable
 
-      val requiredImports = methodsForVtable.filter{_.scope.get.getEnclosingClassNode.get != cd}.map(
-        x => s"extern ${x.symbolName}"
-      ).mkString("\n")
+        val requiredImports = methodsForVtable.filter{_.scope.get.getEnclosingClassNode.get != cd}.map(
+          x => s"extern ${x.symbolName}"
+        ).mkString("\n")
 
-      val requiredClassTags = methodsForVtable
-        .filter{_.scope.get.getEnclosingClassNode.get != cd}
-        .map(_.scope.get.getEnclosingClassNode.get.asInstanceOf[ClassDeclaration])
-        .toSet[ClassDeclaration]
-        .map(x => s"%define ${x.symbolName}_class_tag 0x${x.runtimeTag.toHexString}")
-        .mkString("\n")
+        val requiredClassTags = methodsForVtable
+          .filter{_.scope.get.getEnclosingClassNode.get != cd}
+          .map(_.scope.get.getEnclosingClassNode.get.asInstanceOf[ClassDeclaration])
+          .toSet[ClassDeclaration]
+          .map(x => s"%define ${x.symbolName}_class_tag 0x${x.runtimeTag.toHexString}")
+          .mkString("\n")
 
-      val methodsForTopLevel = methodsForVtable.map(
-        x => s"VTableMethodDef($symbolName, ${x.symbolName}, ${x.symbolName})"
-      ).mkString("\n")
+        val methodsForTopLevel = methodsForVtable.map(
+          x => s"VTableMethodDef($symbolName, ${x.symbolName}, ${x.symbolName})"
+        ).mkString("\n")
 
-      s"""
+        s"""
 $requiredImports
 $requiredClassTags
 
@@ -107,40 +114,97 @@ $methodsForTopLevel
 ; end of vtable for $symbolName
 
 SECTION .text
-""" + cd.children.map(generateAssemblyForNode(_)).filter{_ != ""}.mkString("\n")
-    }
-
-    case md: MethodDeclaration => {
-      val symbolName = md.symbolName
-      val body: String = md.body match {
-        case Some(b: Block) => generateAssemblyForNode(b, indent + 1)
-        case None => ("  " * indent) + "ret\n"
+  """ + cd.children.map(generateAssemblyForNode(_)).filter{_ != ""}.mkString("\n")
       }
 
-      (
-        ("  " * indent) + s"global $symbolName\n" +
-        ("  " * indent) + s"$symbolName:\n" + body
-      )
-    }
-    case b: Block => {
-      b.statements.map(generateAssemblyForNode(_, indent + 1)).filter{_ != ""}.mkString("\n")
-    }
-
-    case r: ReturnStatement => {
-      //  TODO: This is just for testing.
-      r.expression match {
-        case Some(n: Num) => {
-          val numval = n.value
-          ("  " * indent) + s"mov eax, $numval\n" + ("  " * indent) + "ret\n"
+      case md: MethodDeclaration => {
+        val symbolName = md.symbolName
+        val body: String = md.body match {
+          case Some(b: Block) => generateAssemblyForNode(b, indent + 1)
+          case None => ("  " * indent) + "ret\n"
         }
 
-        case None => ("  " * indent) + "ret\n"
-
-        //  TODO: handle this case, this is just super late night testing.
-        case _ => ("  " * indent) + "ret\n"
+        (
+          ("  " * indent) + s"global $symbolName\n" +
+          ("  " * indent) + s"$symbolName:\n" + body
+        )
       }
+
+      case m: SimpleMethodInvocation => {
+        val env = m.scope.get
+        val an = m.name
+        TypeChecker.resolveMethodName(an, m.args, env) match {
+          case Some(declaration: MethodDeclaration) =>{
+            val symbolName: String = declaration.symbolName
+            if (declaration.isStatic) {
+              (
+                ("  " * indent) + s"call $symbolName\n"
+              )
+            } else {
+              (
+                ("  " * indent) + s";global $symbolName\n" +
+                ("  " * indent) + s";call $symbolName\n"
+              )
+            }
+          }
+          case None =>
+            throw new SyntaxError("Could not resolve method: " + an)
+        }
+
+      }
+
+      case b: Block => {
+        val substatements = b
+          .statements
+          .map(generateAssemblyForNode(_, indent + 1))
+          .filter{_ != ""}
+          .mkString("\n")
+
+          s"""
+    push ebp
+    mov ebp, esp   ; save the stack pointer
+
+    $substatements
+
+    mov esp, ebp   ; reset the stack pointer
+    pop ebp
+    ret
+  """
+      }
+
+      case r: ReturnStatement => {
+        //  TODO: This is just for testing.
+        r.expression match {
+          case Some(n: Num) => {
+            val numval = n.value
+            ("  " * indent) + s"mov eax, $numval\n" + ("  " * indent) + """
+    mov esp, ebp   ; reset the stack pointer
+    pop ebp
+    ret
+"""
+          }
+
+          case None => ("  " * indent) + """
+    mov esp, ebp   ; reset the stack pointer
+    pop ebp
+    ret
+"""
+
+          //  TODO: handle this case, this is just super late night testing.
+          case _ => ("  " * indent) + """
+    mov esp, ebp   ; reset the stack pointer
+    pop ebp
+    ret
+"""
+        }
+      }
+      case x => x.children.map(generateAssemblyForNode(_, indent + 1)).filter{_ != ""}.mkString("\n")
     }
-    case x => x.children.map(generateAssemblyForNode(_, indent + 1)).filter{_ != ""}.mkString("\n")
+    s"""
+; begin asm for node ${n.getClass.getSimpleName} ${n.hashCode}
+$asm
+; end asm for node ${n.getClass.getSimpleName} ${n.hashCode}
+    """
   }
 
 
