@@ -4,8 +4,10 @@ extern __exception
 
 
 %define VTableBase(x) (vtable_class_ %+ x)
-%define VMethodLabel(class, method) vtable_class_ %+ class %+ _method__ %+ method
-%define VMethodCall(class, method) call [ebx + (VMethodLabel(class, method) - VTableBase(class))]
+%define VMethodLabel(class, method) vtable_%+class%+ _method__%+ method
+;   This call takes a pointer to a vtable in reg and calls the appropriate method.
+;   We should usually keep the "this" pointer in EBX for simplicity.
+%define VMethodCall(reg, class, method) call [reg + (VMethodLabel(class, method) - VTableBase(class))]
 
 %define VTableClassRef(class) vtable_class_%+class
 %define VTableNestedClassRef(class, super) vtable_class_%+class%+_%+super
@@ -27,6 +29,8 @@ extern __exception
 
 %define VTableClassTagOffset 0
 %define VTableInstanceOfPointerOffset 4
+
+%define ObjectVTableOffset 0
 
 ; cast the object %1 from supertype %2 to subtype %3.
 ; before calling, put object vtable pointer into register %1

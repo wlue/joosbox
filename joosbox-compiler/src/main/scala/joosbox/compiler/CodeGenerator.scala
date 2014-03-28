@@ -143,14 +143,18 @@ SECTION .text
         TypeChecker.resolveMethodName(an, m.args, env) match {
           case Some(declaration: MethodDeclaration) =>{
             val symbolName: String = declaration.symbolName
+            val classSymbolName: String = declaration.scope.get.getEnclosingClassNode.get.symbolName
             if (declaration.isStatic) {
               (
                 ("  " * indent) + s"call $symbolName\n"
               )
             } else {
               (
-                ("  " * indent) + s";global $symbolName\n" +
-                ("  " * indent) + s";call $symbolName\n"
+                ("  " * indent) + s"""
+  ; todo: where does eax come from?
+  mov eax, [ebx + ObjectVTableOffset]
+  VMethodCall(eax, $classSymbolName, $symbolName)
+"""
               )
             }
           }
