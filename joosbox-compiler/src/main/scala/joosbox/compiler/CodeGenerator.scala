@@ -9,6 +9,9 @@ import joosbox.lexer.{SyntaxError, InputString}
  */
 object CodeGenerator {
 
+  lazy val preamble: String =
+    scala.io.Source.fromFile("joosbox-compiler/src/test/resources/stdlib/defines.s").mkString
+
   /*
     Returns a map of class names to strings, for storage in files by the caller.
    */
@@ -30,9 +33,8 @@ object CodeGenerator {
         }
 
         val entryMethodSymbol = method.symbolName
-        val asm = s"""
+        val asm = preamble + s"""
 extern initFields
-extern __debexit
 extern $entryMethodSymbol
 
 global _start
@@ -50,8 +52,8 @@ _start:
     }
     (
       first ++
-      Map("initFields" -> generateInitFields(units)) ++
-      units.map(cu => cu.assemblyFileName -> generateAssemblyForNode(cu))
+      Map("initFields" -> (preamble + generateInitFields(units))) ++
+      units.map(cu => cu.assemblyFileName -> (preamble + generateAssemblyForNode(cu)))
     ).toMap
   }
 
@@ -69,14 +71,44 @@ initFields:
       //  Generate vtable for this class
       val symbolName = cd.symbolName
       val runtimeTag = cd.runtimeTag.toHexString
+      val instanceOfEntries = cd.instanceOfList.map(x => s"InstanceOfEntry($x)").mkString("\n")
+      val methodsForVtable = cd.methodsForVtable
+
+      val requiredImports = methodsForVtable.filter{_.scope.get.getEnclosingClassNode.get != cd}.map(
+        x => s"extern ${x.symbolName}"
+      ).mkString("\n")
+
+      val requiredClassTags = methodsForVtable
+        .filter{_.scope.get.getEnclosingClassNode.get != cd}
+        .map(_.scope.get.getEnclosingClassNode.get.asInstanceOf[ClassDeclaration])
+        .toSet[ClassDeclaration]
+        .map(x => s"%define ${x.symbolName}_class_tag 0x${x.runtimeTag.toHexString}")
+        .mkString("\n")
+
+      val methodsForTopLevel = methodsForVtable.map(
+        x => s"VTableMethodDef($symbolName, ${x.symbolName}, ${x.symbolName})"
+      ).mkString("\n")
+
       s"""
+$requiredImports
+$requiredClassTags
+
 SECTION .data
+
+%define ${symbolName}_class_tag 0x$runtimeTag
+
+; instanceof array for $symbolName
+InstanceOfHeader($symbolName)
+$instanceOfEntries
+InstanceOfEnd
+; end of instanceof array for $symbolName
+
 ; beginning of vtable for $symbolName
-vtable_$symbolName:
-  dd 0x$runtimeTag  ; class tag for $symbolName
-
-
+VTableClassHeader($symbolName)
+VTableInstanceOfRef($symbolName)
+$methodsForTopLevel
 ; end of vtable for $symbolName
+
 SECTION .text
 """ + cd.children.map(generateAssemblyForNode(_)).filter{_ != ""}.mkString("\n")
     }

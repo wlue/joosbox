@@ -180,6 +180,14 @@ object AbstractSyntaxNode {
       modifiers.toList ++ parameters.toList ++ body.toList ++ List(memberType)
 
     override def niceName: String = name.niceName
+    override def symbolName: String = {
+      (
+        scope.get.getEnclosingClassNode.get.asInstanceOf[ClassDeclaration].name.niceName
+        + "__"
+        + name.niceName
+        + parameters.map(_.varType.symbolName).mkString("_")
+      ).replaceAll("""^\s+(?m)""", "")
+    }
   }
 
   case class ClassBody(
@@ -546,6 +554,69 @@ object AbstractSyntaxNode {
     override def symbolName: String = "class_" + name.niceName
 
     def runtimeTag: Int = hashCode
+
+    //  A list of method declarations, in order, for the generated vtable.
+    def methodsForVtable: Seq[TypeMethodDeclaration] = {
+      val superclassMethods: Seq[TypeMethodDeclaration] = superclass match {
+        case Some(c: ClassType) => scope match {
+          case Some(scope: ScopeEnvironment) => {
+            scope.lookup(EnvironmentLookup.lookupFromName(c.name)) match {
+              case Some(scd: ClassDeclaration) => scd.methodsForVtable
+              case _ => throw new SyntaxError("Could not resolve superclass to find vtable methods.")
+            }
+          }
+          case _ => throw new SyntaxError("Could not find scope environment to get vtable methods.")
+        }
+        case None => Seq.empty[TypeMethodDeclaration]
+      }
+
+      val interfaceMethods: Seq[TypeMethodDeclaration] = scope match {
+        case Some(scope: ScopeEnvironment) => {
+          interfaces.flatMap(m => {
+            scope.lookup(EnvironmentLookup.lookupFromName(m.name)) match {
+              case Some(id: InterfaceDeclaration) => id.methodsForVtable
+              case _ => throw new SyntaxError("Could not resolve superclass to find vtable methods.")
+            }
+          })
+        }
+        case _ => throw new SyntaxError("Could not find scope environment to get vtable methods.")
+      }
+
+      (
+        body.declarations.collect { case m: MethodDeclaration if !m.isStatic =>  m }
+        ++ superclassMethods
+        ++ interfaceMethods
+      )
+    }
+
+    def instanceOfList: Seq[String] = {
+      val superinstances = superclass match {
+        case Some(ct: ClassType) => scope match {
+          case Some(scope: ScopeEnvironment) => {
+            scope.lookup(EnvironmentLookup.lookupFromName(ct.name)) match {
+              case Some(scd: ClassDeclaration) => scd.instanceOfList
+              case _ => throw new SyntaxError("Could not resolve superclass to find vtable methods.")
+            }
+          }
+          case _ => Seq.empty[String]
+        }
+        case None => Seq.empty[String]
+      }
+
+      val interfacenames: Seq[String] = scope match {
+        case Some(scope: ScopeEnvironment) => {
+          interfaces.flatMap(m => {
+            scope.lookup(EnvironmentLookup.lookupFromName(m.name)) match {
+              case Some(id: InterfaceDeclaration) => id.instanceOfList
+              case _ => throw new SyntaxError("Could not resolve superclass to find vtable methods.")
+            }
+          })
+        }
+        case _ => throw new SyntaxError("Could not find scope environment to get vtable methods.")
+      }
+
+      Seq[String](symbolName) ++ superinstances ++ interfacenames
+    }
   }
 
   case class InterfaceDeclaration(
@@ -559,6 +630,36 @@ object AbstractSyntaxNode {
       List(body) ++ modifiers.toList ++ interfaces.toList
 
     override def parentOption: Option[AbstractSyntaxNode] = parent
+
+    def methodsForVtable: Seq[TypeMethodDeclaration] = {
+      scope match {
+        case Some(scope: ScopeEnvironment) => {
+          interfaces.flatMap(m => {
+            scope.lookup(EnvironmentLookup.lookupFromName(m.name)) match {
+              case Some(id: InterfaceDeclaration) => id.methodsForVtable
+              case _ => throw new SyntaxError("Could not resolve superclass to find vtable methods.")
+            }
+          })
+        }
+        case _ => throw new SyntaxError("Could not find scope environment to get vtable methods.")
+      }
+    }
+
+    def instanceOfList: Seq[String] = {
+      val interfaceNames = scope match {
+        case Some(scope: ScopeEnvironment) => {
+          interfaces.flatMap(m => {
+            scope.lookup(EnvironmentLookup.lookupFromName(m.name)) match {
+              case Some(id: InterfaceDeclaration) => id.instanceOfList
+              case _ => throw new SyntaxError("Could not resolve superclass to find vtable methods.")
+            }
+          })
+        }
+        case _ => throw new SyntaxError("Could not find scope environment to get vtable methods.")
+      }
+
+      Seq[String](symbolName) ++ interfaceNames
+    }
   }
 
   abstract class ClassMemberDeclaration(
@@ -580,13 +681,14 @@ object AbstractSyntaxNode {
       modifiers.toList ++ parameters.toList ++ body.toList
   }
 
-  sealed trait TypeMethodDeclaration {
+  sealed trait TypeMethodDeclaration extends AbstractSyntaxNode {
     val modifiers: Set[Modifier]
     val memberType: Type
     val parameters: Seq[FormalParameter]
 
     def niceName: String
     def isStatic: Boolean = modifiers.contains(StaticKeyword())
+    def symbolName: String
   }
 
   case class MethodDeclaration(
