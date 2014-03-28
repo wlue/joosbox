@@ -208,6 +208,37 @@ add eax, ebx
 push eax
         """
       )
+      case SubtractExpression(e1, e2) => (
+        generateAssemblyForNode(e1, indent + 1)
+        + generateAssemblyForNode(e2, indent + 1)
+        + """
+pop ebx
+pop eax
+sub eax, ebx
+push eax
+        """
+      )
+      case MultiplyExpression(e1, e2) => (
+        generateAssemblyForNode(e1, indent + 1)
+        + generateAssemblyForNode(e2, indent + 1)
+        + """
+pop eax
+pop edx
+imul edx
+push eax
+        """
+      )
+      case DivideExpression(e1, e2) => (
+        generateAssemblyForNode(e1, indent + 1)
+        + generateAssemblyForNode(e2, indent + 1)
+        + """
+pop ebx
+pop eax
+mov edx, 0
+idiv ebx
+push eax
+        """
+      )
 
       case x => x.children.map(generateAssemblyForNode(_, indent + 1)).filter{_ != ""}.mkString("\n")
     }

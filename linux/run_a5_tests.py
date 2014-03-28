@@ -22,6 +22,10 @@ tests = [
         "", 3
     ),
     (
+        ["joosbox-compiler/src/test/resources/custom-tests/compiler_expression_1.java"],
+        "", 123
+    ),
+    (
         ["joosbox-compiler/src/test/resources/marmoset-tests/a5/J1_01.java"],
         "", 123
     ),
