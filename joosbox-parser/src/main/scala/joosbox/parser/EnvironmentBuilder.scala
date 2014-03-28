@@ -354,10 +354,11 @@ object EnvironmentBuilder {
           case _ => None
         }.toMap
 
-        val locals: Map[EnvironmentLookup, Referenceable] = (
-          n.typeDeclaration.map(x => (TypeNameLookup(x.name.toQualifiedName), x)).toMap
-          ++ explicitImports
-        )
+        val locals: Map[EnvironmentLookup, Referenceable] =
+          explicitImports ++ Map(TypeNameLookup(n.typeDeclaration.name.toQualifiedName) -> n.typeDeclaration)
+
+//        val locals: Map[EnvironmentLookup, Referenceable] =
+//          explicitImports ++ (TypeNameLookup(n.typeDeclaration.name.toQualifiedName) -> n.typeDeclaration).toMap
 
         val packageScopeReference: PackageNameLookup = {
           n.packageDeclaration match {

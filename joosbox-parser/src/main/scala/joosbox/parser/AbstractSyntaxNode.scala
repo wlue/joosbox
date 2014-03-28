@@ -68,14 +68,12 @@ object AbstractSyntaxNode {
   case class CompilationUnit(
     packageDeclaration: Option[PackageDeclaration] = None,
     importDeclarations: Seq[ImportDeclaration] = Seq.empty[ImportDeclaration],
-    typeDeclaration: Option[TypeDeclaration] = None
+    typeDeclaration: TypeDeclaration
   ) extends AbstractSyntaxNode {
     override def children: List[AbstractSyntaxNode] =
-      packageDeclaration.toList ++ importDeclarations.toList ++ typeDeclaration.toList
-    def assemblyFileName: String = typeDeclaration match {
-      case Some(t) => t.fullyQualifiedName.get.toQualifiedName.value.map(_.value).mkString("")
-      case None => ""
-    }
+      packageDeclaration.toList ++ importDeclarations.toList ++ List(typeDeclaration)
+    def assemblyFileName: String =
+      typeDeclaration.fullyQualifiedName.get.toQualifiedName.value.map(_.value).mkString("")
   }
 
   case class PackageDeclaration(name: PackageName) extends AbstractSyntaxNode
@@ -810,22 +808,16 @@ object AbstractSyntaxNode {
       val typeDeclarations: Seq[TypeDeclaration] = children.collect { case x: TypeDeclaration => x }
 
       // Grammar does not guarantee that we only have one type declaration, so make the check here.
-      if (typeDeclarations.size > 1) {
-        throw new SyntaxError("Cannot define more than one class or interface in a file.");
-      }
-
-      val typeDeclaration: Option[TypeDeclaration] = typeDeclarations.headOption
-
-      typeDeclaration match {
-        case Some(td: TypeDeclaration) => {
-          val cu = CompilationUnit(packageDeclaration, importDeclarations, Some(td))
-          td.parent = Some(cu)
+      typeDeclarations match {
+        case Seq(decl: TypeDeclaration) => {
+          val cu = CompilationUnit(packageDeclaration, importDeclarations, decl)
+          decl.parent = Some(cu)
           Seq(cu)
         }
-        case None => {
-          Seq(CompilationUnit(packageDeclaration, importDeclarations, None))
-        }
+        case Seq() => throw new SyntaxError("must define a class or interface in a file.")
+        case _ => throw new SyntaxError("Cannot define more than one class or interface in a file.")
       }
+
     }
 
     case p: ParseNodes.PackageDeclaration => {

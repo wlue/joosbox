@@ -92,15 +92,16 @@ class RootEnvironment(nodes: Seq[AbstractSyntaxNode.CompilationUnit]) extends En
   val qualifiedNameMap: Map[QualifiedName, Referenceable] = {
     nodes.foldLeft(Map.empty[QualifiedName, Referenceable]) {
       case (map: Map[QualifiedName, Referenceable], cu: AbstractSyntaxNode.CompilationUnit) => {
-        val declaration: Option[TypeDeclaration] = cu.typeDeclaration
+        val declaration: TypeDeclaration = cu.typeDeclaration
         val mapping = cu.packageDeclaration match {
-          case Some(p: PackageDeclaration) => declaration.map(d => TypeName(d.name.value, Some(p.name)).toQualifiedName -> d)
-
-          case None => declaration.map(d => TypeName(d.name.value, Some(PackageName(InputString("")))).toQualifiedName -> d)
+          case Some(p: PackageDeclaration) =>
+            (TypeName(declaration.name.value, Some(p.name)).toQualifiedName, declaration)
+          case _ =>
+            (TypeName(declaration.name.value, Some(PackageName(InputString("")))).toQualifiedName, declaration)
         }
 
         mapping match {
-          case Some((q: QualifiedName, t: TypeDeclaration)) => {
+          case (q: QualifiedName, t: TypeDeclaration) => {
             val fqn: TypeName = q.toTypeName
             fqn.scope = t.scope
             t.fullyQualifiedName = Some(fqn)
@@ -109,7 +110,6 @@ class RootEnvironment(nodes: Seq[AbstractSyntaxNode.CompilationUnit]) extends En
               case Some(_) => throw new SyntaxError("Duplicate qualified name " + q)
             }
           }
-          case _ => map
         }
       }
     }
@@ -129,15 +129,14 @@ class RootEnvironment(nodes: Seq[AbstractSyntaxNode.CompilationUnit]) extends En
   def resolveFullyQualifiedNames() = {
     nodes.foreach {
       case (cu: AbstractSyntaxNode.CompilationUnit) => {
-        val declaration: Option[TypeDeclaration] = cu.typeDeclaration
+        val declaration: TypeDeclaration = cu.typeDeclaration
         val mapping = cu.packageDeclaration match {
-          case Some(p: PackageDeclaration) => declaration.map(d => TypeName(d.name.value, Some(p.name)).toQualifiedName -> d)
-
-          case None => declaration.map(d => TypeName(d.name.value, Some(PackageName(InputString("")))).toQualifiedName -> d)
+          case Some(p: PackageDeclaration) => (TypeName(declaration.name.value, Some(p.name)).toQualifiedName, declaration)
+          case None => (TypeName(declaration.name.value, Some(PackageName(InputString("")))).toQualifiedName, declaration)
         }
 
         mapping match {
-          case Some((q: QualifiedName, t: TypeDeclaration)) => {
+          case (q: QualifiedName, t: TypeDeclaration) => {
             val fqn: TypeName = q.toTypeName
             fqn.scope = t.scope
             t.fullyQualifiedName = Some(fqn)
@@ -145,7 +144,6 @@ class RootEnvironment(nodes: Seq[AbstractSyntaxNode.CompilationUnit]) extends En
               throw new SyntaxError("Could not get fully qualified name's scope for " + t)
             }
           }
-          case _ => Unit
         }
       }
     }

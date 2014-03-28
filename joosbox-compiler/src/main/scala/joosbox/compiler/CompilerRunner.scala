@@ -46,13 +46,13 @@ object CompilerRunner {
 
     StaticAnalysisChecker.link(nodes)
 
-    CodeGenerator.generateAssembly(nodes).foreach{
-      case (fileName: String, assembly: String) => {
-        val f = new java.io.File("output/" + fileName + ".s")
-        val p = new java.io.PrintWriter(f)
-        try { p.write(assembly) } finally { p.close() }
-      }
-    }
+//    CodeGenerator.generateAssembly(nodes).foreach{
+//      case (fileName: String, assembly: String) => {
+//        val f = new java.io.File("output/" + fileName + ".s")
+//        val p = new java.io.PrintWriter(f)
+//        try { p.write(assembly) } finally { p.close() }
+//      }
+//    }
   }
 
   def enableScopeLinking(node: AbstractSyntaxNode): Unit = {

@@ -788,17 +788,21 @@ object TypeChecker {
       case SimpleMethodInvocation(name, args) => {
         resolveMethodName(name, args, env) match {
           case None => throw new SyntaxError("Could not resolve method: " + name)
-          case Some(method: TypeMethodDeclaration) => {
-            env.compilationScope
-          }
+          case _ => {}
         }
       }
 
       case ComplexMethodInvocation(ref, name, args) => {
-        val scope : Environment = resolvePrimaryAndFindScope(ref, env)
+        val scope: Environment = resolvePrimaryAndFindScope(ref, env)
         resolveMethodName(name, args, scope) match {
           case None => throw new SyntaxError("Could not resolve method: " + name)
-          case _ => {}
+          case Some(method: TypeMethodDeclaration) => {
+//            val refType = scope.compilationScope.get.node match {
+//              case Some(c: CompilationUnit) => c.typeDeclaration
+//              case _ => throw new Exception("Reference in complex method invocation has no compilation unit.")
+//            }
+//            val thisEnv = env.compilationScope
+          }
         }
       }
 

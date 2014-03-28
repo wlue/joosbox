@@ -18,18 +18,15 @@ object CodeGenerator {
   def generateAssembly(units: Seq[CompilationUnit]): Map[String, String] = {
     val first: Map[String, String] = units.headOption match {
       case Some(cu: CompilationUnit) => {
-        val method: MethodDeclaration = cu.typeDeclaration match {
-          case Some(t: TypeDeclaration) => t.scope match {
-            case Some(scope: ScopeEnvironment) => {
-              val lookup = MethodLookup(MethodName(InputString("test")).toQualifiedName, Seq.empty[Type])
-              scope.lookup(lookup) match {
-                case Some(md : MethodDeclaration) => md
-                case _ => throw new SyntaxError("Could not find method declaration matching signature `int test()`.")
-              }
+        val method: MethodDeclaration = cu.typeDeclaration.scope match {
+          case Some(scope: ScopeEnvironment) => {
+            val lookup = MethodLookup(MethodName(InputString("test")).toQualifiedName, Seq.empty[Type])
+            scope.lookup(lookup) match {
+              case Some(md : MethodDeclaration) => md
+              case _ => throw new SyntaxError("Could not find method declaration matching signature `int test()`.")
             }
-            case _ => throw new SyntaxError("Could not find scope on type declaration: " + t)
           }
-          case _ => throw new SyntaxError("Could not find type declaration in first compilation unit provided: " + cu)
+          case _ => throw new SyntaxError("Could not find scope on type declaration: " + cu.typeDeclaration)
         }
 
         val entryMethodSymbol = method.symbolName

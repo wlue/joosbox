@@ -67,7 +67,7 @@ object TypeLinker {
       case node: CompilationUnit => {
         val classPackage: Option[PackageDeclaration] = node.packageDeclaration
         val imports: Seq[ImportDeclaration] = node.importDeclarations
-        val typeDeclaration: Option[TypeDeclaration] = node.typeDeclaration
+        val typeDeclaration: TypeDeclaration = node.typeDeclaration
 
         // Check for single type import declaration clashes between each other.
         imports.foreach { singleImport =>
@@ -93,33 +93,31 @@ object TypeLinker {
           }
         }
 
-        typeDeclaration.foreach { typeDeclaration =>
-          val className: TypeName = typeDeclaration match {
-            case ClassDeclaration(name, _, _, _, _) => name
-            case InterfaceDeclaration(name, _, _, _) => name
-          }
+        val className: TypeName = typeDeclaration match {
+          case ClassDeclaration(name, _, _, _, _) => name
+          case InterfaceDeclaration(name, _, _, _) => name
+        }
 
-          imports.foreach {
-            case SingleTypeImportDeclaration(name) =>
-              val importName: Seq[InputString] = name.toSeq
+        imports.foreach {
+          case SingleTypeImportDeclaration(name) =>
+            val importName: Seq[InputString] = name.toSeq
 
-              if (classPackage.isEmpty) {
-                // In the default package, all class clashes are invalid
-                if (className.value == importName.last) {
+            if (classPackage.isEmpty) {
+              // In the default package, all class clashes are invalid
+              if (className.value == importName.last) {
+                throw new SyntaxError("Package import cannot be the same name as class name.")
+              }
+            } else {
+              val classPackageName: Seq[InputString] = classPackage.get.name.toQualifiedName.value ++ className.toSeq
+
+              // A class may import itself, but no other clashing classes
+              if (classPackageName != importName) {
+                if (classPackageName.last.value == importName.last.value) {
                   throw new SyntaxError("Package import cannot be the same name as class name.")
                 }
-              } else {
-                val classPackageName: Seq[InputString] = classPackage.get.name.toQualifiedName.value ++ className.toSeq
-
-                // A class may import itself, but no other clashing classes
-                if (classPackageName != importName) {
-                  if (classPackageName.last.value == importName.last.value) {
-                    throw new SyntaxError("Package import cannot be the same name as class name.")
-                  }
-                }
               }
-            case _ => {
             }
+          case _ => {
           }
         }
       }
