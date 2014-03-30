@@ -234,7 +234,7 @@ push eax
         + """
 pop ebx
 pop eax
-mov edx, 0
+cdq
 idiv ebx
 push eax
         """
