@@ -15,7 +15,7 @@ else:
 tests = [
     (
         ["joosbox-compiler/src/test/resources/custom-tests/compiler_variable_access.java"],
-        "", 4
+        "", 11
     ),
     (
         ["joosbox-compiler/src/test/resources/custom-tests/compiler_return_1.java"],
