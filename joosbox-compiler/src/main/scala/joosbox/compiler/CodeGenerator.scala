@@ -371,10 +371,9 @@ idiv ebx
 
       case r : RelationalExpression => {
         var jmpAsm:String = ""
-        var lhsSlot:String = ""
-        var rhsSlot:String = ""
 
-        val resultSlot:String = allocateStackSlot(r.slot)
+        var lhsAsm:String = ""
+        var rhsAsm:String = ""
 
         val falseCase = r.symbolName + "_FALSE"
         val trueCase = r.symbolName + "_TRUE"
@@ -384,43 +383,49 @@ idiv ebx
           case InstanceOfExpression(expr, refType) => return """nop; TODO"""
           case EqualExpression(e1, e2) =>
             jmpAsm = "jz"
-            lhsSlot = allocateStackSlot(e1.slot)
-            rhsSlot = allocateStackSlot(e2.slot)
+            lhsAsm = generateAssemblyForNode(e1, indent + 1)
+            rhsAsm = generateAssemblyForNode(e2, indent + 1)
           case NotEqualExpression(e1, e2) =>
             jmpAsm = "jnz"
-            lhsSlot = allocateStackSlot(e1.slot)
-            rhsSlot = allocateStackSlot(e2.slot)
+            lhsAsm = generateAssemblyForNode(e1, indent + 1)
+            rhsAsm = generateAssemblyForNode(e2, indent + 1)
           case LessThanExpression(e1, e2) =>
             jmpAsm = "jl"
-            lhsSlot = allocateStackSlot(e1.slot)
-            rhsSlot = allocateStackSlot(e2.slot)
+            lhsAsm = generateAssemblyForNode(e1, indent + 1)
+            rhsAsm = generateAssemblyForNode(e2, indent + 1)
           case LessEqualExpression(e1, e2) =>
             jmpAsm = "jle"
-            lhsSlot = allocateStackSlot(e1.slot)
-            rhsSlot = allocateStackSlot(e2.slot)
+            lhsAsm = generateAssemblyForNode(e1, indent + 1)
+            rhsAsm = generateAssemblyForNode(e2, indent + 1)
           case GreaterThanExpression(e1, e2) =>
             jmpAsm = "jg"
-            lhsSlot = allocateStackSlot(e1.slot)
-            rhsSlot = allocateStackSlot(e2.slot)
+            lhsAsm = generateAssemblyForNode(e1, indent + 1)
+            rhsAsm = generateAssemblyForNode(e2, indent + 1)
           case GreaterEqualExpression(e1, e2) =>
             jmpAsm = "jge"
-            lhsSlot = allocateStackSlot(e1.slot)
-            rhsSlot = allocateStackSlot(e2.slot)
+            lhsAsm = generateAssemblyForNode(e1, indent + 1)
+            rhsAsm = generateAssemblyForNode(e2, indent + 1)
         }
 
         s"""
-mov eax, $lhsSlot
-mov ebx, $rhsSlot
+$lhsAsm
+push eax
+
+$rhsAsm
+push eax
+
+pop ebx
+pop eax
 sub eax, ebx
+
 $jmpAsm $trueCase
 
 ${falseCase}:
-mov $resultSlot, ${false}
+mov eax, 0
 jmp $finalCase
 
 ${trueCase}:
-mov $resultSlot, ${true}
-jmp $finalCase
+mov eax, 1
 
 ${finalCase}:
         """
