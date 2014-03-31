@@ -257,7 +257,9 @@ object AbstractSyntaxNode {
     override def children: List[AbstractSyntaxNode] = List(e1) ++ List(e2)
   }
 
-  sealed trait RelationalExpression extends Expression
+  sealed trait RelationalExpression extends Expression {
+    override def symbolName: String = ("RelationalExpression_0x" + hashCode.toHexString)
+  }
   case class EqualExpression(e1: Expression, e2: Expression)  extends RelationalExpression {
     override def children: List[AbstractSyntaxNode] = List(e1) ++ List(e2)
     override def hashCode: Int = scope.hashCode + constantValue.hashCode + slot.hashCode + super.hashCode
@@ -803,6 +805,7 @@ object AbstractSyntaxNode {
   }
   case class WhileStatement(clause: Expression, body: Option[Statement]) extends Statement {
     override def children: List[AbstractSyntaxNode] = List(clause) ++ body.toList
+    override def symbolName: String = ("While_0x" + hashCode.toHexString)
   }
 
   case class ForVariableDeclaration(typeDeclaration: Type,
@@ -816,6 +819,7 @@ object AbstractSyntaxNode {
                           update: Option[StatementExpression],
                           statement: Statement) extends Statement {
     override def children: List[AbstractSyntaxNode] = init.toList ++ check.toList ++ update.toList ++ List(statement)
+    override def symbolName: String = ("For_0x" + hashCode.toHexString)
   }
 
   /*

@@ -369,6 +369,64 @@ idiv ebx
         """
       )
 
+      case r : RelationalExpression => {
+        var jmpAsm:String = ""
+        var lhsSlot:String = ""
+        var rhsSlot:String = ""
+
+        val resultSlot:String = allocateStackSlot(r.slot)
+
+        val falseCase = r.symbolName + "_FALSE"
+        val trueCase = r.symbolName + "_TRUE"
+        val finalCase = r.symbolName + "_FINAL"
+
+        r match {
+          case InstanceOfExpression(expr, refType) => return """nop; TODO"""
+          case EqualExpression(e1, e2) =>
+            jmpAsm = "jz"
+            lhsSlot = allocateStackSlot(e1.slot)
+            rhsSlot = allocateStackSlot(e2.slot)
+          case NotEqualExpression(e1, e2) =>
+            jmpAsm = "jnz"
+            lhsSlot = allocateStackSlot(e1.slot)
+            rhsSlot = allocateStackSlot(e2.slot)
+          case LessThanExpression(e1, e2) =>
+            jmpAsm = "jl"
+            lhsSlot = allocateStackSlot(e1.slot)
+            rhsSlot = allocateStackSlot(e2.slot)
+          case LessEqualExpression(e1, e2) =>
+            jmpAsm = "jle"
+            lhsSlot = allocateStackSlot(e1.slot)
+            rhsSlot = allocateStackSlot(e2.slot)
+          case GreaterThanExpression(e1, e2) =>
+            jmpAsm = "jg"
+            lhsSlot = allocateStackSlot(e1.slot)
+            rhsSlot = allocateStackSlot(e2.slot)
+          case GreaterEqualExpression(e1, e2) =>
+            jmpAsm = "jge"
+            lhsSlot = allocateStackSlot(e1.slot)
+            rhsSlot = allocateStackSlot(e2.slot)
+        }
+
+        s"""
+mov eax, $lhsSlot
+mov ebx, $rhsSlot
+sub eax, ebx
+$jmpAsm $trueCase
+
+${falseCase}:
+mov $resultSlot, ${false}
+jmp $finalCase
+
+${trueCase}:
+mov $resultSlot, ${true}
+jmp $finalCase
+
+${finalCase}:
+        """
+      }
+
+
       case c : ClassCreationPrimary => {
         val env = c.scope.get
 
@@ -430,6 +488,74 @@ idiv ebx
         pop eax
         """
       }
+
+      case w : WhileStatement => {
+        val whileCheckAsm:String = generateAssemblyForNode(w.clause, indent + 1)
+
+        var whileBodyAsm:String =""
+        if (!w.body.isEmpty) {
+          whileBodyAsm = generateAssemblyForNode(w.body.get, indent + 1)
+        }
+
+        val topLabel:String =  w.symbolName + "_TOP"
+        val bottomLabel:String = w.symbolName + "_BOTTOM"
+
+        s"""
+${topLabel}:
+
+; perform the check of the while loop
+$whileCheckAsm
+jz $bottomLabel
+
+$whileBodyAsm
+
+; end of while loop body
+jmp $topLabel
+${bottomLabel}:
+        """
+      }
+
+
+      case f : ForStatement => {
+        var forInitAsm:String = ""
+        var forCheckAsm:String = ""
+        var forUpdateAsm:String = ""
+        var forBodyAsm:String = ""
+
+        val topLabel:String = f.symbolName + "_TOP"
+        val bottomLabel:String = f.symbolName + "_BOTTOM"
+
+        if (!f.init.isEmpty) {
+          forInitAsm = generateAssemblyForNode(f.init.get, indent + 1)
+        }
+
+        if (!f.check.isEmpty) {
+          forCheckAsm = generateAssemblyForNode(f.check.get, indent + 1)
+        }
+
+        if (!f.update.isEmpty) {
+          forUpdateAsm = generateAssemblyForNode(f.update.get, indent + 1)
+        }
+
+        forBodyAsm = generateAssemblyForNode(f.statement, indent + 1)
+
+        s"""
+$forInitAsm
+
+${topLabel}:
+; perform the check of the for loop
+$forCheckAsm
+jz $bottomLabel
+
+$forBodyAsm
+
+; at end of for loop body, do the update
+$forUpdateAsm
+jmp $topLabel
+${bottomLabel}:
+        """
+      }
+
 
       case x => x.children.map(generateAssemblyForNode(_, indent + 1)).filter{_ != ""}.mkString("\n")
     }

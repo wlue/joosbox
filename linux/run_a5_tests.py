@@ -14,6 +14,14 @@ else:
     cwd = (os.getcwd() + "/linux")
 tests = [
     (
+        ["joosbox-compiler/src/test/resources/custom-tests/compiler_while_loop_1.java"],
+        "", 1
+    ),
+    (
+        ["joosbox-compiler/src/test/resources/custom-tests/compiler_while_loop_2.java"],
+        "", 2
+    ),
+    (
         ["joosbox-compiler/src/test/resources/custom-tests/compiler_class_creation_1.java"],
         "", 42
     ),
