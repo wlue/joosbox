@@ -534,6 +534,8 @@ object AbstractSyntaxNode {
     override def symbolName: String = "native"
   }
 
+  sealed trait MethodOrConstructorDeclaration extends AbstractSyntaxNode
+
   sealed abstract class TypeDeclaration(
     val name: TypeName,
     val modifiers: Set[Modifier] = Set.empty[Modifier],
@@ -565,8 +567,8 @@ object AbstractSyntaxNode {
     def runtimeTag: Int = hashCode
 
     //  A list of method declarations, in order, for the generated vtable.
-    def methodsForVtable: Seq[TypeMethodDeclaration] = {
-      val superclassMethods: Seq[TypeMethodDeclaration] = superclass match {
+    def methodsForVtable: Seq[MethodOrConstructorDeclaration] = {
+      val superclassMethods: Seq[MethodOrConstructorDeclaration] = superclass match {
         case Some(c: ClassType) => scope match {
           case Some(scope: ScopeEnvironment) => {
             scope.lookup(EnvironmentLookup.lookupFromName(c.name)) match {
@@ -576,10 +578,10 @@ object AbstractSyntaxNode {
           }
           case _ => throw new SyntaxError("Could not find scope environment to get vtable methods.")
         }
-        case None => Seq.empty[TypeMethodDeclaration]
+        case None => Seq.empty[MethodOrConstructorDeclaration]
       }
 
-      val interfaceMethods: Seq[TypeMethodDeclaration] = scope match {
+      val interfaceMethods: Seq[MethodOrConstructorDeclaration] = scope match {
         case Some(scope: ScopeEnvironment) => {
           interfaces.flatMap(m => {
             scope.lookup(EnvironmentLookup.lookupFromName(m.name)) match {
@@ -592,7 +594,10 @@ object AbstractSyntaxNode {
       }
 
       (
-        body.declarations.collect { case m: MethodDeclaration if !m.isStatic =>  m }
+        body.declarations.collect {
+          case c: ConstructorDeclaration => c
+          case m: MethodDeclaration if !m.isStatic =>  m
+        }
         ++ superclassMethods
         ++ interfaceMethods
       )
@@ -640,7 +645,7 @@ object AbstractSyntaxNode {
 
     override def parentOption: Option[AbstractSyntaxNode] = parent
 
-    def methodsForVtable: Seq[TypeMethodDeclaration] = {
+    def methodsForVtable: Seq[MethodOrConstructorDeclaration] = {
       scope match {
         case Some(scope: ScopeEnvironment) => {
           interfaces.flatMap(m => {
@@ -685,9 +690,18 @@ object AbstractSyntaxNode {
     modifiers: Set[Modifier] = Set.empty[Modifier],
     parameters: Seq[FormalParameter] = Seq.empty[FormalParameter],
     body: Option[Block] = None
-  ) extends ClassBodyDeclaration(name, modifiers) with Referenceable {
+  ) extends ClassBodyDeclaration(name, modifiers) with Referenceable with MethodOrConstructorDeclaration {
     override def children: List[AbstractSyntaxNode] =
       modifiers.toList ++ parameters.toList ++ body.toList
+    override def symbolName: String = {
+      (
+        scope.get.getEnclosingClassNode.get.asInstanceOf[ClassDeclaration].name.niceName
+          + "__constructor__"
+          + name.niceName
+          + parameters.map(_.varType.symbolName).mkString("_")
+          + "_" + modifiers.map(_.symbolName).mkString("_")
+        ).replaceAll("""^\s+(?m)""", "")
+    }
   }
 
   sealed trait TypeMethodDeclaration extends AbstractSyntaxNode {
@@ -706,7 +720,7 @@ object AbstractSyntaxNode {
     memberType: Type,
     parameters: Seq[FormalParameter] = Seq.empty[FormalParameter],
     body: Option[Block] = None
-  ) extends ClassMemberDeclaration(name, modifiers, memberType) with TypeMethodDeclaration with Referenceable {
+  ) extends ClassMemberDeclaration(name, modifiers, memberType) with TypeMethodDeclaration with Referenceable with MethodOrConstructorDeclaration {
     override def children: List[AbstractSyntaxNode] =
       modifiers.toList ++ List(memberType) ++ parameters.toList ++ body.toList
 

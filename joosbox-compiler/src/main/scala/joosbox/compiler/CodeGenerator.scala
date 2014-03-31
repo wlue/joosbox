@@ -150,7 +150,40 @@ SECTION .text
         s"""
 $symbolName:
     push ebp
-    mov ebp, esp   ; reset the stack pointer
+    mov ebp, esp   ; save the stack pointer
+$body
+    mov esp, ebp   ; reset the stack pointer
+    pop ebp
+    ret; end of method $symbolName
+"""
+      }
+
+      case cd: ConstructorDeclaration => {
+        val symbolName = cd.symbolName
+
+        val body: String = cd.body match {
+          case Some(b: Block) => {
+
+            //  Find all of the local variables declared within this method, and
+            //  make room for them at the start of the stack frame.
+            def findLocalVariableDeclarations(b: AbstractSyntaxNode): Seq[StackAllocatedVariable] = b match {
+              case l: LocalVariableDeclaration => Seq(l)
+              case f: ForVariableDeclaration => Seq(f)
+              case x => x.children.flatMap(findLocalVariableDeclarations)
+            }
+
+            val locals: Seq[String] = findLocalVariableDeclarations(b).map(_.symbolName)
+            val localAccessDefinitions = locals.zipWithIndex.map{case (id, i) => s"%define $id [ebp - ${4 * i}]"}.mkString("\n")
+
+            s"sub esp, ${locals.size * 4}\n" + localAccessDefinitions + "\n" + generateAssemblyForNode(b, indent + 1)
+          }
+          case _ => ""
+        }
+
+        s"""
+$symbolName:
+    push ebp
+    mov ebp, esp   ; save the stack pointer
 $body
     mov esp, ebp   ; reset the stack pointer
     pop ebp
