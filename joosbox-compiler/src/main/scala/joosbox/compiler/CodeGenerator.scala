@@ -140,7 +140,7 @@ SECTION .text
             }
 
             val locals: Seq[String] = findLocalVariableDeclarations(b).map(_.symbolName)
-            val localAccessDefinitions = locals.zipWithIndex.map{case (id, i) => s"%define $id [ebp - ${4 * i}]"}.mkString("\n")
+            val localAccessDefinitions = locals.zipWithIndex.map{case (id, i) => s"%define $id [ebp - ${4 * (i + 1)}]"}.mkString("\n")
 
             s"sub esp, ${locals.size * 4}\n" + localAccessDefinitions + "\n" + generateAssemblyForNode(b, indent + 1)
           }
@@ -210,7 +210,10 @@ $body
 """
             }
 
-            pushArguments(m).mkString("\n") + call
+            val pushedArgs = pushArguments(m)
+            pushedArgs.mkString("\n") + call + s"""
+add esp, ${pushedArgs.size * 4} ; remove the "this" and params from the stack
+            """
           }
           case None =>
             throw new SyntaxError("Could not resolve method: " + an)
@@ -431,5 +434,5 @@ $asm
   }
 
   def allocateStackSlot(offset:Integer) : String = s"dword [ebp - ${offset * 4}]"
-  def pushToStackSlot(location:String) : String = s";push $location\n"
+  def pushToStackSlot(location:String) : String = s"push 0 ;;$location\n"
 }
