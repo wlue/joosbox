@@ -201,18 +201,13 @@ $body
             val symbolName: String = declaration.symbolName
             val classSymbolName: String = declaration.scope.get.getEnclosingClassNode.get.symbolName
             val call: String = if (declaration.isStatic) {
-              (
-                ("  " * indent) + s"call $symbolName\n"
-              )
+              s"call $symbolName\n"
             } else {
-              (
-                ("  " * indent) + s"""
+              s"""
   ; todo: where does eax come from?
-  mov eax, [ebx + ObjectVTableOffset]
+  mov eax, [eax + ObjectVTableOffset]
   VMethodCall(eax, $classSymbolName, $symbolName)
-  push eax
 """
-              )
             }
 
             pushArguments(m).mkString("\n") + call
@@ -233,13 +228,12 @@ $body
             val symbolName: String = declaration.symbolName
             val classSymbolName: String = declaration.scope.get.getEnclosingClassNode.get.symbolName
             val call: String = s"""
-  mov eax, [ebx + ObjectVTableOffset]
+  mov eax, [eax + ObjectVTableOffset]
   VMethodCall(eax, $classSymbolName, $symbolName)
-  push eax
 """
             //  Generate the assembly for the primary (pushing it onto the stack)
             //  then pop the primary's result into ebx and call it
-            generateAssemblyForNode(m.primary, indent + 1) + "pop ebx\n" + pushArguments(m).mkString("\n") + call
+            generateAssemblyForNode(m.primary, indent + 1) + pushArguments(m).mkString("\n") + call
           }
           case None =>
             throw new SyntaxError("Could not resolve method: " + an)
@@ -257,33 +251,32 @@ $body
       }
 
       case r: ReturnStatement => {
-        val epilogue = ("  " * indent) + """
+        val expr = r.expression match {
+          case Some(e: Expression) => generateAssemblyForNode(e, indent + 1)
+          case None => ""
+        }
+        expr +  """
     mov esp, ebp   ; reset the stack pointer
     pop ebp
     ret
 """
-        val expr = r.expression match {
-          case Some(e: Expression) => generateAssemblyForNode(e, indent + 1) + "\npop eax\n"
-          case None => ""
-        }
-        expr + epilogue
       }
 
       case l: LocalVariableDeclaration => {
         val exprAsm = generateAssemblyForNode(l.expression, indent + 1)
         s"""
 $exprAsm
-pop eax
 mov ${l.symbolName}, eax
 """
       }
 
+      //  This is a read of an expressionname
       case e: ExpressionName => {
         e.scope.get.lookup(EnvironmentLookup.lookupFromName(e)) match {
-          case Some(l: LocalVariableDeclaration) => s"push dword ${l.symbolName}\n"
-          case Some(f: ForVariableDeclaration) => s"push dword ${f.symbolName}\n"
-          case Some(f: FieldDeclaration) => s"push dword 0; TODO: field declaration lookup\n"
-          case Some(f: FormalParameter) => s"push dword 0; TODO: formal parameter lookup\n"
+          case Some(l: LocalVariableDeclaration) => s"mov eax, ${l.symbolName}\n"
+          case Some(f: ForVariableDeclaration) => s"mov eax, ${f.symbolName}\n"
+          case Some(f: FieldDeclaration) => s"mov eax, 0; TODO: field declaration lookup\n"
+          case Some(f: FormalParameter) => s"mov eax, 0; TODO: formal parameter lookup\n"
 
           //  TODO: Handle the "None" case, which happens if we call array.length or if we can't find a lookup.
           case _ => ""
@@ -293,46 +286,58 @@ mov ${l.symbolName}, eax
         }
       }
 
-      case n: Num => s"push ${n.value}\n"
+      case a: Assignment => {
+        a.leftHandSide match {
+          case f: FieldAccess => ""
+
+          //  This is a write of an expressionname
+          case e: ExpressionName => ""
+
+          case s: SimpleArrayAccess => ""
+
+          case c: ComplexArrayAccess => ""
+
+          case x
+            => throw new SyntaxError("Cannot assign to " + x)
+        }
+      }
+
+      case n: Num => s"mov eax, ${n.value}\n"
       case AddExpression(e1, e2) => (
-        generateAssemblyForNode(e1, indent + 1)
-        + generateAssemblyForNode(e2, indent + 1)
+        generateAssemblyForNode(e1, indent + 1) + "push eax\n"
+        + generateAssemblyForNode(e2, indent + 1) + "push eax\n"
         + """
 pop eax
 pop ebx
 add eax, ebx
-push eax
         """
       )
       case SubtractExpression(e1, e2) => (
-        generateAssemblyForNode(e1, indent + 1)
-        + generateAssemblyForNode(e2, indent + 1)
+        generateAssemblyForNode(e1, indent + 1) + "push eax\n"
+        + generateAssemblyForNode(e2, indent + 1) + "push eax\n"
         + """
 pop ebx
 pop eax
 sub eax, ebx
-push eax
         """
       )
       case MultiplyExpression(e1, e2) => (
-        generateAssemblyForNode(e1, indent + 1)
-        + generateAssemblyForNode(e2, indent + 1)
+        generateAssemblyForNode(e1, indent + 1) + "push eax\n"
+        + generateAssemblyForNode(e2, indent + 1) + "push eax\n"
         + """
 pop eax
 pop edx
 imul edx
-push eax
         """
       )
       case DivideExpression(e1, e2) => (
-        generateAssemblyForNode(e1, indent + 1)
-        + generateAssemblyForNode(e2, indent + 1)
+        generateAssemblyForNode(e1, indent + 1) + "push eax\n"
+        + generateAssemblyForNode(e2, indent + 1) + "push eax\n"
         + """
 pop ebx
 pop eax
 cdq
 idiv ebx
-push eax
         """
       )
 
@@ -386,15 +391,15 @@ push eax
         call __malloc
         push eax ; push the new object onto the stack
         mov dword [eax], $vtableBase
-        $pushedArgs
-        push eax ; push the new object as the first argument to the call
 
+        $pushedArgs
         mov ebx, [eax + ObjectVTableOffset]
         VMethodCall(ebx, $classSymbol, $constructorSymbol)
 
         add esp, ${(pushedArgs.size + 1) * 4} ; remove the "this" and params from the stack
 
         ; the top of the stack now contains the "this" pointer
+        pop eax
         """
       }
 
@@ -409,8 +414,8 @@ $asm
   }
 
 
-  def pushArguments(node:AbstractSyntaxNode) : Seq[String] = {
-    var args : Seq[Expression] = node match {
+  def pushArguments(node:AbstractSyntaxNode, isStatic: Boolean = false) : Seq[String] = {
+    val args : Seq[Expression] = node match {
       case smi: SimpleMethodInvocation => smi.args
       case cmi: ComplexMethodInvocation => cmi.args
       case ccp: ClassCreationPrimary => ccp.args
@@ -418,10 +423,13 @@ $asm
     }
 
     // Go right-to-left for method parameters
-    // TODO: Implicit this parameter
-    args.reverse.map({ a => pushToStackSlot(allocateStackSlot(a.slot)) })
+    if (isStatic) {
+      args.reverse.map({ a => pushToStackSlot(allocateStackSlot(a.slot)) })
+    } else {
+      args.reverse.map({ a => pushToStackSlot(allocateStackSlot(a.slot)) })
+    }
   }
 
   def allocateStackSlot(offset:Integer) : String = s"dword [ebp - ${offset * 4}]"
-  def pushToStackSlot(location:String) : String = s"push $location\n"
+  def pushToStackSlot(location:String) : String = s";push $location\n"
 }
