@@ -30,8 +30,16 @@ class CodeGeneratorSpec extends Specification {
 
     stringToProcess(postCommand).!
 
-    stringToProcess("./main").! must beEqualTo(expectedReturnCode)
-    stringToProcess("./main").!! must beEqualTo(expectedOutput)
+
+
+    // TODO: The following !! call throws an exception if the return code is not 0.
+    // Until this is fixed, we're ignoring expected output if return code != 0.
+    if (expectedReturnCode == 0) {
+      stringToProcess("./main").! must beEqualTo(expectedReturnCode)
+      stringToProcess("./main").!! must beEqualTo(expectedOutput)
+    } else {
+      stringToProcess("./main").! must beEqualTo(expectedReturnCode)
+    }
   }
 
   "Compiler" should {

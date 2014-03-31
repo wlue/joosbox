@@ -195,6 +195,8 @@ $body
         val env = m.scope.get
         val an = m.name
         TypeChecker.resolveMethodName(an, m.args, env) match {
+
+
           case Some(declaration: MethodDeclaration) => {
             val symbolName: String = declaration.symbolName
             val classSymbolName: String = declaration.scope.get.getEnclosingClassNode.get.symbolName
@@ -314,7 +316,8 @@ push eax
 
         def recursiveFields(decl : ClassDeclaration): Set[String] = {
           val fields:Set[String] = decl.body.declarations.filter({
-              case f:FieldDeclaration => !f.isStatic
+              case f:FieldDeclaration if !f.isStatic => true
+              case _ => false
           }).map( f => f.asInstanceOf[FieldDeclaration].name.value.value).toSet
 
           if (!decl.superclass.isEmpty) {
@@ -332,11 +335,18 @@ push eax
           case _ => throw new SyntaxError("Invalid class creation.")
         }
         val constructorTypes: Seq[Type] = TypeChecker.resolvedTypesForArgs(c.args, env)
-        val constructorLookup: EnvironmentLookup =
-        ConstructorLookup(QualifiedName(Seq(c.classType.name.value)), constructorTypes)
-        val constructorDecl:ConstructorDeclaration = env.lookup(constructorLookup) match {
-          case Some(cdecl: ConstructorDeclaration) => cdecl
-          case _ => throw new SyntaxError("Invalid constructor stuff.")
+        val classLookup: EnvironmentLookup = TypeNameLookup(c.classType.fullyQualifiedName)
+        val constructorDecl: ConstructorDeclaration = env.lookup(classLookup) match {
+          case Some(cd: ClassDeclaration) => {
+            val constructorLookup: EnvironmentLookup = ConstructorLookup(c.classType.name.toQualifiedName, constructorTypes)
+            cd.scope.get.lookup(constructorLookup) match {
+              case Some(cdecl: ConstructorDeclaration) => cdecl
+              case _
+                => throw new SyntaxError("Could not find constructor: " + c.classType.name.niceName)
+            }
+          }
+          case _
+            => throw new SyntaxError("Could not find class declaration for " + classLookup)
         }
 
         val fields = recursiveFields(classDecl)
