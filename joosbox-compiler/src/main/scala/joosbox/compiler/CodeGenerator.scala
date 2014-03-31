@@ -1,6 +1,6 @@
 package joosbox.compiler
 
-import joosbox.parser.{EnvironmentLookup, AbstractSyntaxNode, ScopeEnvironment, MethodLookup}
+import joosbox.parser.{AbstractSyntaxNode, ScopeEnvironment, EnvironmentLookup, MethodLookup, TypeNameLookup, ConstructorLookup}
 import joosbox.parser.AbstractSyntaxNode._
 import joosbox.lexer.{SyntaxError, InputString}
 
@@ -275,6 +275,56 @@ idiv ebx
 push eax
         """
       )
+
+      case c : ClassCreationPrimary => {
+        val env = c.scope.get
+
+        def recursiveFields(decl : ClassDeclaration): Set[String] = {
+          val fields:Set[String] = decl.body.declarations.filter({
+              case f:FieldDeclaration => !f.isStatic
+          }).map( f => f.asInstanceOf[FieldDeclaration].name.value.value).toSet
+
+          if (!decl.superclass.isEmpty) {
+            fields ++ env.lookup(TypeNameLookup(decl.superclass.get.name.toQualifiedName)) match {
+              case sdecl: ClassDeclaration => recursiveFields(sdecl)
+              case _ => Set.empty[String]
+            }
+          } else {
+            fields
+          }
+        }
+
+        val classDecl:ClassDeclaration = env.lookup(TypeNameLookup(c.classType.name.toQualifiedName)) match {
+          case Some(cdecl: ClassDeclaration) => cdecl
+          case _ => throw new SyntaxError("Invalid class creation.")
+        }
+        val constructorTypes: Seq[Type] = TypeChecker.resolvedTypesForArgs(c.args, env)
+        val constructorLookup: EnvironmentLookup =
+        ConstructorLookup(QualifiedName(Seq(c.classType.name.value)), constructorTypes)
+        val constructorDecl:ConstructorDeclaration = env.lookup(constructorLookup) match {
+          case Some(cdecl: ConstructorDeclaration) => cdecl
+          case _ => throw new SyntaxError("Invalid constructor stuff.")
+        }
+
+        val fields = recursiveFields(classDecl)
+        val allocSize = (fields.size + 1)
+        val vtableBase = s"VTableBase(${classDecl.symbolName})"
+        val pushedArgs = pushArguments(c).mkString("\n")
+        val classSymbol = classDecl.symbolName
+        val constructorSymbol = constructorDecl.symbolName
+        val returnSlot = allocateStackSlot(c.slot)
+
+        s"""
+        mov eax, ${allocSize * 4}
+        call __malloc
+        mov dword [eax], $vtableBase
+        $pushedArgs
+        push eax
+        VMethodCall(eax, $classSymbol, $constructorSymbol)
+        mov $returnSlot, eax
+        """
+      }
+
 
       case x => x.children.map(generateAssemblyForNode(_, indent + 1)).filter{_ != ""}.mkString("\n")
     }
