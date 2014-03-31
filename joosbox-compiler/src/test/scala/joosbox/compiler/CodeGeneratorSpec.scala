@@ -57,6 +57,13 @@ class CodeGeneratorSpec extends Specification {
           "", 11
         )
       }
+
+      "while 1" in {
+        linkAndTest(
+          Seq("joosbox-compiler/src/test/resources/custom-tests/compiler_while_loop_1.java"),
+          "", 1
+        )
+      }
     }
 
     "pass marmoset tests for assignment 5" in {

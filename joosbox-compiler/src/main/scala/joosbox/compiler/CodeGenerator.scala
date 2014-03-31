@@ -396,7 +396,7 @@ idiv ebx
         mov ebx, [eax + ObjectVTableOffset]
         VMethodCall(ebx, $classSymbol, $constructorSymbol)
 
-        add esp, ${(pushedArgs.size + 1) * 4} ; remove the "this" and params from the stack
+        add esp, ${pushedArgs.size * 4} ; remove the "this" and params from the stack
 
         ; the top of the stack now contains the "this" pointer
         pop eax
@@ -426,7 +426,7 @@ $asm
     if (isStatic) {
       args.reverse.map({ a => pushToStackSlot(allocateStackSlot(a.slot)) })
     } else {
-      args.reverse.map({ a => pushToStackSlot(allocateStackSlot(a.slot)) })
+      args.reverse.map({ a => pushToStackSlot(allocateStackSlot(a.slot)) }) ++ Seq("push eax; 'this' pointer\n")
     }
   }
 

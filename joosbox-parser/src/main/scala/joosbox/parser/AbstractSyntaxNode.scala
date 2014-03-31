@@ -2,6 +2,7 @@ package joosbox.parser
 
 import joosbox.lexer.InputString
 import joosbox.lexer.SyntaxError
+import scala.runtime.ScalaRunTime
 
 sealed trait AbstractSyntaxNode {
   def parentOption: Option[AbstractSyntaxNode] = None
@@ -15,6 +16,9 @@ sealed trait AbstractSyntaxNode {
   var scope: Option[Environment] = None
   var constantValue : Option[AbstractSyntaxNode.ConstantValue] = None
   var slot: Integer = 0
+
+  def astHashCode: Int = scope.hashCode + constantValue.hashCode + slot.hashCode
+  override def hashCode: Int = super.hashCode
 }
 
 object AbstractSyntaxNode {
@@ -88,6 +92,7 @@ object AbstractSyntaxNode {
   case class Identifier(value: InputString) extends AbstractSyntaxNode
 
   case class PackageName(value: InputString, prefix: Option[PackageName] = None) extends Name {
+    override def hashCode: Int = value.hashCode + prefix.hashCode
     def niceName = value.value
     def isAmbiguous: Boolean = false
     def toSeq: Seq[InputString] = prefix match {
@@ -101,6 +106,7 @@ object AbstractSyntaxNode {
     }
   }
   case class TypeName(value: InputString, prefix: Option[PackageName] = None) extends Name {
+    override def hashCode: Int = value.hashCode + prefix.hashCode
     def niceName = value.value
     def isAmbiguous: Boolean = false
     def toSeq: Seq[InputString] = prefix match {
@@ -114,6 +120,7 @@ object AbstractSyntaxNode {
     }
   }
   case class ExpressionName(value: InputString, prefix: Option[Name] = None) extends Name {
+    override def hashCode: Int = value.hashCode + prefix.hashCode
     def niceName = value.value
     override def symbolName = value.value
     def isAmbiguous: Boolean = prefix match {
@@ -131,6 +138,7 @@ object AbstractSyntaxNode {
     }
   }
   case class MethodName(value: InputString, prefix: Option[Name] = None) extends Name {
+    override def hashCode: Int = value.hashCode + prefix.hashCode
     def niceName = value.value
     def isAmbiguous: Boolean = prefix match {
       case Some(n: Name) => n.isAmbiguous
@@ -148,6 +156,7 @@ object AbstractSyntaxNode {
   }
 
   case class AmbiguousName(value: InputString, prefix: Option[Name] = None) extends Name {
+    override def hashCode: Int = value.hashCode + prefix.hashCode
     def niceName = value.value
     def isAmbiguous: Boolean = true
     def toSeq: Seq[InputString] = prefix match {
@@ -251,24 +260,31 @@ object AbstractSyntaxNode {
   sealed trait RelationalExpression extends Expression
   case class EqualExpression(e1: Expression, e2: Expression)  extends RelationalExpression {
     override def children: List[AbstractSyntaxNode] = List(e1) ++ List(e2)
+    override def hashCode: Int = scope.hashCode + constantValue.hashCode + slot.hashCode + super.hashCode
   }
   case class NotEqualExpression(e1: Expression, e2: Expression)  extends RelationalExpression {
     override def children: List[AbstractSyntaxNode] = List(e1) ++ List(e2)
+    override def hashCode: Int = scope.hashCode + constantValue.hashCode + slot.hashCode + super.hashCode
   }
   case class LessThanExpression(e1: Expression, e2: Expression)  extends RelationalExpression {
     override def children: List[AbstractSyntaxNode] = List(e1) ++ List(e2)
+    override def hashCode: Int = scope.hashCode + constantValue.hashCode + slot.hashCode + super.hashCode
   }
   case class LessEqualExpression(e1: Expression, e2: Expression)  extends RelationalExpression {
     override def children: List[AbstractSyntaxNode] = List(e1) ++ List(e2)
+    override def hashCode: Int = scope.hashCode + constantValue.hashCode + slot.hashCode + super.hashCode
   }
   case class GreaterThanExpression(e1: Expression, e2: Expression)  extends RelationalExpression {
     override def children: List[AbstractSyntaxNode] = List(e1) ++ List(e2)
+    override def hashCode: Int = scope.hashCode + constantValue.hashCode + slot.hashCode + super.hashCode
   }
   case class GreaterEqualExpression(e1: Expression, e2: Expression)  extends RelationalExpression {
     override def children: List[AbstractSyntaxNode] = List(e1) ++ List(e2)
+    override def hashCode: Int = scope.hashCode + constantValue.hashCode + slot.hashCode + super.hashCode
   }
   case class InstanceOfExpression(e: Expression, t: ReferenceType)  extends RelationalExpression {
     override def children: List[AbstractSyntaxNode] = List(e) ++ List(t)
+    override def hashCode: Int = scope.hashCode + constantValue.hashCode + slot.hashCode + super.hashCode
   }
 
   sealed trait ArithmeticExpression extends Expression {
@@ -374,6 +390,8 @@ object AbstractSyntaxNode {
 
   //  This no longer inherits from Name, as it's really just a helper atm.
   case class QualifiedName(value: Seq[InputString]) extends AbstractSyntaxNode {
+    override def hashCode: Int = value.hashCode
+
     def niceName: String = value.map(_.value).mkString(".")
     def isAmbiguous: Boolean = false
     def prefixesIncludingSelf: Seq[QualifiedName] = Seq(this) ++ prefixes
