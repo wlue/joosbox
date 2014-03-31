@@ -162,6 +162,8 @@ SECTION .text
           }
           case None =>
             throw new SyntaxError("Could not resolve method: " + an)
+          case _ =>
+            throw new SyntaxError("Method resolved to an abstract method declaration: " + an)
         }
 
       }

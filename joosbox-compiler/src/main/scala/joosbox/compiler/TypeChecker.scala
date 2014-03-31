@@ -831,7 +831,7 @@ object TypeChecker {
                         throw new SyntaxError("No argument-free super constructor found for class: " + c.name.niceName)
                     }
                   }
-                  case None
+                  case _
                     => throw new SyntaxError("Could not find superclass node from constructor: " + node)
                 }
               }
@@ -896,7 +896,7 @@ object TypeChecker {
           }
         }
 
-        val invocations: List[AbstractSyntaxNode] = methodInvocationSearch(node)
+        val invocations: List[MethodInvocation] = methodInvocationSearch(node)
         invocations.foreach {
           case invocation: ComplexMethodInvocation => {
             val complexType: Type = resolvePrimary(invocation.primary, env)

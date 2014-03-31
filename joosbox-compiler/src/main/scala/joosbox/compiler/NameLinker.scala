@@ -132,6 +132,8 @@ object NameLinker {
                       case None => throw new SyntaxError("Unknown name " + identifier)
                     }
                   }
+                  case _ =>
+                    throw new SyntaxError("Type name lookup resolved to non-type: " + identifier)
                 }
               }
             }
