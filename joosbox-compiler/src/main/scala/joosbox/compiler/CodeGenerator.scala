@@ -210,11 +210,36 @@ $body
   ; todo: where does eax come from?
   mov eax, [ebx + ObjectVTableOffset]
   VMethodCall(eax, $classSymbolName, $symbolName)
+  push eax
 """
               )
             }
 
             pushArguments(m).mkString("\n") + call
+          }
+          case None =>
+            throw new SyntaxError("Could not resolve method: " + an)
+          case _ =>
+            throw new SyntaxError("Method resolved to an abstract method declaration: " + an)
+        }
+
+      }
+
+      case m: ComplexMethodInvocation => {
+        val env = m.scope.get
+        val an = m.name
+        TypeChecker.resolveMethodName(an, m.args, env) match {
+          case Some(declaration: MethodDeclaration) => {
+            val symbolName: String = declaration.symbolName
+            val classSymbolName: String = declaration.scope.get.getEnclosingClassNode.get.symbolName
+            val call: String = s"""
+  mov eax, [ebx + ObjectVTableOffset]
+  VMethodCall(eax, $classSymbolName, $symbolName)
+  push eax
+"""
+            //  Generate the assembly for the primary (pushing it onto the stack)
+            //  then pop the primary's result into ebx and call it
+            generateAssemblyForNode(m.primary, indent + 1) + "pop ebx\n" + pushArguments(m).mkString("\n") + call
           }
           case None =>
             throw new SyntaxError("Could not resolve method: " + an)
@@ -355,19 +380,23 @@ push eax
         val pushedArgs = pushArguments(c).mkString("\n")
         val classSymbol = classDecl.symbolName
         val constructorSymbol = constructorDecl.symbolName
-        val returnSlot = allocateStackSlot(c.slot)
 
         s"""
         mov eax, ${allocSize * 4}
         call __malloc
+        push eax ; push the new object onto the stack
         mov dword [eax], $vtableBase
         $pushedArgs
-        push eax
-        VMethodCall(eax, $classSymbol, $constructorSymbol)
-        mov $returnSlot, eax
+        push eax ; push the new object as the first argument to the call
+
+        mov ebx, [eax + ObjectVTableOffset]
+        VMethodCall(ebx, $classSymbol, $constructorSymbol)
+
+        add esp, ${(pushedArgs.size + 1) * 4} ; remove the "this" and params from the stack
+
+        ; the top of the stack now contains the "this" pointer
         """
       }
-
 
       case x => x.children.map(generateAssemblyForNode(_, indent + 1)).filter{_ != ""}.mkString("\n")
     }
