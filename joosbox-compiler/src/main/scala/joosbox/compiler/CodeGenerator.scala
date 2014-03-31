@@ -1,6 +1,6 @@
 package joosbox.compiler
 
-import joosbox.parser.{AbstractSyntaxNode, ScopeEnvironment, MethodLookup}
+import joosbox.parser.{EnvironmentLookup, AbstractSyntaxNode, ScopeEnvironment, MethodLookup}
 import joosbox.parser.AbstractSyntaxNode._
 import joosbox.lexer.{SyntaxError, InputString}
 
@@ -142,15 +142,19 @@ SECTION .text
             val locals: Seq[String] = findLocalVariableDeclarations(b).map(_.symbolName)
             val localAccessDefinitions = locals.zipWithIndex.map{case (id, i) => s"%define $id [ebp - ${4 * i}]"}.mkString("\n")
 
-            localAccessDefinitions + "\n" + generateAssemblyForNode(b, indent + 1)
+            s"sub esp, ${locals.size * 4}\n" + localAccessDefinitions + "\n" + generateAssemblyForNode(b, indent + 1)
           }
           case _ => ""
         }
 
         s"""
 $symbolName:
+    push ebp
+    mov ebp, esp   ; reset the stack pointer
 $body
-  ret ; end of method $symbolName
+    mov esp, ebp   ; reset the stack pointer
+    pop ebp
+    ret; end of method $symbolName
 """
       }
 
@@ -186,21 +190,10 @@ $body
       }
 
       case b: Block => {
-        val substatements = b
-          .statements
-          .map(generateAssemblyForNode(_, indent + 1))
-          .filter{_ != ""}
-          .mkString("\n")
-
-          s"""
-    push ebp
-    mov ebp, esp   ; save the stack pointer
-
-    $substatements
-
-    mov esp, ebp   ; reset the stack pointer
-    pop ebp
-  """
+        b.statements
+         .map(generateAssemblyForNode(_, indent + 1))
+         .filter{_ != ""}
+         .mkString("\n")
       }
 
       case r: ReturnStatement => {
@@ -214,6 +207,30 @@ $body
           case None => ""
         }
         expr + epilogue
+      }
+
+      case l: LocalVariableDeclaration => {
+        val exprAsm = generateAssemblyForNode(l.expression, indent + 1)
+        s"""
+$exprAsm
+pop eax
+mov ${l.symbolName}, eax
+"""
+      }
+
+      case e: ExpressionName => {
+        e.scope.get.lookup(EnvironmentLookup.lookupFromName(e)) match {
+          case Some(l: LocalVariableDeclaration) => s"push dword ${l.symbolName}\n"
+          case Some(f: ForVariableDeclaration) => s"push dword ${f.symbolName}\n"
+          case Some(f: FieldDeclaration) => s"push dword 0; TODO: field declaration lookup\n"
+          case Some(f: FormalParameter) => s"push dword 0; TODO: formal parameter lookup\n"
+
+          //  TODO: Handle the "None" case, which happens if we call array.length or if we can't find a lookup.
+          case _ => ""
+
+          case x =>
+            throw new SyntaxError("Environment lookup for name " + e.niceName + " resulted in unknown node " + x)
+        }
       }
 
       case n: Num => s"push ${n.value}\n"
