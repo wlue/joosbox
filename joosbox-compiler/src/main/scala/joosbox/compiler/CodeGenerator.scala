@@ -293,8 +293,19 @@ mov ${l.symbolName}, eax
         a.leftHandSide match {
           case f: FieldAccess => ""
 
-          //  This is a write of an expressionname
-          case e: ExpressionName => ""
+          //  This is a write to an expressionname
+          case e: ExpressionName => e.scope.get.lookup(EnvironmentLookup.lookupFromName(e)) match {
+            case Some(l: LocalVariableDeclaration) => s"mov ${l.symbolName}, eax\n"
+            case Some(f: ForVariableDeclaration) => s"mov ${f.symbolName}, eax\n"
+            case Some(f: FieldDeclaration) => s"mov eax, 0; TODO: field declaration assignment\n"
+            case Some(f: FormalParameter) => s"mov eax, 0; TODO: formal parameter assignment\n"
+
+            //  TODO: Handle the "None" case, which happens if we call array.length or if we can't find a lookup.
+            case _ => ""
+
+            case x =>
+              throw new SyntaxError("Environment lookup for name " + e.niceName + " resulted in unknown node " + x)
+          }
 
           case s: SimpleArrayAccess => ""
 
