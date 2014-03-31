@@ -494,6 +494,37 @@ ${finalCase}:
         """
       }
 
+      case i : IfStatement => {
+        val clauseAsm:String = generateAssemblyForNode(i.clause, indent + 1)
+        var trueAsm:String = ""
+        var falseAsm:String = ""
+
+        if (!i.trueCase.isEmpty) {
+          trueAsm = generateAssemblyForNode(i.trueCase.get, indent + 1)
+        }
+        if (!i.elseCase.isEmpty) {
+          falseAsm = generateAssemblyForNode(i.elseCase.get, indent + 1)
+        }
+
+        val trueLabel:String = i.symbolName + "_TRUE"
+        val falseLabel:String = i.symbolName + "_FALSE"
+        val finalLabel:String = i.symbolName + "_FINAL"
+
+        s"""
+$clauseAsm
+jz ${falseLabel}
+
+$(trueLabel}:
+$trueAsm
+jmp $finalLabel
+
+$(falseLabel}:
+$falseAsm
+
+$(finalLabel}:
+        """
+      }
+
       case w : WhileStatement => {
         val whileCheckAsm:String = generateAssemblyForNode(w.clause, indent + 1)
 
@@ -519,7 +550,6 @@ jmp $topLabel
 ${bottomLabel}:
         """
       }
-
 
       case f : ForStatement => {
         var forInitAsm:String = ""

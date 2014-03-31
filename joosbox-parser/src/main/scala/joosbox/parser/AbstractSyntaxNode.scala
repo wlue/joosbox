@@ -802,6 +802,7 @@ object AbstractSyntaxNode {
 
   case class IfStatement(clause: Expression, trueCase: Option[Statement], elseCase: Option[Statement] = None) extends Statement  {
     override def children: List[AbstractSyntaxNode] = List(clause) ++ trueCase.toList ++ elseCase.toList
+    override def symbolName: String = ("If_0x" + hashCode.toHexString)
   }
   case class WhileStatement(clause: Expression, body: Option[Statement]) extends Statement {
     override def children: List[AbstractSyntaxNode] = List(clause) ++ body.toList
