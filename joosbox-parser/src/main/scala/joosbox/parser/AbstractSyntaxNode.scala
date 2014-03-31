@@ -115,6 +115,7 @@ object AbstractSyntaxNode {
   }
   case class ExpressionName(value: InputString, prefix: Option[Name] = None) extends Name {
     def niceName = value.value
+    override def symbolName = value.value
     def isAmbiguous: Boolean = prefix match {
       case Some(n: Name) => n.isAmbiguous
       case None => false
@@ -735,12 +736,16 @@ object AbstractSyntaxNode {
 
   sealed trait BlockStatement extends AbstractSyntaxNode
 
+  sealed trait StackAllocatedVariable extends AbstractSyntaxNode
+
   case class LocalVariableDeclaration(
     name: ExpressionName,
     memberType: Type,
     expression: Expression
-  ) extends BlockStatement with Referenceable {
+  ) extends BlockStatement with Referenceable with StackAllocatedVariable {
     override def children: List[AbstractSyntaxNode] = List(memberType) ++ List(expression)
+    override def symbolName: String = ("LocalVariableDeclaration_" + name.symbolName + "_0x" + hashCode.toHexString).replaceAll("""^\s+(?m)""", "")
+
   }
 
   case class Block(statements: Seq[BlockStatement] = Seq.empty[BlockStatement]) extends Statement {
@@ -770,8 +775,9 @@ object AbstractSyntaxNode {
 
   case class ForVariableDeclaration(typeDeclaration: Type,
                                     variableName: ExpressionName,
-                                    expression: Expression) extends ForInit with Referenceable {
+                                    expression: Expression) extends ForInit with Referenceable with StackAllocatedVariable {
     override def children: List[AbstractSyntaxNode] = List(typeDeclaration, variableName, expression)
+    override def symbolName: String = ("ForVariableDeclaration_" + variableName.symbolName + "_0x" + hashCode.toHexString).replaceAll("""^\s+(?m)""", "")
   }
   case class ForStatement(init: Option[ForInit],
                           check: Option[Expression],

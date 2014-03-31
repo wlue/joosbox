@@ -127,14 +127,31 @@ SECTION .text
 
       case md: MethodDeclaration => {
         val symbolName = md.symbolName
+
         val body: String = md.body match {
-          case Some(b: Block) => generateAssemblyForNode(b, indent + 1)
-          case None => ("  " * indent) + "ret\n"
+          case Some(b: Block) => {
+
+            //  Find all of the local variables declared within this method, and
+            //  make room for them at the start of the stack frame.
+            def findLocalVariableDeclarations(b: AbstractSyntaxNode): Seq[StackAllocatedVariable] = b match {
+              case l: LocalVariableDeclaration => Seq(l)
+              case f: ForVariableDeclaration => Seq(f)
+              case x => x.children.flatMap(findLocalVariableDeclarations)
+            }
+
+            val locals: Seq[String] = findLocalVariableDeclarations(b).map(_.symbolName)
+            val localAccessDefinitions = locals.zipWithIndex.map{case (id, i) => s"%define $id [ebp - ${4 * i}]"}.mkString("\n")
+
+            localAccessDefinitions + "\n" + generateAssemblyForNode(b, indent + 1)
+          }
+          case _ => ""
         }
 
-        (
-          ("  " * indent) + s"$symbolName:\n" + body
-        )
+        s"""
+$symbolName:
+$body
+  ret ; end of method $symbolName
+"""
       }
 
       case m: SimpleMethodInvocation => {
