@@ -382,7 +382,7 @@ idiv ebx
         val fields = recursiveFields(classDecl)
         val allocSize = (fields.size + 1)
         val vtableBase = s"VTableBase(${classDecl.symbolName})"
-        val pushedArgs = pushArguments(c).mkString("\n")
+        val pushedArgs = pushArguments(c)
         val classSymbol = classDecl.symbolName
         val constructorSymbol = constructorDecl.symbolName
 
@@ -392,7 +392,7 @@ idiv ebx
         push eax ; push the new object onto the stack
         mov dword [eax], $vtableBase
 
-        $pushedArgs
+        ${pushedArgs.mkString("\n")}
         mov ebx, [eax + ObjectVTableOffset]
         VMethodCall(ebx, $classSymbol, $constructorSymbol)
 
