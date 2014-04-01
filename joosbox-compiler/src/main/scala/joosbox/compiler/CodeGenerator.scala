@@ -7,6 +7,38 @@ import joosbox.lexer.{SyntaxError, InputString}
 /**
  * Created by psobot on 3/22/14.
  */
+
+object NASMDefines {
+  //  The version of NASM used by Marmoset does not support label concatenation properly.
+  //  We'll do it in our own compiler, instead.
+
+  def VTableBase(s: String): String = s"vtable_class_${s}"
+  def VMethodLabel(klass: String, method: String): String = s"vtable_${klass}_method__${method}"
+  def VMethodCall(reg: String, klass: String, method: String): String =
+    s"call [${reg} + (vtable_${klass}_method__${method} - vtable_class_${klass})]"
+
+  def VTableInstanceOfRef(klass: String): String =
+    s"vtable_class_${klass}_instanceof: dd instanceof_class_${klass}"
+  def VTableNestedInstanceOfRef(klass: String, superklass: String): String =
+    s"vtable_class_${klass}_${superklass}_instanceof: dd instanceof_class_${klass}"
+
+  def ClassTagForClass(klass: String): String = s"${klass}_class_tag"
+
+  def VTableClassHeader(klass: String): String =
+    s"vtable_class_${klass}: dd ${klass}_class_tag"
+  def VTableNestedClassHeader(klass: String, superklass: String): String =
+    s"vtable_class_${klass}_${superklass}: dd ${klass}_class_tag"
+
+  def VTableMethodDef(klass: String, method: String, impl: String): String =
+    s"vtable_${klass}_method__${method}: dd ${impl}"
+  def VTableNestedMethodDef(klass: String, superklass: String, method: String, impl: String): String =
+    s"vtable_${klass}_method__${method}_${superklass}: dd ${impl}"
+
+  def InstanceOfHeader(klass: String): String = s"instanceof_class_${klass}:"
+  def InstanceOfEntry(otherclass: String): String = s"dd ${otherclass}_class_tag"
+  def InstanceOfEnd: String = "dd 0x0"
+}
+
 object CodeGenerator {
 
   lazy val preamble: String =
@@ -88,7 +120,7 @@ initFields:
         //  Generate vtable for this class
         val symbolName = cd.symbolName
         val runtimeTag = cd.runtimeTag.toHexString
-        val instanceOfEntries = cd.instanceOfList.map(x => s"InstanceOfEntry($x)").mkString("\n")
+        val instanceOfEntries = cd.instanceOfList.map(x => NASMDefines.InstanceOfEntry(x)).mkString("\n")
         val methodsForVtable = cd.methodsForVtable
 
         val requiredClassTags = methodsForVtable
@@ -99,7 +131,7 @@ initFields:
           .mkString("\n")
 
         val methodsForTopLevel = methodsForVtable.map(
-          x => s"VTableMethodDef($symbolName, ${x.symbolName}, ${x.symbolName})"
+          x => NASMDefines.VTableMethodDef(symbolName, x.symbolName, x.symbolName)
         ).mkString("\n")
 
         s"""
@@ -110,14 +142,14 @@ SECTION .data
 %define ${symbolName}_class_tag 0x$runtimeTag
 
 ; instanceof array for $symbolName
-InstanceOfHeader($symbolName)
+${NASMDefines.InstanceOfHeader(symbolName)}
 $instanceOfEntries
-InstanceOfEnd
+${NASMDefines.InstanceOfEnd}
 ; end of instanceof array for $symbolName
 
 ; beginning of vtable for $symbolName
-VTableClassHeader($symbolName)
-VTableInstanceOfRef($symbolName)
+${NASMDefines.VTableClassHeader(symbolName)}
+${NASMDefines.VTableInstanceOfRef(symbolName)}
 $methodsForTopLevel
 ; end of vtable for $symbolName
 
@@ -237,7 +269,7 @@ $body
               s"""
   $loadInvokeTargetIntoEAX
   mov eax, [eax + ObjectVTableOffset]
-  VMethodCall(eax, $classSymbolName, $symbolName)
+  ${NASMDefines.VMethodCall("eax", classSymbolName, symbolName)}
 """
             }
 
@@ -263,7 +295,7 @@ add esp, ${pushedArgs.size * 4} ; remove the "this" and params from the stack
             val classSymbolName: String = declaration.scope.get.getEnclosingClassNode.get.symbolName
             val call: String = s"""
   mov eax, [eax + ObjectVTableOffset]
-  VMethodCall(eax, $classSymbolName, $symbolName)
+  ${NASMDefines.VMethodCall("eax", classSymbolName, symbolName)}
 """
             //  Generate the assembly for the primary (pushing it onto the stack)
             //  then pop the primary's result into ebx and call it
@@ -578,6 +610,7 @@ and eax, ebx
           case Some(cdecl: ClassDeclaration) => cdecl
           case _ => throw new SyntaxError("Invalid class creation.")
         }
+
         val constructorTypes: Seq[Type] = TypeChecker.resolvedTypesForArgs(c.args, env)
         val classLookup: EnvironmentLookup = TypeNameLookup(c.classType.fullyQualifiedName)
         val constructorDecl: ConstructorDeclaration = env.lookup(classLookup) match {
@@ -595,7 +628,7 @@ and eax, ebx
 
         val fields = recursiveFields(classDecl)
         val allocSize = (fields.size + 1)
-        val vtableBase = s"VTableBase(${classDecl.symbolName})"
+        val vtableBase = NASMDefines.VTableBase(classDecl.symbolName)
         val pushedArgs = pushArguments(c)
         val classSymbol = classDecl.symbolName
         val constructorSymbol = constructorDecl.symbolName
@@ -608,7 +641,7 @@ and eax, ebx
 
         ${pushedArgs.mkString("\n")}
         mov ebx, [eax + ObjectVTableOffset]
-        VMethodCall(ebx, $classSymbol, $constructorSymbol)
+        ${NASMDefines.VMethodCall("ebx", classSymbol, constructorSymbol)}
 
         add esp, ${pushedArgs.size * 4} ; remove the "this" and params from the stack
 

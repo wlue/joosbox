@@ -2,31 +2,6 @@ extern __malloc
 extern __debexit
 extern __exception
 
-
-%define VTableBase(x) vtable_class_%+x
-%define VMethodLabel(class, method) vtable_%+class%+_method__%+method
-;   This call takes a pointer to a vtable in reg and calls the appropriate method.
-;   We should usually keep the "this" pointer in EBX for simplicity.
-%define VMethodCall(reg, class, method) call [reg + (vtable_%+class%+_method__%+method - vtable_class_%+class)]
-
-%define VTableClassRef(class) vtable_class_%+class
-%define VTableNestedClassRef(class, super) vtable_class_%+class%+_%+super
-
-%define VTableInstanceOfRef(class) vtable_class_%+class%+_instanceof: dd instanceof_class_%+class
-%define VTableNestedInstanceOfRef(class, super) vtable_class_%+class%+_%+super%+_instanceof: dd instanceof_class_%+class
-
-%define ClassTagForClass(class) class%+_class_tag
-
-%define VTableClassHeader(class) vtable_class_%+class: dd class%+_class_tag
-%define VTableNestedClassHeader(class, super) vtable_class_%+class%+_%+super: dd class%+_class_tag
-
-%define VTableMethodDef(class, method, impl) vtable_%+class%+_method__%+method: dd impl
-%define VTableNestedMethodDef(class, super, method, impl) vtable_%+class%+_method__%+method%+_%+super: dd impl
-
-%define InstanceOfHeader(class) instanceof_class_%+class:
-%define InstanceOfEntry(otherclass) dd otherclass%+_class_tag
-%define InstanceOfEnd dd 0x0
-
 %define VTableClassTagOffset 0
 %define VTableInstanceOfPointerOffset 4
 
@@ -48,7 +23,7 @@ extern __exception
   cmp dword[esi], 0
   je %%_no_match
 
-  cmp dword[esi], ClassTagForClass(%3)
+  cmp dword[esi], %3_class_tag
   je %%_found_instance_match
 
   add esi, 4
@@ -58,7 +33,7 @@ extern __exception
   call __exception
 
 %%_found_instance_match:
-  add %1, (VTableNestedClassRef(%2, %3) - VTableClassRef(%2))
+  add %1, (vtable_class_%2_%3 - vtable_class_%2)
   pop esi
 
 %endmacro
@@ -79,7 +54,7 @@ extern __exception
   cmp dword[esi], 0
   je %%_no_match
 
-  cmp dword[esi], ClassTagForClass(%3)
+  cmp dword[esi], %3_class_tag
   je %%_found_instance_match
 
   add esi, 4
@@ -90,7 +65,7 @@ extern __exception
   call __debexit
 
 %%_found_instance_match:
-  sub %1, (VTableNestedClassRef(%3, %2) - VTableClassRef(%3))
+  sub %1, (vtable_class_%3_%2 - vtable_class_%3)
   pop esi
 
 %endmacro
