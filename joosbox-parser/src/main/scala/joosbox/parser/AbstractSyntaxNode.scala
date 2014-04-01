@@ -751,6 +751,7 @@ object AbstractSyntaxNode {
 
     def niceName: String
     def isStatic: Boolean = modifiers.contains(StaticKeyword())
+    def isProtected: Boolean = modifiers.contains(ProtectedKeyword())
     def symbolName: String
   }
 
@@ -786,6 +787,7 @@ object AbstractSyntaxNode {
       modifiers.toList ++ List(memberType) ++ expression.toList
 
     def isStatic: Boolean = modifiers.contains(StaticKeyword())
+    def isProtected: Boolean = modifiers.contains(ProtectedKeyword())
   }
 
   sealed trait BlockStatement extends AbstractSyntaxNode

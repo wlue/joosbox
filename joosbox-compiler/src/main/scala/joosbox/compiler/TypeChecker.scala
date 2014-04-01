@@ -263,6 +263,138 @@ object TypeChecker {
     }
   }
 
+  def checkFieldProtection(name: ExpressionName, field: FieldDeclaration)(env: Environment) {
+    if (!field.isProtected) {
+      return
+    }
+
+    val scope: Environment = field.scope.get
+    val (thatPackage: PackageDeclaration, thatType: TypeDeclaration) = scope.compilationScope.get.node match {
+      case Some(c: CompilationUnit) => (c.packageDeclaration.getOrElse(PackageDeclaration.implicitPackage), c.typeDeclaration)
+      case _ => throw new Exception("Reference in complex method invocation has no compilation unit.")
+    }
+
+    val (thisPackage: PackageDeclaration, thisType: TypeDeclaration) = env.compilationScope.get.node match {
+      case Some(c: CompilationUnit) => (c.packageDeclaration.getOrElse(PackageDeclaration.implicitPackage), c.typeDeclaration)
+      case _ => throw new Exception("Method invocation context has no compilation unit.")
+    }
+
+    if (thatPackage == thisPackage) {
+      return
+    }
+
+    val expressionType: TypeDeclaration = name.prefix match {
+      case Some(prefix) => {
+        val namePrefix = NameLinker.disambiguateName(prefix)(env)
+        resolveType(namePrefix) match {
+          case None => throw new Exception("Could not resolve prefix of method name: " + name)
+          case Some(tpe) => {
+            val typeName = tpe match {
+              case ClassType(name) => name
+              case InterfaceType(name) => name
+              case _ => throw new Exception("Not a class or interface type.");
+            }
+
+            env.lookup(TypeNameLookup(typeName.toQualifiedName)) match {
+              case Some(x: TypeDeclaration) => x
+              case _ => throw new Exception("Could not find type declaration for " + typeName)
+            }
+          }
+        }
+      }
+      case _ => thisType
+    }
+
+    checkProtectionAccess(thatType, thisType, expressionType, Right(field), field.isStatic)
+  }
+
+  def checkMethodProtection(name: MethodName, method: TypeMethodDeclaration)(env: Environment) {
+    if (!method.isProtected) {
+      return
+    }
+
+    val scope: Environment = method.scope.get
+    val (thatPackage: PackageDeclaration, thatType: TypeDeclaration) = scope.compilationScope.get.node match {
+      case Some(c: CompilationUnit) => (c.packageDeclaration.getOrElse(PackageDeclaration.implicitPackage), c.typeDeclaration)
+      case _ => throw new Exception("Reference in complex method invocation has no compilation unit.")
+    }
+
+    val (thisPackage: PackageDeclaration, thisType: TypeDeclaration) = env.compilationScope.get.node match {
+      case Some(c: CompilationUnit) => (c.packageDeclaration.getOrElse(PackageDeclaration.implicitPackage), c.typeDeclaration)
+      case _ => throw new Exception("Method invocation context has no compilation unit.")
+    }
+
+    if (thatPackage == thisPackage) {
+      return
+    }
+
+    val expressionType: TypeDeclaration = name.prefix match {
+      case Some(prefix) => {
+        val namePrefix = NameLinker.disambiguateName(prefix)(env)
+        resolveType(namePrefix) match {
+          case None => throw new Exception("Could not resolve prefix of method name: " + name)
+          case Some(tpe) => {
+            val typeName = tpe match {
+              case ClassType(name) => name
+              case InterfaceType(name) => name
+              case _ => throw new Exception("Not a class or interface type.");
+            }
+
+            env.lookup(TypeNameLookup(typeName.toQualifiedName)) match {
+              case Some(x: TypeDeclaration) => x
+              case _ => throw new Exception("Could not find type declaration for " + typeName)
+            }
+          }
+        }
+      }
+      case _ => thisType
+    }
+
+    checkProtectionAccess(thatType, thisType, expressionType, Left(method), method.isStatic)
+  }
+
+  def checkProtectionAccess(
+    thatType: TypeDeclaration,
+    thisType: TypeDeclaration,
+    expressionType: TypeDeclaration,
+    methodOrField: Either[TypeMethodDeclaration, FieldDeclaration],
+    static: Boolean
+  ) = {
+    val (niceType, niceName) = methodOrField match {
+      case Left(method) => ("method", method.niceName)
+      case Right(field) => ("field", field.name.niceName)
+    }
+
+    (thatType, thisType, expressionType) match {
+      case (thatClass: ClassDeclaration, thisClass: ClassDeclaration, expressionClass: ClassDeclaration) => {
+        if (static) {
+          // In static methods, expressionClass is identical to thatClass.
+          // If the class that is invoked is a subclass, then
+          if (thatClass.isSameOrSubclassOf(thisClass)) {
+            throw new SyntaxError(s"Static protected ${niceType} ${niceName} defined " +
+              s"in ${thatType.name.niceName} invoked from class " +
+              s"${thisType.name.niceName} is defined in a subclass.")
+          }
+        } else {
+          // When a method is invoked on an object, we check if the caller's class (thisClass) is
+          // Access is permitted if and only if the type of E is S or a subclass of S.
+          if (expressionClass.isSameOrSubclassOf(thisClass)) {
+            if (thatClass.isSameOrSubclassOf(expressionClass)) {
+              throw new SyntaxError(s"Protected ${niceType} ${niceName} defined " +
+                s"in ${thatType.name.niceName} invoked from class " +
+                s"${thisType.name.niceName} is defined in a subclass.")
+            }
+          } else {
+            throw new SyntaxError(s"Protected ${niceType} ${niceName} defined " +
+              s"invoked on ${expressionType.name.niceName} from class " +
+              s"${thisType.name.niceName} is not a subclass.")
+          }
+        }
+      }
+      case _ => {}
+    }
+  }
+
   def compatibleTypes(type1: Type, type2: Type): Boolean = (type1, type2) match {
     // Exact types are compatible.
     case (one, two) if one == two => true
@@ -728,13 +860,15 @@ object TypeChecker {
   def check(node: AbstractSyntaxNode) {
     val env = node.scope match {
       case Some(x) => x
-      case None =>
-        throw new SyntaxError("Node has no scope: " + node)
+      case _ => throw new SyntaxError("Node has no scope: " + node)
     }
+
     node match {
+
       // Check that no bitwise operations occur.
       case AndExpression(e1, e2) => TypeChecker.checkBooleanExpression(e1, e2)
       case OrExpression(e1, e2) => TypeChecker.checkBooleanExpression(e1, e2)
+
       // Check that no bitwise operations occur.
       case BinAndExpression(e1, e2) => TypeChecker.checkBooleanExpression(e1, e2)
       case BinOrExpression(e1, e2) => TypeChecker.checkBooleanExpression(e1, e2)
@@ -751,7 +885,6 @@ object TypeChecker {
         }
         validateTypeConvertability(lType, resolveType(rhs))
       }
-
 
       case LocalVariableDeclaration(_, lhs: Type, rhs: Expression) =>
         validateTypeConvertability(Some(lhs), resolveType(rhs))
@@ -787,75 +920,8 @@ object TypeChecker {
       // accessed as non-static are actually non-static.
       case SimpleMethodInvocation(name, args) => {
         resolveMethodName(name, args, env) match {
-          case None => throw new SyntaxError("Could not resolve method: " + name)
-          case Some(method: TypeMethodDeclaration) => {
-            val scope: Environment = method.scope.get
-
-            if (method.modifiers.contains(ProtectedKeyword())) {
-              val (thatPackage: PackageDeclaration, thatType: TypeDeclaration) = scope.compilationScope.get.node match {
-                case Some(c: CompilationUnit) => (c.packageDeclaration.getOrElse(PackageDeclaration.implicitPackage), c.typeDeclaration)
-                case _ => throw new Exception("Reference in complex method invocation has no compilation unit.")
-              }
-
-              val (thisPackage: PackageDeclaration, thisType: TypeDeclaration) = env.compilationScope.get.node match {
-                case Some(c: CompilationUnit) => (c.packageDeclaration.getOrElse(PackageDeclaration.implicitPackage), c.typeDeclaration)
-                case _ => throw new Exception("Method invocation context has no compilation unit.")
-              }
-
-              if (thatPackage != thisPackage) {
-                val expressionType: TypeDeclaration = name.prefix match {
-                  case Some(prefix) => {
-                    val namePrefix = NameLinker.disambiguateName(prefix)(env)
-                    resolveType(namePrefix) match {
-                      case None => throw new Exception("Could not resolve prefix of method name: " + name)
-                      case Some(tpe) => {
-                        val typeName = tpe match {
-                          case ClassType(name) => name
-                          case InterfaceType(name) => name
-                          case _ => throw new Exception("Not a class or interface type.");
-                        }
-
-                        env.lookup(TypeNameLookup(typeName.toQualifiedName)) match {
-                          case Some(x: TypeDeclaration) => x
-                          case _ => throw new Exception("Could not find type declaration for " + typeName)
-                        }
-                      }
-                    }
-                  }
-                  case _ => thisType
-                }
-
-                (thatType, thisType, expressionType) match {
-                  case (thatClass: ClassDeclaration, thisClass: ClassDeclaration, expressionClass: ClassDeclaration) => {
-                    if (method.modifiers.contains(StaticKeyword())) {
-                      // In static methods, expressionClass is identical to thatClass.
-                      // If the class that is invoked is a subclass, then
-                      if (thatClass.isSameOrSubclassOf(thisClass)) {
-                        throw new SyntaxError(s"Static protected method ${method.niceName} defined " +
-                          s"in ${thatType.name.niceName} invoked from class " +
-                          s"${thisType.name.niceName} is defined in a subclass.")
-                      }
-                    } else {
-                      // When a method is invoked on an object, we check if the caller's class (thisClass) is
-                      // Access is permitted if and only if the type of E is S or a subclass of S.
-                      if (expressionClass.isSameOrSubclassOf(thisClass)) {
-                        if (thatClass.isSameOrSubclassOf(expressionClass)) {
-                          throw new SyntaxError(s"Protected method ${method.niceName} defined " +
-                            s"in ${thatType.name.niceName} invoked from class " +
-                            s"${thisType.name.niceName} is defined in a subclass.")
-                        }
-                      } else {
-                        throw new SyntaxError(s"Protected method ${method.niceName} defined " +
-                          s"invoked on ${expressionType.name.niceName} from class " +
-                          s"${thisType.name.niceName} is not a subclass.")
-                      }
-                    }
-                  }
-                  case _ => {}
-                }
-              }
-            }
-          }
+          case Some(method: TypeMethodDeclaration) => checkMethodProtection(name, method)(env)
+          case _ => throw new SyntaxError("Could not resolve method: " + name)
         }
       }
 
@@ -876,31 +942,21 @@ object TypeChecker {
         }
 
         node.scope.get.getEnclosingClassNode match {
-          case Some(c: ClassDeclaration) => {
-            c.superclass match {
-              case Some(st: ClassType) => {
-                st.node match {
-                  case Some(superclass: ClassDeclaration) => {
-                    val defaultSuperConstructorLookup
-                      = ConstructorLookup(superclass.name.toQualifiedName, Seq.empty[Type])
-                    superclass.scope.get.lookup(defaultSuperConstructorLookup) match {
-
-                      //  A super constructor exists with no arguments. We good.
-                      case Some(_) => Unit
-
-                      case None =>
-                        throw new SyntaxError("No argument-free super constructor found for class: " + c.name.niceName)
-                    }
-                  }
-                  case _
-                    => throw new SyntaxError("Could not find superclass node from constructor: " + node)
+          case Some(c: ClassDeclaration) => c.superclass match {
+            case Some(st: ClassType) => st.node match {
+              case Some(superclass: ClassDeclaration) => {
+                val lookup = ConstructorLookup(superclass.name.toQualifiedName, Seq.empty[Type])
+                superclass.scope.get.lookup(lookup) match {
+                  case None => throw new SyntaxError("No argument-free super constructor found for class: " + c.name.niceName)
+                  // A super constructor exists with no arguments. We good.
+                  case _ => {}
                 }
               }
-              case None => Unit
+              case _ => throw new SyntaxError("Could not find superclass node from constructor: " + node)
             }
+            case _ => {}
           }
-          case _
-            => throw new SyntaxError("Could not find ClassDeclaration from constructor to validate super constructor: " + node)
+          case _ => throw new SyntaxError("Could not find ClassDeclaration from constructor to validate super constructor: " + node)
         }
       }
 
@@ -959,9 +1015,7 @@ object TypeChecker {
 
         val invocations: List[MethodInvocation] = methodInvocationSearch(node)
         invocations.foreach {
-          case invocation: ComplexMethodInvocation => {
-            val complexType: Type = resolvePrimary(invocation.primary, env)
-          }
+          case invocation: ComplexMethodInvocation => resolvePrimary(invocation.primary, env)
           case invocation: SimpleMethodInvocation => {
             val env = invocation.scope.get
 
@@ -996,9 +1050,7 @@ object TypeChecker {
       case LogicalNotExpression(e1) if promotedTypeOption(resolveType(e1)) != Some(BooleanKeyword()) =>
         throw new SyntaxError("Complement operator (!) must be invoked on booleans only.")
 
-      case relational: RelationalExpression => {
-        resolveType(relational)
-      }
+      case relational: RelationalExpression => resolveType(relational)
 
       case arithmetic: ArithmeticExpression => arithmetic match {
         case a: AddExpression => TypeChecker.validateAddExpression(a)
@@ -1025,12 +1077,14 @@ object TypeChecker {
           throw new SyntaxError("Can't find constructor matching arguments: " + className.niceName + "(" + types.mkString(",") + ")")
         }
       }
+
       case a: ArrayCreationPrimary => {
         resolveType(a.dimExpr) match {
           case  Some(_:NumericType) => Unit
           case _ => throw new SyntaxError("Array index must have numeric type.")
         }
       }
+
       case f: ForStatement => {
         if (!f.check.isEmpty) {
           resolveType(f.check.get) match {
@@ -1042,6 +1096,7 @@ object TypeChecker {
 
       case _ => {}
     }
+
     node.children.foreach { node => check(node) }
   }
 }
