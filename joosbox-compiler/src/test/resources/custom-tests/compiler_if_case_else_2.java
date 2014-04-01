@@ -7,6 +7,5 @@ public class compiler_if_case_else_2 {
       } else {
         return 2;
       }
-      return 2;
     }
 }

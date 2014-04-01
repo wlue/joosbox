@@ -420,14 +420,14 @@ sub eax, ebx
 
 $jmpAsm $trueCase
 
-${falseCase}:
+$falseCase:
 mov eax, 0
 jmp $finalCase
 
-${trueCase}:
+$trueCase:
 mov eax, 1
 
-${finalCase}:
+$finalCase:
         """
       }
 
@@ -512,16 +512,17 @@ ${finalCase}:
 
         s"""
 $clauseAsm
-jz ${falseLabel}
+sub eax, 0
+jz $falseLabel
 
-$(trueLabel}:
+$trueLabel:
 $trueAsm
 jmp $finalLabel
 
-$(falseLabel}:
+$falseLabel:
 $falseAsm
 
-$(finalLabel}:
+$finalLabel:
         """
       }
 
@@ -537,17 +538,18 @@ $(finalLabel}:
         val bottomLabel:String = w.symbolName + "_BOTTOM"
 
         s"""
-${topLabel}:
+$topLabel:
 
 ; perform the check of the while loop
 $whileCheckAsm
+sub eax, 0
 jz $bottomLabel
 
 $whileBodyAsm
 
 ; end of while loop body
 jmp $topLabel
-${bottomLabel}:
+$bottomLabel:
         """
       }
 
@@ -577,9 +579,10 @@ ${bottomLabel}:
         s"""
 $forInitAsm
 
-${topLabel}:
+$topLabel:
 ; perform the check of the for loop
 $forCheckAsm
+sub eax, 0
 jz $bottomLabel
 
 $forBodyAsm
@@ -587,7 +590,7 @@ $forBodyAsm
 ; at end of for loop body, do the update
 $forUpdateAsm
 jmp $topLabel
-${bottomLabel}:
+$bottomLabel:
         """
       }
 
