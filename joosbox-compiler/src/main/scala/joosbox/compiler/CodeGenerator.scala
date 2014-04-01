@@ -417,16 +417,29 @@ pop edx
 imul edx
         """
       )
-      case DivideExpression(e1, e2) => (
-        generateAssemblyForNode(e1, indent + 1) + "push eax\n"
-        + generateAssemblyForNode(e2, indent + 1) + "push eax\n"
-        + """
+      case d : DivideExpression => {
+        val checkLabel:String = d.symbolName + "_DIV0_CHECK"
+        val lhsAsm:String = generateAssemblyForNode(d.e1, indent + 1)
+        val rhsAsm:String = generateAssemblyForNode(d.e2, indent + 1)
+
+        s"""
+$lhsAsm
+push eax
+$rhsAsm
+push eax
+
 pop ebx
 pop eax
+
+sub ebx, 0
+jne $checkLabel
+call __exception
+$checkLabel:
+
 cdq
 idiv ebx
         """
-      )
+      }
 
       case r : RelationalExpression => {
         var jmpAsm:String = ""

@@ -304,6 +304,7 @@ object AbstractSyntaxNode {
   }
   case class DivideExpression(e1: Expression, e2: Expression) extends ArithmeticExpression {
     override def children: List[AbstractSyntaxNode] = List(e1) ++ List(e2)
+    override def symbolName: String = ("DivideExpression_0x" + hashCode.toHexString)
   }
   case class ModExpression(e1: Expression, e2: Expression) extends ArithmeticExpression {
     override def children: List[AbstractSyntaxNode] = List(e1) ++ List(e2)
