@@ -3,25 +3,25 @@ extern __debexit
 extern __exception
 
 
-%define VTableBase(x) (vtable_class_ %+ x)
-%define VMethodLabel(class, method) vtable_%+class%+ _method__%+ method
+%define VTableBase(x) vtable_class_%+x
+%define VMethodLabel(class, method) vtable_%+class%+_method__%+method
 ;   This call takes a pointer to a vtable in reg and calls the appropriate method.
 ;   We should usually keep the "this" pointer in EBX for simplicity.
-%define VMethodCall(reg, class, method) call [reg + (VMethodLabel(class, method) - VTableBase(class))]
+%define VMethodCall(reg, class, method) call [reg + (vtable_%+class%+_method__%+method - vtable_class_%+class)]
 
 %define VTableClassRef(class) vtable_class_%+class
 %define VTableNestedClassRef(class, super) vtable_class_%+class%+_%+super
 
-%define VTableInstanceOfRef(class) VTableClassRef(class)%+_instanceof: dd instanceof_class_%+class
-%define VTableNestedInstanceOfRef(class, super) VTableNestedClassRef(class, super)%+_instanceof: dd instanceof_class_%+class
+%define VTableInstanceOfRef(class) vtable_class_%+class%+_instanceof: dd instanceof_class_%+class
+%define VTableNestedInstanceOfRef(class, super) vtable_class_%+class%+_%+super%+_instanceof: dd instanceof_class_%+class
 
-%define ClassTagForClass(class)  class %+ _class_tag
+%define ClassTagForClass(class) class%+_class_tag
 
-%define VTableClassHeader(class) VTableClassRef(class): dd ClassTagForClass(class)
-%define VTableNestedClassHeader(class, super) VTableNestedClassRef(class, super): dd ClassTagForClass(class)
+%define VTableClassHeader(class) vtable_class_%+class: dd class%+_class_tag
+%define VTableNestedClassHeader(class, super) vtable_class_%+class%+_%+super: dd class%+_class_tag
 
-%define VTableMethodDef(class, method, impl) VMethodLabel(class, method): dd impl
-%define VTableNestedMethodDef(class, super, method, impl) VMethodLabel(class, method)%+_%+super: dd impl
+%define VTableMethodDef(class, method, impl) vtable_%+class%+_method__%+method: dd impl
+%define VTableNestedMethodDef(class, super, method, impl) vtable_%+class%+_method__%+method%+_%+super: dd impl
 
 %define InstanceOfHeader(class) instanceof_class_%+class:
 %define InstanceOfEntry(otherclass) dd otherclass%+_class_tag

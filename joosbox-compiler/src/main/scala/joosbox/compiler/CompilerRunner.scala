@@ -14,9 +14,9 @@ object CompilerRunner {
         case se: SyntaxError =>
           System.err.println(se)
           System.exit(42)
-        /*case matche: MatchError =>
+        case matche: MatchError =>
           System.err.println("Got unexpected MatchError (probably improperly implemented syntax): " + matche)
-          System.exit(42)*/
+          System.exit(42)
         case noel: java.util.NoSuchElementException =>
           System.err.println("Got unexpected NoSuchElementException (probably improperly implemented syntax): " + noel)
           System.exit(42)
