@@ -790,29 +790,68 @@ object TypeChecker {
           case None => throw new SyntaxError("Could not resolve method: " + name)
           case Some(method: TypeMethodDeclaration) => {
             val scope: Environment = method.scope.get
-            val (thatPackage: PackageDeclaration, thatType: TypeDeclaration) = scope.compilationScope.get.node match {
-              case Some(c: CompilationUnit) => (c.packageDeclaration.getOrElse(PackageDeclaration.implicitPackage), c.typeDeclaration)
-              case _ => throw new Exception("Reference in complex method invocation has no compilation unit.")
-            }
-
-            val (thisPackage: PackageDeclaration, thisType: TypeDeclaration) = env.compilationScope.get.node match {
-              case Some(c: CompilationUnit) => (c.packageDeclaration.getOrElse(PackageDeclaration.implicitPackage), c.typeDeclaration)
-              case _ => throw new Exception("Method invocation context has no compilation unit.")
-            }
 
             if (method.modifiers.contains(ProtectedKeyword())) {
-              (thatPackage, thisPackage) match {
-                case (a, b) if a == b => {}
-                case _ => {
-                  (thatType, thisType) match {
-                    case (thatClass: ClassDeclaration, thisClass: ClassDeclaration) => {
-                      if (!thisClass.isSameOrSubclass(thatClass)) {
-                        throw new SyntaxError("Protected keyword accessed from different package, and not a subtype.")
+              val (thatPackage: PackageDeclaration, thatType: TypeDeclaration) = scope.compilationScope.get.node match {
+                case Some(c: CompilationUnit) => (c.packageDeclaration.getOrElse(PackageDeclaration.implicitPackage), c.typeDeclaration)
+                case _ => throw new Exception("Reference in complex method invocation has no compilation unit.")
+              }
+
+              val (thisPackage: PackageDeclaration, thisType: TypeDeclaration) = env.compilationScope.get.node match {
+                case Some(c: CompilationUnit) => (c.packageDeclaration.getOrElse(PackageDeclaration.implicitPackage), c.typeDeclaration)
+                case _ => throw new Exception("Method invocation context has no compilation unit.")
+              }
+
+              if (thatPackage != thisPackage) {
+                val expressionType: TypeDeclaration = name.prefix match {
+                  case Some(prefix) => {
+                    val namePrefix = NameLinker.disambiguateName(prefix)(env)
+                    resolveType(namePrefix) match {
+                      case None => throw new Exception("Could not resolve prefix of method name: " + name)
+                      case Some(tpe) => {
+                        val typeName = tpe match {
+                          case ClassType(name) => name
+                          case InterfaceType(name) => name
+                          case _ => throw new Exception("Not a class or interface type.");
+                        }
+
+                        env.lookup(TypeNameLookup(typeName.toQualifiedName)) match {
+                          case Some(x: TypeDeclaration) => x
+                          case _ => throw new Exception("Could not find type declaration for " + typeName)
+                        }
                       }
                     }
-                    case _ => {}
                   }
+                  case _ => thisType
+                }
 
+                (thatType, thisType, expressionType) match {
+                  case (thatClass: ClassDeclaration, thisClass: ClassDeclaration, expressionClass: ClassDeclaration) => {
+                    if (method.modifiers.contains(StaticKeyword())) {
+                      // In static methods, expressionClass is identical to thatClass.
+                      // If the class that is invoked is a subclass, then
+                      if (thatClass.isSameOrSubclassOf(thisClass)) {
+                        throw new SyntaxError(s"Static protected method ${method.niceName} defined " +
+                          s"in ${thatType.name.niceName} invoked from class " +
+                          s"${thisType.name.niceName} is defined in a subclass.")
+                      }
+                    } else {
+                      // When a method is invoked on an object, we check if the caller's class (thisClass) is
+                      // Access is permitted if and only if the type of E is S or a subclass of S.
+                      if (expressionClass.isSameOrSubclassOf(thisClass)) {
+                        if (thatClass.isSameOrSubclassOf(expressionClass)) {
+                          throw new SyntaxError(s"Protected method ${method.niceName} defined " +
+                            s"in ${thatType.name.niceName} invoked from class " +
+                            s"${thisType.name.niceName} is defined in a subclass.")
+                        }
+                      } else {
+                        throw new SyntaxError(s"Protected method ${method.niceName} defined " +
+                          s"invoked on ${expressionType.name.niceName} from class " +
+                          s"${thisType.name.niceName} is not a subclass.")
+                      }
+                    }
+                  }
+                  case _ => {}
                 }
               }
             }

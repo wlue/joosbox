@@ -590,7 +590,7 @@ object AbstractSyntaxNode {
 
     def runtimeTag: Int = hashCode
 
-    def isSameOrSubclass(decl: ClassDeclaration): Boolean = decl match {
+    def isSameOrSubclassOf(decl: ClassDeclaration): Boolean = decl match {
       // The class declarations are identical.
       case d if d == this => true
       case _ => superclass match {
@@ -599,7 +599,7 @@ object AbstractSyntaxNode {
         case Some(classType: ClassType) => {
           // Search scope for the superclass by name to get class declaration reference.
           decl.scope.get.lookup(EnvironmentLookup.lookupFromName(classType.name)) match {
-            case Some(superDecl: ClassDeclaration) => superDecl.isSameOrSubclass(decl)
+            case Some(superDecl: ClassDeclaration) => superDecl.isSameOrSubclassOf(decl)
             case _ => throw new SyntaxError("Could not resolve superclass in scope.")
           }
         }
