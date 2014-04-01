@@ -788,7 +788,35 @@ object TypeChecker {
       case SimpleMethodInvocation(name, args) => {
         resolveMethodName(name, args, env) match {
           case None => throw new SyntaxError("Could not resolve method: " + name)
-          case _ => {}
+          case Some(method: TypeMethodDeclaration) => {
+            val scope: Environment = method.scope.get
+            val (thatPackage: PackageDeclaration, thatType: TypeDeclaration) = scope.compilationScope.get.node match {
+              case Some(c: CompilationUnit) => (c.packageDeclaration.getOrElse(PackageDeclaration.implicitPackage), c.typeDeclaration)
+              case _ => throw new Exception("Reference in complex method invocation has no compilation unit.")
+            }
+
+            val (thisPackage: PackageDeclaration, thisType: TypeDeclaration) = env.compilationScope.get.node match {
+              case Some(c: CompilationUnit) => (c.packageDeclaration.getOrElse(PackageDeclaration.implicitPackage), c.typeDeclaration)
+              case _ => throw new Exception("Method invocation context has no compilation unit.")
+            }
+
+            if (method.modifiers.contains(ProtectedKeyword())) {
+              (thatPackage, thisPackage) match {
+                case (a, b) if a == b => {}
+                case _ => {
+                  (thatType, thisType) match {
+                    case (thatClass: ClassDeclaration, thisClass: ClassDeclaration) => {
+                      if (!thisClass.isSameOrSubclass(thatClass)) {
+                        throw new SyntaxError("Protected keyword accessed from different package, and not a subtype.")
+                      }
+                    }
+                    case _ => {}
+                  }
+
+                }
+              }
+            }
+          }
         }
       }
 
@@ -796,13 +824,7 @@ object TypeChecker {
         val scope: Environment = resolvePrimaryAndFindScope(ref, env)
         resolveMethodName(name, args, scope) match {
           case None => throw new SyntaxError("Could not resolve method: " + name)
-          case Some(method: TypeMethodDeclaration) => {
-//            val refType = scope.compilationScope.get.node match {
-//              case Some(c: CompilationUnit) => c.typeDeclaration
-//              case _ => throw new Exception("Reference in complex method invocation has no compilation unit.")
-//            }
-//            val thisEnv = env.compilationScope
-          }
+          case _ => {}
         }
       }
 

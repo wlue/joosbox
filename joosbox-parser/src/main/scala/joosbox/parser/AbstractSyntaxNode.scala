@@ -80,6 +80,9 @@ object AbstractSyntaxNode {
       typeDeclaration.fullyQualifiedName.get.toQualifiedName.value.map(_.value).mkString("")
   }
 
+  object PackageDeclaration {
+    val implicitPackage = PackageDeclaration(PackageName(InputString("")))
+  }
   case class PackageDeclaration(name: PackageName) extends AbstractSyntaxNode
 
   sealed trait ImportDeclaration extends AbstractSyntaxNode {
@@ -587,6 +590,22 @@ object AbstractSyntaxNode {
 
     def runtimeTag: Int = hashCode
 
+    def isSameOrSubclass(decl: ClassDeclaration): Boolean = decl match {
+      // The class declarations are identical.
+      case d if d == this => true
+      case _ => superclass match {
+        // No superclass, can't be a superclass.
+        case None => false
+        case Some(classType: ClassType) => {
+          // Search scope for the superclass by name to get class declaration reference.
+          decl.scope.get.lookup(EnvironmentLookup.lookupFromName(classType.name)) match {
+            case Some(superDecl: ClassDeclaration) => superDecl.isSameOrSubclass(decl)
+            case _ => throw new SyntaxError("Could not resolve superclass in scope.")
+          }
+        }
+      }
+    }
+
     //  A list of method declarations, in order, for the generated vtable.
     def methodsForVtable: Seq[MethodOrConstructorDeclaration] = {
       val superclassMethods: Seq[MethodOrConstructorDeclaration] = superclass match {
@@ -869,7 +888,7 @@ object AbstractSyntaxNode {
           decl.parent = Some(cu)
           Seq(cu)
         }
-        case Seq() => throw new SyntaxError("must define a class or interface in a file.")
+        case Seq() => throw new SyntaxError("Must define a class or interface in a file.")
         case _ => throw new SyntaxError("Cannot define more than one class or interface in a file.")
       }
 
@@ -880,7 +899,7 @@ object AbstractSyntaxNode {
       Seq(PackageDeclaration(children.collectFirst { case x: QualifiedName => x.toPackageName }.get))
     }
 
-    case i: ParseNodes.SingleTypeImportDeclaration   => {
+    case i: ParseNodes.SingleTypeImportDeclaration => {
       val children: Seq[AbstractSyntaxNode] = i.children.flatMap(recursive(_))
       Seq(SingleTypeImportDeclaration(children.collectFirst { case x: QualifiedName => x.toTypeName }.get))
     }
@@ -889,7 +908,6 @@ object AbstractSyntaxNode {
       val children: Seq[AbstractSyntaxNode] = i.children.flatMap(recursive(_))
       Seq(TypeImportOnDemandDeclaration(children.collectFirst { case x: QualifiedName => x.toPackageName }.get))
     }
-
 
     case c: ParseNodes.ClassDeclaration => {
       val children: Seq[AbstractSyntaxNode] = c.children.flatMap(recursive(_))
@@ -900,10 +918,11 @@ object AbstractSyntaxNode {
       val interfaces: Seq[InterfaceType] = children.collect { case x: InterfaceType => x }.toSeq
       val body: ClassBody = children.collectFirst { case x: ClassBody => x }.get
 
-      //  Enforce "A class cannot be both abstract and final."
+      // Enforce "A class cannot be both abstract and final."
       if (modifiers.collectFirst{case AbstractKeyword() => true}.isDefined && modifiers.collectFirst{case FinalKeyword() => true}.isDefined) {
         throw new SyntaxError("Class " + name.value + " cannot be both abstract and final.")
       }
+
       // Enforce: No package private classes
       if (modifiers.collectFirst{case PublicKeyword() => true}.isEmpty && modifiers.collectFirst{case ProtectedKeyword() => true}.isEmpty) {
         throw new SyntaxError("Class " + name.value + " cannot be package private.")

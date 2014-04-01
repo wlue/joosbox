@@ -75,7 +75,7 @@ sealed trait Environment {
   }
 
   def compilationScope: Option[Environment] = parent match {
-    case Some(root: RootEnvironment) => Some(root)
+    case Some(root: RootEnvironment) => Some(this)
     case Some(env: Environment) => env.compilationScope
     case _ => None
   }
