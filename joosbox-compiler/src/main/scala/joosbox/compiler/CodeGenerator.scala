@@ -195,16 +195,27 @@ $body
         val env = m.scope.get
         val an = m.name
         TypeChecker.resolveMethodName(an, m.args, env) match {
-
-
           case Some(declaration: MethodDeclaration) => {
+            //  TODO: Need to lookup what the prefix of this method declaration is.
+            //  If it's not static, then load the expressionName that is its prefix into the
+
             val symbolName: String = declaration.symbolName
             val classSymbolName: String = declaration.scope.get.getEnclosingClassNode.get.symbolName
             val call: String = if (declaration.isStatic) {
               s"call $symbolName\n"
             } else {
+              println("Calling simpleMethodInvocation on expression (?) " + an.prefix)
+              val loadInvokeTargetIntoEAX = an.prefix match {
+                case None => "mov eax, 0xcafebabe; TODO: load the 'this' pointer of this method"
+                case Some(an: AmbiguousName) => {
+                  NameLinker.disambiguateName(an)(env) match {
+                    case e: ExpressionName => generateAssemblyForNode(e, indent + 1)
+                  }
+                }
+              }
+
               s"""
-  ; todo: where does eax come from?
+  $loadInvokeTargetIntoEAX
   mov eax, [eax + ObjectVTableOffset]
   VMethodCall(eax, $classSymbolName, $symbolName)
 """
@@ -278,8 +289,8 @@ mov ${l.symbolName}, eax
         e.scope.get.lookup(EnvironmentLookup.lookupFromName(e)) match {
           case Some(l: LocalVariableDeclaration) => s"mov eax, ${l.symbolName}\n"
           case Some(f: ForVariableDeclaration) => s"mov eax, ${f.symbolName}\n"
-          case Some(f: FieldDeclaration) => s"mov eax, 0; TODO: field declaration lookup\n"
-          case Some(f: FormalParameter) => s"mov eax, 0; TODO: formal parameter lookup\n"
+          case Some(f: FieldDeclaration) => s"mov eax, 0xcafecafe; TODO: field declaration lookup\n"
+          case Some(f: FormalParameter) => s"mov eax, 0xdeadcafe; TODO: formal parameter lookup\n"
 
           //  TODO: Handle the "None" case, which happens if we call array.length or if we can't find a lookup.
           case _ => ""
@@ -317,6 +328,10 @@ mov ${l.symbolName}, eax
       }
 
       case n: Num => s"mov eax, ${n.value}\n"
+
+      case _: FalseLiteral => s"mov eax, 0\n"
+      case _: TrueLiteral => s"mov eax, 1\n"
+
       case AddExpression(e1, e2) => (
         generateAssemblyForNode(e1, indent + 1) + "push eax\n"
         + generateAssemblyForNode(e2, indent + 1) + "push eax\n"

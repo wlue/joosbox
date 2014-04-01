@@ -67,7 +67,12 @@ class CodeGeneratorSpec extends Specification {
     }
 
     "pass marmoset tests for assignment 5" in {
-      true
+      "J1_1_Instanceof_OfAdditiveExpression.java" in {
+        linkAndTest(
+          Seq("joosbox-compiler/src/test/resources/marmoset-tests/a5/J1_1_Instanceof_OfAdditiveExpression.java"),
+          "", 123
+        )
+      }
     }
   }
 }
