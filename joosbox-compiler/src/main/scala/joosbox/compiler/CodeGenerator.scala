@@ -452,6 +452,102 @@ $finalCase:
         """
       }
 
+      case NegatedExpression(expr) =>
+        generateAssemblyForNode(expr, indent + 1) +
+        """
+neg eax
+        """
+
+      case LogicalNotExpression(expr) =>
+        generateAssemblyForNode(expr, indent + 1) +
+        """
+not eax
+        """
+
+      case c : ConditionalExpression => {
+        val lhsAsm:String = generateAssemblyForNode(c.e1, indent + 1)
+        val rhsAsm:String = generateAssemblyForNode(c.e2, indent + 1)
+
+        val falseLabel:String = c.symbolName + "_FALSE"
+        val trueLabel:String = c.symbolName + "_TRUE"
+        val finalLabel:String = c.symbolName + "_FINAL"
+
+        c match {
+          case _:OrExpression =>
+            s"""
+$lhsAsm
+sub eax, 0
+jnz $trueLabel
+
+$rhsAsm
+sub eax, 0
+jnz $trueLabel
+
+mov eax, 0
+jmp $finalLabel
+
+$trueLabel:
+mov eax, 1
+
+$finalLabel:
+            """
+          case _:AndExpression =>
+            s"""
+$lhsAsm
+sub eax, 0
+jz $falseLabel
+
+$rhsAsm
+sub eax, 0
+jz $falseLabel
+
+mov eax, 1
+jmp $finalLabel
+
+$falseLabel:
+mov eax, 0
+
+$finalLabel:
+            """
+          case _:BinOrExpression =>
+            s"""
+$lhsAsm
+push eax
+
+$rhsAsm
+push eax
+
+pop ebx
+pop eax
+or eax, ebx
+          """
+          case _:BinXorExpression =>
+            s"""
+$lhsAsm
+push eax
+
+$rhsAsm
+push eax
+
+pop ebx
+pop eax
+xor eax, ebx
+          """
+          case _:BinAndExpression =>
+            s"""
+$lhsAsm
+push eax
+
+$rhsAsm
+push eax
+
+pop ebx
+pop eax
+and eax, ebx
+          """
+
+        }
+      }
 
       case c : ClassCreationPrimary => {
         val env = c.scope.get
