@@ -14,6 +14,10 @@ else:
     cwd = (os.getcwd() + "/linux")
 tests = [
     (
+        ["joosbox-compiler/src/test/resources/custom-tests/compiler_neg_1.java"],
+        "", 1
+    ),
+    (
         ["joosbox-compiler/src/test/resources/custom-tests/compiler_if_case_1.java"],
         "", 1
     ),
@@ -28,6 +32,10 @@ tests = [
     (
         ["joosbox-compiler/src/test/resources/custom-tests/compiler_if_case_else_2.java"],
         "", 2
+    ),
+    (
+        ["joosbox-compiler/src/test/resources/custom-tests/compiler_conditional_1.java"],
+        "", 1
     ),
     (
         ["joosbox-compiler/src/test/resources/custom-tests/compiler_while_loop_1.java"],
@@ -56,6 +64,10 @@ tests = [
     (
         ["joosbox-compiler/src/test/resources/custom-tests/compiler_expression_1.java"],
         "", 123
+    ),
+    (
+        ["joosbox-compiler/src/test/resources/custom-tests/compiler_assignment_1.java"],
+        "", 1
     ),
     (
         ["joosbox-compiler/src/test/resources/marmoset-tests/a5/J1_01.java"],

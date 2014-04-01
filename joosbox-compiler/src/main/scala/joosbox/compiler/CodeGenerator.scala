@@ -321,7 +321,8 @@ mov ${l.symbolName}, eax
       }
 
       case a: Assignment => {
-        a.leftHandSide match {
+        val rhsAsm:String = generateAssemblyForNode(a.rightHandSide, indent + 1)
+        val lhsAsm:String = a.leftHandSide match {
           case f: FieldAccess => ""
 
           //  This is a write to an expressionname
@@ -345,6 +346,11 @@ mov ${l.symbolName}, eax
           case x
             => throw new SyntaxError("Cannot assign to " + x)
         }
+
+        s"""
+$rhsAsm
+$lhsAsm
+        """
       }
 
       case n: Num => s"mov eax, ${n.value}\n"
