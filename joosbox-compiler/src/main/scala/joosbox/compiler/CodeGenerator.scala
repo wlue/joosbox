@@ -142,8 +142,25 @@ SECTION .text
             val locals: Seq[String] = findLocalVariableDeclarations(b).map(_.symbolName)
             val localAccessDefinitions = locals.zipWithIndex.map{case (id, i) => s"%define $id [ebp - ${4 * (i + 1)}]"}.mkString("\n")
 
-            s"sub esp, ${locals.size * 4}\n" + localAccessDefinitions + "\n" + generateAssemblyForNode(b, indent + 1)
+            val parameterDefinitions = md.parameters.zipWithIndex.map{
+              case (fp: FormalParameter, i: Int) => s"%define ${fp.symbolName}_${fp.hashCode} [ebp + ${4 * (if (md.isStatic) i else (i + 1))}]"
+            }.mkString("\n")
+
+            val parameterDefinitionsWithThis = if (md.isStatic) {
+              parameterDefinitions
+            } else {
+              parameterDefinitions + "\n" + s"%define ${md.symbolName}_${md.hashCode}_this [ebp + 0]"
+            }
+
+            val body = generateAssemblyForNode(b, indent + 1)
+            s"""
+sub esp, ${locals.size * 4}
+$localAccessDefinitions
+$parameterDefinitionsWithThis
+$body
+"""
           }
+
           case _ => ""
         }
 
@@ -196,21 +213,25 @@ $body
         val an = m.name
         TypeChecker.resolveMethodName(an, m.args, env) match {
           case Some(declaration: MethodDeclaration) => {
-            //  TODO: Need to lookup what the prefix of this method declaration is.
-            //  If it's not static, then load the expressionName that is its prefix into the
-
             val symbolName: String = declaration.symbolName
             val classSymbolName: String = declaration.scope.get.getEnclosingClassNode.get.symbolName
             val call: String = if (declaration.isStatic) {
               s"call $symbolName\n"
             } else {
               val loadInvokeTargetIntoEAX = an.prefix match {
-                case None => "mov eax, 0xcafebabe; TODO: load the 'this' pointer of this method"
+
+                //  TODO: If we could easily get the caller here, this should be a call to
+                //  mov eax, ${caller.symbolName}_${caller.hashCode}_this
+                case None => s"mov eax, [ebp + 0]; load the 'this' pointer"
                 case Some(an: AmbiguousName) => {
                   NameLinker.disambiguateName(an)(env) match {
                     case e: ExpressionName => generateAssemblyForNode(e, indent + 1)
+                    case _
+                      => throw new SyntaxError("Could not disambiguate expression name for invocation target: " + an)
                   }
                 }
+                case _
+                  => throw new SyntaxError("Could not get invocation target: " + an)
               }
 
               s"""
