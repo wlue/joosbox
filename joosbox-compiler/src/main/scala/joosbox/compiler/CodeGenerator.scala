@@ -204,7 +204,6 @@ $body
             val call: String = if (declaration.isStatic) {
               s"call $symbolName\n"
             } else {
-              println("Calling simpleMethodInvocation on expression (?) " + an.prefix)
               val loadInvokeTargetIntoEAX = an.prefix match {
                 case None => "mov eax, 0xcafebabe; TODO: load the 'this' pointer of this method"
                 case Some(an: AmbiguousName) => {
