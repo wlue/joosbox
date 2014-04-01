@@ -95,8 +95,12 @@ object StaticAnalysisChecker {
                   case DivideExpression(_,_) =>
                     t match {
                         case Some(_:NumericType) =>
-                          val intValue : Int = a.e1.constantValue.get.value.toInt / a.e2.constantValue.get.value.toInt
-                          Some(ConstantNum(intValue.toString))
+                          if (a.e2.constantValue.get.value.toInt == 0) {
+                            None
+                          } else {
+                            val intValue : Int = a.e1.constantValue.get.value.toInt / a.e2.constantValue.get.value.toInt
+                            Some(ConstantNum(intValue.toString))
+                          }
                         case _ => None
                     }
                   case ModExpression(_,_) =>
