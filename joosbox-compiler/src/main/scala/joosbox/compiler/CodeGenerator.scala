@@ -548,6 +548,7 @@ $lhsAsm
 
       case n: Num => s"mov eax, ${n.value}\n"
 
+      case _: NullLiteral => s"mov eax, 0\n"
       case _: FalseLiteral => s"mov eax, 0\n"
       case _: TrueLiteral => s"mov eax, 1\n"
 
