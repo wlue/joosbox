@@ -112,8 +112,9 @@ object TypeChecker {
 
             name match {
               case Some(name) => env.lookup(TypeNameLookup(name)) match {
-                case Some(cd: ClassDeclaration) => Some(Some(cd), cd.body.scope.get)
-                case Some(id: InterfaceDeclaration) => Some(Some(id), id.body.scope.get)
+                case Some(cd: ClassDeclaration) =>
+                  Some(Some(cd), cd.body.scope.get.parent.get)
+                case Some(id: InterfaceDeclaration) => Some(Some(id), id.body.scope.get.parent.get)
                 case _ => throw new SyntaxError("Invalid declaration.")
               }
               case _ => None
@@ -314,7 +315,7 @@ object TypeChecker {
     }
   }
 
-  def checkFieldProtection(name: ExpressionName, field: FieldDeclaration)(env: Environment) {
+  def checkFieldProtection(name: ExpressionName, expressionType: TypeDeclaration, field: FieldDeclaration)(env: Environment) {
     if (!field.isProtected) {
       return
     }
@@ -334,29 +335,35 @@ object TypeChecker {
       return
     }
 
-    val expressionType: TypeDeclaration = name.prefix match {
-      case Some(prefix) => {
-        val namePrefix = NameLinker.disambiguateName(prefix)(env)
-        resolveType(namePrefix) match {
-          case None => throw new Exception("Could not resolve prefix of method name: " + name)
-          case Some(tpe) => {
-            val typeName = tpe match {
-              case ClassType(name) => name
-              case InterfaceType(name) => name
-              case _ => throw new Exception("Not a class or interface type.");
-            }
+    checkProtectionAccess(thatType, thisType, expressionType, Right(field), field.isStatic)
+  }
 
-            env.lookup(TypeNameLookup(typeName.toQualifiedName)) match {
-              case Some(x: TypeDeclaration) => x
-              case _ => throw new Exception("Could not find type declaration for " + typeName)
-            }
-          }
-        }
-      }
-      case _ => thisType
+  def checkClassCreationProtection(creation: ClassCreationPrimary)(env: Environment) {
+    val argTypes = resolvedTypesForArgs(creation.args, env)
+    val lookup: EnvironmentLookup = ConstructorLookup(QualifiedName(Seq(creation.classType.name.value)), argTypes)
+    val constructor: ConstructorDeclaration = env.lookup(lookup) match {
+      case Some(x: ConstructorDeclaration) => x
+      case _ => throw new Exception("Couldn't resolve constructor.")
     }
 
-    checkProtectionAccess(thatType, thisType, expressionType, Right(field), field.isStatic)
+    if (!constructor.isProtected) {
+      return
+    }
+
+    val scope: Environment = constructor.scope.get
+    val thatPackage: PackageDeclaration = scope.compilationScope.get.node match {
+      case Some(c: CompilationUnit) => c.packageDeclaration.getOrElse(PackageDeclaration.implicitPackage)
+      case _ => throw new Exception("Reference in complex method invocation has no compilation unit.")
+    }
+
+    val thisPackage: PackageDeclaration = env.compilationScope.get.node match {
+      case Some(c: CompilationUnit) => c.packageDeclaration.getOrElse(PackageDeclaration.implicitPackage)
+      case _ => throw new Exception("Reference in complex method invocation has no compilation unit.")
+    }
+
+    if (thatPackage != thisPackage) {
+      throw new SyntaxError("Cannot call protected constructor from a different package.")
+    }
   }
 
   def checkMethodProtection(name: MethodName, method: TypeMethodDeclaration)(env: Environment) {
@@ -970,7 +977,7 @@ object TypeChecker {
       case name: ExpressionName => {
         val disambiguated = NameLinker.disambiguateName(name)(env).asInstanceOf[ExpressionName]
         resolveFieldDeclaration(disambiguated, env) match {
-          case Some((field, expressionType)) => checkFieldProtection(name, field)(env)
+          case Some((field, expressionType)) => checkFieldProtection(name, expressionType, field)(env)
           case _ => {}
         }
       }
@@ -1132,8 +1139,34 @@ object TypeChecker {
 
         val types: Seq[Type] = resolvedTypesForArgs(c.args, env)
         val lookup: EnvironmentLookup = ConstructorLookup(QualifiedName(Seq(className.value)), types)
-        if (classEnv.lookup(lookup).isEmpty) {
-          throw new SyntaxError("Can't find constructor matching arguments: " + className.niceName + "(" + types.mkString(",") + ")")
+
+        val constructor = classEnv.lookup(lookup) match {
+          case Some(constructor: ConstructorDeclaration) => constructor
+          case Some(x) => throw new Exception("Didn't get a constructor declaration back. Wat. " + x)
+          case None => throw new SyntaxError("Can't find constructor matching arguments: " + className.niceName + "(" + types.mkString(",") + ")")
+        }
+
+        //
+        // Protected verification.
+        //
+
+        if (!constructor.isProtected) {
+          return
+        }
+
+        val scope: Environment = constructor.scope.get
+        val thatPackage: PackageDeclaration = scope.compilationScope.get.node match {
+          case Some(c: CompilationUnit) => c.packageDeclaration.getOrElse(PackageDeclaration.implicitPackage)
+          case _ => throw new Exception("Reference in complex method invocation has no compilation unit.")
+        }
+
+        val thisPackage: PackageDeclaration = env.compilationScope.get.node match {
+          case Some(c: CompilationUnit) => c.packageDeclaration.getOrElse(PackageDeclaration.implicitPackage)
+          case _ => throw new Exception("Reference in complex method invocation has no compilation unit.")
+        }
+
+        if (thatPackage != thisPackage) {
+          throw new SyntaxError("Cannot call protected constructor from a different package.")
         }
       }
 

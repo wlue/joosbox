@@ -19,6 +19,8 @@ case class MethodLookup(name: QualifiedName, params: Seq[Type]) extends Environm
 case class ConstructorLookup(name: QualifiedName, params: Seq[Type]) extends EnvironmentLookup
 
 object EnvironmentLookup {
+  var enableLinkedScopes: Boolean = false
+
   def lookupFromName(name: Name) = name match {
 
     //  Changing the input into a QualifiedName gets rid of the scope.
@@ -166,8 +168,7 @@ class ScopeEnvironment(
 
   //  Class' sub-scopes can have a class node associated with them for convenience.
   val enclosingClassNode: Option[AbstractSyntaxNode] = None,
-  val linkedScopeReferences: Seq[EnvironmentLookup] = Seq.empty[EnvironmentLookup],
-  var useLinkedScopes: Boolean = false
+  val linkedScopeReferences: Seq[EnvironmentLookup] = Seq.empty[EnvironmentLookup]
 ) extends Environment {
   val node: Option[AbstractSyntaxNode] = enclosingClassNode
 
@@ -179,7 +180,7 @@ class ScopeEnvironment(
       case (MethodLookup(qn: QualifiedName, _), method: MethodDeclaration)
       if (qn.toMethodName.value == name) => method
     }.toSeq
-    if (useLinkedScopes) {
+    if (EnvironmentLookup.enableLinkedScopes) {
       searchScopes = searchScopes ++ linkedScopes.flatMap(_.searchForMethodsWithName(name))
     }
     searchScopes
@@ -360,7 +361,7 @@ class ScopeEnvironment(
             uniqueDeclarations.get(name) match {
               case Some(x) => Some(x)
               case None => {
-                if (useLinkedScopes) {
+                if (EnvironmentLookup.enableLinkedScopes) {
                   linkedScopes
                     .filter(_ != this)
                     .toStream

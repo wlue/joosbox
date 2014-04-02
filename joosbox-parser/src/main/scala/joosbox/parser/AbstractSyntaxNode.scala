@@ -758,6 +758,7 @@ object AbstractSyntaxNode {
           + "_" + modifiers.map(_.symbolName).mkString("_")
         ).replaceAll("""^\s+(?m)""", "")
     }
+    def isProtected: Boolean = modifiers.contains(ProtectedKeyword())
   }
 
   sealed trait TypeMethodDeclaration extends AbstractSyntaxNode {
