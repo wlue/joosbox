@@ -89,13 +89,64 @@ object TypeChecker {
     }
   }
 
+  /**
+   * Resolves an expression name to a field declaration, and it's prefix's Type Declaration (class or interface)
+   * If returns None, then the expression did not point to a field declaration.
+   */
+  def resolveFieldDeclaration(name: ExpressionName, env: Environment): Option[(FieldDeclaration, TypeDeclaration)] = {
+    val result: Option[(Option[TypeDeclaration], Environment)] = name.prefix match {
+      case Some(prefix) =>
+        val prefixType: Option[Type] = prefix match {
+          case n: ExpressionName => resolveExpressionName(n, env)
+          case other => resolveType(other)
+        }
+
+        prefixType match {
+          case Some(result) => {
+            val name = result match {
+              case x: ClassOrInterfaceType => Some(x.name.toQualifiedName)
+              case x: ClassType => Some(x.name.toQualifiedName)
+              case x: InterfaceType => Some(x.name.toQualifiedName)
+              case _ => None
+            }
+
+            name match {
+              case Some(name) => env.lookup(TypeNameLookup(name)) match {
+                case Some(cd: ClassDeclaration) => Some(Some(cd), cd.body.scope.get)
+                case Some(id: InterfaceDeclaration) => Some(Some(id), id.body.scope.get)
+                case _ => throw new SyntaxError("Invalid declaration.")
+              }
+              case _ => None
+            }
+          }
+          case _ => None
+        }
+      case _ => Some(None, env)
+    }
+
+    result match {
+      case Some((Some(decl), prefixScope)) =>
+        val lookup = ExpressionNameLookup(ExpressionName(name.value).toQualifiedName)
+        prefixScope.lookup(lookup) match {
+          case Some(result) => result match {
+            case field: FieldDeclaration => Some((field, decl))
+            case _ => None
+          }
+          case _ => throw new SyntaxError("ExpressionName " + name + " does not resolve to a type.")
+        }
+      case Some((None, _)) => None
+      case _ => None
+    }
+  }
+
   def resolveExpressionName(name: ExpressionName, env: Environment): Option[Type] = {
     var tmpEnv = env
     if (!name.prefix.isEmpty) {
-      val t:Option[Type] = name.prefix.get match {
-        case n:ExpressionName => resolveExpressionName(n, env)
+      val t: Option[Type] = name.prefix.get match {
+        case n: ExpressionName => resolveExpressionName(n, env)
         case other => resolveType(other)
       }
+
       t match {
         case None =>
           throw new SyntaxError("ExpressionName " + name.prefix.get + " does not resolve to a type.")
@@ -913,6 +964,14 @@ object TypeChecker {
           case _: SyntaxError => {
             validateTypeComparability(resolveType(e2), resolveType(e1))
           }
+        }
+      }
+
+      case name: ExpressionName => {
+        val disambiguated = NameLinker.disambiguateName(name)(env).asInstanceOf[ExpressionName]
+        resolveFieldDeclaration(disambiguated, env) match {
+          case Some((field, expressionType)) => checkFieldProtection(name, field)(env)
+          case _ => {}
         }
       }
 
