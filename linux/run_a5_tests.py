@@ -50,10 +50,6 @@ tests = [
         "", 2
     ),
     (
-        ["joosbox-compiler/src/test/resources/custom-tests/compiler_class_creation_1.java"],
-        "", 42
-    ),
-    (
         ["joosbox-compiler/src/test/resources/custom-tests/compiler_variable_access.java"],
         "", 11
     ),
@@ -72,6 +68,14 @@ tests = [
     (
         ["joosbox-compiler/src/test/resources/custom-tests/compiler_assignment_1.java"],
         "", 1
+    ),
+    (
+        ["joosbox-compiler/src/test/resources/custom-tests/compiler_method_args_1.java"],
+        "", 1
+    ),
+    (
+        ["joosbox-compiler/src/test/resources/custom-tests/compiler_constructor_args_1.java"],
+        "", 13
     ),
     (
         ["joosbox-compiler/src/test/resources/marmoset-tests/a5/J1_01.java"],

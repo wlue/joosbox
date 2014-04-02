@@ -1,6 +1,6 @@
 package joosbox.compiler
 
-import joosbox.parser.{ScopeEnvironment, Parser, AbstractSyntaxNode, EnvironmentBuilder}
+import joosbox.parser.{Parser, AbstractSyntaxNode, EnvironmentBuilder, EnvironmentLookup}
 import joosbox.lexer.SyntaxError
 
 import AbstractSyntaxNode.CompilationUnit
@@ -39,7 +39,7 @@ object CompilerRunner {
     TypeLinker.link(nodes, root)
     HierarchyChecker.link(nodes)
 
-    nodes.foreach(enableScopeLinking(_))
+    EnvironmentLookup.enableLinkedScopes = true
 
     NameLinker.link(nodes)
     TypeChecker.link(nodes)
@@ -52,11 +52,4 @@ object CompilerRunner {
     try { p.write(asm) } finally { p.close() }
   }
 
-  def enableScopeLinking(node: AbstractSyntaxNode): Unit = {
-    node.scope match {
-      case Some(scope: ScopeEnvironment) => scope.useLinkedScopes = true
-      case _ => Unit
-    }
-    node.children.foreach(enableScopeLinking)
-  }
 }

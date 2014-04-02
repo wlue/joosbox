@@ -15,9 +15,8 @@ sealed trait AbstractSyntaxNode {
 
   var scope: Option[Environment] = None
   var constantValue : Option[AbstractSyntaxNode.ConstantValue] = None
-  var slot: Integer = 0
 
-  def astHashCode: Int = scope.hashCode + constantValue.hashCode + slot.hashCode
+  def astHashCode: Int = scope.hashCode + constantValue.hashCode
   override def hashCode: Int = super.hashCode
 }
 
@@ -265,31 +264,31 @@ object AbstractSyntaxNode {
   }
   case class EqualExpression(e1: Expression, e2: Expression)  extends RelationalExpression {
     override def children: List[AbstractSyntaxNode] = List(e1) ++ List(e2)
-    override def hashCode: Int = scope.hashCode + constantValue.hashCode + slot.hashCode + super.hashCode
+    override def hashCode: Int = scope.hashCode + constantValue.hashCode + super.hashCode
   }
   case class NotEqualExpression(e1: Expression, e2: Expression)  extends RelationalExpression {
     override def children: List[AbstractSyntaxNode] = List(e1) ++ List(e2)
-    override def hashCode: Int = scope.hashCode + constantValue.hashCode + slot.hashCode + super.hashCode
+    override def hashCode: Int = scope.hashCode + constantValue.hashCode + super.hashCode
   }
   case class LessThanExpression(e1: Expression, e2: Expression)  extends RelationalExpression {
     override def children: List[AbstractSyntaxNode] = List(e1) ++ List(e2)
-    override def hashCode: Int = scope.hashCode + constantValue.hashCode + slot.hashCode + super.hashCode
+    override def hashCode: Int = scope.hashCode + constantValue.hashCode + super.hashCode
   }
   case class LessEqualExpression(e1: Expression, e2: Expression)  extends RelationalExpression {
     override def children: List[AbstractSyntaxNode] = List(e1) ++ List(e2)
-    override def hashCode: Int = scope.hashCode + constantValue.hashCode + slot.hashCode + super.hashCode
+    override def hashCode: Int = scope.hashCode + constantValue.hashCode + super.hashCode
   }
   case class GreaterThanExpression(e1: Expression, e2: Expression)  extends RelationalExpression {
     override def children: List[AbstractSyntaxNode] = List(e1) ++ List(e2)
-    override def hashCode: Int = scope.hashCode + constantValue.hashCode + slot.hashCode + super.hashCode
+    override def hashCode: Int = scope.hashCode + constantValue.hashCode + super.hashCode
   }
   case class GreaterEqualExpression(e1: Expression, e2: Expression)  extends RelationalExpression {
     override def children: List[AbstractSyntaxNode] = List(e1) ++ List(e2)
-    override def hashCode: Int = scope.hashCode + constantValue.hashCode + slot.hashCode + super.hashCode
+    override def hashCode: Int = scope.hashCode + constantValue.hashCode + super.hashCode
   }
   case class InstanceOfExpression(e: Expression, t: ReferenceType)  extends RelationalExpression {
     override def children: List[AbstractSyntaxNode] = List(e) ++ List(t)
-    override def hashCode: Int = scope.hashCode + constantValue.hashCode + slot.hashCode + super.hashCode
+    override def hashCode: Int = scope.hashCode + constantValue.hashCode + super.hashCode
   }
 
   sealed trait ArithmeticExpression extends Expression {

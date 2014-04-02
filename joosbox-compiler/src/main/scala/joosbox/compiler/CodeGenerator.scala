@@ -225,10 +225,7 @@ initFields:
     )
   }
 
-  def generateAssemblyForNode(
-    n: AbstractSyntaxNode,
-    indent: Integer = 0
-  )(
+  def generateAssemblyForNode(n: AbstractSyntaxNode)(
     implicit parentCompilationUnit: Option[CompilationUnit],
     parentClassDeclaration: Option[ClassDeclaration]
   ): String = {
@@ -323,7 +320,7 @@ SECTION .text
               parameterDefinitions + "\n" + s"%define ${md.symbolName}_${md.hashCode}_this [ebp + 8]"
             }
 
-            val body = generateAssemblyForNode(b, indent + 1)
+            val body = generateAssemblyForNode(b)
             s"""
 sub esp, ${locals.size * 4}
 $localAccessDefinitions
@@ -363,7 +360,19 @@ $body
             val locals: Seq[String] = findLocalVariableDeclarations(b).map(_.symbolName)
             val localAccessDefinitions = locals.zipWithIndex.map{case (id, i) => s"%define $id [ebp - ${4 * i}]"}.mkString("\n")
 
-            s"sub esp, ${locals.size * 4}\n" + localAccessDefinitions + "\n" + generateAssemblyForNode(b, indent + 1)
+            val parameterDefinitions = cd.parameters.zipWithIndex.map{
+              case (fp: FormalParameter, i: Int) => s"%define ${fp.symbolName}_${fp.hashCode} [ebp + ${4 * (i+3)}]"
+            }.mkString("\n")
+
+            val parameterDefinitionsWithThis = parameterDefinitions + "\n" + s"%define ${cd.symbolName}_${cd.hashCode}_this [ebp + 8]"
+
+            val body = generateAssemblyForNode(b)
+            s"""
+sub esp, ${locals.size * 4}
+$localAccessDefinitions
+$parameterDefinitionsWithThis
+$body
+            """
           }
           case _ => ""
         }
@@ -387,7 +396,7 @@ $body
             val symbolName: String = declaration.symbolName
             val classSymbolName: String = declaration.scope.get.getEnclosingClassNode.get.symbolName
             val call: String = if (declaration.isStatic) {
-              s"call $symbolName\n"
+              s"call $symbolName"
             } else {
               val loadInvokeTargetIntoEAX = an.prefix match {
 
@@ -396,7 +405,7 @@ $body
                 case None => s"mov eax, [ebp + 8]; load the 'this' pointer"
                 case Some(an: AmbiguousName) => {
                   NameLinker.disambiguateName(an)(env) match {
-                    case e: ExpressionName => generateAssemblyForNode(e, indent + 1)
+                    case e: ExpressionName => generateAssemblyForNode(e)
                     case _
                       => throw new SyntaxError("Could not disambiguate expression name for invocation target: " + an)
                   }
@@ -404,25 +413,26 @@ $body
                 case _
                   => throw new SyntaxError("Could not get invocation target: " + an)
               }
-
-              s"""
-  $loadInvokeTargetIntoEAX
-  ; move vtable of the invocation target into ebx
-  mov ebx, [eax + ObjectVTableOffset]
-  ; move its class tag into eax
-  mov eax, [eax + ObjectClassTagOffset]
-  ; call the appropriate method to move the vtable offset into eax
-  call ${NASMDefines.GetVTableOffset(classSymbolName)}
-  ; add the offset and the vtable pointer we stored in ebx
-  add eax, ebx
-  ; eax now contains the vtable pointer at the appropriate offset
-  ${NASMDefines.VMethodCall("eax", classSymbolName, symbolName)}
-"""
+              val thunkAsm = s"""
+; move vtable of the invocation target into ebx
+mov ebx, [eax + ObjectVTableOffset]
+; move its class tag into eax
+mov eax, [eax + ObjectClassTagOffset]
+; call the appropriate method to move the vtable offset into eax
+call ${NASMDefines.GetVTableOffset(classSymbolName)}
+; add the offset and the vtable pointer we stored in ebx
+add eax, ebx
+; eax now contains the vtable pointer at the appropriate offset
+              """
+              generateInstanceCallAssembly(loadInvokeTargetIntoEAX, thunkAsm, classSymbolName, symbolName)
             }
 
-            val pushedArgs = pushArguments(m)
-            pushedArgs.mkString("\n") + call + s"""
-add esp, ${pushedArgs.size * 4} ; remove the "this" and params from the stack
+            val pushArgs = pushArguments(m).mkString("\n")
+            val argsSize = m.args.size
+            s"""
+$pushArgs
+$call
+add esp, ${argsSize * 4} ; remove the params from the stack
             """
           }
           case None =>
@@ -440,13 +450,17 @@ add esp, ${pushedArgs.size * 4} ; remove the "this" and params from the stack
           case Some(declaration: MethodDeclaration) => {
             val symbolName: String = declaration.symbolName
             val classSymbolName: String = declaration.scope.get.getEnclosingClassNode.get.symbolName
-            val call = s"""
-  mov eax, [eax + ObjectVTableOffset]
-  ${NASMDefines.VMethodCall("eax", classSymbolName, symbolName)}
-"""
-            //  Generate the assembly for the primary (pushing it onto the stack)
-            //  then pop the primary's result into ebx and call it
-            generateAssemblyForNode(m.primary, indent + 1) + pushArguments(m).mkString("\n") + call
+
+            val primaryAsm:String = generateAssemblyForNode(m.primary)
+            val thunkAsm = s"mov eax, [eax + ObjectVTableOffset]"
+            val call:String = generateInstanceCallAssembly(primaryAsm, thunkAsm, classSymbolName, symbolName)
+            val pushArgs = pushArguments(m).mkString("\n")
+            val argsSize = m.args.size
+            s"""
+$pushArgs
+$call
+add esp, ${argsSize * 4} ; remove params from stack
+            """
           }
           case None =>
             throw new SyntaxError("Could not resolve method: " + an)
@@ -458,14 +472,14 @@ add esp, ${pushedArgs.size * 4} ; remove the "this" and params from the stack
 
       case b: Block => {
         b.statements
-         .map(generateAssemblyForNode(_, indent + 1))
+         .map(generateAssemblyForNode(_))
          .filter{_ != ""}
          .mkString("\n")
       }
 
       case r: ReturnStatement => {
         val expr = r.expression match {
-          case Some(e: Expression) => generateAssemblyForNode(e, indent + 1)
+          case Some(e: Expression) => generateAssemblyForNode(e)
           case None => ""
         }
         expr +  """
@@ -476,7 +490,7 @@ add esp, ${pushedArgs.size * 4} ; remove the "this" and params from the stack
       }
 
       case l: LocalVariableDeclaration => {
-        val exprAsm = generateAssemblyForNode(l.expression, indent + 1)
+        val exprAsm = generateAssemblyForNode(l.expression)
         s"""
 $exprAsm
 mov ${l.symbolName}, eax
@@ -489,7 +503,7 @@ mov ${l.symbolName}, eax
           case Some(l: LocalVariableDeclaration) => s"mov eax, ${l.symbolName}\n"
           case Some(f: ForVariableDeclaration) => s"mov eax, ${f.symbolName}\n"
           case Some(f: FieldDeclaration) => s"mov eax, 0xcafecafe; TODO: field declaration lookup\n"
-          case Some(f: FormalParameter) => s"mov eax, 0xdeadcafe; TODO: formal parameter lookup\n"
+          case Some(f: FormalParameter) => s"mov eax, ${f.symbolName}_${f.hashCode}; reference parameter\n"
 
           //  TODO: Handle the "None" case, which happens if we call array.length or if we can't find a lookup.
           case _ => ""
@@ -500,7 +514,7 @@ mov ${l.symbolName}, eax
       }
 
       case a: Assignment => {
-        val rhsAsm:String = generateAssemblyForNode(a.rightHandSide, indent + 1)
+        val rhsAsm:String = generateAssemblyForNode(a.rightHandSide)
         val lhsAsm:String = a.leftHandSide match {
           case f: FieldAccess => ""
 
@@ -509,7 +523,7 @@ mov ${l.symbolName}, eax
             case Some(l: LocalVariableDeclaration) => s"mov ${l.symbolName}, eax\n"
             case Some(f: ForVariableDeclaration) => s"mov ${f.symbolName}, eax\n"
             case Some(f: FieldDeclaration) => s"mov eax, 0; TODO: field declaration assignment\n"
-            case Some(f: FormalParameter) => s"mov eax, 0; TODO: formal parameter assignment\n"
+            case Some(f: FormalParameter) => s"mov ${f.symbolName}_${f.hashCode}, eax\n"
 
             //  TODO: Handle the "None" case, which happens if we call array.length or if we can't find a lookup.
             case _ => ""
@@ -538,17 +552,17 @@ $lhsAsm
       case _: TrueLiteral => s"mov eax, 1\n"
 
       case AddExpression(e1, e2) => (
-        generateAssemblyForNode(e1, indent + 1) + "push eax\n"
-        + generateAssemblyForNode(e2, indent + 1) + "push eax\n"
+        generateAssemblyForNode(e1) + "push eax\n"
+        + generateAssemblyForNode(e2) + "push eax\n"
         + """
-pop eax
 pop ebx
+pop eax
 add eax, ebx
         """
       )
       case SubtractExpression(e1, e2) => (
-        generateAssemblyForNode(e1, indent + 1) + "push eax\n"
-        + generateAssemblyForNode(e2, indent + 1) + "push eax\n"
+        generateAssemblyForNode(e1) + "push eax\n"
+        + generateAssemblyForNode(e2) + "push eax\n"
         + """
 pop ebx
 pop eax
@@ -556,8 +570,8 @@ sub eax, ebx
         """
       )
       case MultiplyExpression(e1, e2) => (
-        generateAssemblyForNode(e1, indent + 1) + "push eax\n"
-        + generateAssemblyForNode(e2, indent + 1) + "push eax\n"
+        generateAssemblyForNode(e1) + "push eax\n"
+        + generateAssemblyForNode(e2) + "push eax\n"
         + """
 pop eax
 pop edx
@@ -566,8 +580,8 @@ imul edx
       )
       case d : DivideExpression => {
         val checkLabel:String = d.symbolName + "_DIV0_CHECK"
-        val lhsAsm:String = generateAssemblyForNode(d.e1, indent + 1)
-        val rhsAsm:String = generateAssemblyForNode(d.e2, indent + 1)
+        val lhsAsm:String = generateAssemblyForNode(d.e1)
+        val rhsAsm:String = generateAssemblyForNode(d.e2)
 
         s"""
 $lhsAsm
@@ -602,28 +616,28 @@ idiv ebx
           case InstanceOfExpression(expr, refType) => return """nop; TODO"""
           case EqualExpression(e1, e2) =>
             jmpAsm = "jz"
-            lhsAsm = generateAssemblyForNode(e1, indent + 1)
-            rhsAsm = generateAssemblyForNode(e2, indent + 1)
+            lhsAsm = generateAssemblyForNode(e1)
+            rhsAsm = generateAssemblyForNode(e2)
           case NotEqualExpression(e1, e2) =>
             jmpAsm = "jnz"
-            lhsAsm = generateAssemblyForNode(e1, indent + 1)
-            rhsAsm = generateAssemblyForNode(e2, indent + 1)
+            lhsAsm = generateAssemblyForNode(e1)
+            rhsAsm = generateAssemblyForNode(e2)
           case LessThanExpression(e1, e2) =>
             jmpAsm = "jl"
-            lhsAsm = generateAssemblyForNode(e1, indent + 1)
-            rhsAsm = generateAssemblyForNode(e2, indent + 1)
+            lhsAsm = generateAssemblyForNode(e1)
+            rhsAsm = generateAssemblyForNode(e2)
           case LessEqualExpression(e1, e2) =>
             jmpAsm = "jle"
-            lhsAsm = generateAssemblyForNode(e1, indent + 1)
-            rhsAsm = generateAssemblyForNode(e2, indent + 1)
+            lhsAsm = generateAssemblyForNode(e1)
+            rhsAsm = generateAssemblyForNode(e2)
           case GreaterThanExpression(e1, e2) =>
             jmpAsm = "jg"
-            lhsAsm = generateAssemblyForNode(e1, indent + 1)
-            rhsAsm = generateAssemblyForNode(e2, indent + 1)
+            lhsAsm = generateAssemblyForNode(e1)
+            rhsAsm = generateAssemblyForNode(e2)
           case GreaterEqualExpression(e1, e2) =>
             jmpAsm = "jge"
-            lhsAsm = generateAssemblyForNode(e1, indent + 1)
-            rhsAsm = generateAssemblyForNode(e2, indent + 1)
+            lhsAsm = generateAssemblyForNode(e1)
+            rhsAsm = generateAssemblyForNode(e2)
         }
 
         s"""
@@ -651,20 +665,20 @@ $finalCase:
       }
 
       case NegatedExpression(expr) =>
-        generateAssemblyForNode(expr, indent + 1) +
+        generateAssemblyForNode(expr) +
         """
 neg eax
         """
 
       case LogicalNotExpression(expr) =>
-        generateAssemblyForNode(expr, indent + 1) +
+        generateAssemblyForNode(expr) +
         """
 not eax
         """
 
       case c : ConditionalExpression => {
-        val lhsAsm:String = generateAssemblyForNode(c.e1, indent + 1)
-        val rhsAsm:String = generateAssemblyForNode(c.e2, indent + 1)
+        val lhsAsm:String = generateAssemblyForNode(c.e1)
+        val rhsAsm:String = generateAssemblyForNode(c.e2)
 
         val falseLabel:String = c.symbolName + "_FALSE"
         val trueLabel:String = c.symbolName + "_TRUE"
@@ -789,38 +803,40 @@ and eax, ebx
         val fields = recursiveFields(classDecl)
         val allocSize = (fields.size + 2) // why + 2? Header includes class tag + vtable pointer
         val vtableBase = NASMDefines.VTableBase(classDecl.symbolName)
-        val pushedArgs = pushArguments(c)
-        val classSymbol = classDecl.symbolName
-        val constructorSymbol = constructorDecl.symbolName
+
+        val classSymbolName = classDecl.symbolName
+        val symbolName = constructorDecl.symbolName
+        val mallocAsm = s"""
+mov eax, ${allocSize * 4}
+call __malloc
+        """
+        val thunkAsm = s"""
+mov dword [eax], ${NASMDefines.ClassTagForClass(classDecl.symbolName)}
+mov dword [eax + ObjectVTableOffset], $vtableBase
+mov eax, [eax + ObjectVTableOffset]
+        """
+
+        val call = generateInstanceCallAssembly(mallocAsm, thunkAsm, classSymbolName, symbolName)
+        val pushArgs = pushArguments(c).mkString("\n")
+        val argsSize = c.args.size
 
         s"""
-        mov eax, ${allocSize * 4}
-        call __malloc
-        push eax ; push the new object onto the stack
-        mov dword [eax], ${NASMDefines.ClassTagForClass(classDecl.symbolName)}
-        mov dword [eax + ObjectVTableOffset], $vtableBase
-
-        ${pushedArgs.mkString("\n")}
-        mov ebx, [eax + ObjectVTableOffset] ; no class tag checking required here
-        ${NASMDefines.VMethodCall("ebx", classSymbol, constructorSymbol)}
-
-        add esp, ${pushedArgs.size * 4} ; remove the "this" and params from the stack
-
-        ; the top of the stack now contains the "this" pointer
-        pop eax
+$pushArgs
+$call
+add esp, ${argsSize * 4} ; remove params from the stack
         """
       }
 
       case i : IfStatement => {
-        val clauseAsm:String = generateAssemblyForNode(i.clause, indent + 1)
+        val clauseAsm:String = generateAssemblyForNode(i.clause)
         var trueAsm:String = ""
         var falseAsm:String = ""
 
         if (!i.trueCase.isEmpty) {
-          trueAsm = generateAssemblyForNode(i.trueCase.get, indent + 1)
+          trueAsm = generateAssemblyForNode(i.trueCase.get)
         }
         if (!i.elseCase.isEmpty) {
-          falseAsm = generateAssemblyForNode(i.elseCase.get, indent + 1)
+          falseAsm = generateAssemblyForNode(i.elseCase.get)
         }
 
         val trueLabel:String = i.symbolName + "_TRUE"
@@ -844,11 +860,11 @@ $finalLabel:
       }
 
       case w : WhileStatement => {
-        val whileCheckAsm:String = generateAssemblyForNode(w.clause, indent + 1)
+        val whileCheckAsm:String = generateAssemblyForNode(w.clause)
 
         var whileBodyAsm:String =""
         if (!w.body.isEmpty) {
-          whileBodyAsm = generateAssemblyForNode(w.body.get, indent + 1)
+          whileBodyAsm = generateAssemblyForNode(w.body.get)
         }
 
         val topLabel:String =  w.symbolName + "_TOP"
@@ -880,18 +896,18 @@ $bottomLabel:
         val bottomLabel:String = f.symbolName + "_BOTTOM"
 
         if (!f.init.isEmpty) {
-          forInitAsm = generateAssemblyForNode(f.init.get, indent + 1)
+          forInitAsm = generateAssemblyForNode(f.init.get)
         }
 
         if (!f.check.isEmpty) {
-          forCheckAsm = generateAssemblyForNode(f.check.get, indent + 1)
+          forCheckAsm = generateAssemblyForNode(f.check.get)
         }
 
         if (!f.update.isEmpty) {
-          forUpdateAsm = generateAssemblyForNode(f.update.get, indent + 1)
+          forUpdateAsm = generateAssemblyForNode(f.update.get)
         }
 
-        forBodyAsm = generateAssemblyForNode(f.statement, indent + 1)
+        forBodyAsm = generateAssemblyForNode(f.statement)
 
         s"""
 $forInitAsm
@@ -912,7 +928,7 @@ $bottomLabel:
       }
 
 
-      case x => x.children.map(generateAssemblyForNode(_, indent + 1)).filter{_ != ""}.mkString("\n")
+      case x => x.children.map(generateAssemblyForNode(_)).filter{_ != ""}.mkString("\n")
     }
 
     s"""
@@ -923,7 +939,7 @@ $asm
   }
 
 
-  def pushArguments(node:AbstractSyntaxNode, isStatic: Boolean = false) : Seq[String] = {
+  def pushArguments(node:AbstractSyntaxNode) : Seq[String] = {
     val args : Seq[Expression] = node match {
       case smi: SimpleMethodInvocation => smi.args
       case cmi: ComplexMethodInvocation => cmi.args
@@ -931,14 +947,22 @@ $asm
       case x => throw new SyntaxError("Cannot push arguments for node type without arguments: " + x)
     }
 
-    // Go right-to-left for method parameters
-    if (isStatic) {
-      args.reverse.map({ a => pushToStackSlot(allocateStackSlot(a.slot)) })
-    } else {
-      args.reverse.map({ a => pushToStackSlot(allocateStackSlot(a.slot)) }) ++ Seq("push eax; 'this' pointer\n")
-    }
+    var argsAsms:Seq[String] = Seq.empty[String]
+    args.reverse.foreach(a => {
+      argsAsms = argsAsms ++ Seq(generateAssemblyForNode(a)(None,None))
+      argsAsms = argsAsms ++ Seq("push eax; arg")
+    })
+
+    argsAsms
   }
 
-  def allocateStackSlot(offset:Integer) : String = s"dword [ebp - ${offset * 4}]"
-  def pushToStackSlot(location:String) : String = s"push 0 ;;$location\n"
+  def generateInstanceCallAssembly(instanceAsm:String, thunkAsm:String, className:String, callName:String) : String = {
+    s"""
+$instanceAsm
+push eax
+$thunkAsm
+${NASMDefines.VMethodCall("eax", className, callName)}
+add esp, 4 ; remove the this from the stack
+    """
+  }
 }
