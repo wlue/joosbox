@@ -18,7 +18,7 @@ object StaticAnalysisChecker {
     Map.empty
   }
 
-  def resolveConstantValue(node: AbstractSyntaxNode) : Unit = {
+  def resolveConstantValue(node: AbstractSyntaxNode, parentType: Option[Type] = None) : Unit = {
     // If it isn't None, that means it has already been constant folded
     // If it is None, it might have been tried and resulted in None, but we don't know for sure
     if (node.constantValue.isEmpty) {
@@ -61,44 +61,47 @@ object StaticAnalysisChecker {
 
             case a: ArithmeticExpression => {
               val t : Option[Type] = TypeChecker.resolveType(a)
-              resolveConstantValue(a.e1)
-              resolveConstantValue(a.e2)
+              resolveConstantValue(a.e1, t)
+              resolveConstantValue(a.e2, t)
               if (a.e1.constantValue.isEmpty || a.e2.constantValue.isEmpty) {
                 None
               } else {
                 a match {
                   case AddExpression(_,_) =>
-                    t match {
-                        case Some(_:NumericType) =>
-                          val intValue : Int = a.e1.constantValue.get.value.toInt + a.e2.constantValue.get.value.toInt
-                          Some(ConstantNum(intValue.toString))
-                        case Some(ClassType(TypeName(InputString("String", _, _, _),
-                                  Some(PackageName(InputString("lang", _, _, _),
-                                  Some(PackageName(InputString("java", _, _, _), None))))))) =>
-                          Some(ConstantString(a.e1.constantValue.get.value + a.e2.constantValue.get.value))
-                        case _ => None
+                    parentType match {
+                      case Some(ClassType(n)) if n.toQualifiedName == CommonNames.JavaLangString =>
+                        Some(ConstantString(a.e1.constantValue.get.toConstantString + a.e2.constantValue.get.toConstantString))
+                      case _ =>
+                        t match {
+                            case Some(_:NumericType) =>
+                              val intValue : Int = a.e1.constantValue.get.toConstantInt + a.e2.constantValue.get.toConstantInt
+                              Some(ConstantNum(intValue.toString))
+                            case Some(ClassType(n)) if n.toQualifiedName == CommonNames.JavaLangString =>
+                              Some(ConstantString(a.e1.constantValue.get.toConstantString + a.e2.constantValue.get.toConstantString))
+                            case _ => None
+                        }
                     }
                   case SubtractExpression(_,_) =>
                     t match {
                         case Some(_:NumericType) =>
-                          val intValue : Int = a.e1.constantValue.get.value.toInt - a.e2.constantValue.get.value.toInt
+                          val intValue : Int = a.e1.constantValue.get.toConstantInt - a.e2.constantValue.get.toConstantInt
                           Some(ConstantNum(intValue.toString))
                         case _ => None
                     }
                   case MultiplyExpression(_,_) =>
                     t match {
                         case Some(_:NumericType) =>
-                          val intValue : Int = a.e1.constantValue.get.value.toInt * a.e2.constantValue.get.value.toInt
+                          val intValue : Int = a.e1.constantValue.get.toConstantInt * a.e2.constantValue.get.toConstantInt
                           Some(ConstantNum(intValue.toString))
                         case _ => None
                     }
                   case DivideExpression(_,_) =>
                     t match {
                         case Some(_:NumericType) =>
-                          if (a.e2.constantValue.get.value.toInt == 0) {
+                          if (a.e2.constantValue.get.toConstantInt == 0) {
                             None
                           } else {
-                            val intValue : Int = a.e1.constantValue.get.value.toInt / a.e2.constantValue.get.value.toInt
+                            val intValue : Int = a.e1.constantValue.get.toConstantInt / a.e2.constantValue.get.toConstantInt
                             Some(ConstantNum(intValue.toString))
                           }
                         case _ => None
@@ -106,7 +109,7 @@ object StaticAnalysisChecker {
                   case ModExpression(_,_) =>
                     t match {
                         case Some(_:NumericType) =>
-                          val intValue : Int = a.e1.constantValue.get.value.toInt % a.e2.constantValue.get.value.toInt
+                          val intValue : Int = a.e1.constantValue.get.toConstantInt / a.e2.constantValue.get.toConstantInt
                           Some(ConstantNum(intValue.toString))
                         case _ => None
                     }
@@ -121,7 +124,7 @@ object StaticAnalysisChecker {
               } else {
                 t match {
                   case Some(_:NumericType) =>
-                    val intValue : Int = n.expr.constantValue.get.value.toInt * -1
+                    val intValue : Int = n.expr.constantValue.get.toConstantInt * -1
                     Some(ConstantNum(intValue.toString))
                   case _ => None
                 }
@@ -153,7 +156,7 @@ object StaticAnalysisChecker {
                   } else {
                     (t1, t2) match {
                       case (Some(_:NumericType), Some(_:NumericType)) =>
-                        val boolValue : Boolean = (e1.constantValue.get.value.toInt == e2.constantValue.get.value.toInt)
+                        val boolValue : Boolean = (e1.constantValue.get.toConstantInt == e2.constantValue.get.toConstantInt)
                         Some(ConstantBool(boolValue.toString))
                       case (Some(_:BooleanKeyword), Some(_:BooleanKeyword)) =>
                         val boolValue : Boolean = (e1.constantValue.get.value.toBoolean == e2.constantValue.get.value.toBoolean)
@@ -164,7 +167,7 @@ object StaticAnalysisChecker {
                             Some(ClassType(TypeName(InputString("String", _, _, _),
                               Some(PackageName(InputString("lang", _, _, _),
                               Some(PackageName(InputString("java", _, _, _), None)))))))) =>
-                        val boolValue : Boolean = (e1.constantValue.get.value == e2.constantValue.get.value)
+                        val boolValue : Boolean = (e1.constantValue.get.toConstantString == e2.constantValue.get.toConstantString)
                         Some(ConstantBool(boolValue.toString))
                       case _ => None
                     }
@@ -179,7 +182,7 @@ object StaticAnalysisChecker {
                   } else {
                     (t1, t2) match {
                       case (Some(_:NumericType), Some(_:NumericType)) =>
-                        val boolValue : Boolean = (e1.constantValue.get.value.toInt != e2.constantValue.get.value.toInt)
+                        val boolValue : Boolean = (e1.constantValue.get.toConstantInt != e2.constantValue.get.toConstantInt)
                         Some(ConstantBool(boolValue.toString))
                       case (Some(_:BooleanKeyword), Some(_:BooleanKeyword)) =>
                         val boolValue : Boolean = (e1.constantValue.get.value.toBoolean != e2.constantValue.get.value.toBoolean)
@@ -190,7 +193,7 @@ object StaticAnalysisChecker {
                             Some(ClassType(TypeName(InputString("String", _, _, _),
                               Some(PackageName(InputString("lang", _, _, _),
                               Some(PackageName(InputString("java", _, _, _), None)))))))) =>
-                        val boolValue : Boolean = (e1.constantValue.get.value != e2.constantValue.get.value)
+                        val boolValue : Boolean = (e1.constantValue.get.toConstantString != e2.constantValue.get.toConstantString)
                         Some(ConstantBool(boolValue.toString))
                       case _ => None
                     }
@@ -205,7 +208,7 @@ object StaticAnalysisChecker {
                   } else {
                     (t1, t2) match {
                       case (Some(_:NumericType), Some(_:NumericType)) =>
-                        val boolValue : Boolean = (e1.constantValue.get.value.toInt < e2.constantValue.get.value.toInt)
+                        val boolValue : Boolean = (e1.constantValue.get.toConstantInt < e2.constantValue.get.toConstantInt)
                         Some(ConstantBool(boolValue.toString))
                       case _ => None
                     }
@@ -220,7 +223,7 @@ object StaticAnalysisChecker {
                   } else {
                     (t1, t2) match {
                       case (Some(_:NumericType), Some(_:NumericType)) =>
-                        val boolValue : Boolean = (e1.constantValue.get.value.toInt <= e2.constantValue.get.value.toInt)
+                        val boolValue : Boolean = (e1.constantValue.get.toConstantInt <= e2.constantValue.get.toConstantInt)
                         Some(ConstantBool(boolValue.toString))
                       case _ => None
                     }
@@ -235,7 +238,7 @@ object StaticAnalysisChecker {
                   } else {
                     (t1, t2) match {
                       case (Some(_:NumericType), Some(_:NumericType)) =>
-                        val boolValue : Boolean = (e1.constantValue.get.value.toInt > e2.constantValue.get.value.toInt)
+                        val boolValue : Boolean = (e1.constantValue.get.toConstantInt > e2.constantValue.get.toConstantInt)
                         Some(ConstantBool(boolValue.toString))
                       case _ => None
                     }
@@ -250,7 +253,7 @@ object StaticAnalysisChecker {
                   } else {
                     (t1, t2) match {
                       case (Some(_:NumericType), Some(_:NumericType)) =>
-                        val boolValue : Boolean = (e1.constantValue.get.value.toInt >= e2.constantValue.get.value.toInt)
+                        val boolValue : Boolean = (e1.constantValue.get.toConstantInt >= e2.constantValue.get.toConstantInt)
                         Some(ConstantBool(boolValue.toString))
                       case _ => None
                     }
@@ -658,8 +661,6 @@ object StaticAnalysisChecker {
   }
 
   def check(node: AbstractSyntaxNode, parent: Option[AbstractSyntaxNode]) : Unit = {
-    node.children.foreach { child => check(child, Some(node)) }
-
     def takeAfter[A](elem: A, seq:Seq[A]) : Seq[A] = {
       seq.drop(seq.indexOf(elem) + 1)
     }
@@ -681,5 +682,7 @@ object StaticAnalysisChecker {
 
         case _ => resolveConstantValue(node)
     }
+
+    node.children.foreach { child => check(child, Some(node)) }
   }
 }

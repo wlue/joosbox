@@ -542,7 +542,7 @@ object TypeChecker {
 
       case Num(value, _) => Some(IntKeyword())
       case _: CharLiteral => Some(CharKeyword())
-      case _: StringLiteral => Some(withScope(ClassType(QualifiedName("java.lang.String".split("\\.").map(InputString(_))).toTypeName), node.scope))
+      case _: StringLiteral => Some(withScope(ClassType(CommonNames.JavaLangString.toTypeName), node.scope))
 
       case param: FormalParameter => Some(param.varType)
       case field: FieldDeclaration => Some(field.memberType)
@@ -722,7 +722,8 @@ object TypeChecker {
   }
 
   def validateAddExpression(e1: AddExpression) {
-    resolveType(e1) match {
+    val t : Option[Type] = resolveType(e1)
+    t match {
       case Some(ClassType(TypeName(InputString("String", _, _, _),
                       Some(PackageName(InputString("lang", _, _, _),
                       Some(PackageName(InputString("java", _, _, _), None))))))) =>

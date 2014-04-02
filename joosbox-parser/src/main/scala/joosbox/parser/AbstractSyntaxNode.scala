@@ -24,11 +24,42 @@ object AbstractSyntaxNode {
 
   sealed trait ConstantValue extends AbstractSyntaxNode {
     def value : String
+    def toConstantInt : Int = throw new SyntaxError("Unimplemented toConstantInt")
+    def toConstantString : String = value
   }
   case class ConstantString(value: String) extends ConstantValue
-  case class ConstantChar(value: String) extends ConstantValue
+  case class ConstantChar(value: String) extends ConstantValue {
+    override def toConstantInt : Int = {
+      value match {
+        case "'\n'" => '\n'.toInt
+        case "'\r'" => '\r'.toInt
+        case "'\t'" => '\t'.toInt
+        case "'\b'" => '\b'.toInt
+        case "'\f'" => '\f'.toInt
+        case "'\"'" => '\"'.toInt
+        case "'\\'" => '\\'.toInt
+        case "'\''" => '\''.toInt
+        case s =>
+          var sub = s.substring(1, s.length - 1)
+          if (sub.length == 1) {
+            sub.toList.head.toInt
+          } else {
+            // octal escape sequence
+            sub = s.substring(1, s.length)
+            Integer.parseInt(sub, 8)
+          }
+      }
+    }
+    override def toConstantString : String = {
+      value.substring(1, value.length - 1)
+    }
+  }
   case class ConstantBool(value: String) extends ConstantValue
-  case class ConstantNum(value: String) extends ConstantValue
+  case class ConstantNum(value: String) extends ConstantValue {
+    override def toConstantInt : Int = {
+      value.toInt
+    }
+  }
   case class ConstantNull(value: String) extends ConstantValue
 
   /**
