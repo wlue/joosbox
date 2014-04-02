@@ -42,6 +42,10 @@ tests = [
         "", 1
     ),
     (
+        ["joosbox-compiler/src/test/resources/custom-tests/compiler_logical_not_1.java"],
+        "", 1
+    ),
+    (
         ["joosbox-compiler/src/test/resources/custom-tests/compiler_while_loop_1.java"],
         "", 1
     ),

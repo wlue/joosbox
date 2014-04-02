@@ -673,7 +673,9 @@ neg eax
       case LogicalNotExpression(expr) =>
         generateAssemblyForNode(expr) +
         """
-not eax
+neg eax
+sbb eax, eax
+inc eax
         """
 
       case c : ConditionalExpression => {
