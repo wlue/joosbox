@@ -452,7 +452,17 @@ add esp, ${argsSize * 4} ; remove the params from the stack
             val classSymbolName: String = declaration.scope.get.getEnclosingClassNode.get.symbolName
 
             val primaryAsm:String = generateAssemblyForNode(m.primary)
-            val thunkAsm = ""
+            val thunkAsm = s"""
+; move vtable of the invocation target into ebx
+mov ebx, [eax + ObjectVTableOffset]
+; move its class tag into eax
+mov eax, [eax + ObjectClassTagOffset]
+; call the appropriate method to move the vtable offset into eax
+call ${NASMDefines.GetVTableOffset(classSymbolName)}
+; add the offset and the vtable pointer we stored in ebx
+add eax, ebx
+; eax now contains the vtable pointer at the appropriate offset
+              """
             val call:String = generateInstanceCallAssembly(primaryAsm, thunkAsm, classSymbolName, symbolName)
             val pushArgs = pushArguments(m)
             val argsSize = m.args.size
@@ -819,7 +829,7 @@ mov dword [eax + ObjectVTableOffset], $vtableBase
 mov eax, [eax + ObjectVTableOffset]
         """
 
-        val call = generateInstanceCallAssembly(mallocAsm, thunkAsm, classSymbolName, symbolName)
+        val call = generateInstanceCallAssembly(mallocAsm, thunkAsm, classSymbolName, symbolName, isConstructor = true)
         val pushArgs = pushArguments(c)
         val argsSize = c.args.size
 
@@ -956,13 +966,13 @@ $asm
     }).mkString("\n")
   }
 
-  def generateInstanceCallAssembly(instanceAsm:String, thunkAsm:String, className:String, callName:String) : String = {
+  def generateInstanceCallAssembly(instanceAsm:String, thunkAsm:String, className:String, callName:String, isConstructor: Boolean = false) : String = {
     s"""
 $instanceAsm
 push eax
 $thunkAsm
 ${NASMDefines.VMethodCall("eax", className, callName)}
-add esp, 4 ; remove the this from the stack
+${if (isConstructor) { "pop eax; remove this from the stack and put into eax" } else { "add esp, 4 ; remove the this from the stack" }}
     """
   }
 }
