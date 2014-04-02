@@ -12,31 +12,35 @@ object NASMDefines {
   //  The version of NASM used by Marmoset does not support label concatenation properly.
   //  We'll do it in our own compiler, instead.
 
-  def VTableBase(s: String): String = s"vtable_class_${s}"
+  def VTableBase(s: String): String = s"vtable_${s}"
   def VMethodLabel(klass: String, method: String): String = s"vtable_${klass}_method__${method}"
   def VMethodCall(reg: String, klass: String, method: String): String =
-    s"call [${reg} + (vtable_${klass}_method__${method} - vtable_class_${klass})]"
-
-  def VTableInstanceOfRef(klass: String): String =
-    s"vtable_class_${klass}_instanceof: dd instanceof_class_${klass}"
-  def VTableNestedInstanceOfRef(klass: String, superklass: String): String =
-    s"vtable_class_${klass}_${superklass}_instanceof: dd instanceof_class_${klass}"
+    s"call [${reg} + (vtable_${klass}_method__${method} - vtable_${klass})]"
 
   def ClassTagForClass(klass: String): String = s"${klass}_class_tag"
 
   def VTableClassHeader(klass: String): String =
-    s"vtable_class_${klass}: dd ${klass}_class_tag"
+    s"vtable_${klass}:"
   def VTableNestedClassHeader(klass: String, superklass: String): String =
-    s"vtable_class_${klass}_${superklass}: dd ${klass}_class_tag"
+    s"vtable_${klass}_${superklass}:"
 
   def VTableMethodDef(klass: String, method: String, impl: String): String =
     s"vtable_${klass}_method__${method}: dd ${impl}"
   def VTableNestedMethodDef(klass: String, superklass: String, method: String, impl: String): String =
     s"vtable_${klass}_method__${method}_${superklass}: dd ${impl}"
 
-  def InstanceOfHeader(klass: String): String = s"instanceof_class_${klass}:"
+  def GetVTableOffset(klass: String): String = OffsetTableLabel(klass)
+  def OffsetTableLabel(klass: String): String = s"offsettable_${klass}"
+  def OffsetTableStatementLabel(klass: String, midclass: String): String = s"offsettable_${klass}_${midclass}"
+  def OffsetTableStatementLabelEnd(klass: String, midclass: String): String = s"offsettable_${klass}_${midclass}_nomatch"
+
+  def InstanceOfHeader(klass: String): String = s"instanceof_${klass}:"
   def InstanceOfEntry(otherclass: String): String = s"dd ${otherclass}_class_tag"
   def InstanceOfEnd: String = "dd 0x0"
+
+  def VTableOffsetFunction(klass: ClassDeclaration): String = s"""
+
+  """
 }
 
 object CodeGenerator {
@@ -46,7 +50,7 @@ object CodeGenerator {
 
   def generateSingleAssembly(units: Seq[CompilationUnit]): String = {
     preamble + generateAssembly(units).map({
-      case (f: String, d: String) => {
+      case ((f: String, d: String)) => {
         s"""
 
 ; ====================
@@ -63,8 +67,8 @@ $d
   /*
     Returns a map of class names to strings, for storage in files by the caller.
    */
-  def generateAssembly(units: Seq[CompilationUnit]): Map[String, String] = {
-    val first: Map[String, String] = units.headOption match {
+  def generateAssembly(units: Seq[CompilationUnit]): Seq[(String, String)] = {
+    val first: String = units.headOption match {
       case Some(cu: CompilationUnit) => {
         val method: MethodDeclaration = cu.typeDeclaration.scope match {
           case Some(scope: ScopeEnvironment) => {
@@ -86,17 +90,98 @@ _start:
   call __debexit
 
     """.stripMargin
-        Map("bootstrap" -> asm)
+        asm
       }
       case None => throw new SyntaxError(
         "No files passed in on the command line!"
       )
     }
-    (
-      first ++
-      Map("initFields" -> generateInitFields(units)) ++
-      units.map(cu => cu.assemblyFileName -> generateAssemblyForNode(cu)(Some(cu), None))
+    Seq(
+      ("bootstrap", first),
+      ("offsetTables", generateOffsetTables(units)),
+      ("initFields", generateInitFields(units))
+    ) ++ units.map(cu => cu.assemblyFileName -> generateAssemblyForNode(cu)(Some(cu), None))
+  }
+
+  def generateOffsetTables(units: Seq[CompilationUnit]): String = {
+    val ancestors: Set[TypeDeclaration] = Set(
+      units(0).scope.get.lookup(TypeNameLookup(CommonNames.JavaIOSerializable)).get.asInstanceOf[TypeDeclaration],
+      units(0).scope.get.lookup(TypeNameLookup(CommonNames.JavaLangCloneable)).get.asInstanceOf[TypeDeclaration],
+      units(0).scope.get.lookup(TypeNameLookup(CommonNames.JavaLangObject)).get.asInstanceOf[TypeDeclaration]
     )
+
+    var subclassesIncludingSelfs: Map[TypeDeclaration, Set[TypeDeclaration]]
+      = Map.empty[TypeDeclaration, Set[TypeDeclaration]]
+    var classTags: Seq[String] = Seq.empty[String]
+
+    def addMapping(superc: TypeDeclaration, subc: TypeDeclaration) = {
+      val s: Set[TypeDeclaration]
+        = subclassesIncludingSelfs.getOrElse(superc, Set.empty[TypeDeclaration])
+      subclassesIncludingSelfs
+        = subclassesIncludingSelfs ++ Map(superc -> (s ++ Set(subc)))
+    }
+
+    def gatherClassRelationships(n: AbstractSyntaxNode): Unit = {
+      n match {
+        case c: ClassDeclaration => {
+          classTags = classTags ++ Seq(s"%define ${c.symbolName}_class_tag 0x${c.runtimeTag.toHexString}")
+
+          if (!c.modifiers.contains(AbstractKeyword())) {
+            addMapping(c, c)
+            ancestors.foreach(addMapping(_, c))
+            if (c.superclass.isDefined) {
+              val superclass:ClassDeclaration =
+                c.scope.get.lookup(TypeNameLookup(c.superclass.get.name.toQualifiedName)) match {
+                  case Some(cdecl: ClassDeclaration) => cdecl
+                  case _ => throw new SyntaxError("Invalid class creation.")
+                }
+
+              addMapping(superclass, c)
+            }
+            c.interfaces.foreach{case i: InterfaceType => {
+              c.scope.get.lookup(TypeNameLookup(i.name.toQualifiedName)) match {
+                case Some(idecl: InterfaceDeclaration) => addMapping(idecl, c)
+                case _ => throw new SyntaxError("Invalid interface creation.")
+              }
+            }}
+          }
+        }
+        case x => x.children.map(gatherClassRelationships)
+      }
+    }
+
+    units.map(gatherClassRelationships)
+
+    val offsetTable = subclassesIncludingSelfs.map{
+      case (s: TypeDeclaration, sub: Set[TypeDeclaration]) => {
+        val substatements = sub.map(x => {
+          val movExpr = if (x.symbolName == s.symbolName) {
+            "0"
+          } else {
+            s"(vtable_${x.symbolName}_${s.symbolName} - vtable_${x.symbolName})"
+          }
+
+          s"""
+${NASMDefines.OffsetTableStatementLabel(s.symbolName, x.symbolName)}:
+  cmp eax, ${NASMDefines.ClassTagForClass(x.symbolName)}
+  jne ${NASMDefines.OffsetTableStatementLabelEnd(s.symbolName, x.symbolName)}
+  mov eax, $movExpr
+  ret
+${NASMDefines.OffsetTableStatementLabelEnd(s.symbolName, x.symbolName)}:
+"""
+        })
+
+        s"""
+; beginning of offset table for ${s.symbolName}
+${NASMDefines.OffsetTableLabel(s.symbolName)}:
+${substatements.mkString("\n")}
+call __exception
+; end of offset table for ${s.symbolName}
+"""
+      }
+    }.mkString("\n\n")
+
+    classTags.mkString("\n") + offsetTable
   }
 
   def generateInitFields(units: Seq[CompilationUnit]): String = {
@@ -106,6 +191,38 @@ initFields:
   ret
 
     """.stripMargin
+  }
+
+  def generateNestedVTableEntries(td: TypeDeclaration): Seq[TypeDeclaration] = {
+    def gatherParentClassHierarchy(n: AbstractSyntaxNode): Seq[TypeDeclaration] = {
+      n match {
+        case c: ClassDeclaration => {
+          val interfaces = c.interfaces.map{case i: InterfaceType => {
+            c.scope.get.lookup(TypeNameLookup(i.name.toQualifiedName)) match {
+              case Some(idecl: InterfaceDeclaration) => idecl
+              case _ => throw new SyntaxError("Invalid interface creation.")
+            }
+          }}
+          if (c.superclass.isDefined) {
+            val superclass:ClassDeclaration =
+              c.scope.get.lookup(TypeNameLookup(c.superclass.get.name.toQualifiedName)) match {
+                case Some(cdecl: ClassDeclaration) => cdecl
+                case _ => throw new SyntaxError("Invalid class creation.")
+              }
+            interfaces ++ Seq(superclass)
+          } else {
+            interfaces
+          }
+        }
+        case x => x.children.flatMap(gatherParentClassHierarchy)
+      }
+    }
+
+    gatherParentClassHierarchy(td) ++ Seq(
+      td.scope.get.lookup(TypeNameLookup(CommonNames.JavaLangObject)).get.asInstanceOf[TypeDeclaration],
+      td.scope.get.lookup(TypeNameLookup(CommonNames.JavaIOSerializable)).get.asInstanceOf[TypeDeclaration],
+      td.scope.get.lookup(TypeNameLookup(CommonNames.JavaLangCloneable)).get.asInstanceOf[TypeDeclaration]
+    )
   }
 
   def generateAssemblyForNode(
@@ -119,27 +236,31 @@ initFields:
       case cd: ClassDeclaration => {
         //  Generate vtable for this class
         val symbolName = cd.symbolName
-        val runtimeTag = cd.runtimeTag.toHexString
         val instanceOfEntries = cd.instanceOfList.map(x => NASMDefines.InstanceOfEntry(x)).mkString("\n")
-        val methodsForVtable = cd.methodsForVtable
 
-        val requiredClassTags = methodsForVtable
-          .filter{_.scope.get.getEnclosingClassNode.get != cd}
-          .map(_.scope.get.getEnclosingClassNode.get.asInstanceOf[ClassDeclaration])
-          .toSet[ClassDeclaration]
-          .map(x => s"%define ${x.symbolName}_class_tag 0x${x.runtimeTag.toHexString}")
-          .mkString("\n")
-
-        val methodsForTopLevel = methodsForVtable.map(
+        val localMethods = cd.methodsForVtable
+        val methodsForTopLevel = localMethods.map(
           x => NASMDefines.VTableMethodDef(symbolName, x.symbolName, x.symbolName)
         ).mkString("\n")
 
+        //  TODO: For each of these nested entries, we need to call the overridden methods, not the superclass's
+        val nestedEntries = generateNestedVTableEntries(cd).flatMap{
+          case c: ClassDeclaration => {
+            Seq(NASMDefines.VTableNestedClassHeader(symbolName, c.symbolName)) ++
+            c.methodsForVtable.map(
+              x => NASMDefines.VTableNestedMethodDef(symbolName, c.symbolName, x.symbolName, x.symbolName)
+            )
+          }
+          case i: InterfaceDeclaration => {
+            Seq(NASMDefines.VTableNestedClassHeader(symbolName, i.symbolName)) ++
+            i.methodsForVtable.map(
+              x => NASMDefines.VTableNestedMethodDef(symbolName, i.symbolName, x.symbolName, x.symbolName)
+            )
+          }
+        }.mkString("\n")
+
         s"""
-$requiredClassTags
-
 SECTION .data
-
-%define ${symbolName}_class_tag 0x$runtimeTag
 
 ; instanceof array for $symbolName
 ${NASMDefines.InstanceOfHeader(symbolName)}
@@ -149,9 +270,13 @@ ${NASMDefines.InstanceOfEnd}
 
 ; beginning of vtable for $symbolName
 ${NASMDefines.VTableClassHeader(symbolName)}
-${NASMDefines.VTableInstanceOfRef(symbolName)}
 $methodsForTopLevel
+$nestedEntries
 ; end of vtable for $symbolName
+
+; vtable offset lookup functions for $symbolName
+
+; end of vtable offset lookup functions for $symbolName
 
 SECTION .text
   """ + cd.children.map(generateAssemblyForNode(_)).filter{_ != ""}.mkString("\n")
@@ -181,7 +306,7 @@ SECTION .text
             val parameterDefinitionsWithThis = if (md.isStatic) {
               parameterDefinitions
             } else {
-              parameterDefinitions + "\n" + s"%define ${md.symbolName}_${md.hashCode}_this [ebp + 0]"
+              parameterDefinitions + "\n" + s"%define ${md.symbolName}_${md.hashCode}_this [ebp + 8]"
             }
 
             val body = generateAssemblyForNode(b, indent + 1)
@@ -254,7 +379,7 @@ $body
 
                 //  TODO: If we could easily get the caller here, this should be a call to
                 //  mov eax, ${caller.symbolName}_${caller.hashCode}_this
-                case None => s"mov eax, [ebp + 0]; load the 'this' pointer"
+                case None => s"mov eax, [ebp + 8]; load the 'this' pointer"
                 case Some(an: AmbiguousName) => {
                   NameLinker.disambiguateName(an)(env) match {
                     case e: ExpressionName => generateAssemblyForNode(e, indent + 1)
@@ -268,7 +393,16 @@ $body
 
               s"""
   $loadInvokeTargetIntoEAX
-  mov eax, [eax + ObjectVTableOffset]
+  ; invocation target is in EAX, now push it on the stack temporarily
+  push eax
+  ; move its vtable into ebx
+  mov ebx, [eax + ObjectVTableOffset]
+  ; move its class tag into eax
+  mov eax, [eax + ObjectClassTagOffset]
+  ; call the appropriate method to move the vtable offset into eax
+  call ${NASMDefines.GetVTableOffset(classSymbolName)}
+  ; load the vtable pointer + offset into eax again
+  mov eax, [ebx + eax]
   ${NASMDefines.VMethodCall("eax", classSymbolName, symbolName)}
 """
             }
@@ -293,7 +427,7 @@ add esp, ${pushedArgs.size * 4} ; remove the "this" and params from the stack
           case Some(declaration: MethodDeclaration) => {
             val symbolName: String = declaration.symbolName
             val classSymbolName: String = declaration.scope.get.getEnclosingClassNode.get.symbolName
-            val call: String = s"""
+            val call = s"""
   mov eax, [eax + ObjectVTableOffset]
   ${NASMDefines.VMethodCall("eax", classSymbolName, symbolName)}
 """
@@ -640,7 +774,7 @@ and eax, ebx
         }
 
         val fields = recursiveFields(classDecl)
-        val allocSize = (fields.size + 1)
+        val allocSize = (fields.size + 2) // why + 2? Header includes class tag + vtable pointer
         val vtableBase = NASMDefines.VTableBase(classDecl.symbolName)
         val pushedArgs = pushArguments(c)
         val classSymbol = classDecl.symbolName
@@ -650,10 +784,11 @@ and eax, ebx
         mov eax, ${allocSize * 4}
         call __malloc
         push eax ; push the new object onto the stack
-        mov dword [eax], $vtableBase
+        mov dword [eax], ${NASMDefines.ClassTagForClass(classDecl.symbolName)}
+        mov dword [eax + ObjectVTableOffset], $vtableBase
 
         ${pushedArgs.mkString("\n")}
-        mov ebx, [eax + ObjectVTableOffset]
+        mov ebx, [eax + ObjectVTableOffset] ; no class tag checking here, we know it's the same type as what we just created
         ${NASMDefines.VMethodCall("ebx", classSymbol, constructorSymbol)}
 
         add esp, ${pushedArgs.size * 4} ; remove the "this" and params from the stack
