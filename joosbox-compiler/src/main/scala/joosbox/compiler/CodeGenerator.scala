@@ -314,7 +314,7 @@ SECTION .text
             val localAccessDefinitions = locals.zipWithIndex.map{case (id, i) => s"%define $id [ebp - ${4 * (i + 1)}]"}.mkString("\n")
 
             val parameterDefinitions = md.parameters.zipWithIndex.map{
-              case (fp: FormalParameter, i: Int) => s"%define ${fp.symbolName}_${fp.hashCode} [ebp + ${4 * (if (md.isStatic) i else (i + 1))}]"
+              case (fp: FormalParameter, i: Int) => s"%define ${fp.symbolName}_${fp.hashCode} [ebp + ${4 * (if (md.isStatic) (i + 2) else (i + 3))}]"
             }.mkString("\n")
 
             val parameterDefinitionsWithThis = if (md.isStatic) {
