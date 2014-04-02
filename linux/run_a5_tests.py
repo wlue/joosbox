@@ -70,8 +70,20 @@ tests = [
         "", 123
     ),
     (
-        ["joosbox-compiler/src/test/resources/custom-tests/compiler_assignment_1.java"],
-        "", 1
+        ["joosbox-compiler/src/test/resources/custom-tests/compiler_static_invocation.java"],
+        "", 123
+    ),
+    (
+        ["joosbox-compiler/src/test/resources/custom-tests/compiler_static_invocation_2.java"],
+        "", 9
+    ),
+    (
+        ["joosbox-compiler/src/test/resources/custom-tests/compiler_override.java"],
+        "", 43
+    ),
+    (
+        ["joosbox-compiler/src/test/resources/custom-tests/compiler_interface_override.java"],
+        "", 43
     ),
     (
         ["joosbox-compiler/src/test/resources/custom-tests/compiler_method_args_1.java"],

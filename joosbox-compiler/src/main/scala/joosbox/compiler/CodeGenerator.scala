@@ -427,7 +427,7 @@ add eax, ebx
               generateInstanceCallAssembly(loadInvokeTargetIntoEAX, thunkAsm, classSymbolName, symbolName)
             }
 
-            val pushArgs = pushArguments(m).mkString("\n")
+            val pushArgs = pushArguments(m)
             val argsSize = m.args.size
             s"""
 $pushArgs
@@ -454,7 +454,7 @@ add esp, ${argsSize * 4} ; remove the params from the stack
             val primaryAsm:String = generateAssemblyForNode(m.primary)
             val thunkAsm = ""
             val call:String = generateInstanceCallAssembly(primaryAsm, thunkAsm, classSymbolName, symbolName)
-            val pushArgs = pushArguments(m).mkString("\n")
+            val pushArgs = pushArguments(m)
             val argsSize = m.args.size
             s"""
 $pushArgs
@@ -820,7 +820,7 @@ mov eax, [eax + ObjectVTableOffset]
         """
 
         val call = generateInstanceCallAssembly(mallocAsm, thunkAsm, classSymbolName, symbolName)
-        val pushArgs = pushArguments(c).mkString("\n")
+        val pushArgs = pushArguments(c)
         val argsSize = c.args.size
 
         s"""
@@ -942,7 +942,7 @@ $asm
   }
 
 
-  def pushArguments(node:AbstractSyntaxNode) : Seq[String] = {
+  def pushArguments(node:AbstractSyntaxNode) : String = {
     val args : Seq[Expression] = node match {
       case smi: SimpleMethodInvocation => smi.args
       case cmi: ComplexMethodInvocation => cmi.args
@@ -950,13 +950,10 @@ $asm
       case x => throw new SyntaxError("Cannot push arguments for node type without arguments: " + x)
     }
 
-    var argsAsms:Seq[String] = Seq.empty[String]
-    args.reverse.foreach(a => {
-      argsAsms = argsAsms ++ Seq(generateAssemblyForNode(a)(None,None))
-      argsAsms = argsAsms ++ Seq("push eax; arg")
-    })
-
-    argsAsms
+    //  TODO: it looks like this doesn't evaluate the args in the correct order
+    args.reverse.map(a => {
+      generateAssemblyForNode(a)(None,None) + "\npush eax; argument for call\n"
+    }).mkString("\n")
   }
 
   def generateInstanceCallAssembly(instanceAsm:String, thunkAsm:String, className:String, callName:String) : String = {
