@@ -82,10 +82,6 @@ tests = [
         "", 43
     ),
     (
-        ["joosbox-compiler/src/test/resources/custom-tests/compiler_interface_override.java"],
-        "", 43
-    ),
-    (
         ["joosbox-compiler/src/test/resources/custom-tests/compiler_method_args_1.java"],
         "", 1
     ),
