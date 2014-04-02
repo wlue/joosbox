@@ -452,7 +452,7 @@ add esp, ${argsSize * 4} ; remove the params from the stack
             val classSymbolName: String = declaration.scope.get.getEnclosingClassNode.get.symbolName
 
             val primaryAsm:String = generateAssemblyForNode(m.primary)
-            val thunkAsm = s"mov eax, [eax + ObjectVTableOffset]"
+            val thunkAsm = ""
             val call:String = generateInstanceCallAssembly(primaryAsm, thunkAsm, classSymbolName, symbolName)
             val pushArgs = pushArguments(m).mkString("\n")
             val argsSize = m.args.size

@@ -78,6 +78,10 @@ tests = [
         "", 13
     ),
     (
+        ["joosbox-compiler/src/test/resources/custom-tests/compiler_class_creation_1.java"],
+        "", 42
+    ),
+    (
         ["joosbox-compiler/src/test/resources/marmoset-tests/a5/J1_01.java"],
         "", 123
     ),
