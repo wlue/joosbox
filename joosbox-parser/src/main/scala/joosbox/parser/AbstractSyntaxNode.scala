@@ -540,21 +540,35 @@ object AbstractSyntaxNode {
   sealed trait AccessModifier extends Modifier
   sealed trait NonAccessModifier extends Modifier
   case class StaticKeyword() extends NonAccessModifier {
+    //  All instances of modifiers should be hashCode equivalent.
+    override def hashCode: Int = this.getClass.hashCode()
     override def symbolName: String = "static"
   }
 
   case class PublicKeyword() extends AccessModifier {
+    //  All instances of modifiers should be hashCode equivalent.
+    override def hashCode: Int = this.getClass.hashCode()
     override def symbolName: String = "public"
   }
   case class ProtectedKeyword() extends AccessModifier {
+    //  All instances of modifiers should be hashCode equivalent.
+    override def hashCode: Int = this.getClass.hashCode()
     override def symbolName: String = "protected"
   }
 
-  case class AbstractKeyword() extends NonAccessModifier
+  case class AbstractKeyword() extends NonAccessModifier {
+    //  All instances of modifiers should be hashCode equivalent.
+    override def hashCode: Int = this.getClass.hashCode()
+    override def symbolName: String = "abstract"
+  }
   case class FinalKeyword() extends NonAccessModifier {
+    //  All instances of modifiers should be hashCode equivalent.
+    override def hashCode: Int = this.getClass.hashCode()
     override def symbolName: String = "final"
   }
   case class NativeKeyword() extends NonAccessModifier {
+    //  All instances of modifiers should be hashCode equivalent.
+    override def hashCode: Int = this.getClass.hashCode()
     override def symbolName: String = "native"
   }
 
@@ -586,7 +600,7 @@ object AbstractSyntaxNode {
       List(body) ++ superclass.toList ++ modifiers.toList ++ interfaces.toList
 
     override def parentOption: Option[AbstractSyntaxNode] = parent
-    override def symbolName: String = "class_" + name.niceName
+    override def symbolName: String = "class_" + name.niceName + "_0x" + hashCode.toHexString
 
     def runtimeTag: Int = hashCode
 
@@ -682,6 +696,8 @@ object AbstractSyntaxNode {
   ) extends TypeDeclaration(name, modifiers, interfaces) with Referenceable {
     override def children: List[AbstractSyntaxNode] =
       List(body) ++ modifiers.toList ++ interfaces.toList
+
+    override def symbolName: String = "interface_" + name.niceName + "_0x" + hashCode.toHexString
 
     override def parentOption: Option[AbstractSyntaxNode] = parent
 
