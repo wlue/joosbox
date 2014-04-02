@@ -393,16 +393,15 @@ $body
 
               s"""
   $loadInvokeTargetIntoEAX
-  ; invocation target is in EAX, now push it on the stack temporarily
-  push eax
-  ; move its vtable into ebx
+  ; move the invocation target's vtable into ebx
   mov ebx, [eax + ObjectVTableOffset]
   ; move its class tag into eax
   mov eax, [eax + ObjectClassTagOffset]
   ; call the appropriate method to move the vtable offset into eax
   call ${NASMDefines.GetVTableOffset(classSymbolName)}
-  ; load the vtable pointer + offset into eax again
-  mov eax, [ebx + eax]
+  ; add the offset and the vtable pointer we stored in ebx
+  add eax, ebx
+  ; eax now contains the vtable pointer at the appropriate offset
   ${NASMDefines.VMethodCall("eax", classSymbolName, symbolName)}
 """
             }
