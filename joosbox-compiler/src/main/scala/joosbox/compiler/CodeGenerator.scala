@@ -243,19 +243,33 @@ initFields:
           x => NASMDefines.VTableMethodDef(symbolName, x.symbolName, x.symbolName)
         ).mkString("\n")
 
-        //  TODO: For each of these nested entries, we need to call the overridden methods, not the superclass's
+        def generateReferenceToOverriddenMethod(superSymbolName: String, n: MethodOrConstructorDeclaration): String = n match {
+          case m: MethodDeclaration => {
+            cd.scope.get.lookup(MethodLookup(m.name.toQualifiedName, m.parameters.map(_.varType))) match {
+              case Some(concrete: MethodDeclaration) =>
+                NASMDefines.VTableNestedMethodDef(symbolName, superSymbolName, m.symbolName, concrete.symbolName)
+              case None
+                => throw new SyntaxError("Could not find concrete method declaration for VTable: " + m.niceName)
+            }
+          }
+          case constructor: ConstructorDeclaration => {
+            cd.scope.get.lookup(ConstructorLookup(constructor.name.toQualifiedName, constructor.parameters.map(_.varType))) match {
+              case Some(concrete: ConstructorDeclaration) =>
+                NASMDefines.VTableNestedMethodDef(symbolName, superSymbolName, constructor.symbolName, concrete.symbolName)
+              case None
+                => throw new SyntaxError("Could not find concrete constructor declaration for VTable: " + constructor.name.niceName)
+            }
+          }
+        }
+
         val nestedEntries = generateNestedVTableEntries(cd).flatMap{
           case c: ClassDeclaration => {
             Seq(NASMDefines.VTableNestedClassHeader(symbolName, c.symbolName)) ++
-            c.methodsForVtable.map(
-              x => NASMDefines.VTableNestedMethodDef(symbolName, c.symbolName, x.symbolName, x.symbolName)
-            )
+            c.methodsForVtable.map(generateReferenceToOverriddenMethod(c.symbolName, _))
           }
           case i: InterfaceDeclaration => {
             Seq(NASMDefines.VTableNestedClassHeader(symbolName, i.symbolName)) ++
-            i.methodsForVtable.map(
-              x => NASMDefines.VTableNestedMethodDef(symbolName, i.symbolName, x.symbolName, x.symbolName)
-            )
+            i.methodsForVtable.map(generateReferenceToOverriddenMethod(i.symbolName, _))
           }
         }.mkString("\n")
 
@@ -393,7 +407,7 @@ $body
 
               s"""
   $loadInvokeTargetIntoEAX
-  ; move the invocation target's vtable into ebx
+  ; move vtable of the invocation target into ebx
   mov ebx, [eax + ObjectVTableOffset]
   ; move its class tag into eax
   mov eax, [eax + ObjectClassTagOffset]
@@ -787,7 +801,7 @@ and eax, ebx
         mov dword [eax + ObjectVTableOffset], $vtableBase
 
         ${pushedArgs.mkString("\n")}
-        mov ebx, [eax + ObjectVTableOffset] ; no class tag checking here, we know it's the same type as what we just created
+        mov ebx, [eax + ObjectVTableOffset] ; no class tag checking required here
         ${NASMDefines.VMethodCall("ebx", classSymbol, constructorSymbol)}
 
         add esp, ${pushedArgs.size * 4} ; remove the "this" and params from the stack
