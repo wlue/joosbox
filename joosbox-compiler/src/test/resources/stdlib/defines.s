@@ -6,3 +6,5 @@ extern __exception
 
 %define ObjectClassTagOffset 0
 %define ObjectVTableOffset 4
+
+%define NoVTableOffsetFound 0xFFFFFFFF

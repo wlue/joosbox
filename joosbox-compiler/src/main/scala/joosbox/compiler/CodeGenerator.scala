@@ -175,7 +175,10 @@ ${NASMDefines.OffsetTableStatementLabelEnd(s.symbolName, x.symbolName)}:
 ; beginning of offset table for ${s.symbolName}
 ${NASMDefines.OffsetTableLabel(s.symbolName)}:
 ${substatements.mkString("\n")}
-call __exception
+
+; lookup failed - return a constant
+mov eax, NoVTableOffsetFound
+ret
 ; end of offset table for ${s.symbolName}
 """
       }
@@ -310,7 +313,7 @@ SECTION .text
             val locals: Seq[String] = findLocalVariableDeclarations(b).map(_.symbolName)
             val localAccessDefinitions = locals.zipWithIndex.map{case (id, i) => s"%define $id [ebp - ${4 * (i + 1)}]"}.mkString("\n")
 
-            val parameterDefinitions = md.parameters.zipWithIndex.map{
+            val parameterDefinitions = md.parameters.reverse.zipWithIndex.map{
               case (fp: FormalParameter, i: Int) => s"%define ${fp.symbolName}_${fp.hashCode} [ebp + ${4 * (if (md.isStatic) (i + 2) else (i + 3))}]"
             }.mkString("\n")
 
@@ -420,6 +423,9 @@ mov ebx, [eax + ObjectVTableOffset]
 mov eax, [eax + ObjectClassTagOffset]
 ; call the appropriate method to move the vtable offset into eax
 call ${NASMDefines.GetVTableOffset(classSymbolName)}
+; check the returned offset to see if it's invalid
+cmp eax, NoVTableOffsetFound
+je __exception
 ; add the offset and the vtable pointer we stored in ebx
 add eax, ebx
 ; eax now contains the vtable pointer at the appropriate offset
@@ -459,6 +465,9 @@ mov ebx, [eax + ObjectVTableOffset]
 mov eax, [eax + ObjectClassTagOffset]
 ; call the appropriate method to move the vtable offset into eax
 call ${NASMDefines.GetVTableOffset(classSymbolName)}
+; check the returned offset to see if it's invalid
+cmp eax, NoVTableOffsetFound
+je __exception
 ; add the offset and the vtable pointer we stored in ebx
 add eax, ebx
 ; eax now contains the vtable pointer at the appropriate offset
@@ -613,7 +622,49 @@ idiv ebx
         """
       }
 
-      case r : RelationalExpression => {
+      case InstanceOfExpression(e: Expression, c: ReferenceType) => {
+        //  Evaluate the expression inside, then move it into eax.
+        //  If the target type is a reference, verify that the resulting object pointer is an instance of the target.
+        val prepareToValidateCast = s"""
+; move vtable of the invocation target into ebx
+mov ebx, [eax + ObjectVTableOffset]
+; move its class tag into eax
+mov eax, [eax + ObjectClassTagOffset]
+"""
+        val offsetCall = c match {
+          case ct: ClassOrInterfaceType => {
+            c.scope.get.lookup(TypeNameLookup(ct.name.toQualifiedName)) match {
+              case Some(cd: ClassDeclaration) => s"call ${NASMDefines.OffsetTableLabel(cd.symbolName)}"
+              case Some(id: InterfaceDeclaration) => s"call ${NASMDefines.OffsetTableLabel(id.symbolName)}"
+              case x => throw new SyntaxError("Cast expression could not find target class or interface, instead got: " + x)
+            }
+          }
+          case ct: ClassType => {
+            c.scope.get.lookup(TypeNameLookup(ct.name.toQualifiedName)) match {
+              case Some(cd: ClassDeclaration) => s"call ${NASMDefines.OffsetTableLabel(cd.symbolName)}"
+              case _ => throw new SyntaxError("Cast expression could not find target class")
+            }
+          }
+          case it: InterfaceType => {
+            c.scope.get.lookup(TypeNameLookup(it.name.toQualifiedName)) match {
+              case Some(id: InterfaceDeclaration) => s"call ${NASMDefines.OffsetTableLabel(id.symbolName)}"
+              case _ => throw new SyntaxError("Cast expression could not find target interface")
+            }
+          }
+          case _: PrimitiveType => "nop ; primitive cast"
+          case x => s"nop; unhandled cast type to ${x.symbolName}"
+        }
+
+        val postValidateCast = s"""
+; check eax to see if the cast was successful
+sub eax, NoVTableOffsetFound
+not eax
+"""
+
+        generateAssemblyForNode(e) + prepareToValidateCast + offsetCall + postValidateCast
+      }
+
+      case r :RelationalExpression => {
         var jmpAsm:String = ""
 
         var lhsAsm:String = ""
@@ -624,7 +675,8 @@ idiv ebx
         val finalCase = r.symbolName + "_FINAL"
 
         r match {
-          case InstanceOfExpression(expr, refType) => return """nop; TODO"""
+          case _: InstanceOfExpression
+            => throw new SyntaxError("InstanceOfExpression should not be caught here.")
           case EqualExpression(e1, e2) =>
             jmpAsm = "jz"
             lhsAsm = generateAssemblyForNode(e1)
@@ -940,8 +992,51 @@ $bottomLabel:
         """
       }
 
+      case c: CastExpression => {
+        //  Evaluate the expression inside, then move it into eax.
+        //  If the target type is a reference, verify that the resulting object pointer is an instance of the target.
+        val prepareToValidateCast = s"""
+; validating cast - first push the object pointer in eax to save it
+push eax
+; move vtable of the invocation target into ebx
+mov ebx, [eax + ObjectVTableOffset]
+; move its class tag into eax
+mov eax, [eax + ObjectClassTagOffset]
+"""
+        val offsetCall = c.targetType match {
+          case ct: ClassOrInterfaceType => {
+            c.scope.get.lookup(TypeNameLookup(ct.name.toQualifiedName)) match {
+              case Some(cd: ClassDeclaration) => s"call ${NASMDefines.OffsetTableLabel(cd.symbolName)}"
+              case Some(id: InterfaceDeclaration) => s"call ${NASMDefines.OffsetTableLabel(id.symbolName)}"
+              case x => throw new SyntaxError("Cast expression could not find target class or interface, instead got: " + x)
+            }
+          }
+          case ct: ClassType => {
+            c.scope.get.lookup(TypeNameLookup(ct.name.toQualifiedName)) match {
+              case Some(cd: ClassDeclaration) => s"call ${NASMDefines.OffsetTableLabel(cd.symbolName)}"
+              case _ => throw new SyntaxError("Cast expression could not find target class")
+            }
+          }
+          case it: InterfaceType => {
+            c.scope.get.lookup(TypeNameLookup(it.name.toQualifiedName)) match {
+              case Some(id: InterfaceDeclaration) => s"call ${NASMDefines.OffsetTableLabel(id.symbolName)}"
+              case _ => throw new SyntaxError("Cast expression could not find target interface")
+            }
+          }
+          case _: PrimitiveType => "nop ; primitive cast"
+          case x => s"nop; unhandled cast type to ${x.symbolName}"
+        }
 
-      case x => x.children.map(generateAssemblyForNode(_)).filter{_ != ""}.mkString("\n")
+        val postValidateCast = s"""
+; check eax to see if the cast was successful
+cmp eax, NoVTableOffsetFound
+je __exception
+"""
+
+        prepareToValidateCast + offsetCall + postValidateCast
+      }
+
+      case x => x.children.map(generateAssemblyForNode).filter{_ != ""}.mkString("\n")
     }
 
     s"""
@@ -961,7 +1056,7 @@ $asm
     }
 
     //  TODO: it looks like this doesn't evaluate the args in the correct order
-    args.reverse.map(a => {
+    args.map(a => {
       generateAssemblyForNode(a)(None,None) + "\npush eax; argument for call\n"
     }).mkString("\n")
   }
