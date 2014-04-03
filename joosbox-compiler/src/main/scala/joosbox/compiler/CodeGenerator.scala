@@ -1089,16 +1089,13 @@ idiv ebx
         //  Evaluate the expression inside, then move it into eax.
         //  If the target type is a reference, verify that the resulting object pointer is an instance of the target.
         val prepareToValidateCast = s"""
-cmp eax, 0 ; if null, treat classTag as 0
-je .instanceOf_${c.symbolName}_${e.symbolName}_classTagIsInEAX
-
-; move vtable of the invocation target into ebx
-mov ebx, [eax + ObjectVTableOffset]
-.instanceOf_${c.symbolName}_${e.symbolName}_classTagIsInEAX:
+cmp eax, 0 ; if null, jump over everything as 0
+je .instanceOf_${c.symbolName}_${e.symbolName}_objectPointerIsNull
 """
         val offsetCall = generateOffsetCallForType(c)
 
         val postValidateCast = s"""
+.instanceOf_${c.symbolName}_${e.symbolName}_objectPointerIsNull:
 ; check eax to see if the cast was successful
 sub eax, NoVTableOffsetFound
 ; if the cast was successful, eax will be nonzero
@@ -1515,8 +1512,6 @@ $asm
             val thunkAsm = s"""
 ; move vtable of the invocation target into ebx
 mov ebx, [eax + ObjectVTableOffset]
-; move its class tag into eax
-mov eax, [eax + ObjectClassTagOffset]
 ; call the appropriate method to move the vtable offset into eax
 call ${NASMDefines.GetVTableOffset(classSymbolName)}
 
