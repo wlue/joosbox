@@ -721,7 +721,26 @@ mov dword [ebx + ArrayLengthOffset + 4*(ecx + 1)], eax
             """
           }
 
-          case c: ComplexArrayAccess => ""
+          case c: ComplexArrayAccess => {
+            val arrayAsm:String = generateAssemblyForNode(c.primary)
+            val indexAsm:String = generateAssemblyForNode(c.expr)
+
+            s"""
+push eax ; push rhs value
+
+$arrayAsm
+push eax
+$indexAsm
+push eax
+
+pop ecx
+pop ebx
+pop eax
+
+mov dword [ebx + ArrayLengthOffset + 4*(ecx + 1)], eax
+            """
+
+          }
 
           case x
             => throw new SyntaxError("Cannot assign to " + x)
@@ -1002,7 +1021,7 @@ and eax, ebx
 
         s"""
 $dimsAsm
-mov ecx, eax; ecx holds the length
+mov ecx, eax; ebx holds the length
 mov ebx, 4
 imul ebx ; 4x length in eax
 add eax, 16 ; extra bits plus 4x length

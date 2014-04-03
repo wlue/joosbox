@@ -1722,8 +1722,10 @@ object AbstractSyntaxNode {
           Seq(SimpleArrayAccess(name, expr))
         }
         case Seq(p: ParseNodes.PrimaryNoNewArray, l: ParseNodes.LeftBracket, e: ParseNodes.Expression, r: ParseNodes.RightBracket) => {
-          val primary: Primary = children.collectFirst { case x: Primary => x }.get
-          val expr: Expression = children.collectFirst { case x: Expression => x }.get
+          val pChildren = p.children.flatMap(recursive(_))
+          val eChildren = e.children.flatMap(recursive(_))
+          val primary: Primary = pChildren.collectFirst { case x: Primary => x }.get
+          val expr: Expression = eChildren.collectFirst { case x: Expression => x }.get
           Seq(ComplexArrayAccess(primary, expr))
         }
         case _ => a.children.flatMap(recursive(_))
