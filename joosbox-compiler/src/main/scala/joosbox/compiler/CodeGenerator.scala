@@ -93,7 +93,6 @@ $d
         val asm = s"""
 global _start
 _start:
-  call stringLiterals
   call initFields
   call $entryMethodSymbol
   call __debexit
@@ -256,16 +255,26 @@ ${code}
         if (!string_literals.contains(s.stringVal)) {
           string_literals = string_literals ++ Seq(s.stringVal)
           s.index = Some(string_literals.indexOf(s.stringVal))
+          val stringSymbolName = node.scope.get.lookup(
+            TypeNameLookup(CommonNames.JavaLangString)
+          ) match {
+            case Some(c: ClassDeclaration) => c.symbolName
+            case _ => throw new SyntaxError("Could not find javalangstring")
+          }
 
           val charsAsm:String = s.stringVal.toList.map{ char => s"dd '$char'"}.mkString("\n")
           literalAsm = s"""
-; string literal "${s.stringVal}"
-_string_literal_${s.index.get}:
+_string_literal_${s.index.get}_char_array:
 dd ${NASMDefines.ClassTagForClass(arraySymbolName)}
 dd ${NASMDefines.VTableBase(arraySymbolName)}
 dd CharTypeTag
 dd ${s.stringVal.length}
 $charsAsm
+
+_string_literal_${s.index.get}_String:
+dd ${NASMDefines.ClassTagForClass(stringSymbolName)}
+dd ${NASMDefines.VTableBase(stringSymbolName)}
+dd _string_literal_${s.index.get}_char_array
           """
         } else {
           s.index = Some(string_literals.indexOf(s.stringVal))
@@ -289,15 +298,11 @@ $charsAsm
     }.mkString("\n")
 
     s"""
-global stringLiterals
-stringLiterals:
 SECTION .data
 ; beginning of string literals data
 $literalsAsm
 ; end of string literals data
 SECTION .text
-
-ret
   """.stripMargin
   }
 
@@ -861,6 +866,12 @@ $lhsAsm
       case _: NullLiteral => s"mov eax, 0\n"
       case _: FalseLiteral => s"mov eax, 0\n"
       case _: TrueLiteral => s"mov eax, 1\n"
+
+      case s: StringLiteral =>
+        s"""
+; string literal "${s.stringVal}"
+mov eax, _string_literal_${s.index.get}_String
+        """
 
       case c: CharLiteral =>
         s"""
