@@ -1108,16 +1108,21 @@ mov dword [eax + ArrayLengthOffset], ecx
 mov eax, ${allocSize * 4}
 call __malloc
         """
-//${fields.map(generateAssemblyForNode(_.expression) + "\nmov ").mkString("\n")}
-        val initializeFieldInitialization = s"""
-; initialize fields in this instance of ${classDecl.symbolName}
 
-; end of field initialization for instance of ${classDecl.symbolName}
-"""
+        val instanceFieldInitialization = fields.filter(_.expression.isDefined).map(f => s"""
+; instance field initialization for ${f.symbolName}
+push eax
+${generateAssemblyForNode(f.expression.get)}
+mov ebx, eax
+pop eax
+mov [eax + ${(getOffsetOfInstanceField(f) + 2) * 4}], ebx
+; end instance field initialization for ${f.symbolName}
+""").mkString("\n")
+
         val thunkAsm = s"""
 mov dword [eax], ${NASMDefines.ClassTagForClass(classDecl.symbolName)}
 mov dword [eax + ObjectVTableOffset], $vtableBase
-$initializeFieldInitialization
+$instanceFieldInitialization
 
 mov eax, [eax + ObjectVTableOffset]
         """
