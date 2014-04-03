@@ -596,11 +596,6 @@ mov ${l.symbolName}, eax
           case Some(l: LocalVariableDeclaration) => s"mov eax, ${l.symbolName}\n"
           case Some(f: ForVariableDeclaration) => s"mov eax, ${f.symbolName}\n"
           case Some(f: FieldDeclaration) => {
-            val loadTarget = if (f.name.prefix.isEmpty) {
-              s""
-            } else {
-              s""
-            }
             s"mov eax, [eax + ${(getOffsetOfInstanceField(f) + 2) * 4}]; field declaration lookup\n"
           }
           case Some(f: FormalParameter) => s"mov eax, ${f.symbolName}_${f.hashCode}; reference parameter\n"
@@ -614,18 +609,13 @@ mov ${l.symbolName}, eax
                 disambiguated = NameLinker.disambiguateName(e)(e.scope.get).asInstanceOf[ExpressionName]
               }
 
-              println("Expression name could not be found: " + disambiguated.toQualifiedName + "\n")
-
               if (disambiguated.prefix.isEmpty) {
                 "; TODO: what in the actual fuck?"
               } else {
                 // Look up the expression name of the prefix and the name separately.
-                println("Multipart FD: " + disambiguated.toQualifiedName)
                 val endValue = ExpressionName(disambiguated.value)
                 endValue.scope = e.scope
-                val res = generateAssemblyForNode(disambiguated.prefix.get) + generateAssemblyForNode(endValue)
-                println(s"Result of nested expressionname lookups for ${disambiguated.toQualifiedName}:\n\n${res}\n\n")
-                res
+                generateAssemblyForNode(disambiguated.prefix.get) + generateAssemblyForNode(endValue)
               }
             }
           }
@@ -649,8 +639,39 @@ mov ${l.symbolName}, eax
             }
             case Some(f: FormalParameter) => s"mov ${f.symbolName}_${f.hashCode}, eax\n"
 
-            //  TODO: Handle the "None" case, which happens if we call array.length or if we can't find a lookup.
-            case _ => ""
+            case None => {
+              if (e.value.value.equals("length")) {
+                "; array length lookup TODO"
+              } else {
+                var disambiguated: ExpressionName = e
+                if (e.isAmbiguous) {
+                  disambiguated = NameLinker.disambiguateName(e)(e.scope.get).asInstanceOf[ExpressionName]
+                }
+
+                if (disambiguated.prefix.isEmpty) {
+                  "; TODO: what in the actual fuck?"
+                } else {
+                  // Look up the expression name of the prefix and the name separately.
+                  val endValue = ExpressionName(disambiguated.value)
+                  endValue.scope = e.scope
+
+                  val assign = e.scope.get.lookup(EnvironmentLookup.lookupFromName(endValue)) match {
+                    case Some(f: FieldDeclaration) => {
+                      val res = s"""
+pop ebx ; ebx now contains the thing we're assigning
+mov [eax + ${(getOffsetOfInstanceField(f) + 2) * 4}], ebx; field declaration assignment
+mov ebx, eax
+"""
+                      res
+                    }
+                    case _
+                      => throw new SyntaxError("Could not find instance field to assign to")
+                  }
+
+                  "push eax\n" + generateAssemblyForNode(disambiguated.prefix.get) + "\n" + assign
+                }
+              }
+            }
 
             case x =>
               throw new SyntaxError("Environment lookup for name " + e.niceName + " resulted in unknown node " + x)
