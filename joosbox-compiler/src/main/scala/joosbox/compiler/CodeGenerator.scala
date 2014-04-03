@@ -635,7 +635,10 @@ add esp, ${argsSize * 4} ; remove the params from the stack
       case m: ComplexMethodInvocation => {
         val env = m.scope.get
         val an = m.name
-        TypeChecker.resolveMethodName(an, m.args, env) match {
+        val argTypes: Seq[Type] = TypeChecker.resolvedTypesForArgs(m.args, env)
+        val scope:Environment = TypeChecker.resolvePrimaryAndFindScope(m.primary, env)
+
+        TypeChecker.resolveMethodName(an, m.args, scope) match {
           case Some(declaration: MethodDeclaration) => {
             val symbolName: String = declaration.symbolName
             val classSymbolName: String = declaration.scope.get.getEnclosingClassNode.get.symbolName
