@@ -24,6 +24,12 @@ object NASMDefines {
   def VTableNestedClassHeader(klass: String, superklass: String): String =
     s"vtable_${klass}_${superklass}:"
 
+  def VTableStaticFieldTag(klass: String, field: String): String =
+    s"vtable_${klass}_static_field_${field}"
+
+  def VTableStaticFieldDef(klass: String, field: String): String =
+    s"${VTableStaticFieldTag(klass, field)}: dd 0x0"
+
   def VTableMethodDef(klass: String, method: String, impl: String): String =
     s"vtable_${klass}_method__${method}: dd ${impl}"
   def VTableNestedMethodDef(klass: String, superklass: String, method: String, impl: String): String =
@@ -313,9 +319,12 @@ SECTION .text
         val instanceOfEntries = cd.instanceOfList.map(x => NASMDefines.InstanceOfEntry(x)).mkString("\n")
 
         val localMethods = cd.methodsForVtable
-        val methodsForTopLevel = localMethods.map(
-          x => NASMDefines.VTableMethodDef(symbolName, x.symbolName, x.symbolName)
-        ).mkString("\n")
+        val staticFields = cd.staticFieldsForVtable.map { field =>
+          NASMDefines.VTableStaticFieldDef(symbolName, field.symbolName)
+        }.mkString("\n")
+        val methodsForTopLevel = localMethods.map { x =>
+          NASMDefines.VTableMethodDef(symbolName, x.symbolName, x.symbolName)
+        }.mkString("\n")
 
         def generateReferenceToOverriddenMethod(superSymbolName: String, n: MethodOrConstructorDeclaration): String = n match {
           case m: MethodDeclaration => {
@@ -358,6 +367,7 @@ ${NASMDefines.InstanceOfEnd}
 
 ; beginning of vtable for $symbolName
 ${NASMDefines.VTableClassHeader(symbolName)}
+$staticFields
 $methodsForTopLevel
 $nestedEntries
 ; end of vtable for $symbolName
@@ -596,7 +606,12 @@ mov ${l.symbolName}, eax
           case Some(l: LocalVariableDeclaration) => s"mov eax, ${l.symbolName}\n"
           case Some(f: ForVariableDeclaration) => s"mov eax, ${f.symbolName}\n"
           case Some(f: FieldDeclaration) => {
-            s"mov eax, [eax + ${(getOffsetOfInstanceField(f) + 2) * 4}]; field declaration lookup\n"
+            if (f.isStatic) {
+              val classDeclaration = f.scope.get.compilationScope.get.node.get.asInstanceOf[CompilationUnit].typeDeclaration.asInstanceOf[ClassDeclaration]
+              s"mov eax, [${NASMDefines.VTableStaticFieldTag(classDeclaration.symbolName, f.symbolName)}]\n"
+            } else {
+              s"mov eax, [eax + ${(getOffsetOfInstanceField(f) + 2) * 4}]; field declaration lookup\n"
+            }
           }
           case Some(f: FormalParameter) => s"mov eax, ${f.symbolName}_${f.hashCode}; reference parameter\n"
 
@@ -626,16 +641,21 @@ mov ${l.symbolName}, eax
       }
 
       case a: Assignment => {
-        val rhsAsm:String = generateAssemblyForNode(a.rightHandSide)
-        val lhsAsm:String = a.leftHandSide match {
+        val rhsAsm: String = generateAssemblyForNode(a.rightHandSide)
+        val lhsAsm: String = a.leftHandSide match {
           case f: FieldAccess => ""
 
-          //  This is a write to an expressionname
-          case e: ExpressionName => e.scope.get.lookup(EnvironmentLookup.lookupFromName(e)) match {
+          // This is a write to an ExpressionName
+          case e: ExpressionName => e.scope.get.lookup(EnvironmentLookup.lookupFromName(NameLinker.disambiguateName(e)(e.scope.get))) match {
             case Some(l: LocalVariableDeclaration) => s"mov ${l.symbolName}, eax\n"
             case Some(f: ForVariableDeclaration) => s"mov ${f.symbolName}, eax\n"
             case Some(f: FieldDeclaration) => {
-              s"mov [${(getOffsetOfInstanceField(f) + 2) * 4}], eax; field declaration assignment\n"
+              if (f.isStatic) {
+                val classDeclaration = f.scope.get.compilationScope.get.node.get.asInstanceOf[CompilationUnit].typeDeclaration.asInstanceOf[ClassDeclaration]
+                s"mov [${NASMDefines.VTableStaticFieldTag(classDeclaration.symbolName, f.symbolName)}], eax\n"
+              } else {
+                s"mov [${(getOffsetOfInstanceField(f) + 2) * 4}], eax; field declaration assignment\n"
+              }
             }
             case Some(f: FormalParameter) => s"mov ${f.symbolName}_${f.hashCode}, eax\n"
 
@@ -655,20 +675,27 @@ mov ${l.symbolName}, eax
                   val endValue = ExpressionName(disambiguated.value)
                   endValue.scope = e.scope
 
-                  val assign = e.scope.get.lookup(EnvironmentLookup.lookupFromName(endValue)) match {
+                  e.scope.get.lookup(EnvironmentLookup.lookupFromName(endValue)) match {
                     case Some(f: FieldDeclaration) => {
-                      val res = s"""
+                      if (f.isStatic) {
+                        val classDeclaration = f.scope.get.compilationScope.get.node.get.asInstanceOf[CompilationUnit].typeDeclaration.asInstanceOf[ClassDeclaration]
+s"""
+${generateAssemblyForNode(disambiguated.prefix.get)}
+mov [${NASMDefines.VTableStaticFieldTag(classDeclaration.symbolName, f.symbolName)}], eax
+"""
+                      } else {
+                        s"""
+push eax
+${generateAssemblyForNode(disambiguated.prefix.get)}
 pop ebx ; ebx now contains the thing we're assigning
 mov [eax + ${(getOffsetOfInstanceField(f) + 2) * 4}], ebx; field declaration assignment
 mov ebx, eax
 """
-                      res
+                      }
                     }
                     case _
                       => throw new SyntaxError("Could not find instance field to assign to")
                   }
-
-                  "push eax\n" + generateAssemblyForNode(disambiguated.prefix.get) + "\n" + assign
                 }
               }
             }

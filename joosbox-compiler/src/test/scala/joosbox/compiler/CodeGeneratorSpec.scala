@@ -44,33 +44,10 @@ class CodeGeneratorSpec extends Specification {
 
   "Compiler" should {
     "pass all custom marmoset tests" in {
-      "class creation 1" in {
+      "static field assignment" in {
         linkAndTest(
-          Seq("joosbox-compiler/src/test/resources/custom-tests/compiler_class_creation_1.java"),
-          "", 42
-        )
-      }
-
-      "variable access" in {
-        linkAndTest(
-          Seq("joosbox-compiler/src/test/resources/custom-tests/compiler_variable_access.java"),
-          "", 11
-        )
-      }
-
-      "while 1" in {
-        linkAndTest(
-          Seq("joosbox-compiler/src/test/resources/custom-tests/compiler_while_loop_1.java"),
+          Seq("joosbox-compiler/src/test/resources/custom-tests/compiler_static_field_assign.java"),
           "", 1
-        )
-      }
-    }
-
-    "pass marmoset tests for assignment 5" in {
-      "J1_1_Instanceof_OfAdditiveExpression.java" in {
-        linkAndTest(
-          Seq("joosbox-compiler/src/test/resources/marmoset-tests/a5/J1_1_Instanceof_OfAdditiveExpression.java"),
-          "", 123
         )
       }
     }

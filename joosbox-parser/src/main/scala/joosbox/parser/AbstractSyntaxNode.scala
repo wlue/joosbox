@@ -650,6 +650,10 @@ object AbstractSyntaxNode {
       }
     }
 
+    def staticFieldsForVtable: Seq[FieldDeclaration] = {
+      body.declarations.collect { case field: FieldDeclaration if field.isStatic => field }
+    }
+
     //  A list of method declarations, in order, for the generated vtable.
     def methodsForVtable: Seq[MethodOrConstructorDeclaration] = {
       val superclassMethods: Seq[MethodOrConstructorDeclaration] = superclass match {
@@ -832,6 +836,8 @@ object AbstractSyntaxNode {
   ) extends ClassMemberDeclaration(name, modifiers, memberType) with Referenceable {
     override def children: List[AbstractSyntaxNode] =
       modifiers.toList ++ List(memberType) ++ expression.toList
+
+    override def symbolName: String = s"${name.niceName}_0x${hashCode.toHexString}"
 
     def isStatic: Boolean = modifiers.contains(StaticKeyword())
     def isProtected: Boolean = modifiers.contains(ProtectedKeyword())
