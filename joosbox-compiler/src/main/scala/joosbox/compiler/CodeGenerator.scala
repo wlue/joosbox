@@ -995,15 +995,31 @@ mov eax, _string_literal_${s.index.get}_String
 mov dword eax, ${c.value.value}
         """
 
-      case AddExpression(e1, e2) => (
-        generateAssemblyForNode(e1) + "push eax\n"
-        + generateAssemblyForNode(e2) + "push eax\n"
-        + """
+      case a:AddExpression => {
+        val t:Option[Type] = TypeChecker.resolveType(a)
+
+        t match {
+          case Some(ClassType(TypeName(InputString("String", _, _, _),
+                      Some(PackageName(InputString("lang", _, _, _),
+                      Some(PackageName(InputString("java", _, _, _), None))))))) =>
+            generateStringConcatenationAssembly(a.e1, a.e2)
+
+          case _ =>
+            val e1Asm = generateAssemblyForNode(a.e1)
+            val e2Asm = generateAssemblyForNode(a.e2)
+        s"""
+$e1Asm
+push eax
+$e2Asm
+push eax
+
 pop ebx
 pop eax
 add eax, ebx
         """
-      )
+
+        }
+      }
       case SubtractExpression(e1, e2) => (
         generateAssemblyForNode(e1) + "push eax\n"
         + generateAssemblyForNode(e2) + "push eax\n"
@@ -1450,6 +1466,76 @@ je __exception
 $asm
 ; end asm for node ${n.getClass.getSimpleName} 0x${n.hashCode.toHexString}
     """
+  }
+
+  def generateStringConcatenationAssembly(e1: Expression, e2: Expression) : String = {
+      var env : Environment = e1.scope.get
+
+
+      val name = MethodName(InputString("concat", "", 0))
+      env= env.lookup(
+            TypeNameLookup(CommonNames.JavaLangString)
+          ) match {
+            case Some(c: ClassDeclaration) => c.body.scope.get
+            case _ => throw new SyntaxError("Could not find javalangstring")
+          }
+
+      TypeChecker.resolveMethodName(name, Seq(e2), env) match {
+          case Some(declaration: MethodDeclaration) => {
+            val symbolName: String = declaration.symbolName
+            val classSymbolName: String = declaration.scope.get.getEnclosingClassNode.get.symbolName
+
+            val e1Asm = generateStringPromotionAssembly(e1)
+            val thunkAsm = s"""
+; move vtable of the invocation target into ebx
+mov ebx, [eax + ObjectVTableOffset]
+; move its class tag into eax
+mov eax, [eax + ObjectClassTagOffset]
+; call the appropriate method to move the vtable offset into eax
+call ${NASMDefines.GetVTableOffset(classSymbolName)}
+
+cmp eax, NoVTableOffsetFound
+je __exception
+; add the offset and the vtable pointer we stored in ebx
+add eax, ebx
+; eax now contains the vtable pointer at the appropriate offset
+              """
+
+            val call = generateInstanceCallAssembly(e1Asm, thunkAsm, classSymbolName, symbolName)
+            val pushArg = generateStringPromotionAssembly(e2)
+            s"""
+$pushArg
+$call
+add esp, 4 ; remove the single arg from the stack
+            """
+          }
+          case _ => {
+            throw new SyntaxError("No concat method for type.")
+          }
+      }
+  }
+
+  def generateStringPromotionAssembly(e: Expression) : String = {
+      val env = e.scope.get
+      val name = QualifiedName(Seq(
+                              InputString("String", "", 0),
+                              InputString("valueOf", "", 0))).toMethodName
+
+      TypeChecker.resolveMethodName(name, Seq(e), env) match {
+          case Some(declaration: MethodDeclaration) => {
+            val symbolName: String = declaration.symbolName
+            val call = s"call $symbolName" // String.valueOf is static
+            val pushArg = generateAssemblyForNode(e)(None,None) + "\npush eax; argument for call\n"
+            s"""
+$pushArg
+$call
+add esp, 4 ; remove the single arg from the stack
+            """
+          }
+          case _ => {
+            throw new SyntaxError("No String.valueOf method for type.")
+          }
+      }
   }
 
   def assignToArrayIndex(arrayAsm:String, indexAsm:String) : String = {

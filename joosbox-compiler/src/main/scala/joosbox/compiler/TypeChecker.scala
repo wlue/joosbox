@@ -531,182 +531,188 @@ object TypeChecker {
   }
 
   def resolveType(node: AbstractSyntaxNode): Option[Type] = {
-    val result = node match {
-      case t: Type => Some(t)
+    if (!node.typeOpt.isEmpty) {
+      node.typeOpt
+    } else {
+      val result = node match {
+        case t: Type => Some(t)
 
-      case TrueLiteral() => Some(BooleanKeyword())
-      case FalseLiteral() => Some(BooleanKeyword())
-      case NullLiteral() => None
-      case ThisKeyword() =>
-        resolveExpressionName(withScope(ExpressionName(InputString("this")), node.scope), node.scope.get)
+        case TrueLiteral() => Some(BooleanKeyword())
+        case FalseLiteral() => Some(BooleanKeyword())
+        case NullLiteral() => None
+        case ThisKeyword() =>
+          resolveExpressionName(withScope(ExpressionName(InputString("this")), node.scope), node.scope.get)
 
-      case Num(value, _) => Some(IntKeyword())
-      case _: CharLiteral => Some(CharKeyword())
-      case _: StringLiteral => Some(withScope(ClassType(CommonNames.JavaLangString.toTypeName), node.scope))
+        case Num(value, _) => Some(IntKeyword())
+        case _: CharLiteral => Some(CharKeyword())
+        case _: StringLiteral => Some(withScope(ClassType(CommonNames.JavaLangString.toTypeName), node.scope))
 
-      case param: FormalParameter => Some(param.varType)
-      case field: FieldDeclaration => Some(field.memberType)
-      case variable: LocalVariableDeclaration => Some(variable.memberType)
-      case variable: ForVariableDeclaration => Some(variable.typeDeclaration)
+        case param: FormalParameter => Some(param.varType)
+        case field: FieldDeclaration => Some(field.memberType)
+        case variable: LocalVariableDeclaration => Some(variable.memberType)
+        case variable: ForVariableDeclaration => Some(variable.typeDeclaration)
 
-      case expr: Expression => expr match {
-        case c: CastExpression =>
-          Some(node.scope.get.asInstanceOf[ScopeEnvironment].fullyQualifyType(c.targetType))
-        case ParenthesizedExpression(expression) => resolveType(expression)
+        case expr: Expression => expr match {
+          case c: CastExpression =>
+            Some(node.scope.get.asInstanceOf[ScopeEnvironment].fullyQualifyType(c.targetType))
+          case ParenthesizedExpression(expression) => resolveType(expression)
 
-        case e: PostfixExpression => e match {
-          case name: ExpressionName => {
-            var env = node.scope.get
-            if (!name.prefix.isEmpty) {
-              NameLinker.disambiguateName(name)(env) match {
-                case n: ExpressionName => resolveExpressionName(n, env)
-                case _ => throw new SyntaxError("Expression name " + name.niceName + " disambiguates weird.")
-              }
-            } else {
-              resolveExpressionName(name, env)
-            }
-          }
-
-          case name: TypeName => {
-            val env = node.scope.get
-            resolveTypeName(name, env)
-          }
-
-          // TODO - I think these should be None, but not sure
-          case name: PackageName => throw new SyntaxError("PackageName" + name.niceName)
-          case name: MethodName => throw new SyntaxError("MethodName" + name.niceName)
-          case name: AmbiguousName => throw new SyntaxError("AmbiguousName" + name.niceName)
-
-          case _ => throw new SyntaxError("PostfixExpression")
-        }
-
-        case conditional: ConditionalExpression => conditional match {
-          // Binary expression are supported
-          case OrExpression(_, _) => Some(BooleanKeyword())
-          case AndExpression(_, _) => Some(BooleanKeyword())
-          // Eager boolean is supported, bitwise are not
-          case BinOrExpression(_, _) => Some(BooleanKeyword())
-          case BinXorExpression(_, _) => Some(BooleanKeyword())
-          case BinAndExpression(_, _) => Some(BooleanKeyword())
-        }
-
-        case relational: RelationalExpression => relational match {
-          case EqualExpression(e1, e2)        => Some(BooleanKeyword())
-          case NotEqualExpression(e1, e2)     => Some(BooleanKeyword())
-          case LessThanExpression(e1, e2)     => matchCompatibleType(resolveType(e1), resolveType(e2), Some(BooleanKeyword()))
-          case LessEqualExpression(e1, e2)    => matchCompatibleType(resolveType(e1), resolveType(e2), Some(BooleanKeyword()))
-          case GreaterThanExpression(e1, e2)  => matchCompatibleType(resolveType(e1), resolveType(e2), Some(BooleanKeyword()))
-          case GreaterEqualExpression(e1, e2) => matchCompatibleType(resolveType(e1), resolveType(e2), Some(BooleanKeyword()))
-          case InstanceOfExpression(expr, reference) => {
-            (expr, reference) match {
-              case (NullLiteral(), _: ReferenceType) => Some(BooleanKeyword())
-              case (expr, reference) => (resolveType(expr), reference) match {
-                case (Some(_: ReferenceType), _: ReferenceType) => Some(BooleanKeyword())
-                case (left, _) => throw new SyntaxError("Left hand side of \"instanceOf\" is not a reference: " + left)
-              }
-            }
-          }
-        }
-
-        case arithmetic: ArithmeticExpression => arithmetic match {
-          case AddExpression(e1, e2)        => promotedTypeOption(matchCompatibleType(resolveType(e1), resolveType(e2)))
-          case SubtractExpression(e1, e2)   => promotedTypeOption(matchCompatibleType(resolveType(e1), resolveType(e2)))
-          case MultiplyExpression(e1, e2)   => promotedTypeOption(matchCompatibleType(resolveType(e1), resolveType(e2)))
-          case DivideExpression(e1, e2)     => promotedTypeOption(matchCompatibleType(resolveType(e1), resolveType(e2)))
-          case ModExpression(e1, e2)        => promotedTypeOption(matchCompatibleType(resolveType(e1), resolveType(e2)))
-        }
-
-        case NegatedExpression(e1) => promotedTypeOption(resolveType(e1))
-        case _: LogicalNotExpression => Some(BooleanKeyword())
-
-        case FieldAccess(ref, name) => {
-          val env = node.scope.get
-          val refType : Type = resolvePrimary(ref, env)
-          val scope:Environment = resolvePrimaryAndFindScope(ref, env)
-          val fieldName: ExpressionName = ExpressionName(name)
-
-          // Check validity of field access for arrays
-          refType match {
-            case a : ArrayType => 
-              if (fieldName.value == InputString("length")) {
-                return Some(IntKeyword())
+          case e: PostfixExpression => e match {
+            case name: ExpressionName => {
+              var env = node.scope.get
+              if (!name.prefix.isEmpty) {
+                NameLinker.disambiguateName(name)(env) match {
+                  case n: ExpressionName => resolveExpressionName(n, env)
+                  case _ => throw new SyntaxError("Expression name " + name.niceName + " disambiguates weird.")
+                }
               } else {
-                throw new SyntaxError("Only valid array field is length.")
+                resolveExpressionName(name, env)
               }
-            case _ => Unit 
+            }
+
+            case name: TypeName => {
+              val env = node.scope.get
+              resolveTypeName(name, env)
+            }
+
+            // TODO - I think these should be None, but not sure
+            case name: PackageName => throw new SyntaxError("PackageName" + name.niceName)
+            case name: MethodName => throw new SyntaxError("MethodName" + name.niceName)
+            case name: AmbiguousName => throw new SyntaxError("AmbiguousName" + name.niceName)
+
+            case _ => throw new SyntaxError("PostfixExpression")
           }
 
-          resolveExpressionName(fieldName, scope)
-        }
+          case conditional: ConditionalExpression => conditional match {
+            // Binary expression are supported
+            case OrExpression(_, _) => Some(BooleanKeyword())
+            case AndExpression(_, _) => Some(BooleanKeyword())
+            // Eager boolean is supported, bitwise are not
+            case BinOrExpression(_, _) => Some(BooleanKeyword())
+            case BinXorExpression(_, _) => Some(BooleanKeyword())
+            case BinAndExpression(_, _) => Some(BooleanKeyword())
+          }
 
-        case SimpleArrayAccess(name, _) => resolveType(name) match {
-          case Some(ArrayType(subtype)) => Some(subtype)
-          case _ => throw new SyntaxError("Array access of non-array type expression.")
-        }
-
-        case ComplexArrayAccess(ref, expr) => resolveType(ref) match {
-          case Some(ArrayType(subtype)) => Some(subtype)
-          case _ => throw new SyntaxError("Expression " + ref + " is not an array.")
-        }
-
-        case ArrayCreationPrimary(t, _) => Some(ArrayType(t))
-        case ClassCreationPrimary(t, _) => Some(t)
-
-        case method: MethodInvocation => method match {
-          case SimpleMethodInvocation(ambiguousName, args) => {
-            val env = node.scope.get
-            resolveMethodName(ambiguousName, args, env) match {
-
-              //  We can't call a static method without naming the class.
-              case Some(method) if method.isStatic && ambiguousName.prefix.isEmpty =>
-                throw new SyntaxError("Static method cannot be called without class name: " + ambiguousName)
-
-              case Some(method) => method.memberType match {
-                case r: ReferenceNonArrayType => resolveTypeName(r.name, r.scope.get)
-                case ArrayType(r: ReferenceNonArrayType) => Some(withScope(ArrayType(resolveTypeName(r.name, r.scope.get).get), r.scope))
-                case ArrayType(_: PrimitiveType) => Some(method.memberType)
-                case p: PrimitiveType => Some(p)
-                case VoidKeyword() => Some(VoidKeyword())
-                case _ =>
-                  throw new SyntaxError("Could not match type of simple method invocation: " + node)
+          case relational: RelationalExpression => relational match {
+            case EqualExpression(e1, e2)        => Some(BooleanKeyword())
+            case NotEqualExpression(e1, e2)     => Some(BooleanKeyword())
+            case LessThanExpression(e1, e2)     => matchCompatibleType(resolveType(e1), resolveType(e2), Some(BooleanKeyword()))
+            case LessEqualExpression(e1, e2)    => matchCompatibleType(resolveType(e1), resolveType(e2), Some(BooleanKeyword()))
+            case GreaterThanExpression(e1, e2)  => matchCompatibleType(resolveType(e1), resolveType(e2), Some(BooleanKeyword()))
+            case GreaterEqualExpression(e1, e2) => matchCompatibleType(resolveType(e1), resolveType(e2), Some(BooleanKeyword()))
+            case InstanceOfExpression(expr, reference) => {
+              (expr, reference) match {
+                case (NullLiteral(), _: ReferenceType) => Some(BooleanKeyword())
+                case (expr, reference) => (resolveType(expr), reference) match {
+                  case (Some(_: ReferenceType), _: ReferenceType) => Some(BooleanKeyword())
+                  case (left, _) => throw new SyntaxError("Left hand side of \"instanceOf\" is not a reference: " + left)
+                }
               }
-              case None =>
-                throw new SyntaxError("Could not resolve method: " + ambiguousName)
             }
           }
 
-          case ComplexMethodInvocation(ref, name, args) => {
+          case arithmetic: ArithmeticExpression => arithmetic match {
+            case AddExpression(e1, e2)        => promotedTypeOption(matchCompatibleType(resolveType(e1), resolveType(e2)))
+            case SubtractExpression(e1, e2)   => promotedTypeOption(matchCompatibleType(resolveType(e1), resolveType(e2)))
+            case MultiplyExpression(e1, e2)   => promotedTypeOption(matchCompatibleType(resolveType(e1), resolveType(e2)))
+            case DivideExpression(e1, e2)     => promotedTypeOption(matchCompatibleType(resolveType(e1), resolveType(e2)))
+            case ModExpression(e1, e2)        => promotedTypeOption(matchCompatibleType(resolveType(e1), resolveType(e2)))
+          }
+
+          case NegatedExpression(e1) => promotedTypeOption(resolveType(e1))
+          case _: LogicalNotExpression => Some(BooleanKeyword())
+
+          case FieldAccess(ref, name) => {
             val env = node.scope.get
-            val argTypes: Seq[Type] = resolvedTypesForArgs(args, env)
+            val refType : Type = resolvePrimary(ref, env)
             val scope:Environment = resolvePrimaryAndFindScope(ref, env)
+            val fieldName: ExpressionName = ExpressionName(name)
 
-            scope.lookup(MethodLookup(name.toQualifiedName, argTypes)) match {
-              case None =>
-                throw new SyntaxError("Invoking complex method " + name + " does not resolve.")
-              case Some(result) => result match {
-                case method: MethodDeclaration => Some(method.memberType)
-                case method: InterfaceMemberDeclaration => Some(method.memberType)
-                case _ => throw new SyntaxError("Invoking non-method!!!")
+            // Check validity of field access for arrays
+            refType match {
+              case a : ArrayType => 
+                if (fieldName.value == InputString("length")) {
+                  return Some(IntKeyword())
+                } else {
+                  throw new SyntaxError("Only valid array field is length.")
+                }
+              case _ => Unit 
+            }
+
+            resolveExpressionName(fieldName, scope)
+          }
+
+          case SimpleArrayAccess(name, _) => resolveType(name) match {
+            case Some(ArrayType(subtype)) => Some(subtype)
+            case _ => throw new SyntaxError("Array access of non-array type expression.")
+          }
+
+          case ComplexArrayAccess(ref, expr) => resolveType(ref) match {
+            case Some(ArrayType(subtype)) => Some(subtype)
+            case _ => throw new SyntaxError("Expression " + ref + " is not an array.")
+          }
+
+          case ArrayCreationPrimary(t, _) => Some(ArrayType(t))
+          case ClassCreationPrimary(t, _) => Some(t)
+
+          case method: MethodInvocation => method match {
+            case SimpleMethodInvocation(ambiguousName, args) => {
+              val env = node.scope.get
+              resolveMethodName(ambiguousName, args, env) match {
+
+                //  We can't call a static method without naming the class.
+                case Some(method) if method.isStatic && ambiguousName.prefix.isEmpty =>
+                  throw new SyntaxError("Static method cannot be called without class name: " + ambiguousName)
+
+                case Some(method) => method.memberType match {
+                  case r: ReferenceNonArrayType => resolveTypeName(r.name, r.scope.get)
+                  case ArrayType(r: ReferenceNonArrayType) => Some(withScope(ArrayType(resolveTypeName(r.name, r.scope.get).get), r.scope))
+                  case ArrayType(_: PrimitiveType) => Some(method.memberType)
+                  case p: PrimitiveType => Some(p)
+                  case VoidKeyword() => Some(VoidKeyword())
+                  case _ =>
+                    throw new SyntaxError("Could not match type of simple method invocation: " + node)
+                }
+                case None =>
+                  throw new SyntaxError("Could not resolve method: " + ambiguousName)
+              }
+            }
+
+            case ComplexMethodInvocation(ref, name, args) => {
+              val env = node.scope.get
+              val argTypes: Seq[Type] = resolvedTypesForArgs(args, env)
+              val scope:Environment = resolvePrimaryAndFindScope(ref, env)
+
+              scope.lookup(MethodLookup(name.toQualifiedName, argTypes)) match {
+                case None =>
+                  throw new SyntaxError("Invoking complex method " + name + " does not resolve.")
+                case Some(result) => result match {
+                  case method: MethodDeclaration => Some(method.memberType)
+                  case method: InterfaceMemberDeclaration => Some(method.memberType)
+                  case _ => throw new SyntaxError("Invoking non-method!!!")
+                }
               }
             }
           }
+
+          case Assignment(lhs, rhs) => resolveType(lhs)
+
+          case _ => None
         }
 
-        case Assignment(lhs, rhs) => resolveType(lhs)
-
-        case _ => None
+        // Some nodes just don't make sense to every look/check for type
+        case _ =>  None
       }
 
-      // Some nodes just don't make sense to every look/check for type
-      case _ =>  None
-    }
+      //  Fully qualify everything we can.
+      node.typeOpt = result match {
+        case Some(c: ClassType) => Some(withScope(c.fullyQualified, c.scope))
+        case Some(c: InterfaceType) => Some(withScope(c.fullyQualified, c.scope))
+        case Some(c: ClassOrInterfaceType) => Some(withScope(c.fullyQualified, c.scope))
+        case _ => result
+      }
 
-    //  Fully qualify everything we can.
-    result match {
-      case Some(c: ClassType) => Some(withScope(c.fullyQualified, c.scope))
-      case Some(c: InterfaceType) => Some(withScope(c.fullyQualified, c.scope))
-      case Some(c: ClassOrInterfaceType) => Some(withScope(c.fullyQualified, c.scope))
-      case _ => result
+      node.typeOpt
     }
   }
 
@@ -721,13 +727,19 @@ object TypeChecker {
     }
   }
 
-  def validateAddExpression(e1: AddExpression) {
-    val t : Option[Type] = resolveType(e1)
+  def updateTypesOfConcat(e: AddExpression) {
+    e.children.foreach { child =>
+      child.typeOpt = e.typeOpt
+    }
+  }
+
+  def validateAddExpression(e: AddExpression) {
+    val t : Option[Type] = resolveType(e)
     t match {
       case Some(ClassType(TypeName(InputString("String", _, _, _),
                       Some(PackageName(InputString("lang", _, _, _),
                       Some(PackageName(InputString("java", _, _, _), None))))))) =>
-                    Unit
+                    updateTypesOfConcat(e)
       case Some(t : ReferenceType) => throw new SyntaxError("Can't perform add operations on Reference Types")
       case Some(_) => Unit
       case None => throw new SyntaxError("Can't perform arithmetic operations on Null Types")

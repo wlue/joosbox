@@ -14,6 +14,7 @@ sealed trait AbstractSyntaxNode {
   def symbolName: String = (List(this.getClass.getSimpleName) ++ children.map(_.symbolName)).mkString("_")
 
   var scope: Option[Environment] = None
+  var typeOpt: Option[AbstractSyntaxNode.Type] = None
   var constantValue : Option[AbstractSyntaxNode.ConstantValue] = None
 
   def astHashCode: Int = scope.hashCode + constantValue.hashCode
