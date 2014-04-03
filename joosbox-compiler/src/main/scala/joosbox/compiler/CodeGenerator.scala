@@ -228,6 +228,39 @@ initFields:
     )
   }
 
+  def getInstanceFieldsForClass(cd: ClassDeclaration): Seq[FieldDeclaration] = {
+    //  Ordering of instance fields:
+    //    super...superclass's fields
+    //    ...
+    //    superclass's fields
+    //    class's fields
+
+    val fields: Seq[FieldDeclaration] = cd.body.declarations.filter({
+      case f:FieldDeclaration if !f.isStatic => true
+      case _ => false
+    }).map(f => f.asInstanceOf[FieldDeclaration])
+
+    if (!cd.superclass.isEmpty) {
+      (cd.scope.get.lookup(TypeNameLookup(cd.superclass.get.name.toQualifiedName)) match {
+        case sdecl: ClassDeclaration => getInstanceFieldsForClass(sdecl)
+        case _ => Seq.empty[FieldDeclaration]
+      }) ++ fields
+    } else {
+      fields
+    }
+  }
+
+  def getOffsetOfInstanceFieldInClass(f: FieldDeclaration, cd: ClassDeclaration): Integer =
+    getInstanceFieldsForClass(cd).indexOf(f)
+
+  def getOffsetOfInstanceField(f: FieldDeclaration): Integer = {
+    if (f.isStatic) {
+      throw new SyntaxError("Trying to get offset of static field in instance!")
+    }
+    getInstanceFieldsForClass(f.scope.get.getEnclosingClassNode.get.asInstanceOf[ClassDeclaration]).indexOf(f)
+  }
+
+
   def generateAssemblyForNode(n: AbstractSyntaxNode)(
     implicit parentCompilationUnit: Option[CompilationUnit],
     parentClassDeclaration: Option[ClassDeclaration]
@@ -293,7 +326,7 @@ $nestedEntries
 ; end of vtable offset lookup functions for $symbolName
 
 SECTION .text
-  """ + cd.children.map(generateAssemblyForNode(_)).filter{_ != ""}.mkString("\n")
+  """ + cd.children.map(generateAssemblyForNode).filter{_ != ""}.mkString("\n")
       }
 
       case md: MethodDeclaration => {
@@ -423,7 +456,7 @@ mov ebx, [eax + ObjectVTableOffset]
 mov eax, [eax + ObjectClassTagOffset]
 ; call the appropriate method to move the vtable offset into eax
 call ${NASMDefines.GetVTableOffset(classSymbolName)}
-; check the returned offset to see if it's invalid
+
 cmp eax, NoVTableOffsetFound
 je __exception
 ; add the offset and the vtable pointer we stored in ebx
@@ -465,7 +498,6 @@ mov ebx, [eax + ObjectVTableOffset]
 mov eax, [eax + ObjectClassTagOffset]
 ; call the appropriate method to move the vtable offset into eax
 call ${NASMDefines.GetVTableOffset(classSymbolName)}
-; check the returned offset to see if it's invalid
 cmp eax, NoVTableOffsetFound
 je __exception
 ; add the offset and the vtable pointer we stored in ebx
@@ -521,12 +553,15 @@ mov ${l.symbolName}, eax
         e.scope.get.lookup(EnvironmentLookup.lookupFromName(e)) match {
           case Some(l: LocalVariableDeclaration) => s"mov eax, ${l.symbolName}\n"
           case Some(f: ForVariableDeclaration) => s"mov eax, ${f.symbolName}\n"
-          case Some(f: FieldDeclaration) => s"mov eax, 0xcafecafe; TODO: field declaration lookup\n"
+          case Some(f: FieldDeclaration) => {
+            println("FD: " + f.name)
+            s"mov eax, [eax + ${(getOffsetOfInstanceField(f) + 2) * 4}]; field declaration lookup\n"
+          }
           case Some(f: FormalParameter) => s"mov eax, ${f.symbolName}_${f.hashCode}; reference parameter\n"
 
           //  TODO: Handle the "None" case, which happens if we call array.length or if we can't find a lookup.
-          case _ => ""
-
+          case Some(y) => "; something here: " + y.symbolName
+          case None => "; expression name matches nothing"
           case x =>
             throw new SyntaxError("Environment lookup for name " + e.niceName + " resulted in unknown node " + x)
         }
@@ -541,7 +576,9 @@ mov ${l.symbolName}, eax
           case e: ExpressionName => e.scope.get.lookup(EnvironmentLookup.lookupFromName(e)) match {
             case Some(l: LocalVariableDeclaration) => s"mov ${l.symbolName}, eax\n"
             case Some(f: ForVariableDeclaration) => s"mov ${f.symbolName}, eax\n"
-            case Some(f: FieldDeclaration) => s"mov eax, 0; TODO: field declaration assignment\n"
+            case Some(f: FieldDeclaration) => {
+              s"mov [${(getOffsetOfInstanceField(f) + 2) * 4}], eax; field declaration assignment\n"
+            }
             case Some(f: FormalParameter) => s"mov ${f.symbolName}_${f.hashCode}, eax\n"
 
             //  TODO: Handle the "None" case, which happens if we call array.length or if we can't find a lookup.
@@ -829,22 +866,6 @@ and eax, ebx
       case c : ClassCreationPrimary => {
         val env = c.scope.get
 
-        def recursiveFields(decl : ClassDeclaration): Set[String] = {
-          val fields:Set[String] = decl.body.declarations.filter({
-              case f:FieldDeclaration if !f.isStatic => true
-              case _ => false
-          }).map( f => f.asInstanceOf[FieldDeclaration].name.value.value).toSet
-
-          if (!decl.superclass.isEmpty) {
-            fields ++ env.lookup(TypeNameLookup(decl.superclass.get.name.toQualifiedName)) match {
-              case sdecl: ClassDeclaration => recursiveFields(sdecl)
-              case _ => Set.empty[String]
-            }
-          } else {
-            fields
-          }
-        }
-
         val classDecl:ClassDeclaration = env.lookup(TypeNameLookup(c.classType.name.toQualifiedName)) match {
           case Some(cdecl: ClassDeclaration) => cdecl
           case _ => throw new SyntaxError("Invalid class creation.")
@@ -865,8 +886,8 @@ and eax, ebx
             => throw new SyntaxError("Could not find class declaration for " + classLookup)
         }
 
-        val fields = recursiveFields(classDecl)
-        val allocSize = (fields.size + 2) // why + 2? Header includes class tag + vtable pointer
+        val fields = getInstanceFieldsForClass(classDecl)
+        val allocSize = fields.size + 2 // why + 2? Header includes class tag + vtable pointer
         val vtableBase = NASMDefines.VTableBase(classDecl.symbolName)
 
         val classSymbolName = classDecl.symbolName
@@ -1050,7 +1071,7 @@ $asm
   def pushArguments(node:AbstractSyntaxNode) : String = {
     val args : Seq[Expression] = node match {
       case smi: SimpleMethodInvocation => smi.args
-      case cmi: ComplexMethodInvocation => cmi.args
+      case cmi: ComplexMethodInvocation =>   cmi.args
       case ccp: ClassCreationPrimary => ccp.args
       case x => throw new SyntaxError("Cannot push arguments for node type without arguments: " + x)
     }
