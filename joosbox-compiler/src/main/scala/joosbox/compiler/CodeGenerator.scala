@@ -399,7 +399,8 @@ SECTION .text
 
   def generateAssemblyForNode(n: AbstractSyntaxNode)(
     implicit parentCompilationUnit: Option[CompilationUnit],
-    parentClassDeclaration: Option[ClassDeclaration]
+    parentClassDeclaration: Option[ClassDeclaration],
+    hasDereferencedPrefix: Boolean = false
   ): String = {
     val asm = n match {
       case cd: ClassDeclaration => {
@@ -713,9 +714,10 @@ mov ${l.symbolName}, eax
               s"mov eax, [${NASMDefines.VTableStaticFieldTag(classDeclaration.symbolName, f.symbolName)}]\n"
             } else {
               s"""
+${if (!hasDereferencedPrefix) "mov eax, [ebp + 8]; load the \"this\" pointer into eax" else "; not loading \"this\" pointer into eax"}
 cmp eax, 0; null pointer access on field declaration
-  je __exception
-mov eax, [eax + ${(getOffsetOfInstanceField(f) + 2) * 4}]; field declaration lookup" +
+je __exception
+mov eax, [eax + ${(getOffsetOfInstanceField(f) + 2) * 4}]; field lookup ${f.symbolName} on eax
 """
             }
           }
@@ -742,7 +744,11 @@ mov eax, [eax + ArrayLengthOffset]
               // Look up the expression name of the prefix and the name separately.
               val endValue = ExpressionName(disambiguated.value)
               endValue.scope = e.scope
-              generateAssemblyForNode(disambiguated.prefix.get) + generateAssemblyForNode(endValue)
+              generateAssemblyForNode(disambiguated.prefix.get) + generateAssemblyForNode(endValue)(
+                parentCompilationUnit,
+                parentClassDeclaration,
+                hasDereferencedPrefix=true
+              )
             } else {
               //  The prefix is a TypeName, so we need to do a TypeName lookup to get the class
               //  then get the static field on that class. It must be static if we're here. (I think.)
