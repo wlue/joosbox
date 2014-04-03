@@ -14,6 +14,10 @@ else:
     cwd = (os.getcwd() + "/linux")
 tests = [
     (
+        ["joosbox-compiler/src/test/resources/custom-tests/compiler_array_assign_1.java"],
+        "", 1
+    ),
+    (
         ["joosbox-compiler/src/test/resources/custom-tests/compiler_add_many_123.java"],
         "", 123
     ),

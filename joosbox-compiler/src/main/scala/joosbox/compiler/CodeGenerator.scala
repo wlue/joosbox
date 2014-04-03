@@ -704,7 +704,25 @@ mov ebx, eax
               throw new SyntaxError("Environment lookup for name " + e.niceName + " resulted in unknown node " + x)
           }
 
-          case s: SimpleArrayAccess => ""
+          case s: SimpleArrayAccess => {
+            val arrayAsm:String = generateAssemblyForNode(s.name)
+            val indexAsm:String = generateAssemblyForNode(s.expr)
+
+            s"""
+push eax ; push rhs value
+
+$arrayAsm
+push eax
+$indexAsm
+push eax
+
+pop ecx
+pop ebx
+pop eax
+
+mov dword [ebx + ArrayLengthOffset + 4*(ecx + 1)], eax
+            """
+          }
 
           case c: ComplexArrayAccess => ""
 
