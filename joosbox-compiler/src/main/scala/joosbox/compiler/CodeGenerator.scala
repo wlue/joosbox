@@ -850,10 +850,14 @@ idiv ebx
         //  Evaluate the expression inside, then move it into eax.
         //  If the target type is a reference, verify that the resulting object pointer is an instance of the target.
         val prepareToValidateCast = s"""
+cmp eax, 0 ; if null, treat classTag as 0
+je .instanceOf_${c.symbolName}_${e.symbolName}_classTagIsInEAX
+
 ; move vtable of the invocation target into ebx
 mov ebx, [eax + ObjectVTableOffset]
 ; move its class tag into eax
 mov eax, [eax + ObjectClassTagOffset]
+.instanceOf_${c.symbolName}_${e.symbolName}_classTagIsInEAX:
 """
         val offsetCall = c match {
           case ct: ClassOrInterfaceType => {
@@ -882,7 +886,7 @@ mov eax, [eax + ObjectClassTagOffset]
         val postValidateCast = s"""
 ; check eax to see if the cast was successful
 sub eax, NoVTableOffsetFound
-not eax
+; if the cast was successful, eax will be nonzero
 """
 
         generateAssemblyForNode(e) + prepareToValidateCast + offsetCall + postValidateCast
