@@ -1166,6 +1166,10 @@ $bottomLabel:
       }
 
       case c: CastExpression => {
+        if (c.targetType.isInstanceOf[PrimitiveType]) {
+          return "; cast validation is a nop - the target type is primitive"
+        }
+
         //  Evaluate the expression inside, then move it into eax.
         //  If the target type is a reference, verify that the resulting object pointer is an instance of the target.
         val prepareToValidateCast = s"""
@@ -1196,7 +1200,6 @@ mov eax, [eax + ObjectClassTagOffset]
               case _ => throw new SyntaxError("Cast expression could not find target interface")
             }
           }
-          case _: PrimitiveType => "nop ; primitive cast"
           case x => s"nop; unhandled cast type to ${x.symbolName}"
         }
 
