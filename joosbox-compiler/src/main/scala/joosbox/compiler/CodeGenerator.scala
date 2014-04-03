@@ -1055,7 +1055,6 @@ $asm
       case x => throw new SyntaxError("Cannot push arguments for node type without arguments: " + x)
     }
 
-    //  TODO: it looks like this doesn't evaluate the args in the correct order
     args.map(a => {
       generateAssemblyForNode(a)(None,None) + "\npush eax; argument for call\n"
     }).mkString("\n")
