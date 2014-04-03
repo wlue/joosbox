@@ -754,9 +754,9 @@ mov [${NASMDefines.VTableStaticFieldTag(classDeclaration.symbolName, f.symbolNam
                       s"""
 push eax
 ${generateAssemblyForNode(disambiguated.prefix.get)}
-pop ebx ; ebx now contains the thing we're assigning
+pop ebx ; ebx now contains the RHS
 mov [eax + ${(getOffsetOfInstanceField(f) + 2) * 4}], ebx; field declaration assignment
-mov ebx, eax
+mov eax, ebx ; assignment should return the result
 """
                     }
                   }
