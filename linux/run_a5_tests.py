@@ -14,6 +14,14 @@ else:
     cwd = (os.getcwd() + "/linux")
 tests = [
     (
+        ["joosbox-compiler/src/test/resources/custom-tests/compiler_array_covariance.java"],
+        "", 123
+    ),
+    (
+        ["joosbox-compiler/src/test/resources/custom-tests/compiler_array_covariance_error.java"],
+        "", 13
+    ),
+    (
         ["joosbox-compiler/src/test/resources/custom-tests/compiler_compare_literals.java"],
         "", 123
     ),
