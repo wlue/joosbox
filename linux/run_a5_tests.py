@@ -22,6 +22,10 @@ tests = [
         "", 1
     ),
     (
+        ["joosbox-compiler/src/test/resources/custom-tests/compiler_print_char.java"],
+        "D", 0
+    ),
+    (
         ["joosbox-compiler/src/test/resources/custom-tests/compiler_array_assign_1.java"],
         "", 1
     ),

@@ -64,7 +64,7 @@ sealed trait Environment {
    */
   def search(name: EnvironmentLookup): Option[Referenceable]
 
-  def getEnclosingClassNode: Option[AbstractSyntaxNode] = None
+  def getEnclosingClassNode: Option[ClassDeclaration] = None
 
   def getEnclosingCompilationUnit: Option[AbstractSyntaxNode] = None
 
@@ -186,7 +186,7 @@ class ScopeEnvironment(
     searchScopes
   }
 
-  override def getEnclosingClassNode: Option[AbstractSyntaxNode] = node match {
+  override def getEnclosingClassNode: Option[ClassDeclaration] = node match {
     case Some(a: ClassDeclaration) => Some(a)
     case _ => parent match {
       case None => None

@@ -437,25 +437,37 @@ SECTION .text
 
             val body = generateAssemblyForNode(b)
             s"""
+$symbolName:
+push ebp
+mov ebp, esp   ; save the stack pointer
 sub esp, ${locals.size * 4}
 $localAccessDefinitions
 $parameterDefinitionsWithThis
 $body
+mov esp, ebp   ; reset the stack pointer
+pop ebp
+ret; end of method $symbolName
 """
           }
 
-          case _ => ""
-        }
-
-        s"""
+          case None if md.modifiers.contains(NativeKeyword()) => {
+            val fullMethodName = md.scope.get.getEnclosingClassNode.get.fullyQualifiedName.get.toQualifiedName.value.map(_.value).mkString(".") + "." + md.name.value.value
+            s"""
 $symbolName:
-    push ebp
-    mov ebp, esp   ; save the stack pointer
-$body
-    mov esp, ebp   ; reset the stack pointer
-    pop ebp
-    ret; end of method $symbolName
+; native method invocation
+extern NATIVE${fullMethodName}
+
+; TODO: Push all arguments in the proper order by C call convention (or whatever Lhotak expects)
+call NATIVE${fullMethodName}
+ret; end of method $symbolName
 """
+          }
+          case _ => s"""
+$symbolName:
+; empty method invocation
+ret; end of method $symbolName
+"""
+        }
       }
 
       case cd: ConstructorDeclaration => {
@@ -654,13 +666,30 @@ mov ${l.symbolName}, eax
                 //  We must have an array type here
                 s"mov eax, [eax + ArrayLengthOffset]"
               } else {
-                "; TODO: what in the actual fuck?"
+                throw new SyntaxError("Could not resolve expressionname for expression evaluation.")
               }
-            } else {
+            } else if (disambiguated.prefix.get.isInstanceOf[ExpressionName]) {
               // Look up the expression name of the prefix and the name separately.
               val endValue = ExpressionName(disambiguated.value)
               endValue.scope = e.scope
               generateAssemblyForNode(disambiguated.prefix.get) + generateAssemblyForNode(endValue)
+            } else {
+              //  The prefix is a TypeName, so we need to do a TypeName lookup to get the class
+              //  then get the static field on that class. It must be static if we're here. (I think.)
+              disambiguated.prefix.get.scope.get.lookup(EnvironmentLookup.lookupFromName(disambiguated.prefix.get)) match {
+                case Some(c: ClassDeclaration) => {
+                  val endValue = ExpressionName(disambiguated.value)
+                  endValue.scope = e.scope
+
+                  c.body.scope.get.lookup(EnvironmentLookup.lookupFromName(endValue)) match {
+                    case Some(f: FieldDeclaration) if f.isStatic => {
+                      s"mov eax, [${NASMDefines.VTableStaticFieldTag(c.symbolName, f.symbolName)}]; static field ref\n"
+                    }
+                    case _ => throw new SyntaxError("Could not find static field decl in class")
+                  }
+                }
+                case _ => throw new SyntaxError("Could not find typename for expression reference")
+              }
             }
           }
 
@@ -707,8 +736,10 @@ mov ${l.symbolName}, eax
               }
 
               if (disambiguated.prefix.isEmpty) {
-                "; TODO: what in the actual fuck?"
+                throw new SyntaxError("Could not resolve expressionname for assignment.")
               } else {
+                //  TODO: Verify that assignment to something like System.out.field works
+
                 // Look up the expression name of the prefix and the name separately.
                 val endValue = ExpressionName(disambiguated.value)
                 endValue.scope = e.scope

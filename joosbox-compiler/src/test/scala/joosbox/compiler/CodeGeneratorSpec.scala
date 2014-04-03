@@ -50,6 +50,12 @@ class CodeGeneratorSpec extends Specification {
           "", 1
         )
       }
+      "print char" in {
+        linkAndTest(
+          Seq("joosbox-compiler/src/test/resources/custom-tests/compiler_print_char.java"),
+          "", 0
+        )
+      }
     }
   }
 }
