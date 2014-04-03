@@ -18,6 +18,10 @@ tests = [
         "", 1
     ),
     (
+        ["joosbox-compiler/src/test/resources/custom-tests/compiler_array_length_5.java"],
+        "", 5
+    ),
+    (
         ["joosbox-compiler/src/test/resources/custom-tests/compiler_add_many_123.java"],
         "", 123
     ),

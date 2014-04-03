@@ -616,22 +616,23 @@ mov ${l.symbolName}, eax
           case Some(f: FormalParameter) => s"mov eax, ${f.symbolName}_${f.hashCode}; reference parameter\n"
 
           case None => {
-            if (e.value.value.equals("length")) {
-              "; array length lookup TODO"
-            } else {
-              var disambiguated: ExpressionName = e
-              if (e.isAmbiguous) {
-                disambiguated = NameLinker.disambiguateName(e)(e.scope.get).asInstanceOf[ExpressionName]
-              }
+            var disambiguated: ExpressionName = e
+            if (e.isAmbiguous) {
+              disambiguated = NameLinker.disambiguateName(e)(e.scope.get).asInstanceOf[ExpressionName]
+            }
 
-              if (disambiguated.prefix.isEmpty) {
-                "; TODO: what in the actual fuck?"
+            if (disambiguated.prefix.isEmpty) {
+              if (disambiguated.value.value.equals("length")) {
+                //  We must have an array type here
+                s"mov eax, [eax + ArrayLengthOffset]"
               } else {
-                // Look up the expression name of the prefix and the name separately.
-                val endValue = ExpressionName(disambiguated.value)
-                endValue.scope = e.scope
-                generateAssemblyForNode(disambiguated.prefix.get) + generateAssemblyForNode(endValue)
+                "; TODO: what in the actual fuck?"
               }
+            } else {
+              // Look up the expression name of the prefix and the name separately.
+              val endValue = ExpressionName(disambiguated.value)
+              endValue.scope = e.scope
+              generateAssemblyForNode(disambiguated.prefix.get) + generateAssemblyForNode(endValue)
             }
           }
 
@@ -660,42 +661,38 @@ mov ${l.symbolName}, eax
             case Some(f: FormalParameter) => s"mov ${f.symbolName}_${f.hashCode}, eax\n"
 
             case None => {
-              if (e.value.value.equals("length")) {
-                "; array length lookup TODO"
+              var disambiguated: ExpressionName = e
+              if (e.isAmbiguous) {
+                disambiguated = NameLinker.disambiguateName(e)(e.scope.get).asInstanceOf[ExpressionName]
+              }
+
+              if (disambiguated.prefix.isEmpty) {
+                "; TODO: what in the actual fuck?"
               } else {
-                var disambiguated: ExpressionName = e
-                if (e.isAmbiguous) {
-                  disambiguated = NameLinker.disambiguateName(e)(e.scope.get).asInstanceOf[ExpressionName]
-                }
+                // Look up the expression name of the prefix and the name separately.
+                val endValue = ExpressionName(disambiguated.value)
+                endValue.scope = e.scope
 
-                if (disambiguated.prefix.isEmpty) {
-                  "; TODO: what in the actual fuck?"
-                } else {
-                  // Look up the expression name of the prefix and the name separately.
-                  val endValue = ExpressionName(disambiguated.value)
-                  endValue.scope = e.scope
-
-                  e.scope.get.lookup(EnvironmentLookup.lookupFromName(endValue)) match {
-                    case Some(f: FieldDeclaration) => {
-                      if (f.isStatic) {
-                        val classDeclaration = f.scope.get.compilationScope.get.node.get.asInstanceOf[CompilationUnit].typeDeclaration.asInstanceOf[ClassDeclaration]
+                e.scope.get.lookup(EnvironmentLookup.lookupFromName(endValue)) match {
+                  case Some(f: FieldDeclaration) => {
+                    if (f.isStatic) {
+                      val classDeclaration = f.scope.get.compilationScope.get.node.get.asInstanceOf[CompilationUnit].typeDeclaration.asInstanceOf[ClassDeclaration]
 s"""
 ${generateAssemblyForNode(disambiguated.prefix.get)}
 mov [${NASMDefines.VTableStaticFieldTag(classDeclaration.symbolName, f.symbolName)}], eax
 """
-                      } else {
-                        s"""
+                    } else {
+                      s"""
 push eax
 ${generateAssemblyForNode(disambiguated.prefix.get)}
 pop ebx ; ebx now contains the thing we're assigning
 mov [eax + ${(getOffsetOfInstanceField(f) + 2) * 4}], ebx; field declaration assignment
 mov ebx, eax
 """
-                      }
                     }
-                    case _
-                      => throw new SyntaxError("Could not find instance field to assign to")
                   }
+                  case _
+                    => throw new SyntaxError("Could not find instance field to assign to")
                 }
               }
             }
