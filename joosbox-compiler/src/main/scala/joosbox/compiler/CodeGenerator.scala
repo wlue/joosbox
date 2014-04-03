@@ -809,10 +809,24 @@ mov ${l.symbolName}, eax
 """
       }
 
+      case f: FieldAccess => {
+        val fieldEnv = TypeChecker.resolvePrimaryAndFindScope(f.primary, f.scope.get)
+        val fieldNameLookup = EnvironmentLookup.lookupFromName(ExpressionName(f.name))
+        val field = fieldEnv.lookup(fieldNameLookup) match {
+          case Some(field: FieldDeclaration) => field
+          case _ => throw new Exception("Field access environment lookup did not resolve to a field declaration.")
+        }
+
+        s"""
+${generateAssemblyForNode(f.primary)}
+mov eax, [eax + ${(getOffsetOfInstanceField(field) + 2) * 4}]
+"""
+      }
+
       //  This is a read of an expressionname
       case e: ExpressionName => {
         e.scope.get.lookup(EnvironmentLookup.lookupFromName(e)) match {
-          //  The following cases are triggered if the target of this expression is unqualified.
+          // The following cases are triggered if the target of this expression is unqualified.
           case Some(l: LocalVariableDeclaration) => s"mov eax, ${l.symbolName}\n"
           case Some(f: ForVariableDeclaration) => s"mov eax, ${f.symbolName}\n"
           case Some(f: FieldDeclaration) => {
@@ -894,9 +908,24 @@ mov eax, [eax + ArrayLengthOffset]
       }
 
       case a: Assignment => {
+        // This assigns eax to the right hand evaluated expression
         val rhsAsm: String = generateAssemblyForNode(a.rightHandSide)
+
+        // This assigns eax to the address of what needs to be assigned.
         val lhsAsm: String = a.leftHandSide match {
-          case f: FieldAccess => ""
+          case f: FieldAccess => {
+            val fieldEnv = TypeChecker.resolvePrimaryAndFindScope(f.primary, f.scope.get)
+            val fieldNameLookup = EnvironmentLookup.lookupFromName(ExpressionName(f.name))
+            val field = fieldEnv.lookup(fieldNameLookup) match {
+              case Some(field: FieldDeclaration) => field
+              case _ => throw new Exception("Field access environment lookup did not resolve to a field declaration.")
+            }
+
+            s"""
+${generateAssemblyForNode(f.primary)}
+add eax, ${(getOffsetOfInstanceField(field) + 2) * 4}; field declaration assignment
+"""
+          }
 
           // This is a write to an ExpressionName
           case e: ExpressionName => e.scope.get.lookup(EnvironmentLookup.lookupFromName(NameLinker.disambiguateName(e)(e.scope.get))) match {
@@ -905,24 +934,26 @@ mov eax, [eax + ArrayLengthOffset]
             case Some(f: FieldDeclaration) => {
               if (f.isStatic) {
                 val classDeclaration = f.scope.get.compilationScope.get.node.get.asInstanceOf[CompilationUnit].typeDeclaration.asInstanceOf[ClassDeclaration]
-                s"mov [${NASMDefines.VTableStaticFieldTag(classDeclaration.symbolName, f.symbolName)}], eax\n"
+                s"mov eax, ${NASMDefines.VTableStaticFieldTag(classDeclaration.symbolName, f.symbolName)}\n"
               } else {
-                s"mov [${(getOffsetOfInstanceField(f) + 2) * 4}], eax; field declaration assignment\n"
+                s"""
+${if (!hasDereferencedPrefix) "mov eax, [ebp + 8]; load the \"this\" pointer into eax" else "; not loading \"this\" pointer into eax"}
+add eax, ${(getOffsetOfInstanceField(f) + 2) * 4}; field declaration assignment
+"""
               }
             }
             case Some(f: FormalParameter) => s"mov ${f.symbolName}_${f.hashCode}, eax\n"
 
             case None => {
-              var disambiguated: ExpressionName = e
-              if (e.isAmbiguous) {
-                disambiguated = NameLinker.disambiguateName(e)(e.scope.get).asInstanceOf[ExpressionName]
+              val disambiguated: ExpressionName = if (e.isAmbiguous) {
+                NameLinker.disambiguateName(e)(e.scope.get).asInstanceOf[ExpressionName]
+              } else {
+                e
               }
 
               if (disambiguated.prefix.isEmpty) {
-                throw new SyntaxError("Could not resolve expressionname for assignment.")
+                throw new SyntaxError("Could not resolve ExpressionName for assignment.")
               } else {
-                //  TODO: Verify that assignment to something like System.out.field works
-
                 // Look up the expression name of the prefix and the name separately.
                 val endValue = ExpressionName(disambiguated.value)
                 endValue.scope = e.scope
@@ -931,22 +962,15 @@ mov eax, [eax + ArrayLengthOffset]
                   case Some(f: FieldDeclaration) => {
                     if (f.isStatic) {
                       val classDeclaration = f.scope.get.compilationScope.get.node.get.asInstanceOf[CompilationUnit].typeDeclaration.asInstanceOf[ClassDeclaration]
-s"""
-${generateAssemblyForNode(disambiguated.prefix.get)}
-mov [${NASMDefines.VTableStaticFieldTag(classDeclaration.symbolName, f.symbolName)}], eax
-"""
+                      s"mov eax, ${NASMDefines.VTableStaticFieldTag(classDeclaration.symbolName, f.symbolName)}"
                     } else {
                       s"""
-push eax
-${generateAssemblyForNode(disambiguated.prefix.get)}
-pop ebx ; ebx now contains the RHS
-mov [eax + ${(getOffsetOfInstanceField(f) + 2) * 4}], ebx; field declaration assignment
-mov eax, ebx ; assignment should return the result
+${generateAssemblyForNode(disambiguated.prefix.get)(parentCompilationUnit, parentClassDeclaration, hasDereferencedPrefix = true)}
+add eax, ${(getOffsetOfInstanceField(f) + 2) * 4} ; eax points to prefix's location in memory, add the offset to get field memory
 """
                     }
                   }
-                  case _
-                    => throw new SyntaxError("Could not find instance field to assign to")
+                  case _ => throw new SyntaxError("Could not find instance field to assign to")
                 }
               }
             }
@@ -956,24 +980,26 @@ mov eax, ebx ; assignment should return the result
           }
 
           case s: SimpleArrayAccess => {
-            val arrayAsm:String = generateAssemblyForNode(s.name)
-            val indexAsm:String = generateAssemblyForNode(s.expr)
-            assignToArrayIndex(arrayAsm, indexAsm)
+            val arrayAsm: String = generateAssemblyForNode(s.name)
+            val indexAsm: String = generateAssemblyForNode(s.expr)
+            getArrayIndexMemory(arrayAsm, indexAsm)
           }
 
           case c: ComplexArrayAccess => {
-            val arrayAsm:String = generateAssemblyForNode(c.primary)
-            val indexAsm:String = generateAssemblyForNode(c.expr)
-            assignToArrayIndex(arrayAsm, indexAsm)
+            val arrayAsm: String = generateAssemblyForNode(c.primary)
+            val indexAsm: String = generateAssemblyForNode(c.expr)
+            getArrayIndexMemory(arrayAsm, indexAsm)
           }
 
-          case x
-            => throw new SyntaxError("Cannot assign to " + x)
+          case x => throw new SyntaxError("Cannot assign to " + x)
         }
 
         s"""
+$lhsAsm; eax should be the location in memory to be written to
+push eax
 $rhsAsm
-$lhsAsm
+pop ebx; ebx contains the write location
+mov [ebx], eax; write and assign
         """
       }
 
@@ -1538,31 +1564,39 @@ add esp, 4 ; remove the single arg from the stack
       }
   }
 
-  def assignToArrayIndex(arrayAsm:String, indexAsm:String) : String = {
-    // Relies on rhs value of assignment to be in eax
-            s"""
-push eax ; push rhs value
-
-$arrayAsm
+  /**
+   * Generates assembly that evaluates lhsAsm, then indexAsm, and returns (to eax) the memory location to write to.
+   */
+  def getArrayIndexMemory(lhsAsm: String, indexAsm: String): String = {
+    s"""
+$lhsAsm
 push eax
 $indexAsm
 push eax
 
-pop ecx
-pop ebx
-pop eax
+pop ecx; contains the index expression result
+pop ebx; contains the memory location of the array
 
-cmp ebx, 0
+cmp ebx, 0; null pointer check
 je __exception
 
-cmp ecx, [ebx + ArrayLengthOffset]
+cmp ecx, [ebx + ArrayLengthOffset]; cannot access above length bounds
 jge __exception
 
-cmp ecx, 0
+cmp ecx, 0; cannot access below 0 bounds
 jl __exception
 
-mov dword [ebx + ArrayLengthOffset + 4*(ecx + 1)], eax
-            """
+mov eax, ebx
+push eax
+
+mov eax, 4
+imul ecx
+mov edx, eax; edx is the index expression (ecx) * 4
+
+pop eax
+add eax, ArrayStartOffset; start at the beginning of the array
+add eax, edx; and move to the index
+"""
   }
 
   def valueAtArrayIndex(arrayAsm:String, indexAsm:String) : String = {
@@ -1585,7 +1619,7 @@ jge __exception
 cmp ebx, 0
 jl __exception
 
-mov eax, [eax + ArrayLengthOffset + 4*(ebx + 1)]
+mov eax, [eax + ArrayStartOffset + 4 * ebx]
             """
   }
 

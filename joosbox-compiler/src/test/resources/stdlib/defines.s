@@ -9,6 +9,7 @@ extern __exception
 
 %define ArrayTypeOffset 8
 %define ArrayLengthOffset 12
+%define ArrayStartOffset 16
 
 %define BooleanTypeTag -1
 %define ByteTypeTag -2
