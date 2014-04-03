@@ -14,6 +14,18 @@ else:
     cwd = (os.getcwd() + "/linux")
 tests = [
     (
+        ["joosbox-compiler/src/test/resources/custom-tests/compiler_array_null.java"],
+        "", 13
+    ),
+     (
+        ["joosbox-compiler/src/test/resources/custom-tests/compiler_array_out_of_bounds.java"],
+        "", 13
+    ),
+    (
+        ["joosbox-compiler/src/test/resources/custom-tests/compiler_array_neg_out_of_bounds.java"],
+        "", 13
+    ),
+    (
         ["joosbox-compiler/src/test/resources/custom-tests/compiler_array_access_3.java"],
         "", 3
     ),

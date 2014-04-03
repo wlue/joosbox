@@ -775,13 +775,13 @@ mov ebx, eax
           case s: SimpleArrayAccess => {
             val arrayAsm:String = generateAssemblyForNode(s.name)
             val indexAsm:String = generateAssemblyForNode(s.expr)
-            assignToArray(arrayAsm, indexAsm)
+            assignToArrayIndex(arrayAsm, indexAsm)
           }
 
           case c: ComplexArrayAccess => {
             val arrayAsm:String = generateAssemblyForNode(c.primary)
             val indexAsm:String = generateAssemblyForNode(c.expr)
-            assignToArray(arrayAsm, indexAsm)
+            assignToArrayIndex(arrayAsm, indexAsm)
           }
 
           case x
@@ -828,7 +828,6 @@ imul edx
         """
       )
       case d : DivideExpression => {
-        val checkLabel:String = d.symbolName + "_DIV0_CHECK"
         val lhsAsm:String = generateAssemblyForNode(d.e1)
         val rhsAsm:String = generateAssemblyForNode(d.e2)
 
@@ -842,9 +841,7 @@ pop ebx
 pop eax
 
 sub ebx, 0
-jne $checkLabel
-call __exception
-$checkLabel:
+je __exception
 
 cdq
 idiv ebx
@@ -1293,7 +1290,7 @@ $asm
     """
   }
 
-  def assignToArray(arrayAsm:String, indexAsm:String) : String = {
+  def assignToArrayIndex(arrayAsm:String, indexAsm:String) : String = {
     // Relies on rhs value of assignment to be in eax
             s"""
 push eax ; push rhs value
@@ -1307,19 +1304,38 @@ pop ecx
 pop ebx
 pop eax
 
+cmp ebx, 0
+je __exception
+
+cmp ecx, [ebx + ArrayLengthOffset]
+jge __exception
+
+cmp ecx, 0
+jl __exception
+
 mov dword [ebx + ArrayLengthOffset + 4*(ecx + 1)], eax
             """
   }
 
   def valueAtArrayIndex(arrayAsm:String, indexAsm:String) : String = {
-            s"""
+    s"""
 $arrayAsm
 push eax
+
 $indexAsm
 push eax
 
 pop ebx
 pop eax
+
+cmp eax, 0
+je __exception
+
+cmp ebx, [eax + ArrayLengthOffset]
+jge __exception
+
+cmp ebx, 0
+jl __exception
 
 mov eax, [eax + ArrayLengthOffset + 4*(ebx + 1)]
             """
