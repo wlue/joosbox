@@ -209,9 +209,37 @@ ret
   }
 
   def generateInitFields(units: Seq[CompilationUnit]): String = {
+    val code: String = units.flatMap { unit => unit match {
+      case CompilationUnit(_, _, classDecl: ClassDeclaration) => classDecl match {
+        case ClassDeclaration(_, ClassBody(declarations), _, _, _) => {
+          val code = declarations.flatMap {
+            case field: FieldDeclaration if field.isStatic => field.expression match {
+              case Some(expr) => {
+Some(s"""
+  ; Field: ${field.name.niceName}
+  ${generateAssemblyForNode(expr)(Some(unit), Some(classDecl))}
+  mov [${NASMDefines.VTableStaticFieldTag(classDecl.symbolName, field.symbolName)}], eax
+""".toString)
+              }
+              case _ => None
+            }
+            case _ => None
+          }
+
+          if (!code.isEmpty) {
+            Some(s"; Static assignment for class ${classDecl.name.niceName}:\n" ++ code.mkString("\n"))
+          } else {
+            None
+          }
+        }
+      }
+      case _ => None
+    }}.mkString("\n")
+
     s"""
 global initFields
 initFields:
+${code}
   ret
 
     """.stripMargin
