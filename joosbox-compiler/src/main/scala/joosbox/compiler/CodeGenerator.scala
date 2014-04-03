@@ -1,6 +1,6 @@
 package joosbox.compiler
 
-import joosbox.parser.{AbstractSyntaxNode, ScopeEnvironment, EnvironmentLookup, MethodLookup, TypeNameLookup, ConstructorLookup}
+import joosbox.parser.{AbstractSyntaxNode, Environment, ScopeEnvironment, EnvironmentLookup, MethodLookup, TypeNameLookup, ConstructorLookup}
 import joosbox.parser.AbstractSyntaxNode._
 import joosbox.lexer.{SyntaxError, InputString}
 
@@ -45,11 +45,13 @@ object NASMDefines {
 
 object CodeGenerator {
 
+  val arraySymbolName : String = "java_lang_Array"
+
   lazy val preamble: String =
     scala.io.Source.fromFile("joosbox-compiler/src/test/resources/stdlib/defines.s").mkString
 
   def generateSingleAssembly(units: Seq[CompilationUnit]): String = {
-    preamble + generateAssembly(units).map({
+    preamble + generateJavaLangArrayVTable(units(0).scope.get) + generateAssembly(units).map({
       case ((f: String, d: String)) => {
         s"""
 
@@ -110,13 +112,13 @@ _start:
       units(0).scope.get.lookup(TypeNameLookup(CommonNames.JavaLangObject)).get.asInstanceOf[TypeDeclaration]
     )
 
-    var subclassesIncludingSelfs: Map[TypeDeclaration, Set[TypeDeclaration]]
-      = Map.empty[TypeDeclaration, Set[TypeDeclaration]]
+    var subclassesIncludingSelfs: Map[String, Set[String]]
+      = Map.empty[String, Set[String]]
     var classTags: Seq[String] = Seq.empty[String]
 
-    def addMapping(superc: TypeDeclaration, subc: TypeDeclaration) = {
-      val s: Set[TypeDeclaration]
-        = subclassesIncludingSelfs.getOrElse(superc, Set.empty[TypeDeclaration])
+    def addMapping(superc: String, subc: String) = {
+      val s: Set[String]
+        = subclassesIncludingSelfs.getOrElse(superc, Set.empty[String])
       subclassesIncludingSelfs
         = subclassesIncludingSelfs ++ Map(superc -> (s ++ Set(subc)))
     }
@@ -127,8 +129,8 @@ _start:
           classTags = classTags ++ Seq(s"%define ${c.symbolName}_class_tag 0x${c.runtimeTag.toHexString}")
 
           if (!c.modifiers.contains(AbstractKeyword())) {
-            addMapping(c, c)
-            ancestors.foreach(addMapping(_, c))
+            addMapping(c.symbolName, c.symbolName)
+            ancestors.foreach(x => addMapping(x.symbolName, c.symbolName))
             if (c.superclass.isDefined) {
               val superclass:ClassDeclaration =
                 c.scope.get.lookup(TypeNameLookup(c.superclass.get.name.toQualifiedName)) match {
@@ -136,11 +138,11 @@ _start:
                   case _ => throw new SyntaxError("Invalid class creation.")
                 }
 
-              addMapping(superclass, c)
+              addMapping(superclass.symbolName, c.symbolName)
             }
             c.interfaces.foreach{case i: InterfaceType => {
               c.scope.get.lookup(TypeNameLookup(i.name.toQualifiedName)) match {
-                case Some(idecl: InterfaceDeclaration) => addMapping(idecl, c)
+                case Some(idecl: InterfaceDeclaration) => addMapping(idecl.symbolName, c.symbolName)
                 case _ => throw new SyntaxError("Invalid interface creation.")
               }
             }}
@@ -153,38 +155,51 @@ _start:
     units.map(gatherClassRelationships)
 
     val offsetTable = subclassesIncludingSelfs.map{
-      case (s: TypeDeclaration, sub: Set[TypeDeclaration]) => {
-        val substatements = sub.map(x => {
-          val movExpr = if (x.symbolName == s.symbolName) {
+      case (s: String, sub: Set[String]) => {
+        var substatements = sub.map(x => {
+          val movExpr = if (x == s) {
             "0"
           } else {
-            s"(vtable_${x.symbolName}_${s.symbolName} - vtable_${x.symbolName})"
+            s"(vtable_${x}_${s} - vtable_${x})"
           }
 
           s"""
-${NASMDefines.OffsetTableStatementLabel(s.symbolName, x.symbolName)}:
-  cmp eax, ${NASMDefines.ClassTagForClass(x.symbolName)}
-  jne ${NASMDefines.OffsetTableStatementLabelEnd(s.symbolName, x.symbolName)}
+${NASMDefines.OffsetTableStatementLabel(s, x)}:
+  cmp eax, ${NASMDefines.ClassTagForClass(x)}
+  jne ${NASMDefines.OffsetTableStatementLabelEnd(s, x)}
   mov eax, $movExpr
   ret
-${NASMDefines.OffsetTableStatementLabelEnd(s.symbolName, x.symbolName)}:
+${NASMDefines.OffsetTableStatementLabelEnd(s, x)}:
 """
         })
 
+        if (s == ancestors.last.symbolName) { // if javaLangObject
+          substatements = substatements ++ Seq(s"""
+${NASMDefines.OffsetTableStatementLabel(s, arraySymbolName)}:
+  cmp eax, ${NASMDefines.ClassTagForClass(arraySymbolName)}
+  jne ${NASMDefines.OffsetTableStatementLabelEnd(s, arraySymbolName)}
+  mov eax, (vtable_${arraySymbolName}_${s} - vtable_${arraySymbolName})
+  ret
+${NASMDefines.OffsetTableStatementLabelEnd(s, arraySymbolName)}:
+            """)
+        }
+
         s"""
-; beginning of offset table for ${s.symbolName}
-${NASMDefines.OffsetTableLabel(s.symbolName)}:
+; beginning of offset table for ${s}
+${NASMDefines.OffsetTableLabel(s)}:
 ${substatements.mkString("\n")}
 
 ; lookup failed - return a constant
 mov eax, NoVTableOffsetFound
 ret
-; end of offset table for ${s.symbolName}
+; end of offset table for ${s}
 """
       }
     }.mkString("\n\n")
 
-    classTags.mkString("\n") + offsetTable
+    val arrayHexString:String = arraySymbolName.hashCode.toHexString
+    val arrayTag:String = s"%define ${arraySymbolName}_class_tag 0x${arrayHexString}"
+    (classTags ++ Seq(arrayTag)).mkString("\n") + offsetTable
   }
 
   def generateInitFields(units: Seq[CompilationUnit]): String = {
@@ -260,6 +275,32 @@ initFields:
     getInstanceFieldsForClass(f.scope.get.getEnclosingClassNode.get.asInstanceOf[ClassDeclaration]).indexOf(f)
   }
 
+  def generateJavaLangArrayVTable(env:Environment) : String = {
+    val symbolName:String = arraySymbolName
+    val objDecl:ClassDeclaration = env.lookup(TypeNameLookup(CommonNames.JavaLangObject)).get.asInstanceOf[ClassDeclaration]
+
+    val nestedEntries:String = (
+      Seq(NASMDefines.VTableNestedClassHeader(symbolName, objDecl.symbolName)) ++
+      objDecl.methodsForVtable.map( x =>
+        NASMDefines.VTableNestedMethodDef(symbolName, objDecl.symbolName, x.symbolName, x.symbolName)
+      )
+    ).mkString("\n")
+
+      s"""
+SECTION .data
+
+; beginning of vtable for $symbolName
+${NASMDefines.VTableClassHeader(symbolName)}
+$nestedEntries
+; end of vtable for $symbolName
+
+; vtable offset lookup functions for $symbolName
+
+; end of vtable offset lookup functions for $symbolName
+
+SECTION .text
+  """
+  }
 
   def generateAssemblyForNode(n: AbstractSyntaxNode)(
     implicit parentCompilationUnit: Option[CompilationUnit],
@@ -890,6 +931,27 @@ and eax, ebx
         }
       }
 
+      case a : ArrayCreationPrimary => {
+        val dimsAsm:String = generateAssemblyForNode(a.dimExpr)
+        val arrayTag:String = NASMDefines.ClassTagForClass(arraySymbolName)
+        val vtableBase:String = NASMDefines.VTableBase(arraySymbolName)
+        val typeAsm:String = typeOfArray(a)
+
+        s"""
+$dimsAsm
+mov ecx, eax; ecx holds the length
+mov ebx, 4
+imul ebx ; 4x length in eax
+add eax, 16 ; extra bits plus 4x length
+call __malloc
+
+mov dword [eax], $arrayTag
+mov dword [eax + ObjectVTableOffset], $vtableBase
+mov dword [eax + ArrayTypeOffset], $typeAsm
+mov dword [eax + ArrayLengthOffset], ecx
+        """
+      }
+
       case c : ClassCreationPrimary => {
         val env = c.scope.get
 
@@ -1094,6 +1156,20 @@ $asm
     """
   }
 
+  def typeOfArray(a: ArrayCreationPrimary) : String = {
+    a.varType match {
+      case p:PrimitiveType =>
+        p match {
+          case BooleanKeyword() => "BooleanTypeTag"
+          case ByteKeyword() => "ByteTypeTag"
+          case ShortKeyword() => "ShortTypeTag"
+          case IntKeyword() => "IntTypeTag"
+          case CharKeyword() => "CharTypeTag"
+        }
+      case t:ReferenceNonArrayType => NASMDefines.ClassTagForClass(t.node.get.symbolName)
+      case _ => throw new SyntaxError("Invalid var type of array.")
+    }
+  }
 
   def pushArguments(node:AbstractSyntaxNode) : String = {
     val args : Seq[Expression] = node match {

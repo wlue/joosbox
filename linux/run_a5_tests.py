@@ -14,10 +14,6 @@ else:
     cwd = (os.getcwd() + "/linux")
 tests = [
     (
-        ["joosbox-compiler/src/test/resources/custom-tests/compiler_instance_field_access.java"],
-        "", 21
-    ),
-    (
         ["joosbox-compiler/src/test/resources/custom-tests/compiler_add_many_123.java"],
         "", 123
     ),
@@ -100,6 +96,10 @@ tests = [
     (
         ["joosbox-compiler/src/test/resources/custom-tests/compiler_class_creation_1.java"],
         "", 42
+    ),
+    (
+        ["joosbox-compiler/src/test/resources/custom-tests/compiler_array_basic_1.java"],
+        "", 1
     ),
     (
         ["joosbox-compiler/src/test/resources/marmoset-tests/a5/J1_01.java"],
