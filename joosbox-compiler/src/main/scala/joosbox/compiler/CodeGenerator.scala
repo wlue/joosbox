@@ -1250,6 +1250,10 @@ $bottomLabel:
         val prepareToValidateCast = s"""
 ; validating cast - first push the object pointer in eax to save it
 push eax
+
+cmp eax, 0 ; if null, treat classTag as 0
+je .cast_${c.expr.symbolName}_${c.targetType.symbolName}_castingNull
+
 ; move vtable of the invocation target into ebx
 mov ebx, [eax + ObjectVTableOffset]
 ; move its class tag into eax
@@ -1282,6 +1286,7 @@ mov eax, [eax + ObjectClassTagOffset]
 ; check eax to see if the cast was successful
 cmp eax, NoVTableOffsetFound
 je __exception
+.cast_${c.expr.symbolName}_${c.targetType.symbolName}_castingNull:
 """
 
         prepareToValidateCast + offsetCall + postValidateCast + generateAssemblyForNode(c.expr)
