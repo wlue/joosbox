@@ -93,6 +93,7 @@ $d
         val asm = s"""
 global _start
 _start:
+  call stringLiterals
   call initFields
   call $entryMethodSymbol
   call __debexit
@@ -107,7 +108,8 @@ _start:
     Seq(
       ("bootstrap", first),
       ("offsetTables", generateOffsetTables(units)),
-      ("initFields", generateInitFields(units))
+      ("initFields", generateInitFields(units)),
+      ("stringLiterals", generateStringLiteralsData(units))
     ) ++ units.map(cu => cu.assemblyFileName -> generateAssemblyForNode(cu)(Some(cu), None))
   }
 
@@ -243,6 +245,60 @@ ${code}
   ret
 
     """.stripMargin
+  }
+
+  var string_literals : Seq[String] = Seq.empty[String]
+
+  def buildStringLiteralIndexData(node: AbstractSyntaxNode):String = {
+    var literalAsm:String = ""
+    node match {
+      case s:StringLiteral => {
+        if (!string_literals.contains(s.stringVal)) {
+          string_literals = string_literals ++ Seq(s.stringVal)
+          s.index = Some(string_literals.indexOf(s.stringVal))
+
+          val charsAsm:String = s.stringVal.toList.map{ char => s"dd '$char'"}.mkString("\n")
+          literalAsm = s"""
+; string literal "${s.stringVal}"
+_string_literal_${s.index.get}:
+dd ${NASMDefines.ClassTagForClass(arraySymbolName)}
+dd ${NASMDefines.VTableBase(arraySymbolName)}
+dd CharTypeTag
+dd ${s.stringVal.length}
+$charsAsm
+          """
+        } else {
+          s.index = Some(string_literals.indexOf(s.stringVal))
+        }
+      }
+      case _ => Unit
+    }
+
+    val childAsm:Seq[String] = node.children.map { child =>
+      buildStringLiteralIndexData(child)
+    }
+
+    (Seq(literalAsm) ++ childAsm).filter(x => x != "").mkString("\n")
+  }
+
+  def generateStringLiteralsData(units: Seq[CompilationUnit]): String = {
+    string_literals = Seq.empty[String]
+
+    val literalsAsm:String = units.map { unit =>
+      buildStringLiteralIndexData(unit)
+    }.mkString("\n")
+
+    s"""
+global stringLiterals
+stringLiterals:
+SECTION .data
+; beginning of string literals data
+$literalsAsm
+; end of string literals data
+SECTION .text
+
+ret
+  """.stripMargin
   }
 
   def generateNestedVTableEntries(td: TypeDeclaration): Seq[TypeDeclaration] = {
@@ -805,6 +861,12 @@ $lhsAsm
       case _: NullLiteral => s"mov eax, 0\n"
       case _: FalseLiteral => s"mov eax, 0\n"
       case _: TrueLiteral => s"mov eax, 1\n"
+
+      case c: CharLiteral =>
+        s"""
+; char literal ${c.value.value}
+mov dword eax, ${c.value.value}
+        """
 
       case AddExpression(e1, e2) => (
         generateAssemblyForNode(e1) + "push eax\n"

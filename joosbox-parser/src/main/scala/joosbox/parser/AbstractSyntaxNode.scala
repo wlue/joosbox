@@ -73,6 +73,10 @@ object AbstractSyntaxNode {
   }
   case class StringLiteral(value: InputString) extends Literal {
     override def symbolName: String = "string"
+    var index : Option[Integer] = None
+    def stringVal:String = {
+      value.value.substring(1, value.value.length - 1)
+    }
   }
   case class NullLiteral() extends Literal {
     override def symbolName: String = "null"
