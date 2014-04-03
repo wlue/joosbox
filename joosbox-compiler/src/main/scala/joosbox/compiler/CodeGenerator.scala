@@ -40,6 +40,12 @@ object NASMDefines {
   def OffsetTableStatementLabel(klass: String, midclass: String): String = s"offsettable_${klass}_${midclass}"
   def OffsetTableStatementLabelEnd(klass: String, midclass: String): String = s"offsettable_${klass}_${midclass}_nomatch"
 
+  def GetArrayVTableOffset(klass: String): String = ArrayOffsetTableLabel(klass)
+  def ArrayOffsetTableLabel(klass: String): String = s"offsettable_array_${klass}"
+  def ArrayOffsetTableLabelReferenceType: String = s"offsettable_array_reftype"
+  def ArrayOffsetTableStatementLabel(klass: String, midclass: String): String = s"offsettable_array_${klass}_${midclass}"
+  def ArrayOffsetTableStatementLabelEnd(klass: String, midclass: String): String = s"offsettable_array_${klass}_${midclass}_nomatch"
+
   def InstanceOfHeader(klass: String): String = s"instanceof_${klass}:"
   def InstanceOfEntry(otherclass: String): String = s"dd ${otherclass}_class_tag"
   def InstanceOfEnd: String = "dd 0x0"
@@ -185,28 +191,133 @@ ${NASMDefines.OffsetTableStatementLabelEnd(s, x)}:
 ${NASMDefines.OffsetTableStatementLabel(s, arraySymbolName)}:
   cmp eax, ${NASMDefines.ClassTagForClass(arraySymbolName)}
   jne ${NASMDefines.OffsetTableStatementLabelEnd(s, arraySymbolName)}
-  mov eax, (vtable_${arraySymbolName}_${s} - vtable_${arraySymbolName})
+  mov eax, (vtable_${arraySymbolName}_$s - vtable_$arraySymbolName)
   ret
 ${NASMDefines.OffsetTableStatementLabelEnd(s, arraySymbolName)}:
             """)
         }
 
         s"""
-; beginning of offset table for ${s}
+; beginning of offset table for $s
 ${NASMDefines.OffsetTableLabel(s)}:
+; move class tag into eax
+mov eax, [eax + ObjectClassTagOffset]
 ${substatements.mkString("\n")}
 
 ; lookup failed - return a constant
 mov eax, NoVTableOffsetFound
 ret
-; end of offset table for ${s}
+; end of offset table for $s
+
+; beginning of offset table for array of $s
+${NASMDefines.ArrayOffsetTableLabel(s)}:
+; assume that eax contains the pointer to the array object
+; check if the provided object is a class
+mov ebx, [eax + ObjectClassTagOffset]
+cmp ebx, ${NASMDefines.ClassTagForClass(arraySymbolName)}
+jne .isNotArray
+
+; we are casting an array, so we should check that the subtypes are equal
+; pretend like our array-contained classtag is at the correct offset,
+; so that when the sub-method dereferences the classtag on the "object",
+; it gets back the classtag of the contained objects within the array
+; this is like a very dirty thunk
+add eax, ArrayTypeOffset
+call ${NASMDefines.GetVTableOffset(s)}
+
+; If this is a valid cast, then we get a possibly nonzero offset
+; so we need to map the return code of this call like so:
+;  if eax == NOMATCH => return NOMATCH
+;  else return an offset of 0
+cmp eax, NoVTableOffsetFound
+je .isInvalidCast
+
+; else return an offset of 0 - arrays cannot be overridden, their vtables are always just Object
+mov eax, 0
+ret
+
+.isInvalidCast:
+.isNotArray:
+; lookup failed - return a constant
+mov eax, NoVTableOffsetFound
+ret
+; end of offset table for array of $s
 """
       }
     }.mkString("\n\n")
 
+    val arrayReferenceTypeMapping = s"""
+; beginning of offset table for array of reference types
+${NASMDefines.ArrayOffsetTableLabelReferenceType}:
+; assume that eax contains the pointer to the array object
+; check if the provided object is a class
+mov ebx, [eax + ObjectClassTagOffset]
+cmp ebx, ${NASMDefines.ClassTagForClass(arraySymbolName)}
+jne .isNotArray
+
+; we are casting an array of reference types, so the subtypes will be equal
+; return an offset of 0 - arrays cannot be overridden, their vtables are always just Object
+mov eax, 0
+ret
+
+.isNotArray:
+; lookup failed - return a constant
+mov eax, NoVTableOffsetFound
+ret
+; end of offset table for array of reference types
+"""
+
     val arrayHexString:String = arraySymbolName.hashCode.toHexString
-    val arrayTag:String = s"%define ${arraySymbolName}_class_tag 0x${arrayHexString}"
-    (classTags ++ Seq(arrayTag)).mkString("\n") + offsetTable
+    val arrayTag:String = s"%define ${arraySymbolName}_class_tag 0x$arrayHexString"
+    (classTags ++ Seq(arrayTag)).mkString("\n") + offsetTable + arrayReferenceTypeMapping
+  }
+
+  def generateOffsetCallForType(c: Type): String = c match {
+    case ct: ClassOrInterfaceType => {
+      c.scope.get.lookup(TypeNameLookup(ct.name.toQualifiedName)) match {
+        case Some(cd: ClassDeclaration) => s"call ${NASMDefines.OffsetTableLabel(cd.symbolName)}"
+        case Some(id: InterfaceDeclaration) => s"call ${NASMDefines.OffsetTableLabel(id.symbolName)}"
+        case x => throw new SyntaxError("Cast expression could not find target class or interface, instead got: " + x)
+      }
+    }
+    case ct: ClassType => {
+      c.scope.get.lookup(TypeNameLookup(ct.name.toQualifiedName)) match {
+        case Some(cd: ClassDeclaration) => s"call ${NASMDefines.OffsetTableLabel(cd.symbolName)}"
+        case _ => throw new SyntaxError("Cast expression could not find target class")
+      }
+    }
+    case it: InterfaceType => {
+      c.scope.get.lookup(TypeNameLookup(it.name.toQualifiedName)) match {
+        case Some(id: InterfaceDeclaration) => s"call ${NASMDefines.OffsetTableLabel(id.symbolName)}"
+        case _ => throw new SyntaxError("Cast expression could not find target interface")
+      }
+    }
+
+    case ArrayType(ct: ClassOrInterfaceType) => {
+      c.scope.get.lookup(TypeNameLookup(ct.name.toQualifiedName)) match {
+        case Some(cd: ClassDeclaration) => s"call ${NASMDefines.ArrayOffsetTableLabel(cd.symbolName)}"
+        case Some(id: InterfaceDeclaration) => s"call ${NASMDefines.ArrayOffsetTableLabel(id.symbolName)}"
+        case x => throw new SyntaxError("Cast expression could not find target array class or interface, instead got: " + x)
+      }
+    }
+
+    case ArrayType(ct: ClassType) => {
+      c.scope.get.lookup(TypeNameLookup(ct.name.toQualifiedName)) match {
+        case Some(cd: ClassDeclaration) => s"call ${NASMDefines.ArrayOffsetTableLabel(cd.symbolName)}"
+        case _ => throw new SyntaxError("Cast expression could not find target array class")
+      }
+    }
+
+    case ArrayType(it: InterfaceType) => {
+      c.scope.get.lookup(TypeNameLookup(it.name.toQualifiedName)) match {
+        case Some(id: InterfaceDeclaration) => s"call ${NASMDefines.ArrayOffsetTableLabel(id.symbolName)}"
+        case _ => throw new SyntaxError("Cast expression could not find target array interface")
+      }
+    }
+    case ArrayType(_: ArrayType) => throw new SyntaxError("Nested arrays not supported")
+    case ArrayType(_: VoidKeyword) => throw new SyntaxError("Arrays of void type not supported")
+    case ArrayType(_: PrimitiveType) => "nop ; primitive cast"
+    case _: PrimitiveType => "nop ; primitive cast"
   }
 
   def generateInitFields(units: Seq[CompilationUnit]): String = {
@@ -517,8 +628,8 @@ ret; end of method $symbolName
             s"""
 $symbolName:
 ; native method invocation
-extern NATIVE${fullMethodName}
-call NATIVE${fullMethodName}
+extern NATIVE$fullMethodName
+call NATIVE$fullMethodName
 ret; end of method $symbolName
 """
           }
@@ -603,8 +714,6 @@ $body
               val thunkAsm = s"""
 ; move vtable of the invocation target into ebx
 mov ebx, [eax + ObjectVTableOffset]
-; move its class tag into eax
-mov eax, [eax + ObjectClassTagOffset]
 ; call the appropriate method to move the vtable offset into eax
 call ${NASMDefines.GetVTableOffset(classSymbolName)}
 
@@ -648,8 +757,6 @@ add esp, ${argsSize * 4} ; remove the params from the stack
             val thunkAsm = s"""
 ; move vtable of the invocation target into ebx
 mov ebx, [eax + ObjectVTableOffset]
-; move its class tag into eax
-mov eax, [eax + ObjectClassTagOffset]
 ; call the appropriate method to move the vtable offset into eax
 call ${NASMDefines.GetVTableOffset(classSymbolName)}
 cmp eax, NoVTableOffsetFound
@@ -945,33 +1052,9 @@ je .instanceOf_${c.symbolName}_${e.symbolName}_classTagIsInEAX
 
 ; move vtable of the invocation target into ebx
 mov ebx, [eax + ObjectVTableOffset]
-; move its class tag into eax
-mov eax, [eax + ObjectClassTagOffset]
 .instanceOf_${c.symbolName}_${e.symbolName}_classTagIsInEAX:
 """
-        val offsetCall = c match {
-          case ct: ClassOrInterfaceType => {
-            c.scope.get.lookup(TypeNameLookup(ct.name.toQualifiedName)) match {
-              case Some(cd: ClassDeclaration) => s"call ${NASMDefines.OffsetTableLabel(cd.symbolName)}"
-              case Some(id: InterfaceDeclaration) => s"call ${NASMDefines.OffsetTableLabel(id.symbolName)}"
-              case x => throw new SyntaxError("Cast expression could not find target class or interface, instead got: " + x)
-            }
-          }
-          case ct: ClassType => {
-            c.scope.get.lookup(TypeNameLookup(ct.name.toQualifiedName)) match {
-              case Some(cd: ClassDeclaration) => s"call ${NASMDefines.OffsetTableLabel(cd.symbolName)}"
-              case _ => throw new SyntaxError("Cast expression could not find target class")
-            }
-          }
-          case it: InterfaceType => {
-            c.scope.get.lookup(TypeNameLookup(it.name.toQualifiedName)) match {
-              case Some(id: InterfaceDeclaration) => s"call ${NASMDefines.OffsetTableLabel(id.symbolName)}"
-              case _ => throw new SyntaxError("Cast expression could not find target interface")
-            }
-          }
-          case _: PrimitiveType => "nop ; primitive cast"
-          case x => s"nop; unhandled cast type to ${x.symbolName}"
-        }
+        val offsetCall = generateOffsetCallForType(c)
 
         val postValidateCast = s"""
 ; check eax to see if the cast was successful
@@ -1346,31 +1429,8 @@ je .cast_${c.expr.symbolName}_${c.targetType.symbolName}_castingNull
 
 ; move vtable of the invocation target into ebx
 mov ebx, [eax + ObjectVTableOffset]
-; move its class tag into eax
-mov eax, [eax + ObjectClassTagOffset]
 """
-        val offsetCall = c.targetType match {
-          case ct: ClassOrInterfaceType => {
-            c.scope.get.lookup(TypeNameLookup(ct.name.toQualifiedName)) match {
-              case Some(cd: ClassDeclaration) => s"call ${NASMDefines.OffsetTableLabel(cd.symbolName)}"
-              case Some(id: InterfaceDeclaration) => s"call ${NASMDefines.OffsetTableLabel(id.symbolName)}"
-              case x => throw new SyntaxError("Cast expression could not find target class or interface, instead got: " + x)
-            }
-          }
-          case ct: ClassType => {
-            c.scope.get.lookup(TypeNameLookup(ct.name.toQualifiedName)) match {
-              case Some(cd: ClassDeclaration) => s"call ${NASMDefines.OffsetTableLabel(cd.symbolName)}"
-              case _ => throw new SyntaxError("Cast expression could not find target class")
-            }
-          }
-          case it: InterfaceType => {
-            c.scope.get.lookup(TypeNameLookup(it.name.toQualifiedName)) match {
-              case Some(id: InterfaceDeclaration) => s"call ${NASMDefines.OffsetTableLabel(id.symbolName)}"
-              case _ => throw new SyntaxError("Cast expression could not find target interface")
-            }
-          }
-          case x => s"nop; unhandled cast type to ${x.symbolName}"
-        }
+        val offsetCall = generateOffsetCallForType(c.targetType)
 
         val postValidateCast = s"""
 ; check eax to see if the cast was successful
