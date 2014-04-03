@@ -1006,7 +1006,9 @@ mov ecx, eax; ecx holds the length
 mov ebx, 4
 imul ebx ; 4x length in eax
 add eax, 16 ; extra bits plus 4x length
+push ecx
 call __malloc
+pop ecx
 
 mov dword [eax], $arrayTag
 mov dword [eax + ObjectVTableOffset], $vtableBase
