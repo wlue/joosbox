@@ -669,6 +669,18 @@ mov ${l.symbolName}, eax
         }
       }
 
+      case s: SimpleArrayAccess => {
+        val arrayAsm:String = generateAssemblyForNode(s.name)
+        val indexAsm:String = generateAssemblyForNode(s.expr)
+        valueAtArrayIndex(arrayAsm, indexAsm)
+      }
+
+      case c: ComplexArrayAccess => {
+        val arrayAsm:String = generateAssemblyForNode(c.primary)
+        val indexAsm:String = generateAssemblyForNode(c.expr)
+        valueAtArrayIndex(arrayAsm, indexAsm)
+      }
+
       case a: Assignment => {
         val rhsAsm: String = generateAssemblyForNode(a.rightHandSide)
         val lhsAsm: String = a.leftHandSide match {
@@ -732,42 +744,13 @@ mov ebx, eax
           case s: SimpleArrayAccess => {
             val arrayAsm:String = generateAssemblyForNode(s.name)
             val indexAsm:String = generateAssemblyForNode(s.expr)
-
-            s"""
-push eax ; push rhs value
-
-$arrayAsm
-push eax
-$indexAsm
-push eax
-
-pop ecx
-pop ebx
-pop eax
-
-mov dword [ebx + ArrayLengthOffset + 4*(ecx + 1)], eax
-            """
+            assignToArray(arrayAsm, indexAsm)
           }
 
           case c: ComplexArrayAccess => {
             val arrayAsm:String = generateAssemblyForNode(c.primary)
             val indexAsm:String = generateAssemblyForNode(c.expr)
-
-            s"""
-push eax ; push rhs value
-
-$arrayAsm
-push eax
-$indexAsm
-push eax
-
-pop ecx
-pop ebx
-pop eax
-
-mov dword [ebx + ArrayLengthOffset + 4*(ecx + 1)], eax
-            """
-
+            assignToArray(arrayAsm, indexAsm)
           }
 
           case x
@@ -1049,7 +1032,7 @@ and eax, ebx
 
         s"""
 $dimsAsm
-mov ecx, eax; ebx holds the length
+mov ecx, eax; ecx holds the length
 mov ebx, 4
 imul ebx ; 4x length in eax
 add eax, 16 ; extra bits plus 4x length
@@ -1270,6 +1253,39 @@ $asm
 ; end asm for node ${n.getClass.getSimpleName} 0x${n.hashCode.toHexString}
     """
   }
+
+  def assignToArray(arrayAsm:String, indexAsm:String) : String = {
+    // Relies on rhs value of assignment to be in eax
+            s"""
+push eax ; push rhs value
+
+$arrayAsm
+push eax
+$indexAsm
+push eax
+
+pop ecx
+pop ebx
+pop eax
+
+mov dword [ebx + ArrayLengthOffset + 4*(ecx + 1)], eax
+            """
+  }
+
+  def valueAtArrayIndex(arrayAsm:String, indexAsm:String) : String = {
+            s"""
+$arrayAsm
+push eax
+$indexAsm
+push eax
+
+pop ebx
+pop eax
+
+mov eax, [eax + ArrayLengthOffset + 4*(ebx + 1)]
+            """
+  }
+
 
   def typeOfArray(a: ArrayCreationPrimary) : String = {
     a.varType match {
