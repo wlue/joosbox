@@ -648,7 +648,11 @@ mov ${l.symbolName}, eax
               val classDeclaration = f.scope.get.compilationScope.get.node.get.asInstanceOf[CompilationUnit].typeDeclaration.asInstanceOf[ClassDeclaration]
               s"mov eax, [${NASMDefines.VTableStaticFieldTag(classDeclaration.symbolName, f.symbolName)}]\n"
             } else {
-              s"mov eax, [eax + ${(getOffsetOfInstanceField(f) + 2) * 4}]; field declaration lookup\n"
+              s"""
+cmp eax, 0; null pointer access on field declaration
+  je __exception
+mov eax, [eax + ${(getOffsetOfInstanceField(f) + 2) * 4}]; field declaration lookup" +
+"""
             }
           }
           case Some(f: FormalParameter) => s"mov eax, ${f.symbolName}_${f.hashCode}; reference parameter\n"
@@ -662,7 +666,11 @@ mov ${l.symbolName}, eax
             if (disambiguated.prefix.isEmpty) {
               if (disambiguated.value.value.equals("length")) {
                 //  We must have an array type here
-                s"mov eax, [eax + ArrayLengthOffset]"
+                s"""
+cmp eax, 0; null pointer access on array length
+  je __exception
+mov eax, [eax + ArrayLengthOffset]
+"""
               } else {
                 throw new SyntaxError("Could not resolve expressionname for expression evaluation.")
               }
@@ -1385,6 +1393,9 @@ mov eax, [eax + ArrayLengthOffset + 4*(ebx + 1)]
   def generateInstanceCallAssembly(instanceAsm:String, thunkAsm:String, className:String, callName:String, isConstructor: Boolean = false) : String = {
     s"""
 $instanceAsm
+cmp eax, 0; null pointer access on instance call
+je __exception
+
 push eax
 $thunkAsm
 ${NASMDefines.VMethodCall("eax", className, callName)}
