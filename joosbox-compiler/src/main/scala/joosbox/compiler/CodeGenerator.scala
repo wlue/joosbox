@@ -242,7 +242,7 @@ initFields:
 
     if (!cd.superclass.isEmpty) {
       (cd.scope.get.lookup(TypeNameLookup(cd.superclass.get.name.toQualifiedName)) match {
-        case sdecl: ClassDeclaration => getInstanceFieldsForClass(sdecl)
+        case Some(sdecl: ClassDeclaration) => getInstanceFieldsForClass(sdecl)
         case _ => Seq.empty[FieldDeclaration]
       }) ++ fields
     } else {
@@ -551,17 +551,37 @@ mov ${l.symbolName}, eax
       //  This is a read of an expressionname
       case e: ExpressionName => {
         e.scope.get.lookup(EnvironmentLookup.lookupFromName(e)) match {
+          //  The following cases are triggered if the target of this expression is unqualified.
           case Some(l: LocalVariableDeclaration) => s"mov eax, ${l.symbolName}\n"
           case Some(f: ForVariableDeclaration) => s"mov eax, ${f.symbolName}\n"
           case Some(f: FieldDeclaration) => {
-            println("FD: " + f.name)
             s"mov eax, [eax + ${(getOffsetOfInstanceField(f) + 2) * 4}]; field declaration lookup\n"
           }
           case Some(f: FormalParameter) => s"mov eax, ${f.symbolName}_${f.hashCode}; reference parameter\n"
 
-          //  TODO: Handle the "None" case, which happens if we call array.length or if we can't find a lookup.
-          case Some(y) => "; something here: " + y.symbolName
-          case None => "; expression name matches nothing"
+          case None => {
+            if (e.value.value.equals("length")) {
+              "; array length lookup TODO"
+            } else {
+              var disambiguated: ExpressionName = e
+              if (e.isAmbiguous) {
+                disambiguated = NameLinker.disambiguateName(e)(e.scope.get).asInstanceOf[ExpressionName]
+              }
+
+              println("Expression name could not be found: " + disambiguated.toQualifiedName + "\n")
+
+              if (disambiguated.prefix.isEmpty) {
+                "; TODO: what in the actual fuck?"
+              } else {
+                // Look up the expression name of the prefix and the name separately.
+                println("Multipart FD: " + disambiguated.toQualifiedName)
+                val endValue = ExpressionName(disambiguated.value)
+                endValue.scope = e.scope
+                generateAssemblyForNode(endValue) + generateAssemblyForNode(disambiguated.prefix.get)
+              }
+            }
+          }
+
           case x =>
             throw new SyntaxError("Environment lookup for name " + e.niceName + " resulted in unknown node " + x)
         }
