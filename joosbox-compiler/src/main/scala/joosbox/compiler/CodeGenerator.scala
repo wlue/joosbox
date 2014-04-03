@@ -456,8 +456,6 @@ ret; end of method $symbolName
 $symbolName:
 ; native method invocation
 extern NATIVE${fullMethodName}
-
-; TODO: Push all arguments in the proper order by C call convention (or whatever Lhotak expects)
 call NATIVE${fullMethodName}
 ret; end of method $symbolName
 """
