@@ -1216,7 +1216,7 @@ $bottomLabel:
 
       case c: CastExpression => {
         if (c.targetType.isInstanceOf[PrimitiveType]) {
-          return "; cast validation is a nop - the target type is primitive"
+          return "; cast validation is a nop - the target type is primitive\n" + generateAssemblyForNode(c.expr)
         }
 
         //  Evaluate the expression inside, then move it into eax.
@@ -1258,7 +1258,7 @@ cmp eax, NoVTableOffsetFound
 je __exception
 """
 
-        prepareToValidateCast + offsetCall + postValidateCast
+        prepareToValidateCast + offsetCall + postValidateCast + generateAssemblyForNode(c.expr)
       }
 
       case x => x.children.map(generateAssemblyForNode).filter{_ != ""}.mkString("\n")
