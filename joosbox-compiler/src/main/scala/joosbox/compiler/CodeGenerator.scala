@@ -411,7 +411,7 @@ SECTION .text
       case md: MethodDeclaration => {
         val symbolName = md.symbolName
 
-        val body: String = md.body match {
+        md.body match {
           case Some(b: Block) => {
 
             //  Find all of the local variables declared within this method, and
@@ -1111,9 +1111,17 @@ mov dword [eax + ArrayLengthOffset], ecx
 mov eax, ${allocSize * 4}
 call __malloc
         """
+//${fields.map(generateAssemblyForNode(_.expression) + "\nmov ").mkString("\n")}
+        val initializeFieldInitialization = s"""
+; initialize fields in this instance of ${classDecl.symbolName}
+
+; end of field initialization for instance of ${classDecl.symbolName}
+"""
         val thunkAsm = s"""
 mov dword [eax], ${NASMDefines.ClassTagForClass(classDecl.symbolName)}
 mov dword [eax + ObjectVTableOffset], $vtableBase
+$initializeFieldInitialization
+
 mov eax, [eax + ObjectVTableOffset]
         """
 
