@@ -555,6 +555,11 @@ mov ${l.symbolName}, eax
           case Some(l: LocalVariableDeclaration) => s"mov eax, ${l.symbolName}\n"
           case Some(f: ForVariableDeclaration) => s"mov eax, ${f.symbolName}\n"
           case Some(f: FieldDeclaration) => {
+            val loadTarget = if (f.name.prefix.isEmpty) {
+              s""
+            } else {
+              s""
+            }
             s"mov eax, [eax + ${(getOffsetOfInstanceField(f) + 2) * 4}]; field declaration lookup\n"
           }
           case Some(f: FormalParameter) => s"mov eax, ${f.symbolName}_${f.hashCode}; reference parameter\n"
@@ -577,7 +582,9 @@ mov ${l.symbolName}, eax
                 println("Multipart FD: " + disambiguated.toQualifiedName)
                 val endValue = ExpressionName(disambiguated.value)
                 endValue.scope = e.scope
-                generateAssemblyForNode(endValue) + generateAssemblyForNode(disambiguated.prefix.get)
+                val res = generateAssemblyForNode(disambiguated.prefix.get) + generateAssemblyForNode(endValue)
+                println(s"Result of nested expressionname lookups for ${disambiguated.toQualifiedName}:\n\n${res}\n\n")
+                res
               }
             }
           }
