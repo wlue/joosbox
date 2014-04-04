@@ -1059,15 +1059,9 @@ mov dword eax, ${c.value.value}
         """
 
       case a:AddExpression => {
-        val t:Option[Type] = TypeChecker.resolveType(a)
-
-        t match {
-          case Some(ClassType(TypeName(InputString("String", _, _, _),
-                      Some(PackageName(InputString("lang", _, _, _),
-                      Some(PackageName(InputString("java", _, _, _), None))))))) =>
+        if (a.stringify) {
             generateStringConcatenationAssembly(a.e1, a.e2)
-
-          case _ =>
+        } else {
             val e1Asm = generateAssemblyForNode(a.e1)
             val e2Asm = generateAssemblyForNode(a.e2)
         s"""
@@ -1533,14 +1527,14 @@ $asm
 
 
       val name = MethodName(InputString("concat", "", 0))
-      env= env.lookup(
+      env = env.lookup(
             TypeNameLookup(CommonNames.JavaLangString)
           ) match {
             case Some(c: ClassDeclaration) => c.body.scope.get
             case _ => throw new SyntaxError("Could not find javalangstring")
           }
 
-      val result = TypeChecker.resolveMethodName(name, Seq(e2), env) match {
+      val result = TypeChecker.resolveMethodName(name, Seq(e2), env, true) match {
           case Some(declaration: MethodDeclaration) => {
             val symbolName: String = declaration.symbolName
             val classSymbolName: String = declaration.scope.get.getEnclosingClassNode.get.symbolName
