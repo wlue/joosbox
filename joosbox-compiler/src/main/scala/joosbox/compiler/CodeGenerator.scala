@@ -677,11 +677,32 @@ ret; end of method $symbolName
 
             val parameterDefinitionsWithThis = parameterDefinitions + "\n" + s"%define ${cd.symbolName}_${cd.hashCode}_this [ebp + 8]"
 
+            val fields = getInstanceFieldsForClass(cd.scope.get.getEnclosingClassNode.get)ph
+            val instanceFieldInitialization = fields.filter(_.expression.isDefined).map(f => s"""
+; instance field initialization for ${f.symbolName}
+push eax
+${generateAssemblyForNode(f.expression.get)(parentCompilationUnit, parentClassDeclaration, Some(f), hasDereferencedPrefix)}
+mov ebx, eax
+pop eax
+mov [eax + ${(getOffsetOfInstanceField(f) + 2) * 4}], ebx
+; end instance field initialization for ${f.symbolName}
+""").mkString("\n")
+
             val body = generateAssemblyForNode(b)(parentCompilationUnit, parentClassDeclaration, None, hasDereferencedPrefix)
             s"""
 sub esp, ${locals.size * 4}
 $localAccessDefinitions
 $parameterDefinitionsWithThis
+; move this ptr into eax
+mov eax, [ebp + 8]
+
+; TODO: If we have no arguments, call super constructor
+
+; initialize fields
+$instanceFieldInitialization
+
+; start of constructor body
+
 $body
             """
           }
@@ -1040,7 +1061,7 @@ mov [ebx], eax; write and assign
         // this could be called from within a method (in which case "this" is in ebp + 8)
         // or this could be called from a field initializer (in which "this" is in esp)
         if (parentFieldDeclaration.isDefined) {
-          "mov eax, [esp]"
+          "mov eax, [ebp + 8] ; field reference of this"
         } else {
           "mov eax, [ebp + 8]"
         }
@@ -1387,21 +1408,9 @@ jmp .clearAllocatedMemory_${c.hashCode}
 .clearAllocatedMemory_done_${c.hashCode}:
         """
 
-        val instanceFieldInitialization = fields.filter(_.expression.isDefined).map(f => s"""
-; instance field initialization for ${f.symbolName}
-push eax
-${generateAssemblyForNode(f.expression.get)(parentCompilationUnit, parentClassDeclaration, Some(f), hasDereferencedPrefix)}
-mov ebx, eax
-pop eax
-mov [eax + ${(getOffsetOfInstanceField(f) + 2) * 4}], ebx
-; end instance field initialization for ${f.symbolName}
-""").mkString("\n")
-
         val thunkAsm = s"""
 mov dword [eax], ${NASMDefines.ClassTagForClass(classDecl.symbolName)}
 mov dword [eax + ObjectVTableOffset], $vtableBase
-$instanceFieldInitialization
-
 mov eax, [eax + ObjectVTableOffset]
         """
 
