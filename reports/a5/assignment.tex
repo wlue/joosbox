@@ -90,7 +90,7 @@
   testing framework, and Apache Commons Lang. This document outlines the
   design of Joosbox, enumerates the significant challenges encountered during
   its construction, and describes our group's testing process for the final
-  phase of the project: code generation.
+  phase of the project.
 
   \section{Design}
 
@@ -366,6 +366,19 @@ call [eax + (vtable_MySuperClass_Constructor0 - vtable_MySuperclass)]
   Many of the aforementioned design choices of Joosbox were not decided upon
   at the outset of Assignment 5, but rather, were arrived upon via trial and
   error.
+
+  A number of challenges arose when trying to test this phase of Joosbox. All
+  of our group members use Mac OS, and we struggled to build a Mac OS-compatible
+  version of {\tt runtime.s} to allow our Joos programs to be run
+  on our machines. However, after much trial and error, and after producing a
+  mostly-working {\tt runtime.s} with subtle bugs, we abandoned this plan and
+  ran our code in a virtual machine. (Details of this testing system are
+  explained more fully below.)
+
+  Other challenges arose when attempting to implement VTables successfully. It
+  took many different designs before settling on one that accommodated  Joos's
+  ``multiple inheritance,'' or rather, its mix of superclasses and implemented
+  interfaces.
 
   \section{Testing}
 
