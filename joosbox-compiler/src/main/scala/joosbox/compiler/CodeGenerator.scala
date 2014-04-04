@@ -615,7 +615,7 @@ SECTION .text
               parameterDefinitions + "\n" + s"%define ${md.symbolName}_${md.hashCode}_this [ebp + 8]"
             }
 
-            val body = generateAssemblyForNode(b)
+            val body = generateAssemblyForNode(b)(parentCompilationUnit, parentClassDeclaration, None, hasDereferencedPrefix)
             s"""
 $symbolName:
 push ebp
@@ -677,7 +677,7 @@ ret; end of method $symbolName
 
             val parameterDefinitionsWithThis = parameterDefinitions + "\n" + s"%define ${cd.symbolName}_${cd.hashCode}_this [ebp + 8]"
 
-            val body = generateAssemblyForNode(b)
+            val body = generateAssemblyForNode(b)(parentCompilationUnit, parentClassDeclaration, None, hasDereferencedPrefix)
             s"""
 sub esp, ${locals.size * 4}
 $localAccessDefinitions
@@ -829,7 +829,7 @@ mov ${l.symbolName}, eax
         fieldEnv.lookup(fieldNameLookup) match {
           case Some(field: FieldDeclaration) => {
             s"""
-${generateAssemblyForNode(f.primary)(parentCompilationUnit, parentClassDeclaration, Some(field), hasDereferencedPrefix)}
+${generateAssemblyForNode(f.primary)}
 mov eax, [eax + ${(getOffsetOfInstanceField(field) + 2) * 4}]
 """
           }
