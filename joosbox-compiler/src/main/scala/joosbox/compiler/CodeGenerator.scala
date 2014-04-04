@@ -1503,7 +1503,7 @@ $asm
             case _ => throw new SyntaxError("Could not find javalangstring")
           }
 
-      TypeChecker.resolveMethodName(name, Seq(e2), env) match {
+      val result = TypeChecker.resolveMethodName(name, Seq(e2), env) match {
           case Some(declaration: MethodDeclaration) => {
             val symbolName: String = declaration.symbolName
             val classSymbolName: String = declaration.scope.get.getEnclosingClassNode.get.symbolName
@@ -1526,14 +1526,17 @@ add eax, ebx
             val pushArg = generateStringPromotionAssembly(e2)
             s"""
 $pushArg
+push eax
+; about to call string concatenation assembly
 $call
-add esp, 4 ; remove the single arg from the stack
+add esp, 4; remove the single arg from the stack
             """
           }
           case _ => {
             throw new SyntaxError("No concat method for type.")
           }
       }
+      ";start concatenation assembly\n" + result + "\n; end concatenation assembly"
   }
 
   def generateStringPromotionAssembly(e: Expression) : String = {
