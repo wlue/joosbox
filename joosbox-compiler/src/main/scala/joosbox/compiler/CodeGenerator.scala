@@ -677,7 +677,7 @@ ret; end of method $symbolName
 
             val parameterDefinitionsWithThis = parameterDefinitions + "\n" + s"%define ${cd.symbolName}_${cd.hashCode}_this [ebp + 8]"
 
-            val fields = getInstanceFieldsForClass(cd.scope.get.getEnclosingClassNode.get)ph
+            val fields = getInstanceFieldsForClass(cd.scope.get.getEnclosingClassNode.get)
             val instanceFieldInitialization = fields.filter(_.expression.isDefined).map(f => s"""
 ; instance field initialization for ${f.symbolName}
 push eax
