@@ -1,0 +1,95 @@
+\documentclass[letterpaper]{article}
+\usepackage{inconsolata}
+\usepackage[T1]{fontenc}
+\usepackage[margin=1in]{geometry}
+\usepackage[utf8]{inputenc}
+\usepackage{hyperref}
+\usepackage{soul}
+\usepackage{fancyhdr, lastpage}
+\usepackage{graphicx}
+\pagestyle{fancy}
+\fancyhf{}
+\usepackage{minted}
+\usemintedstyle{pastie}
+
+\newcommand{\spacer}{\vspace{5mm}\hrule\vspace{5mm}}
+
+\makeatletter
+\renewcommand{\@maketitle}{
+  \begin{center}%
+    {\LARGE \@title \par}%
+  \end{center}%
+  \vspace*{40pt}
+  \noindent \Large \@date \par %
+  \vspace*{20pt}
+  \noindent \Large \@author \par %
+  \vfill
+  \par
+}
+\makeatother
+
+% New commands
+\newcommand{\assignmentnumber}{5}
+\newcommand{\course}{CS 444: Compiler Construction}
+\newcommand{\term}{Winter 2014}
+\newcommand{\project}{Labs \assignmentnumber: Code Generation}
+\newcommand{\name}{wlue, cktaylor, psobot}
+\newcommand{\wenhao}{wlue(20349659) - Lue, Wen-Hao (wlue@uwaterloo.ca)}
+\newcommand{\chris}{cktaylor(20338058) - Taylor, Chris (cktaylor@uwaterloo.ca)}
+\newcommand{\peter}{psobot(20334978) - Sobot, Peter (psobot@uwaterloo.ca)}
+
+% Values for template
+\title{\course \\ \term \\ \project}
+\date{\ul{\textbf{Date of Submission}}: \today}
+\author{\ul{\textbf{Submitted by}}: \\ \indent \wenhao \\ \indent \chris \\ \indent \peter}
+
+\rhead{\name{}}
+\lhead{\course{} Assignment \assignmentnumber}
+\cfoot{Page \thepage{} of \protect\pageref{LastPage}}
+
+% Content
+\begin{document}
+
+  \maketitle
+  \thispagestyle{empty}
+  \clearpage
+
+  \setcounter{page}{1}
+
+  \clearpage
+  \section{Introduction}
+
+  Our Joos1W compiler, named {\em Joosbox}, currently performs the following
+  operations on all programs passed in on the command line:
+
+  \begin{itemize}
+    \item Scanning
+    \item Parsing
+    \item Weeding
+    \item Environment Building
+    \item Type Linking
+    \item Hierarchy Checking
+    \item Name Resolution
+    \item Type Checking
+    \item Static Analysis
+    \item Code Generation
+  \end{itemize}
+
+  When passed a valid Joos1W program, Joosbox will print nothing on standard
+  error or standard output, and will return a {\tt 0} return code. A single
+  i386 assembly language file, located at the path {\tt
+  output/concatenated.s}, will contain the assembly-language representation of
+  the provided Joos program.
+
+  Upon parsing an invalid Joos1W program, Joosbox will output diagnostic
+  information (including line number and character index of invalid tokens, if
+  available) to the standard error stream. Joosbox will then return {\tt 42}.
+
+  Joosbox is implemented in Scala, and makes use of only four libraries ---
+  the Scala standard library, the {\tt SBT} built tool, the {\tt Specs2}
+  testing framework, and Apache Commons Lang. This document outlines the
+  design of Joosbox, enumerates the significant challenges encountered during
+  its construction, and describes our group's testing process for the final
+  phase of the project: code generation.
+
+\end{document}
