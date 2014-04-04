@@ -200,6 +200,10 @@ int getOffsetOfVTableForClassMySuperClassForObjectWithClassTag(int tag) {
 }
   \end{verbatim}
 
+
+  During code generation, this method is generated for every concrete, abstract class, and interface,
+  and contains the switch cases for all concrete classes that inherit from or implement the type.
+
   At each call site, the compiler generates a call to the appropriate {\tt getOffset} method,
   calling the method that corresponds to the type of the object being called upon, which is known at compile
   time. Then, once the offset within the VTable is known, the VTable pointer is incremented by this offset,
@@ -221,9 +225,16 @@ call [eax + (vtable_MySuperClass_Constructor0 - vtable_MySuperclass)]
 
   \subsubsection{Casting and Instanceof}
 
-  To validate casts and check if one object can be an instance of another,
-  the above-described {\tt getOffset} method is used. If the {\tt getOffset} method
-  of a target type returns a valid offset, %todo finishme
+  To validate casts and check if one object can be an instance of another, the
+  above-described {\tt getOffset} method is used. If the {\tt getOffset}
+  method of a target type returns a valid offset, the cast is known to be
+  valid, as the runtime type of the object has the VTable of the target type
+  embedded within its own VTable. If the {\tt getOffset} method returns no
+  result (indicated by {\tt 0xFFFFFFFF}) then the runtime knows the object
+  cannot be cast to the desired type. For {\tt CastExpression} nodes, this
+  results in a runtime error via a call to {\tt \_\_exception}, while the {\tt
+  instanceof} operator instead converts the result of this method into the
+  corresponding boolean value and returns that.
 
   \subsection{Arrays}
 
@@ -252,7 +263,17 @@ call [eax + (vtable_MySuperClass_Constructor0 - vtable_MySuperclass)]
 
   \subsubsection{Array Covariance}
 
-
+  To implement array covariance, Joosbox uses the same casting system used to
+  determine the validity of casts, but with a slight extension. When the type
+  being casted to is an array type, an additional check is performed to verify
+  that both the type of the object is {\tt Array}, but also that the Contained
+  Type Tag field of the object can be casted to the contained type of the
+  target array type. This is implemented by using a nested call to the
+  appropriate {\tt getOffset} method, then checking the result of that nested
+  call and returning the appropriate offset --- which for Arrays, can only be
+  {\tt 0} or {\tt NoVTableOffsetFound}. (This is due to the fact that Arrays
+  cannot be inherited from, meaning that they can never have any instance
+  methods defined upon them.)
 
   \subsection{Strings}
 
