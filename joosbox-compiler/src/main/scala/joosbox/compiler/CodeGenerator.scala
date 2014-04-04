@@ -42,7 +42,7 @@ object NASMDefines {
 
   def GetArrayVTableOffset(klass: String): String = ArrayOffsetTableLabel(klass)
   def ArrayOffsetTableLabel(klass: String): String = s"offsettable_array_${klass}"
-  def ArrayOffsetTableLabelReferenceType: String = s"offsettable_array_reftype"
+  def ArrayOffsetTableLabelPrimitiveType: String = s"offsettable_array_primitivetype"
   def ArrayOffsetTableStatementLabel(klass: String, midclass: String): String = s"offsettable_array_${klass}_${midclass}"
   def ArrayOffsetTableStatementLabelEnd(klass: String, midclass: String): String = s"offsettable_array_${klass}_${midclass}_nomatch"
 
@@ -246,16 +246,16 @@ ret
       }
     }.mkString("\n\n")
 
-    val arrayReferenceTypeMapping = s"""
-; beginning of offset table for array of reference types
-${NASMDefines.ArrayOffsetTableLabelReferenceType}:
+    val arrayPrimitiveTypeMapping = s"""
+; beginning of offset table for array of primitive types
+${NASMDefines.ArrayOffsetTableLabelPrimitiveType}:
 ; assume that eax contains the pointer to the array object
 ; check if the provided object is a class
 mov ebx, [eax + ObjectClassTagOffset]
 cmp ebx, ${NASMDefines.ClassTagForClass(arraySymbolName)}
 jne .isNotArray
 
-; we are casting an array of reference types, so the subtypes will be equal
+; we are casting an array of primitives types, so the subtypes will always be castable
 ; return an offset of 0 - arrays cannot be overridden, their vtables are always just Object
 mov eax, 0
 ret
@@ -264,12 +264,12 @@ ret
 ; lookup failed - return a constant
 mov eax, NoVTableOffsetFound
 ret
-; end of offset table for array of reference types
+; end of offset table for array of primitive types
 """
 
     val arrayHexString:String = arraySymbolName.hashCode.toHexString
     val arrayTag:String = s"%define ${arraySymbolName}_class_tag 0x$arrayHexString"
-    (classTags ++ Seq(arrayTag)).mkString("\n") + offsetTable + arrayReferenceTypeMapping
+    (classTags ++ Seq(arrayTag)).mkString("\n") + offsetTable + arrayPrimitiveTypeMapping
   }
 
   def generateOffsetCallForType(c: Type): String = c match {
@@ -316,7 +316,7 @@ ret
     }
     case ArrayType(_: ArrayType) => throw new SyntaxError("Nested arrays not supported")
     case ArrayType(_: VoidKeyword) => throw new SyntaxError("Arrays of void type not supported")
-    case ArrayType(_: PrimitiveType) => "nop ; primitive cast"
+    case ArrayType(_: PrimitiveType) => s"call ${NASMDefines.ArrayOffsetTableLabelPrimitiveType}"
     case _: PrimitiveType => "nop ; primitive cast"
   }
 
