@@ -1132,9 +1132,9 @@ je .instanceOf_${c.symbolName}_${e.symbolName}_objectPointerIsNull
         val offsetCall = generateOffsetCallForType(c)
 
         val postValidateCast = s"""
-.instanceOf_${c.symbolName}_${e.symbolName}_objectPointerIsNull:
 ; check eax to see if the cast was successful
 sub eax, NoVTableOffsetFound
+.instanceOf_${c.symbolName}_${e.symbolName}_objectPointerIsNull:
 ; if the cast was successful, eax will be nonzero
 """
 
