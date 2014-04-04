@@ -677,7 +677,8 @@ ret; end of method $symbolName
 
             val parameterDefinitionsWithThis = parameterDefinitions + "\n" + s"%define ${cd.symbolName}_${cd.hashCode}_this [ebp + 8]"
 
-            val fields = getInstanceFieldsForClass(cd.scope.get.getEnclosingClassNode.get)
+            val enclosingClass = cd.scope.get.getEnclosingClassNode.get
+            val fields = getInstanceFieldsForClass(enclosingClass)
             val instanceFieldInitialization = fields.filter(_.expression.isDefined).map(f => s"""
 ; instance field initialization for ${f.symbolName}
 push eax
@@ -688,6 +689,36 @@ mov [eax + ${(getOffsetOfInstanceField(f) + 2) * 4}], ebx
 ; end instance field initialization for ${f.symbolName}
 """).mkString("\n")
 
+            val superConstructorCall = if (cd.parameters.length == 0 && enclosingClass.superclass.isDefined) {
+              val superClassDecl:ClassDeclaration = cd.scope.get.lookup(TypeNameLookup(enclosingClass.superclass.get.name.toQualifiedName)) match {
+                case Some(cdecl: ClassDeclaration) => cdecl
+                case _ => throw new SyntaxError("Invalid class creation.")
+              }
+              val superClassName = superClassDecl.symbolName
+              val callName = s"${superClassDecl.name.niceName}__constructor__${superClassDecl.name.niceName}_public"
+              //  Implicit inheritance, like inheriting from Object, will not call the super constructor.
+              s"""
+push eax
+
+; move vtable of the invocation target into ebx
+mov ebx, [eax + ObjectVTableOffset]
+; call the appropriate method to move the vtable offset into eax
+call ${NASMDefines.GetVTableOffset(superClassName)}
+
+cmp eax, NoVTableOffsetFound
+je __exception
+; add the offset and the vtable pointer we stored in ebx
+add eax, ebx
+
+; eax now contains the vtable pointer at the appropriate offset
+
+${NASMDefines.VMethodCall("eax", superClassName, callName)}
+pop eax; remove this from the stack and put into eax
+"""
+            } else {
+              "; no super contructor call"
+            }
+
             val body = generateAssemblyForNode(b)(parentCompilationUnit, parentClassDeclaration, None, hasDereferencedPrefix)
             s"""
 sub esp, ${locals.size * 4}
@@ -696,13 +727,13 @@ $parameterDefinitionsWithThis
 ; move this ptr into eax
 mov eax, [ebp + 8]
 
-; TODO: If we have no arguments, call super constructor
+; optional super constructor call goes here
+$superConstructorCall
 
 ; initialize fields
 $instanceFieldInitialization
 
 ; start of constructor body
-
 $body
             """
           }
@@ -1719,7 +1750,7 @@ mov eax, [eax + ArrayStartOffset + 4 * ebx]
     }
 
     args.map(a => {
-      generateAssemblyForNode(a)(None,None,None,false) + "\npush eax; argument for call\n"
+      generateAssemblyForNode(a)(None, None, None, false) + "\npush eax; argument for call\n"
     }).mkString("\n")
   }
 
