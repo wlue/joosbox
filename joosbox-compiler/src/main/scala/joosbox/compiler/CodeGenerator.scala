@@ -924,6 +924,14 @@ mov eax, [eax + ArrayLengthOffset]
         valueAtArrayIndex(arrayAsm, indexAsm)
       }
 
+      case f: ForVariableDeclaration => {
+        s"""
+; for variable declaration assignment, simple case
+${generateAssemblyForNode(f.expression)}
+mov ${f.symbolName}, eax
+"""
+      }
+
       case a: Assignment => {
         // This assigns eax to the right hand evaluated expression
         val rhsAsm: String = generateAssemblyForNode(a.rightHandSide)
