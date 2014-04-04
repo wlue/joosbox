@@ -86,10 +86,57 @@
   available) to the standard error stream. Joosbox will then return {\tt 42}.
 
   Joosbox is implemented in Scala, and makes use of only four libraries ---
-  the Scala standard library, the {\tt SBT} built tool, the {\tt Specs2}
+  the Scala standard library, the {\tt SBT} build tool, the {\tt Specs2}
   testing framework, and Apache Commons Lang. This document outlines the
   design of Joosbox, enumerates the significant challenges encountered during
   its construction, and describes our group's testing process for the final
   phase of the project: code generation.
 
+  \section{Design}
+  \subsection{VTables}
+
+  \subsubsection{Hierarchy}
+
+  \subsubsection{Dynamic Dispatch}
+
+  \subsection{Arrays}
+
+  The way in which Joosbox generates code for arrays is to special case it and
+  to create an Array layout that provides a simplistic solution to storage of
+  array contents and length field lookup while still accomodating everything
+  else with Array being a reference type and object.
+
+  % TODO - Mockup of Array layout
+
+  The contained type tag is either a class tag of another valid reference type
+  or a constant hardcoded type tag for the 5 supported primitives: {\tt
+  BooleanTypeTag}, {\tt ByteTypeTag}, {\tt ShortTypeTag}. {\tt IntTypeTag},
+  {\tt CharTypeTag}.
+
+  \subsubsection{Array Covariance}
+
+  \subsection{Strings}
+
+  \subsubsection{String Literal Interning}
+
+  String interning is accomplished in Joosbox, by using a pool of String objects
+  as mapped by their string literals. One of the initial code generation steps
+  is to recursively traverse the AST and map string literal nodes to string
+  literals in the pool (adding them to the pool when no matching literal can be
+  found in the pool already). We then generate the assembly for the string pool
+  in a data secion, that inlines the character array layout of the string and a
+  java.lang.String object layout whose {\tt chars} field has a reference to the
+  character array layout.
+
+  With this Joosbox supported reference equality for equivalent string objects
+  from the onset, as equal string nodes will both refer to the same object in
+  the string pool.
+
+  \subsubsection{String Concatenation}
+
+  \section{Challenges}
+
+  % Field initialization zeroing
+
+  \section{Testing}
 \end{document}
