@@ -817,17 +817,27 @@ mov ${l.symbolName}, eax
 
       case f: FieldAccess => {
         val fieldEnv = TypeChecker.resolvePrimaryAndFindScope(f.primary, f.scope.get)
+        val primaryType = TypeChecker.resolveType(f.primary).get
         val fieldNameLookup = EnvironmentLookup.lookupFromName(ExpressionName(f.name))
-        val field = fieldEnv.lookup(fieldNameLookup) match {
-          case Some(field: FieldDeclaration) => field
-          case Some(x) => throw new Exception("Field access environment lookup did not resolve to a field declaration, instead: " + x.symbolName)
-          case None => throw new Exception("Could not find field declaration: " + f)
-        }
-
-        s"""
+        fieldEnv.lookup(fieldNameLookup) match {
+          case Some(field: FieldDeclaration) => {
+            s"""
 ${generateAssemblyForNode(f.primary)}
 mov eax, [eax + ${(getOffsetOfInstanceField(field) + 2) * 4}]
 """
+          }
+          case Some(x) => throw new Exception("Field access environment lookup did not resolve to a field declaration, instead: " + x.symbolName)
+          case None => {
+            if (f.name.value.equals("length") && primaryType.isInstanceOf[ArrayType]) {
+              s"""
+${generateAssemblyForNode(f.primary)}
+mov eax, [eax + ArrayLengthOffset]
+"""
+            } else {
+              throw new Exception("Could not find field declaration: " + f + " in field env")
+            }
+          }
+        }
       }
 
       //  This is a read of an expressionname
