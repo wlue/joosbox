@@ -968,7 +968,7 @@ add eax, ${(getOffsetOfInstanceField(field) + 2) * 4}; field declaration assignm
                 s"mov eax, ${NASMDefines.VTableStaticFieldTag(classDeclaration.symbolName, f.symbolName)}\n"
               } else {
                 s"""
-${if (!hasDereferencedPrefix) "mov eax, ebp\n add eax, 8; load the \"this\" pointer into eax" else "; not loading \"this\" pointer into eax"}
+${if (!hasDereferencedPrefix) "mov eax, [ebp + 8]; load the addr of \"this\" pointer into eax" else "; not loading \"this\" pointer into eax"}
 add eax, ${(getOffsetOfInstanceField(f) + 2) * 4}; field declaration assignment
 """
               }
@@ -1313,6 +1313,19 @@ push ecx
 call __malloc
 pop ecx
 
+; zero out the elements of the array
+mov esi, eax
+mov edi, eax
+add edi, ecx
+
+.clearAllocatedMemory_${a.hashCode}:
+mov byte [esi], 0
+cmp esi, edi
+je .clearAllocatedMemory_done_${a.hashCode}
+inc esi
+jmp .clearAllocatedMemory_${a.hashCode}
+.clearAllocatedMemory_done_${a.hashCode}:
+
 mov dword [eax], $arrayTag
 mov dword [eax + ObjectVTableOffset], $vtableBase
 mov dword [eax + ArrayTypeOffset], $typeAsm
@@ -1351,7 +1364,22 @@ mov dword [eax + ArrayLengthOffset], ecx
         val symbolName = constructorDecl.symbolName
         val mallocAsm = s"""
 mov eax, ${allocSize * 4}
+push eax
 call __malloc
+pop ecx
+
+; zero out the memory we just received
+mov esi, eax
+mov edi, eax
+add edi, ecx
+
+.clearAllocatedMemory_${classDecl.hashCode}:
+mov byte [esi], 0
+cmp esi, edi
+je .clearAllocatedMemory_done_${classDecl.hashCode}
+inc esi
+jmp .clearAllocatedMemory_${classDecl.hashCode}
+.clearAllocatedMemory_done_${classDecl.hashCode}:
         """
 
         val instanceFieldInitialization = fields.filter(_.expression.isDefined).map(f => s"""
