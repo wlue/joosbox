@@ -115,7 +115,7 @@ _start:
       ("offsetTables", generateOffsetTables(units)),
       ("initFields", generateInitFields(units)),
       ("stringLiterals", generateStringLiteralsData(units))
-    ) ++ units.map(cu => cu.assemblyFileName -> generateAssemblyForNode(cu)(Some(cu), None))
+    ) ++ units.map(cu => cu.assemblyFileName -> generateAssemblyForNode(cu)(Some(cu), None, None, false))
   }
 
   def generateOffsetTables(units: Seq[CompilationUnit]): String = {
@@ -329,7 +329,7 @@ ret
               case Some(expr) => {
 Some(s"""
   ; Field: ${field.name.niceName}
-  ${generateAssemblyForNode(expr)(Some(unit), Some(classDecl))}
+  ${generateAssemblyForNode(expr)(Some(unit), Some(classDecl), Some(field), false)}
   mov [${NASMDefines.VTableStaticFieldTag(classDecl.symbolName, field.symbolName)}], eax
 """.toString)
               }
@@ -478,7 +478,7 @@ SECTION .text
     if (f.isStatic) {
       throw new SyntaxError("Trying to get offset of static field in instance!")
     }
-    getInstanceFieldsForClass(f.scope.get.getEnclosingClassNode.get.asInstanceOf[ClassDeclaration]).indexOf(f)
+    getInstanceFieldsForClass(f.scope.get.getEnclosingClassNode.get).indexOf(f)
   }
 
   def generateJavaLangArrayVTable(env:Environment) : String = {
@@ -511,7 +511,8 @@ SECTION .text
   def generateAssemblyForNode(n: AbstractSyntaxNode)(
     implicit parentCompilationUnit: Option[CompilationUnit],
     parentClassDeclaration: Option[ClassDeclaration],
-    hasDereferencedPrefix: Boolean = false
+    parentFieldDeclaration: Option[FieldDeclaration],
+    hasDereferencedPrefix: Boolean
   ): String = {
     val asm = n match {
       case cd: ClassDeclaration => {
@@ -828,7 +829,7 @@ mov ${l.symbolName}, eax
         fieldEnv.lookup(fieldNameLookup) match {
           case Some(field: FieldDeclaration) => {
             s"""
-${generateAssemblyForNode(f.primary)}
+${generateAssemblyForNode(f.primary)(parentCompilationUnit, parentClassDeclaration, Some(field), hasDereferencedPrefix)}
 mov eax, [eax + ${(getOffsetOfInstanceField(field) + 2) * 4}]
 """
           }
@@ -891,6 +892,7 @@ mov eax, [eax + ArrayLengthOffset]
               generateAssemblyForNode(disambiguated.prefix.get) + generateAssemblyForNode(endValue)(
                 parentCompilationUnit,
                 parentClassDeclaration,
+                parentFieldDeclaration,
                 hasDereferencedPrefix=true
               )
             } else {
@@ -996,7 +998,7 @@ add eax, ${(getOffsetOfInstanceField(f) + 2) * 4}; field declaration assignment
                       s"mov eax, ${NASMDefines.VTableStaticFieldTag(classDeclaration.symbolName, f.symbolName)}"
                     } else {
                       s"""
-${generateAssemblyForNode(disambiguated.prefix.get)(parentCompilationUnit, parentClassDeclaration, hasDereferencedPrefix = true)}
+${generateAssemblyForNode(disambiguated.prefix.get)(parentCompilationUnit, parentClassDeclaration, parentFieldDeclaration, hasDereferencedPrefix = true)}
 add eax, ${(getOffsetOfInstanceField(f) + 2) * 4} ; eax points to prefix's location in memory, add the offset to get field memory
 """
                     }
@@ -1035,10 +1037,13 @@ mov [ebx], eax; write and assign
       }
 
       case _: ThisKeyword =>
-        // Other parts of the compiler guarantee this is being called in instance contexts only
-        s"""
-mov eax, [ebp + 8]
-        """
+        // this could be called from within a method (in which case "this" is in ebp + 8)
+        // or this could be called from a field initializer (in which "this" is in esp)
+        if (parentFieldDeclaration.isDefined) {
+          "mov eax, [esp]"
+        } else {
+          "mov eax, [ebp + 8]"
+        }
 
       case n: Num => s"mov eax, ${n.value}\n"
 
@@ -1385,7 +1390,7 @@ jmp .clearAllocatedMemory_${classDecl.hashCode}
         val instanceFieldInitialization = fields.filter(_.expression.isDefined).map(f => s"""
 ; instance field initialization for ${f.symbolName}
 push eax
-${generateAssemblyForNode(f.expression.get)}
+${generateAssemblyForNode(f.expression.get)(parentCompilationUnit, parentClassDeclaration, Some(f), hasDereferencedPrefix)}
 mov ebx, eax
 pop eax
 mov [eax + ${(getOffsetOfInstanceField(f) + 2) * 4}], ebx
@@ -1608,7 +1613,7 @@ add esp, 4; remove the single arg from the stack
           case Some(declaration: MethodDeclaration) => {
             val symbolName: String = declaration.symbolName
             val call = s"call $symbolName" // String.valueOf is static
-            val pushArg = generateAssemblyForNode(e)(None,None) + "\npush eax; argument for call\n"
+            val pushArg = generateAssemblyForNode(e)(None,None,None,false) + "\npush eax; argument for call\n"
             s"""
 $pushArg
 $call
@@ -1705,7 +1710,7 @@ mov eax, [eax + ArrayStartOffset + 4 * ebx]
     }
 
     args.map(a => {
-      generateAssemblyForNode(a)(None,None) + "\npush eax; argument for call\n"
+      generateAssemblyForNode(a)(None,None,None,false) + "\npush eax; argument for call\n"
     }).mkString("\n")
   }
 
