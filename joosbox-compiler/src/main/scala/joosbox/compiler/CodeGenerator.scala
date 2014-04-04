@@ -596,10 +596,16 @@ SECTION .text
             }
 
             val locals: Seq[String] = findLocalVariableDeclarations(b).map(_.symbolName)
-            val localAccessDefinitions = locals.zipWithIndex.map{case (id, i) => s"%define $id [ebp - ${4 * (i + 1)}]"}.mkString("\n")
+            val localAccessDefinitions = locals.zipWithIndex.map{case (id, i) => (
+                s"%define $id [ebp - ${4 * (i + 1)}]\n" +
+                s"%define ${id}_address_offset ${4 * (i + 1)}\n"
+              )}.mkString("\n")
 
             val parameterDefinitions = md.parameters.reverse.zipWithIndex.map{
-              case (fp: FormalParameter, i: Int) => s"%define ${fp.symbolName}_${fp.hashCode} [ebp + ${4 * (if (md.isStatic) (i + 2) else (i + 3))}]"
+              case (fp: FormalParameter, i: Int) => {(
+                s"%define ${fp.symbolName}_${fp.hashCode} [ebp + ${4 * (if (md.isStatic) (i + 2) else (i + 3))}]\n" +
+                s"%define ${fp.symbolName}_${fp.hashCode}_address_offset ${4 * (if (md.isStatic) (i + 2) else (i + 3))}"
+              )}
             }.mkString("\n")
 
             val parameterDefinitionsWithThis = if (md.isStatic) {
@@ -814,7 +820,8 @@ mov ${l.symbolName}, eax
         val fieldNameLookup = EnvironmentLookup.lookupFromName(ExpressionName(f.name))
         val field = fieldEnv.lookup(fieldNameLookup) match {
           case Some(field: FieldDeclaration) => field
-          case _ => throw new Exception("Field access environment lookup did not resolve to a field declaration.")
+          case Some(x) => throw new Exception("Field access environment lookup did not resolve to a field declaration, instead: " + x.symbolName)
+          case None => throw new Exception("Could not find field declaration: " + f)
         }
 
         s"""
@@ -929,7 +936,7 @@ add eax, ${(getOffsetOfInstanceField(field) + 2) * 4}; field declaration assignm
 
           // This is a write to an ExpressionName
           case e: ExpressionName => e.scope.get.lookup(EnvironmentLookup.lookupFromName(NameLinker.disambiguateName(e)(e.scope.get))) match {
-            case Some(l: LocalVariableDeclaration) => s"mov eax, ${l.symbolName}\n"
+            case Some(l: LocalVariableDeclaration) => s"mov eax, ebp;\nsub eax, ${l.symbolName}_address_offset\n"
             case Some(f: ForVariableDeclaration) => s"mov eax, ${f.symbolName}\n"
             case Some(f: FieldDeclaration) => {
               if (f.isStatic) {
@@ -942,7 +949,7 @@ add eax, ${(getOffsetOfInstanceField(f) + 2) * 4}; field declaration assignment
 """
               }
             }
-            case Some(f: FormalParameter) => s"mov eax, ${f.symbolName}_${f.hashCode}\n"
+            case Some(f: FormalParameter) => s"mov eax, ebp;\nadd eax, ${f.symbolName}_${f.hashCode}_address_offset\n"
 
             case None => {
               val disambiguated: ExpressionName = if (e.isAmbiguous) {
