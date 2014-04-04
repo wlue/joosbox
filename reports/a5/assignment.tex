@@ -125,6 +125,22 @@
   field access, assignment, method invocation, etc. all require substantially
   more logic and more complex assembly and as such will be exlained below.
 
+  \subsection{Object Layout}
+
+  \begin{center}
+  \begin{tabular}{| r | l |}
+    \hline
+    Type Tag & {\tt 0xbeadfood } \\ \hline
+    VTable Pointer & {\tt vtable\_MyClass } \\ \hline
+    Instance Field & {\tt ??? } \\ 
+    Instance Field & {\tt ??? } \\ 
+    ... & {\tt ??? } \\ 
+    Instance Field & {\tt ??? } \\ \hline
+  \end{tabular}
+\end{center}
+
+% TODO: Talk about this object layout
+
   \subsection{VTables}
 
   Joosbox implements dynamic method dispatch by means of {\em virtual method
@@ -203,21 +219,40 @@ int getOffsetOfVTableForClassMySuperClassForObjectWithClassTag(int tag) {
 call [eax + (vtable_MySuperClass_Constructor0 - vtable_MySuperclass)]
   \end{verbatim}
 
+  \subsubsection{Casting and Instanceof}
+
+  To validate casts and check if one object can be an instance of another,
+  the above-described {\tt getOffset} method is used. If the {\tt getOffset} method
+  of a target type returns a valid offset, %todo finishme
+
   \subsection{Arrays}
 
-  The way in which Joosbox generates code for arrays is to special case it and
-  to create an Array layout that provides a simplistic solution to storage of
-  array contents and length field lookup while still accomodating everything
-  else with Array being a reference type and object.
+  Arrays are a special type of object in Joosbox, in that they have the same
+  memory layout as a regular object would, but also contain additional object
+  header information, as well as a variable number of instance fields.
 
-  % TODO - Mockup of Array layout
+  \begin{center}
+  \begin{tabular}{| r | l | l | }
+    \hline
+    Type Tag & {\tt 0xbeadfood } & {\em same as Object's layout} \\ \hline
+    VTable Pointer & {\tt vtable\_MyClass } & {\em same as Object's layout} \\ \hline
+    Contained Type Tag & {\tt 0xabcdabcd } & {\em new for array} \\ \hline
+    Length & {\tt n } & {\em new for array} \\ \hline
+    Element 0 & {\tt ??? } \\ 
+    Element 1 & {\tt ??? } \\ 
+    ... & {\tt ??? } \\ 
+    Element {\tt n} & {\tt ??? } \\ \hline
+  \end{tabular}
+\end{center}
 
-  The contained type tag is either a class tag of another valid reference type
+  The Contained Type Tag is either the class tag of another valid reference type
   or a constant hardcoded type tag for the 5 supported primitives: {\tt
-  BooleanTypeTag}, {\tt ByteTypeTag}, {\tt ShortTypeTag}. {\tt IntTypeTag},
+  BooleanTypeTag}, {\tt ByteTypeTag}, {\tt ShortTypeTag}, {\tt IntTypeTag}, and
   {\tt CharTypeTag}.
 
   \subsubsection{Array Covariance}
+
+
 
   \subsection{Strings}
 
