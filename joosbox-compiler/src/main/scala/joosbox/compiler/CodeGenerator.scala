@@ -1495,7 +1495,7 @@ $bottomLabel:
 push eax
 
 cmp eax, 0 ; if null, treat classTag as 0
-je .cast_${c.expr.symbolName}_${c.targetType.symbolName}_castingNull
+je .cast_${c.expr.symbolName}_${c.targetType.symbolName}_${c.hashCode}_castingNull
 
 ; move vtable of the invocation target into ebx
 mov ebx, [eax + ObjectVTableOffset]
@@ -1506,7 +1506,7 @@ mov ebx, [eax + ObjectVTableOffset]
 ; check eax to see if the cast was successful
 cmp eax, NoVTableOffsetFound
 je __exception
-.cast_${c.expr.symbolName}_${c.targetType.symbolName}_castingNull:
+.cast_${c.expr.symbolName}_${c.targetType.symbolName}_${c.hashCode}_castingNull:
 """
 
         prepareToValidateCast + offsetCall + postValidateCast + generateAssemblyForNode(c.expr)
