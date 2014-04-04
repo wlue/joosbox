@@ -929,20 +929,20 @@ add eax, ${(getOffsetOfInstanceField(field) + 2) * 4}; field declaration assignm
 
           // This is a write to an ExpressionName
           case e: ExpressionName => e.scope.get.lookup(EnvironmentLookup.lookupFromName(NameLinker.disambiguateName(e)(e.scope.get))) match {
-            case Some(l: LocalVariableDeclaration) => s"mov ${l.symbolName}, eax\n"
-            case Some(f: ForVariableDeclaration) => s"mov ${f.symbolName}, eax\n"
+            case Some(l: LocalVariableDeclaration) => s"mov eax, ${l.symbolName}\n"
+            case Some(f: ForVariableDeclaration) => s"mov eax, ${f.symbolName}\n"
             case Some(f: FieldDeclaration) => {
               if (f.isStatic) {
                 val classDeclaration = f.scope.get.compilationScope.get.node.get.asInstanceOf[CompilationUnit].typeDeclaration.asInstanceOf[ClassDeclaration]
                 s"mov eax, ${NASMDefines.VTableStaticFieldTag(classDeclaration.symbolName, f.symbolName)}\n"
               } else {
                 s"""
-${if (!hasDereferencedPrefix) "mov eax, [ebp + 8]; load the \"this\" pointer into eax" else "; not loading \"this\" pointer into eax"}
+${if (!hasDereferencedPrefix) "mov eax, ebp\n add eax, 8; load the \"this\" pointer into eax" else "; not loading \"this\" pointer into eax"}
 add eax, ${(getOffsetOfInstanceField(f) + 2) * 4}; field declaration assignment
 """
               }
             }
-            case Some(f: FormalParameter) => s"mov ${f.symbolName}_${f.hashCode}, eax\n"
+            case Some(f: FormalParameter) => s"mov eax, ${f.symbolName}_${f.hashCode}\n"
 
             case None => {
               val disambiguated: ExpressionName = if (e.isAmbiguous) {
