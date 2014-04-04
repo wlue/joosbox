@@ -249,10 +249,10 @@ call [eax + (vtable_MySuperClass_Constructor0 - vtable_MySuperclass)]
     VTable Pointer & {\tt vtable\_MyClass } & {\em same as Object's layout} \\ \hline
     Contained Type Tag & {\tt 0xabcdabcd } & {\em new for array} \\ \hline
     Length & {\tt n } & {\em new for array} \\ \hline
-    Element 0 & {\tt ??? } \\ 
-    Element 1 & {\tt ??? } \\ 
-    ... & {\tt ??? } \\ 
-    Element {\tt n} & {\tt ??? } \\ \hline
+    Element 0 & {\tt ??? } & \\ 
+    Element 1 & {\tt ??? } & \\ 
+    ... & {\tt ??? } & \\ 
+    Element {\tt n} & {\tt ??? } & \\ \hline
   \end{tabular}
 \end{center}
 
@@ -277,47 +277,48 @@ call [eax + (vtable_MySuperClass_Constructor0 - vtable_MySuperclass)]
 
   \subsection{Strings}
 
-  Many properties of Joos strings made them an interesting case to handle in
-  code generation. Firstly, the property that Strings are reference types (to
-  java.lang.String) while being data backed by arrays, another special reference
-  type, made it a case that needed special handling. Additionally, String
-  objects have very specific addition properties in that any String object can
-  be concatenated with some other non-String types. The former, means that
-  Joosbox needs to consider efficiency and must implement string interning. The
-  latter, means that Joosbox needs to generate specific code just for String
-  concatenation.
+  Many properties of Joos strings made theminteresting to handle during the
+  code generation phase. Firstly, the fact that Strings are reference types
+  (of class type java.lang.String) while being data-backed by arrays (another
+  special reference type) made Strings more difficult to implement, and made
+  it more difficult to implement string interning. Additionally, String
+  objects have very specific addition properties: any String object can be
+  concatenated with most other non-String types by using the traditional plus
+  operator. This meant that Joosbox needed to promote types differently to
+  allow for String concatenation.
 
   \subsubsection{String Literal Interning}
 
-  String interning is accomplished in Joosbox, by using a pool of String objects
-  as mapped by their string literals. One of the initial code generation steps
-  is to recursively traverse the AST and map string literal nodes to string
-  literals in the pool (adding them to the pool when no matching literal can be
-  found in the pool already). We then generate the assembly for the string pool
-  in a data secion, that inlines the character array layout of the string and a
-  java.lang.String object layout whose {\tt chars} field has a reference to the
-  character array layout.
+  String interning is accomplished in Joosbox by using a pool of String
+  objects generated in the {\tt .data} section of the program at compile time.
+  One of the initial code generation steps involves recursively traversing the
+  AST and adding all string literal nodes to the string pool, deduplicating
+  instances id necessary. We then generate the assembly for the string pool in
+  a data secion, that statically generates the character array object layout
+  of the string, as well as a java.lang.String object whose {\tt chars} field
+  is pre-initialized to point to the character array layout.
 
-  With this Joosbox supported reference equality for equivalent string objects
-  from the onset, as equal string nodes will both refer to the same object in
-  the string pool.
+  With this implementation of string interning, Joosbox supported reference
+  equality for equivalent string literals from the onset, as equal string literals
+  will both refer to the same object in the string pool.
 
   \subsubsection{String Concatenation}
 
   The assembly generated for string concatenation utilized the underlying
   methods of the java.lang.String class such as to take advantage of that
   pre-existing code. The way in which Joosbox accomplishes this is to take each
-  operand in a concatenation expression, and promote it to a String object by
+  operand in a concatenation expression and promote it to a String object by
   using the java.lang.String static {\tt valueOf} methods. This was accomplished
   by determining the type of the operand, and then performing a method lookup on
   java.lang.String to find the corresponding {\tt valueOf} method that takes
-  that type of argument. Once we have String objects, Joosbox will actually
-  concatenate them by making use of java.lang.String instance {\tt concat}
-  method.
+  that type of argument. Once String objects are found, Joosbox will actually
+  concatenate them by making use of the {\tt concat} instance
+  method on java.lang.String.
 
-  Taking advantage of these existing methods, allowed it so that the {\tt
-  CodeGenerator} only needed to invoke the assembly generation for static and
-  instance method calls.
+  Using these existing methods allowed our {\tt CodeGenerator} to avoid
+  generating specific assembly code just for string concatenation, instead
+  using predefined static and instance methods that exist in the standard
+  library.
 
   \section{Challenges}
 
