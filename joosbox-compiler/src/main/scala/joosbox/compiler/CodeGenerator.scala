@@ -1576,7 +1576,7 @@ add esp, 4; remove the single arg from the stack
                               InputString("String", "", 0),
                               InputString("valueOf", "", 0))).toMethodName
 
-      TypeChecker.resolveMethodName(name, Seq(e), env) match {
+      TypeChecker.resolveMethodName(name, Seq(e), env, false, true) match {
           case Some(declaration: MethodDeclaration) => {
             val symbolName: String = declaration.symbolName
             val call = s"call $symbolName" // String.valueOf is static

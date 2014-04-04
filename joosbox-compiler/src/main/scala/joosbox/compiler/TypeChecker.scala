@@ -22,7 +22,8 @@ object TypeChecker {
     ambiguousName: MethodName,
     args: Seq[Expression],
     env: Environment,
-    useStringifyForArgs: Boolean = false
+    useStringifyForArgs: Boolean = false,
+    treatRefArgsAsObjects:Boolean = false
   ): Option[TypeMethodDeclaration] = {
     val name: MethodName = NameLinker.disambiguateName(ambiguousName)(env).asInstanceOf[MethodName]
 
@@ -49,7 +50,7 @@ object TypeChecker {
       }
     } getOrElse(env)
 
-    val argTypes: Seq[Type] = resolvedTypesForArgs(args, updatedEnv, useStringifyForArgs)
+    val argTypes: Seq[Type] = resolvedTypesForArgs(args, updatedEnv, useStringifyForArgs, treatRefArgsAsObjects)
 
     val lookup = MethodLookup(QualifiedName(Seq(name.value)), argTypes)
 
@@ -226,7 +227,7 @@ object TypeChecker {
     }
   }
 
-  def resolvedTypesForArgs(args: Seq[Expression], env:Environment, useStringifyForArgs:Boolean = false): Seq[Type] = {
+  def resolvedTypesForArgs(args: Seq[Expression], env:Environment, useStringifyForArgs:Boolean = false, treatRefsAsObjects:Boolean = false): Seq[Type] = {
     args.map {
       arg => {
         var result:Option[Type] = None
@@ -236,48 +237,64 @@ object TypeChecker {
           val res = resolveType(arg) match {
             case Some(argType) => argType match {
               case c:ClassType =>
-                env.lookup(TypeNameLookup(c.name.toQualifiedName)).get match {
-                  case decl: ClassDeclaration =>
-                    withScope(ClassType(decl.fullyQualifiedName.get), Some(env))
-                  case _ => throw new SyntaxError("Bad fully qualified type.")
+                if (treatRefsAsObjects) {
+                  ClassType(CommonNames.JavaLangObject.toTypeName)
+                } else {
+                  env.lookup(TypeNameLookup(c.name.toQualifiedName)).get match {
+                    case decl: ClassDeclaration =>
+                      withScope(ClassType(decl.fullyQualifiedName.get), Some(env))
+                    case _ => throw new SyntaxError("Bad fully qualified type.")
+                  }
                 }
               case i:InterfaceType =>
-                env.lookup(TypeNameLookup(i.name.toQualifiedName)).get match {
-                  case decl: InterfaceDeclaration =>
-                    withScope(InterfaceType(decl.fullyQualifiedName.get), Some(env))
-                  case _ => throw new SyntaxError("Bad fully qualified type.")
+                if (treatRefsAsObjects) {
+                  ClassType(CommonNames.JavaLangObject.toTypeName)
+                } else {
+                  env.lookup(TypeNameLookup(i.name.toQualifiedName)).get match {
+                    case decl: InterfaceDeclaration =>
+                      withScope(InterfaceType(decl.fullyQualifiedName.get), Some(env))
+                    case _ => throw new SyntaxError("Bad fully qualified type.")
+                  }
                 }
               case ci:ClassOrInterfaceType =>
-                env.lookup(TypeNameLookup(ci.name.toQualifiedName)).get match {
-                  case decl: ClassDeclaration =>
-                    withScope(ClassType(decl.fullyQualifiedName.get), Some(env))
-                  case decl: InterfaceDeclaration =>
-                    withScope(InterfaceType(decl.fullyQualifiedName.get), Some(env))
-                  case _ => throw new SyntaxError("Bad fully qualified type.")
+                if (treatRefsAsObjects) {
+                  ClassType(CommonNames.JavaLangObject.toTypeName)
+                } else {
+                  env.lookup(TypeNameLookup(ci.name.toQualifiedName)).get match {
+                    case decl: ClassDeclaration =>
+                      withScope(ClassType(decl.fullyQualifiedName.get), Some(env))
+                    case decl: InterfaceDeclaration =>
+                      withScope(InterfaceType(decl.fullyQualifiedName.get), Some(env))
+                    case _ => throw new SyntaxError("Bad fully qualified type.")
+                  }
                 }
               case a:ArrayType =>
-                a.subtype match {
-                  case c:ClassType =>
-                    env.lookup(TypeNameLookup(c.name.toQualifiedName)).get match {
-                      case decl: ClassDeclaration =>
-                        withScope(ArrayType(withScope(ClassType(decl.fullyQualifiedName.get), Some(env))), Some(env))
-                      case _ => throw new SyntaxError("Bad fully qualified type.")
-                    }
-                  case i:InterfaceType =>
-                    env.lookup(TypeNameLookup(i.name.toQualifiedName)).get match {
-                      case decl: InterfaceDeclaration =>
-                        withScope(ArrayType(withScope(InterfaceType(decl.fullyQualifiedName.get), Some(env))), Some(env))
-                      case _ => throw new SyntaxError("Bad fully qualified type.")
-                    }
-                  case ci:ClassOrInterfaceType =>
-                    env.lookup(TypeNameLookup(ci.name.toQualifiedName)).get match {
-                      case decl: ClassDeclaration =>
-                        withScope(ArrayType(withScope(ClassType(decl.fullyQualifiedName.get), Some(env))), Some(env))
-                      case decl: InterfaceDeclaration =>
-                        withScope(ArrayType(withScope(InterfaceType(decl.fullyQualifiedName.get), Some(env))), Some(env))
-                      case _ => throw new SyntaxError("Bad fully qualified type.")
-                    }
-                  case _ => a
+                if (treatRefsAsObjects) {
+                  ClassType(CommonNames.JavaLangObject.toTypeName)
+                } else {
+                  a.subtype match {
+                    case c:ClassType =>
+                      env.lookup(TypeNameLookup(c.name.toQualifiedName)).get match {
+                        case decl: ClassDeclaration =>
+                          withScope(ArrayType(withScope(ClassType(decl.fullyQualifiedName.get), Some(env))), Some(env))
+                        case _ => throw new SyntaxError("Bad fully qualified type.")
+                      }
+                    case i:InterfaceType =>
+                      env.lookup(TypeNameLookup(i.name.toQualifiedName)).get match {
+                        case decl: InterfaceDeclaration =>
+                          withScope(ArrayType(withScope(InterfaceType(decl.fullyQualifiedName.get), Some(env))), Some(env))
+                        case _ => throw new SyntaxError("Bad fully qualified type.")
+                      }
+                    case ci:ClassOrInterfaceType =>
+                      env.lookup(TypeNameLookup(ci.name.toQualifiedName)).get match {
+                        case decl: ClassDeclaration =>
+                          withScope(ArrayType(withScope(ClassType(decl.fullyQualifiedName.get), Some(env))), Some(env))
+                        case decl: InterfaceDeclaration =>
+                          withScope(ArrayType(withScope(InterfaceType(decl.fullyQualifiedName.get), Some(env))), Some(env))
+                        case _ => throw new SyntaxError("Bad fully qualified type.")
+                      }
+                    case _ => a
+                  }
                 }
               case _ => argType
             }
