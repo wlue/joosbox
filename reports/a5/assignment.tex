@@ -117,6 +117,16 @@
 
   \subsection{Strings}
 
+  Many properties of Joos strings made them an interesting case to handle in
+  code generation. Firstly, the property that Strings are reference types (to
+  java.lang.String) while being data backed by arrays, another special reference
+  type, made it a case that needed special handling. Additionally, String
+  objects have very specific addition properties in that any String object can
+  be concatenated with some other non-String types. The former, means that
+  Joosbox needs to consider efficiency and must implement string interning. The
+  latter, means that Joosbox needs to generate specific code just for String
+  concatenation.
+
   \subsubsection{String Literal Interning}
 
   String interning is accomplished in Joosbox, by using a pool of String objects
@@ -133,6 +143,21 @@
   the string pool.
 
   \subsubsection{String Concatenation}
+
+  The assembly generated for string concatenation utilized the underlying
+  methods of the java.lang.String class such as to take advantage of that
+  pre-existing code. The way in which Joosbox accomplishes this is to take each
+  operand in a concatenation expression, and promote it to a String object by
+  using the java.lang.String static {\tt valueOf} methods. This was accomplished
+  by determining the type of the operand, and then performing a method lookup on
+  java.lang.String to find the corresponding {\tt valueOf} method that takes
+  that type of argument. Once we have String objects, Joosbox will actually
+  concatenate them by making use of java.lang.String instance {\tt concat}
+  method.
+
+  Taking advantage of these existing methods, allowed it so that the {\tt
+  CodeGenerator} only needed to invoke the assembly generation for static and
+  instance method calls.
 
   \section{Challenges}
 
