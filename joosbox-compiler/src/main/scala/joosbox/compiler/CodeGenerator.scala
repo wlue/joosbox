@@ -1323,13 +1323,13 @@ mov esi, eax
 mov edi, eax
 add edi, ecx
 
-.clearAllocatedMemory_${a.hashCode}:
+.clearAllocatedMemory_${a.hashCode}_${arraySymbolName}:
 mov byte [esi], 0
 cmp esi, edi
-je .clearAllocatedMemory_done_${a.hashCode}
+je .clearAllocatedMemory_done_${a.hashCode}_${arraySymbolName}
 inc esi
-jmp .clearAllocatedMemory_${a.hashCode}
-.clearAllocatedMemory_done_${a.hashCode}:
+jmp .clearAllocatedMemory_${a.hashCode}_${arraySymbolName}
+.clearAllocatedMemory_done_${a.hashCode}_${arraySymbolName}:
 
 mov dword [eax], $arrayTag
 mov dword [eax + ObjectVTableOffset], $vtableBase
@@ -1378,13 +1378,13 @@ mov esi, eax
 mov edi, eax
 add edi, ecx
 
-.clearAllocatedMemory_${classDecl.hashCode}:
+.clearAllocatedMemory_${c.hashCode}:
 mov byte [esi], 0
 cmp esi, edi
-je .clearAllocatedMemory_done_${classDecl.hashCode}
+je .clearAllocatedMemory_done_${c.hashCode}
 inc esi
-jmp .clearAllocatedMemory_${classDecl.hashCode}
-.clearAllocatedMemory_done_${classDecl.hashCode}:
+jmp .clearAllocatedMemory_${c.hashCode}
+.clearAllocatedMemory_done_${c.hashCode}:
         """
 
         val instanceFieldInitialization = fields.filter(_.expression.isDefined).map(f => s"""
