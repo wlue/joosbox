@@ -662,10 +662,16 @@ ret; end of method $symbolName
             }
 
             val locals: Seq[String] = findLocalVariableDeclarations(b).map(_.symbolName)
-            val localAccessDefinitions = locals.zipWithIndex.map{case (id, i) => s"%define $id [ebp - ${4 * i}]"}.mkString("\n")
+            val localAccessDefinitions = locals.zipWithIndex.map{case (id, i) => (
+              s"%define $id [ebp - ${4 * (i + 1)}]\n" +
+                s"%define ${id}_address_offset ${4 * (i + 1)}\n"
+              )}.mkString("\n")
 
-            val parameterDefinitions = cd.parameters.zipWithIndex.map{
-              case (fp: FormalParameter, i: Int) => s"%define ${fp.symbolName}_${fp.hashCode} [ebp + ${4 * (i+3)}]"
+            val parameterDefinitions = md.parameters.reverse.zipWithIndex.map{
+              case (fp: FormalParameter, i: Int) => {(
+                s"%define ${fp.symbolName}_${fp.hashCode} [ebp + ${4 * (if (md.isStatic) (i + 2) else (i + 3))}]\n" +
+                  s"%define ${fp.symbolName}_${fp.hashCode}_address_offset ${4 * (if (md.isStatic) (i + 2) else (i + 3))}"
+                )}
             }.mkString("\n")
 
             val parameterDefinitionsWithThis = parameterDefinitions + "\n" + s"%define ${cd.symbolName}_${cd.hashCode}_this [ebp + 8]"
