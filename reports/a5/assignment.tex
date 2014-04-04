@@ -93,11 +93,84 @@
   phase of the project: code generation.
 
   \section{Design}
+
   \subsection{VTables}
 
-  \subsubsection{Hierarchy}
+  Joosbox implements dynamic method dispatch by means of {\em virtual method
+  tables}, or ``VTables,'' as they are called in the Joosbox code. Each
+  concrete class contains its own VTable, which resides in the {\tt .data}
+  section of the code. Each VTable is laid out like the following example,
+  which shows the VTable for concrete class {\tt MyClass} that inherits from
+  {\tt MySuperClass} and implements {\tt MyInterface}:
+
+  \begin{center}
+  \begin{tabular}{| l | l |}
+    \hline
+    vtable\_MyClass: & \\ \hline
+    vtable\_MyClass\_Constructor0: & {\tt dd MyClass\_Constructor0\_Impl} \\ 
+    vtable\_MyClass\_Method1: & {\tt dd MyClass\_Method1\_Impl} \\ 
+    vtable\_MyClass\_Method2: & {\tt dd MyClass\_Method2\_Impl} \\ 
+    vtable\_MyClass\_OverriddenMethod3: & {\tt dd MyClass\_OverriddenMethod3\_Impl} \\ 
+    vtable\_MyClass\_InheritedMethod4: & {\tt dd MySuperClass\_InheritedMethod4\_Impl} \\ 
+    vtable\_MyClass\_InheritedMethod5: & {\tt dd MySuperClass\_InheritedMethod5\_Impl} \\
+    vtable\_MyClass\_ImplementedMethod6: & {\tt dd MyClass\_ImplementedMethod6\_Impl} \\ \hline
+
+    vtable\_MyClass\_as\_MySuperClass: & \\ \hline
+    vtable\_MyClass\_as\_MySuperClass\_Constructor0: & \tt{dd MyClass\_Constructor0\_Impl} \\
+    vtable\_MyClass\_as\_MySuperClass\_OverriddenMethod3: & {\tt dd MyClass\_OverriddenMethod3\_Impl} \\ 
+    vtable\_MyClass\_as\_MySuperClass\_InheritedMethod4: & {\tt dd MySuperClass\_InheritedMethod4\_Impl} \\ 
+    vtable\_MyClass\_as\_MySuperClass\_InheritedMethod5: & {\tt dd MySuperClass\_InheritedMethod5\_Impl} \\ \hline
+
+    vtable\_MyClass\_as\_MyInterface: & \\ \hline
+    vtable\_MyClass\_as\_MyInterface\_ImplementedMethod6: & \tt{dd MyClass\_ImplementedMethod6\_Impl} \\ \hline
+  \end{tabular}
+\end{center}
+
+  As shown in this VTable layout, each class's VTable contains a nested section that looks identical
+  to the VTable for another concrete class, abstract class, or interface, but with the implementation
+  pointers pointing to the concrete subclass's implementations where available. This allows Joosbox to
+  dynamically determine the location of a given method given only the object itself, which contains
+  a runtime type tag and a pointer to the top of this VTable.
 
   \subsubsection{Dynamic Dispatch}
+
+  To accomplish this VTable-based dynamic dispatch, Joosbox makes use of a function at call
+  time to determine an offset within any object's VTable, used to allow seamless casting. Although
+  the function itself is written in i386 assembler, it implements the same functionality as the following
+  pseudocode:
+
+  \begin{verbatim}
+// One of these methods is generated for every class, abstract class, and interface.
+int getOffsetOfVTableForClassMySuperClassForObjectWithClassTag(int tag) {
+  //  There will be one switch case for every concrete subclass of MySuperClass
+  switch (tag) {
+    //  The use of label subtraction here allows us to let the assembler do the math.
+    case MyClass: return (vtable_MyClass_as_MySuperClass - vtable_MyClass);
+    case MyOtherClass: return (vtable_MyOtherClass_as_MySuperClass - vtable_MyOtherClass);
+    case default:
+      return 0xFFFFFFFF;
+  }
+}
+  \end{verbatim}
+
+  At each call site, the compiler generates a call to the appropriate {\tt getOffset} method,
+  calling the method that corresponds to the type of the object being called upon, which is known at compile
+  time. Then, once the offset within the VTable is known, the VTable pointer is incremented by this offset,
+  making the new pointer behave exactly like a VTable for the target class would, with method pointers for
+  the same methods living in the exact same addresses relative to the base of the VTable.
+
+  From there on out, invoking the correct method is as simple as invoking {\tt call} and
+  calculating the offset of the desired method within the VTable:
+
+  \begin{verbatim}
+; this will call whatever method that implements vtable_MySuperClass_Constructor0,
+; whether it is on MySuperClass itself, or a subclass whose VTable has been ``thunked''
+; and whose VTable now looks like MySuperClass's VTable.
+; Again, the use of label subtraction here allows NASM to do the math for us and
+; avoids mistakes when calculating offsets within data tables.
+
+call [eax + (vtable_MySuperClass_Constructor0 - vtable_MySuperclass)]
+  \end{verbatim}
 
   \subsection{Arrays}
 
