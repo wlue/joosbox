@@ -97,10 +97,9 @@
   \subsection{Basic nodes}
 
   A large number of our AST nodes had relatively simple code generation steps.
-  These are really any of the nodes that were either single simple nodes or
-  could rely on generating code for their children and using the results of the
-  children assembly in a simple, correct manner. These simple code generation
-  nodes included:
+  These simple code generation nodes did not require very much special logic,
+  and often resulted in less than ten lines of assembly code being generated.
+  These nodes include:
 
   \begin{itemize}
     \item Num
@@ -127,6 +126,12 @@
 
   \subsection{Object Layout}
 
+  Objects in Joosbox are laid out according to the following diagram. Whenever
+  an object is statically allocated (like String literals, explained below) or
+  allocated at runtime (via {\tt \_\_malloc}), the appropriate number of bytes
+  are reserved to fit the following data structure, and the appropriate header
+  fields are initialized at creation time.
+
   \begin{center}
   \begin{tabular}{| r | l |}
     \hline
@@ -139,7 +144,43 @@
   \end{tabular}
 \end{center}
 
-% TODO: Talk about this object layout
+  \subsubsection{Field Access}
+
+  Instance field access was simple to implement with the restrictions of the Joos
+  language, as interfaces cannot define fields, and fields cannot be overridden.
+  This means that all classes have a strict linear ordering of fields that they
+  provide, and that their superclasses provide, and so on. As such, fields are laid
+  out backwards, with the parent class's fields appearing first in each object layout,
+  then the child class's fields appearing last. Instance field references are then
+  simple to generate, as they consist of the base pointer of the object plus a statically-known offset.
+
+  If an instance is casted to a superclass that it implements, this interface
+  field layout remains the same, as the set of fields implemented by its
+  superclass is embedded within the top of its own instance field list, making
+  the offsets match exactly. If an instance is then casted back down to its
+  subclass again, the offsets will still match, as the subclass's fields will
+  still be a part of the object --- just not references for the duration of
+  the time in which the object is treated as its superclass. Unlike method invocation,
+  no dynamic dispatch is required to implement interface fields.
+
+  Static fields are implemented in an even simpler way in Joosbox.
+  Each class has its static fields embedded within the same structure that
+  provides its VTable, meaning that one concrete class contains exactly one set
+  of static fields, living in the {\tt .data} section of the program.
+
+  \subsubsection{Field Initialization}
+
+  Static fields are initialized upon starting a compiled Joos program with the
+  {\tt initFields} method, which iterates through the {\tt CompilationUnit}s
+  provided to {\tt joosc} in order and evaluates the expressions in each
+  static field initializer.
+
+  Instance fields are initialized every time an instance is allocated, in the
+  {\tt ClassCreationPrimary} node. The result of the call to {\tt \_\_malloc}
+  is first zeroed out to ensure that all instance fields are initialized to
+  {\tt 0} or {\tt null}. Each instance field is then initialized in order,
+  with the right hand side of the expression being initialized and assigned to
+  the appropriate memory location within the instance.
 
   \subsection{VTables}
 
@@ -322,7 +363,31 @@ call [eax + (vtable_MySuperClass_Constructor0 - vtable_MySuperclass)]
 
   \section{Challenges}
 
-  % Field initialization zeroing
+  Many of the aforementioned design choices of Joosbox were not decided upon
+  at the outset of Assignment 5, but rather, were arrived upon via trial and
+  error.
 
   \section{Testing}
+
+  To test the code generation portion of Joosbox, our team used a number of
+  tools. While our previous testing framework ({\tt sbt}) was still viable, we
+  opted to create a more flexible testing framework that allowed for debugging
+  of the generated code. To accomplish this, we built a Python script that
+  invoked several shell scripts to build {\tt joosc}, run {\tt joosc} on a set
+  of input files, and to compare its output (both return code and stdout) to
+  the expected output.
+
+  The advantage of this Python script was two-fold: it allowed us to test
+  individual tests without requiring the use of an IDE, and it allowed us to
+  invoke {\tt gdb} before running our program, allowing us to debug the
+  assembly code we had generated.
+
+  Unfortunately, all three of our group members primarily use Mac OS for
+  development, and {\tt nasm} does not support the generation of debug symbols
+  on Mac OS X. Hence, to take full advantage of the debugging power offered by
+  {\tt gdb}, we ran our code in a virtual machine by running Ubuntu 12.04 in a
+  Vagrant (VirtualBox) setup. Our Mac-side testing scripts called into the
+  virtual machine in the case when we wanted to run {\tt gdb} on our code to
+  debug a segfault or other error.
+
 \end{document}
