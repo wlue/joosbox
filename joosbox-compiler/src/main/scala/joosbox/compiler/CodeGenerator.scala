@@ -955,7 +955,7 @@ add eax, ${(getOffsetOfInstanceField(field) + 2) * 4}; field declaration assignm
           // This is a write to an ExpressionName
           case e: ExpressionName => e.scope.get.lookup(EnvironmentLookup.lookupFromName(NameLinker.disambiguateName(e)(e.scope.get))) match {
             case Some(l: LocalVariableDeclaration) => s"mov eax, ebp;\nsub eax, ${l.symbolName}_address_offset\n"
-            case Some(f: ForVariableDeclaration) => s"mov eax, ${f.symbolName}\n"
+            case Some(f: ForVariableDeclaration) => s"mov eax, ebp;\nsub eax, ${f.symbolName}_address_offset\n"
             case Some(f: FieldDeclaration) => {
               if (f.isStatic) {
                 val classDeclaration = f.scope.get.compilationScope.get.node.get.asInstanceOf[CompilationUnit].typeDeclaration.asInstanceOf[ClassDeclaration]
