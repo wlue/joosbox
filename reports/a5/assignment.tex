@@ -94,6 +94,37 @@
 
   \section{Design}
 
+  \subsection{Basic nodes}
+
+  A large number of our AST nodes had relatively simple code generation steps.
+  These are really any of the nodes that were either single simple nodes or
+  could rely on generating code for their children and using the results of the
+  children assembly in a simple, correct manner. These simple code generation
+  nodes included:
+
+  \begin{itemize}
+    \item Num
+    \item NullLiteral
+    \item FalseLiteral
+    \item TrueLiteral
+    \item ArithmeticExpressions (ignoring string concatention)
+    \item RelationalExpression (ignoring instanceof check)
+    \item NegatedExpression
+    \item LogicalNotExpression
+    \item ConditionalExpression
+    \item IfStatement
+    \item WhileStatement
+    \item ForStatement
+    \item ReturnStatement
+    \item Block
+    \item LocalVariableDeclaration
+    \item ForVariableDeclaration
+  \end{itemize}
+
+  Other nodes such as class and array creation, expression name lookup,
+  field access, assignment, method invocation, etc. all require substantially
+  more logic and more complex assembly and as such will be exlained below.
+
   \subsection{VTables}
 
   Joosbox implements dynamic method dispatch by means of {\em virtual method
