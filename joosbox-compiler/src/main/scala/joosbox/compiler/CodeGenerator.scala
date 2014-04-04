@@ -532,7 +532,7 @@ SECTION .text
             cd.scope.get.lookup(MethodLookup(m.name.toQualifiedName, m.parameters.map(_.varType))) match {
               case Some(concrete: MethodDeclaration) =>
                 NASMDefines.VTableNestedMethodDef(symbolName, superSymbolName, m.symbolName, concrete.symbolName)
-              case None
+              case _
                 => throw new SyntaxError("Could not find concrete method declaration for VTable: " + m.niceName)
             }
           }
@@ -540,7 +540,7 @@ SECTION .text
             cd.scope.get.lookup(ConstructorLookup(constructor.name.toQualifiedName, constructor.parameters.map(_.varType))) match {
               case Some(concrete: ConstructorDeclaration) =>
                 NASMDefines.VTableNestedMethodDef(symbolName, superSymbolName, constructor.symbolName, concrete.symbolName)
-              case None
+              case _
                 => throw new SyntaxError("Could not find concrete constructor declaration for VTable: " + constructor.name.niceName)
             }
           }
