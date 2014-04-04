@@ -667,10 +667,10 @@ ret; end of method $symbolName
                 s"%define ${id}_address_offset ${4 * (i + 1)}\n"
               )}.mkString("\n")
 
-            val parameterDefinitions = md.parameters.reverse.zipWithIndex.map{
+            val parameterDefinitions = cd.parameters.reverse.zipWithIndex.map{
               case (fp: FormalParameter, i: Int) => {(
-                s"%define ${fp.symbolName}_${fp.hashCode} [ebp + ${4 * (if (md.isStatic) (i + 2) else (i + 3))}]\n" +
-                  s"%define ${fp.symbolName}_${fp.hashCode}_address_offset ${4 * (if (md.isStatic) (i + 2) else (i + 3))}"
+                s"%define ${fp.symbolName}_${fp.hashCode} [ebp + ${4 * (i + 3)}]\n" +
+                  s"%define ${fp.symbolName}_${fp.hashCode}_address_offset ${4 * (i + 3)}"
                 )}
             }.mkString("\n")
 
