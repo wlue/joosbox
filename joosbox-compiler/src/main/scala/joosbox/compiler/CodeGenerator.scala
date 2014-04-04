@@ -1020,6 +1020,12 @@ mov [ebx], eax; write and assign
         """
       }
 
+      case _: ThisKeyword =>
+        // Other parts of the compiler guarantee this is being called in instance contexts only
+        s"""
+mov eax, [ebp + 8]
+        """
+
       case n: Num => s"mov eax, ${n.value}\n"
 
       case _: NullLiteral => s"mov eax, 0\n"
