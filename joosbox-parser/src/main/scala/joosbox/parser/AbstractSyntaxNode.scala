@@ -1428,7 +1428,7 @@ object AbstractSyntaxNode {
     }
 
     case f: ParseNodes.ForStatement => {
-      val tokens : Seq[Seq[ParseNode]] = f.children.foldLeft(Seq(Seq.empty[ParseNode])) {
+      val tokens : Seq[Seq[ParseNode]] = f.children.dropRight(1).foldLeft(Seq(Seq.empty[ParseNode])) {
         (acc, i) =>
           i match {
             case ParseNodes.Semicolon(_,_) => acc :+ Seq.empty
@@ -1443,12 +1443,13 @@ object AbstractSyntaxNode {
       if (!update.isEmpty) {
         statements = statements diff List(update.get)
       }
-      val statement: Statement = statements.collectFirst { case x: Statement => x }.get
+
+      val statement: Statement = List(f.children.last).flatMap(recursive).collectFirst { case x: Statement => x }.get
       Seq(ForStatement(init, check, update, statement))
     }
 
     case f: ParseNodes.ForStatementNoShortIf => {
-      val tokens : Seq[Seq[ParseNode]] = f.children.foldLeft(Seq(Seq.empty[ParseNode])) {
+      val tokens : Seq[Seq[ParseNode]] = f.children.dropRight(1).foldLeft(Seq(Seq.empty[ParseNode])) {
         (acc, i) =>
           i match {
             case ParseNodes.Semicolon(_,_) => acc :+ Seq.empty
@@ -1464,7 +1465,7 @@ object AbstractSyntaxNode {
         statements = statements diff List(update.get)
       }
 
-      val statement: Statement = statements.collectFirst { case x: Statement => x }.get
+      val statement: Statement = List(f.children.last).flatMap(recursive).collectFirst { case x: Statement => x }.get
       Seq(ForStatement(init, check, update, statement))
     }
 
