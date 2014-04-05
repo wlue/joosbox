@@ -1110,7 +1110,7 @@ mov eax, _string_literal_${s.index.get}_String
       case c: CharLiteral =>
         s"""
 ; char literal ${c.value.value}
-mov dword eax, ${c.value.value}
+mov dword eax, ${c.value.value.replaceAll("'", "`")}
         """
 
       case a:AddExpression => {
