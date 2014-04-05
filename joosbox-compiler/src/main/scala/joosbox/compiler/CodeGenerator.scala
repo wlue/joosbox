@@ -165,17 +165,6 @@ _start:
 
         case c: InterfaceDeclaration => {
           classTags = classTags ++ Seq(s"%define ${c.symbolName}_class_tag 0x${c.runtimeTag.toHexString}")
-
-          if (!c.modifiers.contains(AbstractKeyword())) {
-            addMapping(c.symbolName, c.symbolName)
-            ancestors.foreach(x => addMapping(x.symbolName, c.symbolName))
-            c.interfaces.foreach{case i: InterfaceType => {
-              c.scope.get.lookup(TypeNameLookup(i.name.toQualifiedName)) match {
-                case Some(idecl: InterfaceDeclaration) => addMapping(idecl.symbolName, c.symbolName)
-                case _ => throw new SyntaxError("Invalid interface creation.")
-              }
-            }}
-          }
         }
         case x => x.children.map(gatherClassRelationships)
       }

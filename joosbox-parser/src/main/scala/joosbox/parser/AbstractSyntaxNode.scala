@@ -742,7 +742,7 @@ object AbstractSyntaxNode {
     override def parentOption: Option[AbstractSyntaxNode] = parent
 
     def methodsForVtable: Seq[MethodOrConstructorDeclaration] = {
-      scope match {
+      val interfaceMethods = scope match {
         case Some(scope: ScopeEnvironment) => {
           interfaces.flatMap(m => {
             scope.lookup(EnvironmentLookup.lookupFromName(m.name)) match {
@@ -753,6 +753,13 @@ object AbstractSyntaxNode {
         }
         case _ => throw new SyntaxError("Could not find scope environment to get vtable methods.")
       }
+      (
+        body.declarations.collect {
+          case c: ConstructorDeclaration => c
+          case m: MethodDeclaration if !m.isStatic => m
+        }
+        ++ interfaceMethods
+      )
     }
 
     def instanceOfList: Seq[String] = {
