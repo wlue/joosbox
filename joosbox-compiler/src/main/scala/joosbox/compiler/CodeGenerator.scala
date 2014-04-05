@@ -622,7 +622,6 @@ SECTION .text
         val symbolName = id.symbolName
 
         val localMethods = id.methodsForVtable
-        println("Interface declaration has local methods for vtable: \n\n" + localMethods)
         val methodsForTopLevel = localMethods.map { x =>
           NASMDefines.VTableMethodDef(symbolName, x.symbolName, "0x0")
         }.mkString("\n")
