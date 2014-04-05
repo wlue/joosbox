@@ -221,7 +221,7 @@ object AbstractSyntaxNode {
     memberType: Type,
     parameters: Seq[FormalParameter] = Seq.empty[FormalParameter],
     body: Option[Block] = None
-  ) extends AbstractSyntaxNode with TypeMethodDeclaration with Referenceable {
+  ) extends AbstractSyntaxNode with TypeMethodDeclaration with Referenceable with MethodOrConstructorDeclaration{
     override def children: List[AbstractSyntaxNode] =
       modifiers.toList ++ parameters.toList ++ body.toList ++ List(memberType)
 
