@@ -602,6 +602,39 @@ SECTION .text
   """ + cd.children.map(generateAssemblyForNode).filter{_ != ""}.mkString("\n")
       }
 
+      case id: InterfaceDeclaration => {
+        //  Generate empty vtables for interfaces
+        val symbolName = id.symbolName
+
+        val localMethods = id.methodsForVtable
+        val methodsForTopLevel = localMethods.map { x =>
+          NASMDefines.VTableMethodDef(symbolName, x.symbolName, x.symbolName)
+        }.mkString("\n")
+
+        val nestedEntries = generateNestedVTableEntries(id).flatMap{
+          case i: InterfaceDeclaration => {
+            Seq(NASMDefines.VTableNestedClassHeader(symbolName, i.symbolName)) ++
+              i.methodsForVtable.map(x => NASMDefines.VTableNestedMethodDef(i.symbolName, id.symbolName, x.symbolName, "0x0 ; interface has no impl"))
+          }
+          case i: ClassDeclaration => {
+            Seq(NASMDefines.VTableNestedClassHeader(symbolName, i.symbolName)) ++
+              i.methodsForVtable.map(x => NASMDefines.VTableNestedMethodDef(i.symbolName, id.symbolName, x.symbolName, "0x0 ; interface has no impl"))
+          }
+        }.mkString("\n")
+
+        s"""
+SECTION .data
+
+; beginning of fake vtable for interface $symbolName
+${NASMDefines.VTableClassHeader(symbolName)}
+$methodsForTopLevel
+$nestedEntries
+; end of fake vtable for interface $symbolName
+
+SECTION .text
+  """ + id.children.map(generateAssemblyForNode).filter{_ != ""}.mkString("\n")
+      }
+
       case md: MethodDeclaration => {
         val symbolName = md.symbolName
 
