@@ -3,6 +3,7 @@ package joosbox.compiler
 import joosbox.parser.{AbstractSyntaxNode, Environment, ScopeEnvironment, EnvironmentLookup, MethodLookup, TypeNameLookup, ConstructorLookup}
 import joosbox.parser.AbstractSyntaxNode._
 import joosbox.lexer.{SyntaxError, InputString}
+import scala.util.Random
 
 /**
  * Created by psobot on 3/22/14.
@@ -351,7 +352,11 @@ Some(s"""
     s"""
 global initFields
 initFields:
+  push ebp
+  mov ebp, esp
 ${code}
+  mov esp, ebp
+  pop ebp
   ret
 
     """.stripMargin
@@ -1088,14 +1093,7 @@ mov [ebx], eax; write and assign
         """
       }
 
-      case _: ThisKeyword =>
-        // this could be called from within a method (in which case "this" is in ebp + 8)
-        // or this could be called from a field initializer (in which "this" is in esp)
-        if (parentFieldDeclaration.isDefined) {
-          "mov eax, [ebp + 8] ; field reference of this"
-        } else {
-          "mov eax, [ebp + 8]"
-        }
+      case _: ThisKeyword => "mov eax, [ebp + 8]\n"
 
       case n: Num => s"mov eax, ${n.value}\n"
 
@@ -1360,6 +1358,7 @@ and eax, ebx
         val vtableBase:String = NASMDefines.VTableBase(arraySymbolName)
         val typeAsm:String = typeOfArray(a)
 
+        val uniqueArrayLabel = new Random().nextLong().toHexString
         s"""
 $dimsAsm
 mov ecx, eax; ecx holds the length
@@ -1375,13 +1374,13 @@ mov esi, eax
 mov edi, eax
 add edi, ecx
 
-.clearAllocatedMemory_${a.hashCode}_${arraySymbolName}:
+.clearAllocatedMemory_${a.hashCode}_${arraySymbolName}_$uniqueArrayLabel:
 mov byte [esi], 0
 cmp esi, edi
-je .clearAllocatedMemory_done_${a.hashCode}_${arraySymbolName}
+je .clearAllocatedMemory_done_${a.hashCode}_${arraySymbolName}_$uniqueArrayLabel
 inc esi
-jmp .clearAllocatedMemory_${a.hashCode}_${arraySymbolName}
-.clearAllocatedMemory_done_${a.hashCode}_${arraySymbolName}:
+jmp .clearAllocatedMemory_${a.hashCode}_${arraySymbolName}_$uniqueArrayLabel
+.clearAllocatedMemory_done_${a.hashCode}_${arraySymbolName}_$uniqueArrayLabel:
 
 mov dword [eax], $arrayTag
 mov dword [eax + ObjectVTableOffset], $vtableBase
@@ -1580,9 +1579,10 @@ mov ebx, [eax + ObjectVTableOffset]
 cmp eax, NoVTableOffsetFound
 je __exception
 .cast_${c.expr.symbolName}_${c.targetType.symbolName}_${c.hashCode}_castingNull:
+pop eax
 """
 
-        prepareToValidateCast + offsetCall + postValidateCast + generateAssemblyForNode(c.expr)
+        generateAssemblyForNode(c.expr) + prepareToValidateCast + offsetCall + postValidateCast
       }
 
       case x => x.children.map(generateAssemblyForNode).filter{_ != ""}.mkString("\n")
