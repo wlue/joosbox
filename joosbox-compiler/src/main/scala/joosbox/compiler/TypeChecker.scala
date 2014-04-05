@@ -58,7 +58,8 @@ object TypeChecker {
       case Some(result) => result match {
         case method: TypeMethodDeclaration => if (method.isStatic) {
           name.prefix match {
-            case Some(_: ExpressionName) => throw new SyntaxError("Cannot access static method from instance context: " + name)
+            case Some(_: ExpressionName) =>
+              throw new SyntaxError("Cannot access static method from instance context: " + name)
             case _ => Some(method)
           }
         } else {

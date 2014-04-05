@@ -46,7 +46,7 @@ class CodeGeneratorSpec extends Specification {
     "pass all custom marmoset tests" in {
       "static field assignment" in {
         linkAndTest(
-          Seq("joosbox-compiler/src/test/resources/custom-tests/compiler_field_access.java"),
+          Seq("joosbox-compiler/src/test/resources/marmoset-tests/a5/J1_constructorbodycast.java"),
           "", 1
         )
       }

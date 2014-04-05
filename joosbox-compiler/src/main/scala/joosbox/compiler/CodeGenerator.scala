@@ -1645,15 +1645,12 @@ add esp, 4; remove the single arg from the stack
 
   def generateStringPromotionAssembly(e: Expression) : String = {
       val env = e.scope.get
-      val name = QualifiedName(Seq(
-                              InputString("String", "", 0),
-                              InputString("valueOf", "", 0))).toMethodName
-
+      val name = MethodName(InputString("valueOf"), Some(TypeName(InputString("String"))))
       TypeChecker.resolveMethodName(name, Seq(e), env, false, true) match {
           case Some(declaration: MethodDeclaration) => {
             val symbolName: String = declaration.symbolName
             val call = s"call $symbolName" // String.valueOf is static
-            val pushArg = generateAssemblyForNode(e)(None,None,None,false) + "\npush eax; argument for call\n"
+            val pushArg = generateAssemblyForNode(e)(None, None, None, false) + "\npush eax; argument for call\n"
             s"""
 $pushArg
 $call
