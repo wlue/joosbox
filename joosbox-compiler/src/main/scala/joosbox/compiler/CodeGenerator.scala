@@ -547,6 +547,14 @@ SECTION .text
         }.mkString("\n")
 
         def generateReferenceToOverriddenMethod(superSymbolName: String, n: MethodOrConstructorDeclaration): String = n match {
+          case m: InterfaceMemberDeclaration => {
+            cd.scope.get.lookup(MethodLookup(m.name.toQualifiedName, m.parameters.map(_.varType))) match {
+              case Some(concrete: MethodDeclaration) =>
+                NASMDefines.VTableNestedMethodDef(symbolName, superSymbolName, m.symbolName, concrete.symbolName)
+              case _
+              => throw new SyntaxError("Could not find concrete method declaration for VTable: " + m.niceName)
+            }
+          }
           case m: MethodDeclaration => {
             cd.scope.get.lookup(MethodLookup(m.name.toQualifiedName, m.parameters.map(_.varType))) match {
               case Some(concrete: MethodDeclaration) =>
@@ -571,6 +579,7 @@ SECTION .text
                 => throw new SyntaxError("Could not find concrete constructor declaration for VTable: " + constructor.name.niceName)
             }
           }
+
         }
 
         val nestedEntries = generateNestedVTableEntries(cd).flatMap{
@@ -613,8 +622,9 @@ SECTION .text
         val symbolName = id.symbolName
 
         val localMethods = id.methodsForVtable
+        println("Interface declaration has local methods for vtable: \n\n" + localMethods)
         val methodsForTopLevel = localMethods.map { x =>
-          NASMDefines.VTableMethodDef(symbolName, x.symbolName, x.symbolName)
+          NASMDefines.VTableMethodDef(symbolName, x.symbolName, "0x0")
         }.mkString("\n")
 
         val nestedEntries = generateNestedVTableEntries(id).flatMap{
