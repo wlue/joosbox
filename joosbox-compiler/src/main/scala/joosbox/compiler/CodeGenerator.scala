@@ -1434,11 +1434,9 @@ add edi, ecx
 
 .clearAllocatedMemory_${a.hashCode}_${arraySymbolName}_$uniqueArrayLabel:
 mov byte [esi], 0
-cmp esi, edi
-je .clearAllocatedMemory_done_${a.hashCode}_${arraySymbolName}_$uniqueArrayLabel
 inc esi
-jmp .clearAllocatedMemory_${a.hashCode}_${arraySymbolName}_$uniqueArrayLabel
-.clearAllocatedMemory_done_${a.hashCode}_${arraySymbolName}_$uniqueArrayLabel:
+cmp esi, edi
+jl .clearAllocatedMemory_${a.hashCode}_${arraySymbolName}_$uniqueArrayLabel
 
 mov dword [eax], $arrayTag
 mov dword [eax + ObjectVTableOffset], $vtableBase
@@ -1489,11 +1487,9 @@ add edi, ecx
 
 .clearAllocatedMemory_${c.hashCode}:
 mov byte [esi], 0
-cmp esi, edi
-je .clearAllocatedMemory_done_${c.hashCode}
 inc esi
-jmp .clearAllocatedMemory_${c.hashCode}
-.clearAllocatedMemory_done_${c.hashCode}:
+cmp esi, edi
+jl .clearAllocatedMemory_${c.hashCode}
         """
 
         val thunkAsm = s"""
