@@ -447,6 +447,15 @@ SECTION .text
             interfaces
           }
         }
+        case c: InterfaceDeclaration => {
+          val interfaces = c.interfaces.map{case i: InterfaceType => {
+            c.scope.get.lookup(TypeNameLookup(i.name.toQualifiedName)) match {
+              case Some(idecl: InterfaceDeclaration) => idecl
+              case _ => throw new SyntaxError("Invalid interface creation.")
+            }
+          }}
+          interfaces
+        }
         case x => x.children.flatMap(gatherParentClassHierarchy)
       }
     }
@@ -544,6 +553,14 @@ SECTION .text
                 NASMDefines.VTableNestedMethodDef(symbolName, superSymbolName, m.symbolName, concrete.symbolName)
               case _
                 => throw new SyntaxError("Could not find concrete method declaration for VTable: " + m.niceName)
+            }
+          }
+          case m: InterfaceMemberDeclaration => {
+            cd.scope.get.lookup(MethodLookup(m.name.toQualifiedName, m.parameters.map(_.varType))) match {
+              case Some(concrete: MethodDeclaration) =>
+                NASMDefines.VTableNestedMethodDef(symbolName, superSymbolName, m.symbolName, concrete.symbolName)
+              case _
+              => throw new SyntaxError("Could not find concrete method declaration for VTable: " + m.niceName)
             }
           }
           case constructor: ConstructorDeclaration => {
