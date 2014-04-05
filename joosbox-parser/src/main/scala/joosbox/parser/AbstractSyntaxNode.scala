@@ -755,8 +755,7 @@ object AbstractSyntaxNode {
       }
       (
         body.declarations.collect {
-          case c: ConstructorDeclaration => c
-          case m: MethodDeclaration if !m.isStatic => m
+          case im: InterfaceMemberDeclaration if !im.isStatic => im
         }
         ++ interfaceMethods
       )
