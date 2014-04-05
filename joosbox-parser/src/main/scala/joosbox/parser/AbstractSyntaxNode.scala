@@ -228,8 +228,10 @@ object AbstractSyntaxNode {
     override def niceName: String = name.niceName
     override def symbolName: String = {
       (
-        scope.get.getEnclosingClassNode.get.asInstanceOf[ClassDeclaration].name.niceName
-        + "__"
+        scope.get.getEnclosingCompilationUnit.get
+          .asInstanceOf[CompilationUnit]
+          .typeDeclaration.asInstanceOf[InterfaceDeclaration]
+          .name.niceName + "__"
         + name.niceName
         + parameters.map(_.varType.symbolName).mkString("_")
       ).replaceAll("""^\s+(?m)""", "")
@@ -619,6 +621,7 @@ object AbstractSyntaxNode {
     var parent: Option[CompilationUnit] = None,
     var fullyQualifiedName: Option[TypeName] = None
   ) extends AbstractSyntaxNode with Referenceable {
+    def runtimeTag: Int = hashCode
     override def children: List[AbstractSyntaxNode] =
       modifiers.toList ++ interfaces.toList
   }
@@ -636,8 +639,6 @@ object AbstractSyntaxNode {
 
     override def parentOption: Option[AbstractSyntaxNode] = parent
     override def symbolName: String = "class_" + name.niceName + "_0x" + hashCode.toHexString
-
-    def runtimeTag: Int = hashCode
 
     def isSameOrSubclassOf(decl: ClassDeclaration): Boolean = decl match {
       // The class declarations are identical.

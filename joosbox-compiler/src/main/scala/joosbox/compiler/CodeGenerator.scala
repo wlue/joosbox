@@ -162,6 +162,21 @@ _start:
             }}
           }
         }
+
+        case c: InterfaceDeclaration => {
+          classTags = classTags ++ Seq(s"%define ${c.symbolName}_class_tag 0x${c.runtimeTag.toHexString}")
+
+          if (!c.modifiers.contains(AbstractKeyword())) {
+            addMapping(c.symbolName, c.symbolName)
+            ancestors.foreach(x => addMapping(x.symbolName, c.symbolName))
+            c.interfaces.foreach{case i: InterfaceType => {
+              c.scope.get.lookup(TypeNameLookup(i.name.toQualifiedName)) match {
+                case Some(idecl: InterfaceDeclaration) => addMapping(idecl.symbolName, c.symbolName)
+                case _ => throw new SyntaxError("Invalid interface creation.")
+              }
+            }}
+          }
+        }
         case x => x.children.map(gatherClassRelationships)
       }
     }
@@ -759,7 +774,8 @@ $body
       case m: SimpleMethodInvocation => {
         val env = m.scope.get
         val an = m.name
-        TypeChecker.resolveMethodName(an, m.args, env) match {
+        val result = TypeChecker.resolveMethodName(an, m.args, env)
+        result match {
           case Some(declaration: MethodDeclaration) => {
             val symbolName: String = declaration.symbolName
             val classSymbolName: String = declaration.scope.get.getEnclosingClassNode.get.symbolName
@@ -775,12 +791,57 @@ $body
                   NameLinker.disambiguateName(an)(env) match {
                     case e: ExpressionName => generateAssemblyForNode(e)
                     case _
-                      => throw new SyntaxError("Could not disambiguate expression name for invocation target: " + an)
+                    => throw new SyntaxError("Could not disambiguate expression name for invocation target: " + an)
                   }
                 }
-                case _
-                  => throw new SyntaxError("Could not get invocation target: " + an)
+                case _ => throw new SyntaxError("Could not get invocation target: " + an)
               }
+
+              val thunkAsm = s"""
+; move vtable of the invocation target into ebx
+mov ebx, [eax + ObjectVTableOffset]
+; call the appropriate method to move the vtable offset into eax
+call ${NASMDefines.GetVTableOffset(classSymbolName)}
+
+cmp eax, NoVTableOffsetFound
+je __exception
+; add the offset and the vtable pointer we stored in ebx
+add eax, ebx
+; eax now contains the vtable pointer at the appropriate offset
+              """
+              generateInstanceCallAssembly(loadInvokeTargetIntoEAX, thunkAsm, classSymbolName, symbolName)
+            }
+
+            val pushArgs = pushArguments(m)
+            val argsSize = m.args.size
+            s"""
+$pushArgs
+$call
+add esp, ${argsSize * 4} ; remove the params from the stack
+            """
+          }
+
+          case Some(declaration: InterfaceMemberDeclaration) => {
+            val symbolName: String = declaration.symbolName
+            val classSymbolName: String = declaration.scope.get.getEnclosingTypeNode.get.symbolName
+            val call: String = if (declaration.isStatic) {
+              s"call $symbolName"
+            } else {
+              val loadInvokeTargetIntoEAX = an.prefix match {
+
+                //  TODO: If we could easily get the caller here, this should be a call to
+                //  mov eax, ${caller.symbolName}_${caller.hashCode}_this
+                case None => s"mov eax, [ebp + 8]; load the 'this' pointer"
+                case Some(an: AmbiguousName) => {
+                  NameLinker.disambiguateName(an)(env) match {
+                    case e: ExpressionName => generateAssemblyForNode(e)
+                    case _
+                    => throw new SyntaxError("Could not disambiguate expression name for invocation target: " + an)
+                  }
+                }
+                case _ => throw new SyntaxError("Could not get invocation target: " + an)
+              }
+
               val thunkAsm = s"""
 ; move vtable of the invocation target into ebx
 mov ebx, [eax + ObjectVTableOffset]
@@ -806,10 +867,7 @@ add esp, ${argsSize * 4} ; remove the params from the stack
           }
           case None =>
             throw new SyntaxError("Could not resolve method: " + an)
-          case _ =>
-            throw new SyntaxError("Method resolved to an abstract method declaration: " + an)
         }
-
       }
 
       case m: ComplexMethodInvocation => {

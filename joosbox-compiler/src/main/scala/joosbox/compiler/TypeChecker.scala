@@ -223,7 +223,7 @@ object TypeChecker {
         case v: ForVariableDeclaration => Some(v.typeDeclaration)
         case c: ClassDeclaration => Some(withScope(ClassType(c.name), name.scope))
         case x =>
-          throw new SyntaxError("Could not resolve type of expression: " + x);
+          throw new SyntaxError("Could not resolve type of expression: " + x)
       }
     }
   }

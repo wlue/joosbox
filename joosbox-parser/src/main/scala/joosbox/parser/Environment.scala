@@ -66,6 +66,8 @@ sealed trait Environment {
 
   def getEnclosingClassNode: Option[ClassDeclaration] = None
 
+  def getEnclosingTypeNode: Option[TypeDeclaration] = None
+
   def getEnclosingCompilationUnit: Option[AbstractSyntaxNode] = None
 
   /**
@@ -191,6 +193,14 @@ class ScopeEnvironment(
     case _ => parent match {
       case None => None
       case Some(s) => s.getEnclosingClassNode
+    }
+  }
+
+  override def getEnclosingTypeNode: Option[TypeDeclaration] = node match {
+    case Some(a: TypeDeclaration) => Some(a)
+    case _ => parent match {
+      case None => None
+      case Some(s) => s.getEnclosingTypeNode
     }
   }
 

@@ -26,7 +26,7 @@ class CodeGeneratorSpec extends Specification {
     stringToProcess(preCommand).!
 
     val files = testFiles ++ stdlibFilePaths
-    CompilerRunner.runTestable(files.toArray) must not(throwA[Exception])
+    CompilerRunner.runTestable(files.toArray)
 
     stringToProcess(postCommand).!
 
@@ -46,7 +46,12 @@ class CodeGeneratorSpec extends Specification {
     "pass all custom marmoset tests" in {
       "static field assignment" in {
         linkAndTest(
-          Seq("joosbox-compiler/src/test/resources/marmoset-tests/a5/J1_constructorbodycast.java"),
+          Seq(
+            "joosbox-compiler/src/test/resources/marmoset-tests/a5/J1_callbeforereturn/Main.java",
+            "joosbox-compiler/src/test/resources/marmoset-tests/a5/J1_callbeforereturn/java/util/Collection.java",
+            "joosbox-compiler/src/test/resources/marmoset-tests/a5/J1_callbeforereturn/java/util/LinkedList.java",
+            "joosbox-compiler/src/test/resources/marmoset-tests/a5/J1_callbeforereturn/java/util/List.java"
+          ),
           "", 1
         )
       }
